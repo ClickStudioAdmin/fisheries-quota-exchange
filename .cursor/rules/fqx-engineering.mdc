@@ -1,0 +1,16 @@
+---
+description: FQX tests and documentation expectations
+alwaysApply: true
+---
+
+# Engineering
+
+Add tests for important business logic. Financial and quota operations need especially strong coverage.
+
+Each phase must remain lint-clean and production-buildable.
+
+Do not add dependencies unless the current phase requires them.
+
+Do not create files that are not required by the current phase.
+
+When a change affects architecture, migrations, or deployment, update the relevant file in `docs/`.

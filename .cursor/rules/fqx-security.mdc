@@ -1,0 +1,18 @@
+---
+description: FQX secrets, keys, and untrusted client state
+alwaysApply: true
+---
+
+# Security
+
+Never commit secrets. Use `.env.local` locally, Vercel env vars for the app, and GitHub Actions secrets for migrations.
+
+Never put service-role keys in frontend code or `NEXT_PUBLIC_` variables.
+
+Never trust the browser for payment status, bid validity, quota availability, seller balances, payout eligibility, settlement status, or admin permissions.
+
+Never edit immutable quota or financial ledgers in place. Corrections use adjustment or reversal entries.
+
+Use database transactions for concurrent quota and money operations.
+
+Payment and webhook handling must be idempotent.
