@@ -1,0 +1,52 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { AuthCard } from "@/components/auth-card";
+import { LoginForm } from "@/components/login-form";
+import { getSupabasePublicEnv } from "@/lib/supabase/env";
+import { getUser } from "@/lib/supabase/server";
+
+export const metadata = {
+  title: "Log in",
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const user = await getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  const params = await searchParams;
+  const configured = getSupabasePublicEnv() !== null;
+
+  return (
+    <AuthCard title="Log in">
+      {!configured ? (
+        <p className="text-sm text-red-800" role="alert">
+          Supabase public environment variables are not set for this deployment.
+        </p>
+      ) : null}
+      {params.error ? (
+        <p className="mb-4 text-sm text-red-800" role="alert">
+          Sign-in could not be completed. Try again.
+        </p>
+      ) : null}
+      <LoginForm />
+      <p className="mt-4 text-sm text-ink-muted">
+        <Link href="/forgot-password" className="underline">
+          Forgot password
+        </Link>
+      </p>
+      <p className="mt-2 text-sm text-ink-muted">
+        No account?{" "}
+        <Link href="/register" className="underline">
+          Register
+        </Link>
+      </p>
+    </AuthCard>
+  );
+}

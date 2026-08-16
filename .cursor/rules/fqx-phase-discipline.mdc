@@ -7,11 +7,11 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Work only on the current phase. The current phase is Phase 2.
+Work only on the current phase. The current phase is Phase 3.
 
 Do feature work on `develop`. Merge to `main` only when the user is ready for production.
 
-Phase 2 may add the application shell and placeholder pages only. Do not add authentication, organisation UI, quota data, listings, auctions, payments, Stripe, dashboards, notifications, or authority integrations.
+Phase 3 may add Supabase Auth, login, registration, logout, password reset, and a protected dashboard. Do not add organisation UI, quota data, listings, auctions, payments, Stripe, or authority integrations.
 
 Do not create later-phase tables or speculative architecture.
 

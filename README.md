@@ -6,11 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 2 — Application shell**
+**Phase 3 — Authentication**
 
-Header, navigation, footer, and placeholder pages at `/`, `/marketplace`, `/fisheries`, `/auctions`, and `/about`. No live marketplace functionality.
+Supabase Auth: register, log in, log out, password reset, and a protected `/dashboard`. Organisation screens are not in this phase.
 
-See [docs/phase-2.md](docs/phase-2.md).
+See [docs/phase-3.md](docs/phase-3.md).
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -27,13 +27,13 @@ This is a Next.js App Router project. The homepage lives in `app/page.tsx`.
 
 `package.json` defines `dev`, `lint`, `build`, and `start` scripts. The homepage does not require a local database connection.
 
-Copy `.env.example` to `.env.local` only if you need local public Supabase values. The homepage does not read them.
+Copy `.env.example` to `.env.local` and add the development Supabase URL and publishable key. Do not use the production project.
 
 Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 2 acceptance is that every shell page loads on the `develop` Vercel Preview and the production build still succeeds after merge.
+Phase 3 acceptance is that a user can register, log in, log out, and cannot open `/dashboard` while signed out.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
@@ -52,4 +52,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-2.md](docs/phase-2.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
+See [docs/phase-3.md](docs/phase-3.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

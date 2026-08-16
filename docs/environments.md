@@ -66,7 +66,9 @@ When the app starts using Supabase from the browser, set Vercel environment vari
 | `NEXT_PUBLIC_SUPABASE_URL` | Development project URL | Production project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Development publishable key | Production publishable key |
 
-The Phase 0 homepage does not read these yet. Do not add service-role keys to Vercel.
+These are required from Phase 3. After adding them, redeploy. Do not add service-role keys to Vercel.
+
+Auth redirect URLs must be set on each Supabase project. See [phase-3.md](phase-3.md).
 
 ## Merge to production
 
