@@ -24,7 +24,7 @@ There are no listings, auctions, or payments in this phase.
 | `quota_holdings` | Organisation holding of a stock/season/type |
 | `quota_ledger` | Immutable quantity events |
 
-Australian jurisdictions are seeded. Specific fisheries, authorities and rules are created in admin, not in code.
+Australian jurisdictions are seeded. A development fixture migration also adds `DEV-` authorities, fisheries, stocks, seasons and quota types. These are test records, not official regulatory data.
 
 ## Ledger
 
