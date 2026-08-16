@@ -53,17 +53,29 @@ Future schema changes must be new migration files in the same folder, committed 
 
 ## GitHub Actions process
 
-The workflow `.github/workflows/deploy-database.yml` runs on every push to `main` and when started manually from the Actions tab. A successful first apply of `system_health` was confirmed against the hosted project.
+The workflow `.github/workflows/deploy-database.yml` runs on pushes to `develop` and `main`, and when started manually from the Actions tab.
 
-It links to the hosted project and applies pending migrations. If a migration fails, the workflow fails.
+- `develop` applies migrations to the **development** Supabase project.
+- `main` applies migrations to the **production** Supabase project.
 
-Add these repository secrets under GitHub → Settings → Secrets and variables → Actions:
+A successful first apply of `system_health` was confirmed against the production project.
+
+Production repository secrets:
 
 | Secret | Source |
 | --- | --- |
-| `SUPABASE_ACCESS_TOKEN` | Supabase account token |
-| `SUPABASE_DB_PASSWORD` | Hosted project database password |
-| `SUPABASE_PROJECT_ID` | Hosted project ref |
+| `SUPABASE_ACCESS_TOKEN` | Supabase account token (`sbp_...`) |
+| `SUPABASE_DB_PASSWORD` | Production database password |
+| `SUPABASE_PROJECT_ID` | Production project ref |
+
+Development repository secrets (required before `develop` can migrate):
+
+| Secret | Source |
+| --- | --- |
+| `DEVELOPMENT_SUPABASE_DB_PASSWORD` | Development database password |
+| `DEVELOPMENT_SUPABASE_PROJECT_ID` | Development project ref |
+
+See [environments.md](environments.md) for the full branch and secret model.
 
 The workflow checks that the secrets exist. It does not print the database password.
 
@@ -74,12 +86,13 @@ In the [Vercel dashboard](https://vercel.com/dashboard):
 1. Import the GitHub repository `ClickStudioAdmin/fisheries-quota-exchange`
 2. Framework: Next.js
 3. Root directory: repository root
-4. Phase 0 needs no environment variables
+4. Production branch: `main`
+5. Phase 0 needs no environment variables
 
 Vercel should create:
 
-- Preview deployments for pull requests
-- Production deployments from `main`
+- Preview / testing deployments from `develop` and pull requests
+- Production deployments from `main` at [https://fisheries-quota-exchange.vercel.app/](https://fisheries-quota-exchange.vercel.app/)
 
 ## Environment variables
 
@@ -119,8 +132,11 @@ Phase 0 is complete when all of the following are true:
 
 ## Troubleshooting
 
+**GitHub Actions fails with missing development secrets**  
+Add `DEVELOPMENT_SUPABASE_PROJECT_ID` and `DEVELOPMENT_SUPABASE_DB_PASSWORD`. Do not reuse the production project values.
+
 **GitHub Actions fails with missing secrets**  
-Add the three secrets above, then re-run the workflow from the Actions tab.
+Add the secrets listed above, then re-run the workflow from the Actions tab.
 
 **GitHub Actions fails on `db push`**  
 Confirm the project ID and database password match the hosted project. Do not paste the password into issues or logs.

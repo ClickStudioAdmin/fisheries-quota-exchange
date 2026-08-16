@@ -14,7 +14,9 @@ Homepage copy:
 
 - Fisheries Quota Exchange
 - FQX development environment is operational.
-- Build: 001
+- Build: 002
+
+Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
 ## Technology stack
 
@@ -41,14 +43,17 @@ Later phases will add Vitest and Playwright where the business logic requires it
 
 ## Deployment
 
-1. Push or merge to `main` on GitHub.
-2. Vercel builds the Next.js app for production and pull-request previews.
-3. GitHub Actions applies new files in `supabase/migrations/` to the hosted Supabase project.
+Work on `develop`. Merge to `main` when ready.
 
-Required GitHub Actions secrets:
+| Branch | Database | App |
+| --- | --- | --- |
+| `develop` | Development Supabase | Vercel Preview |
+| `main` | Production Supabase | [https://fisheries-quota-exchange.vercel.app/](https://fisheries-quota-exchange.vercel.app/) |
 
-- `SUPABASE_ACCESS_TOKEN`
-- `SUPABASE_DB_PASSWORD`
-- `SUPABASE_PROJECT_ID`
+GitHub Actions secrets:
 
-See [docs/phase-0.md](docs/phase-0.md) for setup, acceptance criteria, and troubleshooting.
+- Shared: `SUPABASE_ACCESS_TOKEN`
+- Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
+- Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
+
+See [docs/phase-0.md](docs/phase-0.md) and [docs/environments.md](docs/environments.md).

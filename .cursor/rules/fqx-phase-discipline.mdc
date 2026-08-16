@@ -9,6 +9,8 @@ Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before
 
 Work only on the current phase. The current phase is Phase 0 until the user explicitly starts Phase 1.
 
+Do feature work on `develop`. Merge to `main` only when the user is ready for production.
+
 Do not implement later-phase features: authentication, organisations, quota, listings, auctions, payments, Stripe, dashboards, notifications, or authority integrations.
 
 Do not create later-phase tables or speculative architecture.
