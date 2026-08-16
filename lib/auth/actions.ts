@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/paths";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 import type { AuthFormState } from "@/lib/auth/types";
@@ -54,6 +54,22 @@ function readAbn(value: string) {
   return { abn } as const;
 }
 
+function readPhone(value: string) {
+  const phone = value.trim();
+
+  if (!phone) {
+    return { error: "Enter a phone number." } as const;
+  }
+
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.length < 8) {
+    return { error: "Enter a valid phone number." } as const;
+  }
+
+  return { phone } as const;
+}
+
 export async function registerAction(
   _prev: AuthFormState,
   formData: FormData,
@@ -65,12 +81,17 @@ export async function registerAction(
   }
 
   const fullName = String(formData.get("full_name") ?? "").trim();
+  const phoneResult = readPhone(String(formData.get("phone") ?? ""));
   const legalName = String(formData.get("legal_name") ?? "").trim();
   const tradingName = String(formData.get("trading_name") ?? "").trim();
   const abnResult = readAbn(String(formData.get("abn") ?? "").trim());
 
   if (!fullName) {
     return { error: "Enter your name." };
+  }
+
+  if ("error" in phoneResult) {
+    return { error: phoneResult.error };
   }
 
   if (!legalName) {
@@ -95,6 +116,7 @@ export async function registerAction(
       emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
       data: {
         full_name: fullName,
+        phone: phoneResult.phone,
         pending_legal_name: legalName,
         pending_trading_name: tradingName,
         pending_abn: abnResult.abn,
@@ -213,6 +235,115 @@ export async function updatePasswordAction(
   }
 
   redirect("/dashboard");
+}
+
+export async function updatePersonAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const phoneResult = readPhone(String(formData.get("phone") ?? ""));
+
+  if (!fullName) {
+    return { error: "Enter your name." };
+  }
+
+  if (!email || !email.includes("@")) {
+    return { error: "Enter a valid email address." };
+  }
+
+  if ("error" in phoneResult) {
+    return { error: phoneResult.error };
+  }
+
+  const currentEmail = user.email?.toLowerCase() ?? "";
+  const siteUrl = await getSiteUrl();
+  const attributes: {
+    email?: string;
+    data: { full_name: string; phone: string };
+  } = {
+    data: {
+      full_name: fullName,
+      phone: phoneResult.phone,
+    },
+  };
+
+  if (email !== currentEmail) {
+    attributes.email = email;
+  }
+
+  const { data, error } = await supabase.auth.updateUser(
+    attributes,
+    siteUrl && attributes.email
+      ? { emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard` }
+      : undefined,
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (attributes.email && data.user?.email?.toLowerCase() !== email) {
+    return {
+      message:
+        "Saved. Check your new email address to confirm the email change.",
+    };
+  }
+
+  return { message: "Profile saved." };
+}
+
+export async function updateProfilePasswordAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user?.email || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const currentPassword = String(formData.get("current_password") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm_password") ?? "");
+
+  if (!currentPassword) {
+    return { error: "Enter your current password." };
+  }
+
+  if (password.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+
+  if (password !== confirm) {
+    return { error: "New password and confirmation do not match." };
+  }
+
+  const { error: currentError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+
+  if (currentError) {
+    return { error: "Current password is incorrect." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { message: "Password updated." };
 }
 
 export async function logoutAction() {

@@ -11,7 +11,7 @@ There is no quota, marketplace, or listing functionality in this phase.
 | Path | Access |
 | --- | --- |
 | `/register` | Creates the Auth user and their business account |
-| `/dashboard` | Profile details |
+| `/dashboard` | Profile details (person, password, business) |
 | `/dashboard/members` | Account members |
 | `/organisations/new` | Redirects to the dashboard |
 | `/organisations/[id]` | Redirects to `/dashboard?account=[id]` |
@@ -34,6 +34,10 @@ Registration collects the user’s name plus legal name, trading name, and ABN. 
 | Leave the account | Yes, unless last owner | Yes | Yes |
 
 The last owner cannot be removed. Membership is keyed by email and matches the signed-in Auth user.
+
+Changing email on the profile updates Auth. After the new email is confirmed (if confirmation is on), a database trigger updates `organisation_users.email` so membership still matches.
+
+Migration: `supabase/migrations/20260817100000_sync_membership_email.sql`
 
 ## Database
 

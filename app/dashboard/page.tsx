@@ -29,5 +29,10 @@ export default async function DashboardPage({
     );
   }
 
-  return <AccountProfileSection organisationId={account.selected.id} />;
+  return (
+    <AccountProfileSection
+      organisationId={account.selected.id}
+      user={account.user}
+    />
+  );
 }

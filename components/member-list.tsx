@@ -95,9 +95,13 @@ export function MemberList({
                     <input
                       type="hidden"
                       name="organisation_id"
-                      value={organisationId}
+                      value={String(organisationId)}
                     />
-                    <input type="hidden" name="member_id" value={member.id} />
+                    <input
+                      type="hidden"
+                      name="member_id"
+                      value={String(member.id)}
+                    />
                     <label className="sr-only" htmlFor={`role-${member.id}`}>
                       Role for {member.email}
                     </label>
@@ -121,10 +125,18 @@ export function MemberList({
                     <input
                       type="hidden"
                       name="organisation_id"
-                      value={organisationId}
+                      value={String(organisationId)}
                     />
-                    <input type="hidden" name="member_id" value={member.id} />
-                    <input type="hidden" name="target_role" value={member.role} />
+                    <input
+                      type="hidden"
+                      name="member_id"
+                      value={String(member.id)}
+                    />
+                    <input
+                      type="hidden"
+                      name="target_role"
+                      value={member.role}
+                    />
                     <input
                       type="hidden"
                       name="target_email"

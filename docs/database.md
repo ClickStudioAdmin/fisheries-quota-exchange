@@ -27,7 +27,7 @@ Current tables:
 | `audit_events` | 7 | Order workflow audit. |
 | `bids` | 8 | Auction bids. `created_at` is server time. |
 
-`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`.
+`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`.
 
 `quota_types.measurement_kind` must be `WEIGHT`, `UNITS`, `EFFORT`, or `OTHER`.
 

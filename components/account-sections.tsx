@@ -2,6 +2,12 @@ import Link from "next/link";
 import { AddMemberForm } from "@/components/add-member-form";
 import { MemberList } from "@/components/member-list";
 import { OrganisationProfileForm } from "@/components/organisation-profile-form";
+import {
+  PersonProfileForm,
+  ProfilePasswordForm,
+} from "@/components/person-profile-form";
+import { userFullName, userPhone } from "@/lib/auth/display-name";
+import type { User } from "@supabase/supabase-js";
 import { DataTable, DataTableRowExtras, TableActionRow } from "@/components/data-table";
 import { LedgerTable } from "@/components/ledger-table";
 import { formatTableDate } from "@/lib/format";
@@ -34,8 +40,10 @@ type AccountSectionProps = {
 
 export async function AccountProfileSection({
   organisationId,
+  user,
 }: {
   organisationId: number;
+  user: User;
 }) {
   const result = await getOrganisation(organisationId);
 
@@ -46,19 +54,34 @@ export async function AccountProfileSection({
   const canEdit = canEditOrganisation(result.role);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Profile details
-      </h1>
-      <p className="text-sm text-ink-muted">
-        {result.organisation.legal_name} · Your role: {result.role}
-      </p>
-      <div className="max-w-md">
+    <div className="space-y-10">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          Profile details
+        </h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          {result.organisation.legal_name} · Your role: {result.role}
+        </p>
+      </div>
+      <section className="max-w-md space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Your details</h2>
+        <PersonProfileForm
+          fullName={userFullName(user)}
+          email={user.email ?? ""}
+          phone={userPhone(user)}
+        />
+      </section>
+      <section className="max-w-md space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Password</h2>
+        <ProfilePasswordForm />
+      </section>
+      <section className="max-w-md space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Business details</h2>
         <OrganisationProfileForm
           organisation={result.organisation}
           canEdit={canEdit}
         />
-      </div>
+      </section>
     </div>
   );
 }

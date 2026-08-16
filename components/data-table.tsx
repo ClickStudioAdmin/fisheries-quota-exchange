@@ -7,6 +7,7 @@ import {
   useId,
   useMemo,
   useState,
+  type ReactElement,
   type ReactNode,
 } from "react";
 
@@ -81,7 +82,7 @@ function cellContent(row: DataTableRow, key: string) {
 }
 
 function collectExtras(children: ReactNode) {
-  const extras = new Map<string, DataTableRowExtrasProps>();
+  const extras = new Map<string, ReactElement<DataTableRowExtrasProps>>();
 
   Children.forEach(children, (child) => {
     if (!isValidElement<DataTableRowExtrasProps>(child)) {
@@ -92,7 +93,7 @@ function collectExtras(children: ReactNode) {
       return;
     }
 
-    extras.set(String(child.props.id), child.props);
+    extras.set(String(child.props.id), child);
   });
 
   return extras;
@@ -106,8 +107,8 @@ export function TableActionRow({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap items-center gap-2">{children}</div>;
 }
 
-export function DataTableRowExtras(_props: DataTableRowExtrasProps) {
-  return null;
+export function DataTableRowExtras({ actions }: DataTableRowExtrasProps) {
+  return actions ?? null;
 }
 
 export function DataTable({
@@ -303,13 +304,18 @@ export function DataTable({
                 </td>
               </tr>
             ) : (
-              visible.map((row) => {
+              visible.map((row, index) => {
                 const extra = extras.get(String(row.id));
+                const extraProps = extra?.props;
                 const expanded = Boolean(openIds[String(row.id)]);
+                const striped =
+                  index % 2 === 0 ? "bg-paper" : "bg-paper-stripe";
 
                 return (
                   <Fragment key={row.id}>
-                    <tr className="border-t border-line align-top hover:bg-paper-raised">
+                    <tr
+                      className={`border-t border-line align-top ${striped} hover:bg-line/40`}
+                    >
                       {columns.map((column) => (
                         <td
                           key={column.key}
@@ -322,7 +328,7 @@ export function DataTable({
                       ))}
                       <td className="min-w-[10rem] px-3 py-3">
                         <TableActions>
-                          {extra?.expanded ? (
+                          {extraProps?.expanded ? (
                             <button
                               type="button"
                               onClick={() => toggleExpanded(row.id)}
@@ -331,20 +337,23 @@ export function DataTable({
                             >
                               {expanded
                                 ? "Hide"
-                                : extra.expandedLabel ?? "Details"}
+                                : extraProps.expandedLabel ?? "Details"}
                             </button>
                           ) : null}
-                          {extra?.actions}
-                          {!extra?.expanded && !extra?.actions ? (
+                          {extra}
+                          {!extraProps?.expanded && !extraProps?.actions ? (
                             <span className="text-ink-muted">—</span>
                           ) : null}
                         </TableActions>
                       </td>
                     </tr>
-                    {extra?.expanded && expanded ? (
+                    {extraProps?.expanded && expanded ? (
                       <tr className="border-t border-line">
-                        <td colSpan={columnCount} className="bg-paper px-3 py-4">
-                          {extra.expanded}
+                        <td
+                          colSpan={columnCount}
+                          className="bg-paper-stripe px-3 py-4"
+                        >
+                          {extraProps.expanded}
                         </td>
                       </tr>
                     ) : null}

@@ -1,15 +1,28 @@
 "use client";
 
 import { useActionState } from "react";
-import { registerAction } from "@/lib/auth/actions";
+import {
+  updatePersonAction,
+  updateProfilePasswordAction,
+} from "@/lib/auth/actions";
 import type { AuthFormState } from "@/lib/auth/types";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 
 const initialState: AuthFormState = {};
 
-export function RegisterForm() {
+type PersonProfileFormProps = {
+  fullName: string;
+  email: string;
+  phone: string;
+};
+
+export function PersonProfileForm({
+  fullName,
+  email,
+  phone,
+}: PersonProfileFormProps) {
   const [state, formAction, pending] = useActionState(
-    registerAction,
+    updatePersonAction,
     initialState,
   );
 
@@ -35,6 +48,7 @@ export function RegisterForm() {
           type="text"
           autoComplete="name"
           required
+          defaultValue={fullName}
           className={fieldClassName}
         />
       </div>
@@ -48,6 +62,7 @@ export function RegisterForm() {
           type="email"
           autoComplete="email"
           required
+          defaultValue={email}
           className={fieldClassName}
         />
       </div>
@@ -61,12 +76,51 @@ export function RegisterForm() {
           type="tel"
           autoComplete="tel"
           required
+          defaultValue={phone}
+          className={fieldClassName}
+        />
+      </div>
+      <button type="submit" className={buttonClassName} disabled={pending}>
+        {pending ? "Saving…" : "Save profile"}
+      </button>
+    </form>
+  );
+}
+
+export function ProfilePasswordForm() {
+  const [state, formAction, pending] = useActionState(
+    updateProfilePasswordAction,
+    initialState,
+  );
+
+  return (
+    <form action={formAction} className="space-y-4">
+      {state.error ? (
+        <p className="text-sm text-red-800" role="alert">
+          {state.error}
+        </p>
+      ) : null}
+      {state.message ? (
+        <p className="text-sm text-sea" role="status">
+          {state.message}
+        </p>
+      ) : null}
+      <div>
+        <label htmlFor="current_password" className="block text-sm text-ink">
+          Current password
+        </label>
+        <input
+          id="current_password"
+          name="current_password"
+          type="password"
+          autoComplete="current-password"
+          required
           className={fieldClassName}
         />
       </div>
       <div>
         <label htmlFor="password" className="block text-sm text-ink">
-          Password
+          New password
         </label>
         <input
           id="password"
@@ -78,42 +132,22 @@ export function RegisterForm() {
           className={fieldClassName}
         />
       </div>
-      <p className="pt-2 text-sm font-medium text-ink">Business details</p>
       <div>
-        <label htmlFor="legal_name" className="block text-sm text-ink">
-          Legal name
+        <label htmlFor="confirm_password" className="block text-sm text-ink">
+          Confirm new password
         </label>
         <input
-          id="legal_name"
-          name="legal_name"
+          id="confirm_password"
+          name="confirm_password"
+          type="password"
+          autoComplete="new-password"
           required
-          className={fieldClassName}
-        />
-      </div>
-      <div>
-        <label htmlFor="trading_name" className="block text-sm text-ink">
-          Trading name
-        </label>
-        <input
-          id="trading_name"
-          name="trading_name"
-          className={fieldClassName}
-        />
-      </div>
-      <div>
-        <label htmlFor="abn" className="block text-sm text-ink">
-          ABN
-        </label>
-        <input
-          id="abn"
-          name="abn"
-          inputMode="numeric"
-          autoComplete="off"
+          minLength={8}
           className={fieldClassName}
         />
       </div>
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Creating account…" : "Create account"}
+        {pending ? "Updating…" : "Update password"}
       </button>
     </form>
   );
