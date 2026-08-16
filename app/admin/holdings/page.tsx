@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
-import { DataTable } from "@/components/data-table";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { LedgerTable } from "@/components/ledger-table";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createHoldingAction } from "@/lib/fisheries/actions";
@@ -73,7 +73,7 @@ export default async function HoldingsAdminPage() {
           { key: "quotaType", header: "Quota type", sortable: true },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
         ]}
-        rows={ledgers.map(({ holding, entries }) => {
+        rows={ledgers.map(({ holding }) => {
           const organisation = organisations.find(
             (item) => item.id === holding.organisation_id,
           );
@@ -98,16 +98,23 @@ export default async function HoldingsAdminPage() {
             display: {
               quantity: `${holding.quantity} ${quotaType?.unit_label ?? ""}`.trim(),
             },
-            expandedLabel: "Ledger",
-            expanded: (
+          };
+        })}
+      >
+        {ledgers.map(({ holding, entries }) => (
+          <DataTableRowExtras
+            key={holding.id}
+            id={holding.id}
+            expandedLabel="Ledger"
+            expanded={
               <LedgerTable
                 caption={`Ledger for holding ${holding.id}`}
                 entries={entries}
               />
-            ),
-          };
-        })}
-      />
+            }
+          />
+        ))}
+      </DataTable>
       <div className="max-w-md">
         <h2 className="text-xl font-semibold text-ink">Create holding</h2>
         <div className="mt-4">

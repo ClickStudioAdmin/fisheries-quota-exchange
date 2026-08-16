@@ -72,5 +72,7 @@ export function listingStatusLabel(status: ListingStatus) {
       return "Cancelled";
     case "REJECTED":
       return "Rejected";
+    default:
+      return status;
   }
 }

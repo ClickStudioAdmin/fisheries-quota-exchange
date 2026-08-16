@@ -1,6 +1,14 @@
 "use client";
 
-import { Fragment, useId, useMemo, useState, type ReactNode } from "react";
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useId,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type DataTableColumn = {
   key: string;
@@ -14,7 +22,11 @@ export type DataTableColumn = {
 export type DataTableRow = {
   id: string | number;
   values: Record<string, string | number>;
-  display?: Record<string, ReactNode>;
+  display?: Record<string, string>;
+};
+
+type DataTableRowExtrasProps = {
+  id: string | number;
   actions?: ReactNode;
   expanded?: ReactNode;
   expandedLabel?: string;
@@ -27,6 +39,7 @@ type DataTableProps = {
   empty?: string;
   searchPlaceholder?: string;
   defaultSort?: { key: string; direction: "asc" | "desc" };
+  children?: ReactNode;
 };
 
 type SortState = { key: string; direction: "asc" | "desc" } | null;
@@ -43,9 +56,7 @@ function compareValues(a: string | number | undefined, b: string | number | unde
 
 function rowText(row: DataTableRow) {
   const values = Object.values(row.values).map((value) => String(value));
-  const labels = Object.values(row.display ?? {}).flatMap((value) =>
-    typeof value === "string" || typeof value === "number" ? [String(value)] : [],
-  );
+  const labels = Object.values(row.display ?? {});
   return [...values, ...labels].join(" ").toLowerCase();
 }
 
@@ -69,6 +80,24 @@ function cellContent(row: DataTableRow, key: string) {
   return value;
 }
 
+function collectExtras(children: ReactNode) {
+  const extras = new Map<string, DataTableRowExtrasProps>();
+
+  Children.forEach(children, (child) => {
+    if (!isValidElement<DataTableRowExtrasProps>(child)) {
+      return;
+    }
+
+    if (child.props.id == null) {
+      return;
+    }
+
+    extras.set(String(child.props.id), child.props);
+  });
+
+  return extras;
+}
+
 export function TableActions({ children }: { children: ReactNode }) {
   return <div className="flex flex-col items-start gap-2">{children}</div>;
 }
@@ -77,22 +106,8 @@ export function TableActionRow({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap items-center gap-2">{children}</div>;
 }
 
-export function formatTableDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("en-AU");
-}
-
-export function formatTableDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("en-AU");
+export function DataTableRowExtras(_props: DataTableRowExtrasProps) {
+  return null;
 }
 
 export function DataTable({
@@ -102,12 +117,14 @@ export function DataTable({
   empty = "No rows.",
   searchPlaceholder = "Filter…",
   defaultSort,
+  children,
 }: DataTableProps) {
   const searchId = useId();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sort, setSort] = useState<SortState>(defaultSort ?? null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
+  const extras = useMemo(() => collectExtras(children), [children]);
 
   const selectFilters = columns.filter((column) => {
     if (column.filter !== "select") {
@@ -269,7 +286,7 @@ export function DataTable({
               })}
               <th
                 scope="col"
-                className="whitespace-nowrap px-3 py-2 font-medium min-w-[10rem]"
+                className="min-w-[10rem] whitespace-nowrap px-3 py-2 font-medium"
               >
                 Actions
               </th>
@@ -287,6 +304,7 @@ export function DataTable({
               </tr>
             ) : (
               visible.map((row) => {
+                const extra = extras.get(String(row.id));
                 const expanded = Boolean(openIds[String(row.id)]);
 
                 return (
@@ -304,7 +322,7 @@ export function DataTable({
                       ))}
                       <td className="min-w-[10rem] px-3 py-3">
                         <TableActions>
-                          {row.expanded ? (
+                          {extra?.expanded ? (
                             <button
                               type="button"
                               onClick={() => toggleExpanded(row.id)}
@@ -313,20 +331,20 @@ export function DataTable({
                             >
                               {expanded
                                 ? "Hide"
-                                : row.expandedLabel ?? "Details"}
+                                : extra.expandedLabel ?? "Details"}
                             </button>
                           ) : null}
-                          {row.actions}
-                          {!row.expanded && !row.actions ? (
+                          {extra?.actions}
+                          {!extra?.expanded && !extra?.actions ? (
                             <span className="text-ink-muted">—</span>
                           ) : null}
                         </TableActions>
                       </td>
                     </tr>
-                    {row.expanded && expanded ? (
+                    {extra?.expanded && expanded ? (
                       <tr className="border-t border-line">
                         <td colSpan={columnCount} className="bg-paper px-3 py-4">
-                          {row.expanded}
+                          {extra.expanded}
                         </td>
                       </tr>
                     ) : null}

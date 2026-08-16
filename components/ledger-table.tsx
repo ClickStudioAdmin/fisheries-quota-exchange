@@ -1,6 +1,7 @@
 "use client";
 
-import { DataTable, formatTableDateTime } from "@/components/data-table";
+import { DataTable } from "@/components/data-table";
+import { formatTableDateTime } from "@/lib/format";
 import type { QuotaLedgerEntry } from "@/lib/fisheries/types";
 
 export function LedgerTable({

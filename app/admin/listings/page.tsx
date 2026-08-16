@@ -17,7 +17,8 @@ import {
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
-import { DataTable, formatTableDate } from "@/components/data-table";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { formatTableDate } from "@/lib/format";
 
 export const metadata = {
   title: "Listings",
@@ -104,51 +105,58 @@ export default async function AdminListingsPage() {
             status: listingStatusLabel(listing.status),
             created: formatTableDate(listing.created_at),
           },
-          actions: (
-            <>
-              <Link
-                href={
-                  listing.listing_type === "AUCTION"
-                    ? `/auctions/${listing.id}`
-                    : `/marketplace/${listing.id}`
-                }
-                className="text-sm underline"
-              >
-                View
-              </Link>
-              {listing.status === "PENDING_APPROVAL" ? (
-                <>
-                  <form action={approveListingAction} className="flex gap-2">
-                    <input type="hidden" name="listing_id" value={listing.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Note (optional)"
-                      className={compactFieldClassName}
-                    />
-                    <button type="submit" className={tableButtonClassName}>
-                      Approve
-                    </button>
-                  </form>
-                  <form action={rejectListingAction} className="flex gap-2">
-                    <input type="hidden" name="listing_id" value={listing.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Reason (optional)"
-                      className={compactFieldClassName}
-                    />
-                    <button
-                      type="submit"
-                      className={tableSecondaryButtonClassName}
-                    >
-                      Reject
-                    </button>
-                  </form>
-                </>
-              ) : null}
-            </>
-          ),
         }))}
-      />
+      >
+        {listings.map((listing) => (
+          <DataTableRowExtras
+            key={listing.id}
+            id={listing.id}
+            actions={
+              <>
+                <Link
+                  href={
+                    listing.listing_type === "AUCTION"
+                      ? `/auctions/${listing.id}`
+                      : `/marketplace/${listing.id}`
+                  }
+                  className="text-sm underline"
+                >
+                  View
+                </Link>
+                {listing.status === "PENDING_APPROVAL" ? (
+                  <>
+                    <form action={approveListingAction} className="flex gap-2">
+                      <input type="hidden" name="listing_id" value={listing.id} />
+                      <input
+                        name="review_note"
+                        placeholder="Note (optional)"
+                        className={compactFieldClassName}
+                      />
+                      <button type="submit" className={tableButtonClassName}>
+                        Approve
+                      </button>
+                    </form>
+                    <form action={rejectListingAction} className="flex gap-2">
+                      <input type="hidden" name="listing_id" value={listing.id} />
+                      <input
+                        name="review_note"
+                        placeholder="Reason (optional)"
+                        className={compactFieldClassName}
+                      />
+                      <button
+                        type="submit"
+                        className={tableSecondaryButtonClassName}
+                      >
+                        Reject
+                      </button>
+                    </form>
+                  </>
+                ) : null}
+              </>
+            }
+          />
+        ))}
+      </DataTable>
     </div>
   );
 }

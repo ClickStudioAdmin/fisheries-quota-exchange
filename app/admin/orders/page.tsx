@@ -15,7 +15,8 @@ import {
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
-import { DataTable, formatTableDate } from "@/components/data-table";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { formatTableDate } from "@/lib/format";
 
 export const metadata = {
   title: "Orders",
@@ -96,60 +97,67 @@ export default async function AdminOrdersPage() {
             status: orderStatusLabel(order.status),
             created: formatTableDate(order.created_at),
           },
-          actions: (
-            <>
-              <Link href={`/orders/${order.id}`} className="text-sm underline">
-                View
-              </Link>
-              {order.status === "AWAITING_COMPLIANCE" ? (
-                <>
-                  <form action={approveComplianceAction} className="flex gap-2">
-                    <input type="hidden" name="order_id" value={order.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Note (optional)"
-                      className={compactFieldClassName}
-                    />
-                    <button type="submit" className={tableButtonClassName}>
-                      Approve
-                    </button>
-                  </form>
-                  <form action={rejectComplianceAction} className="flex gap-2">
-                    <input type="hidden" name="order_id" value={order.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Reason (optional)"
-                      className={compactFieldClassName}
-                    />
-                    <button
-                      type="submit"
-                      className={tableSecondaryButtonClassName}
-                    >
-                      Reject
-                    </button>
-                  </form>
-                </>
-              ) : null}
-              {order.status === "AWAITING_TRANSFER" ? (
-                <form action={simulateTransferAction}>
-                  <input type="hidden" name="order_id" value={order.id} />
-                  <button type="submit" className={tableButtonClassName}>
-                    Simulate transfer
-                  </button>
-                </form>
-              ) : null}
-              {order.status === "AWAITING_SETTLEMENT" ? (
-                <form action={simulateSettlementAction}>
-                  <input type="hidden" name="order_id" value={order.id} />
-                  <button type="submit" className={tableButtonClassName}>
-                    Simulate settlement
-                  </button>
-                </form>
-              ) : null}
-            </>
-          ),
         }))}
-      />
+      >
+        {orders.map((order) => (
+          <DataTableRowExtras
+            key={order.id}
+            id={order.id}
+            actions={
+              <>
+                <Link href={`/orders/${order.id}`} className="text-sm underline">
+                  View
+                </Link>
+                {order.status === "AWAITING_COMPLIANCE" ? (
+                  <>
+                    <form action={approveComplianceAction} className="flex gap-2">
+                      <input type="hidden" name="order_id" value={order.id} />
+                      <input
+                        name="review_note"
+                        placeholder="Note (optional)"
+                        className={compactFieldClassName}
+                      />
+                      <button type="submit" className={tableButtonClassName}>
+                        Approve
+                      </button>
+                    </form>
+                    <form action={rejectComplianceAction} className="flex gap-2">
+                      <input type="hidden" name="order_id" value={order.id} />
+                      <input
+                        name="review_note"
+                        placeholder="Reason (optional)"
+                        className={compactFieldClassName}
+                      />
+                      <button
+                        type="submit"
+                        className={tableSecondaryButtonClassName}
+                      >
+                        Reject
+                      </button>
+                    </form>
+                  </>
+                ) : null}
+                {order.status === "AWAITING_TRANSFER" ? (
+                  <form action={simulateTransferAction}>
+                    <input type="hidden" name="order_id" value={order.id} />
+                    <button type="submit" className={tableButtonClassName}>
+                      Simulate transfer
+                    </button>
+                  </form>
+                ) : null}
+                {order.status === "AWAITING_SETTLEMENT" ? (
+                  <form action={simulateSettlementAction}>
+                    <input type="hidden" name="order_id" value={order.id} />
+                    <button type="submit" className={tableButtonClassName}>
+                      Simulate settlement
+                    </button>
+                  </form>
+                ) : null}
+              </>
+            }
+          />
+        ))}
+      </DataTable>
     </div>
   );
 }

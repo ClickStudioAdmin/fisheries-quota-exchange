@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
-import { DataTable, formatTableDate } from "@/components/data-table";
+import { DataTable } from "@/components/data-table";
+import { formatTableDate } from "@/lib/format";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
   createFisheryRuleAction,

@@ -7,7 +7,12 @@ import {
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
-import { DataTable, TableActionRow, formatTableDate } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableRowExtras,
+  TableActionRow,
+} from "@/components/data-table";
+import { formatTableDate } from "@/lib/format";
 import {
   canChangeMemberRole,
   canRemoveMember,
@@ -57,24 +62,33 @@ export function MemberList({
         },
         { key: "created", header: "Added", sortable: true },
       ]}
-      rows={members.map((member) => {
+      rows={members.map((member) => ({
+        id: member.id,
+        values: {
+          email: member.email,
+          role: member.role,
+          created: member.created_at,
+        },
+        display: {
+          role: roleLabel[member.role],
+          created: formatTableDate(member.created_at),
+        },
+      }))}
+    >
+      {members.map((member) => {
         const isSelf = member.email === actorEmail.toLowerCase();
         const showRoleForm = canChangeMemberRole(actorRole) && !isSelf;
         const showRemove = canRemoveMember(actorRole, member.role, isSelf);
 
-        return {
-          id: member.id,
-          values: {
-            email: member.email,
-            role: member.role,
-            created: member.created_at,
-          },
-          display: {
-            role: roleLabel[member.role],
-            created: formatTableDate(member.created_at),
-          },
-          actions:
-            showRoleForm || showRemove ? (
+        if (!showRoleForm && !showRemove) {
+          return null;
+        }
+
+        return (
+          <DataTableRowExtras
+            key={member.id}
+            id={member.id}
+            actions={
               <TableActionRow>
                 {showRoleForm ? (
                   <form action={updateMemberRoleAction} className="flex gap-2">
@@ -125,9 +139,10 @@ export function MemberList({
                   </form>
                 ) : null}
               </TableActionRow>
-            ) : undefined,
-        };
+            }
+          />
+        );
       })}
-    />
+    </DataTable>
   );
 }

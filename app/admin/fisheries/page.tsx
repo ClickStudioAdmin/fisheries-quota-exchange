@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
-import { DataTable } from "@/components/data-table";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createFisheryAction } from "@/lib/fisheries/actions";
 import { listAuthorities, listFisheries } from "@/lib/fisheries/queries";
@@ -54,17 +54,24 @@ export default async function FisheriesAdminPage() {
               code: fishery.code ?? "—",
               authority: authority?.name ?? "—",
             },
-            actions: (
+          };
+        })}
+      >
+        {fisheries.map((fishery) => (
+          <DataTableRowExtras
+            key={fishery.id}
+            id={fishery.id}
+            actions={
               <Link
                 href={`/admin/fisheries/${fishery.id}`}
                 className="text-sm underline"
               >
                 Open
               </Link>
-            ),
-          };
-        })}
-      />
+            }
+          />
+        ))}
+      </DataTable>
       <div className="max-w-md">
         <h2 className="text-xl font-semibold text-ink">Create fishery</h2>
         <p className="mt-2 text-sm text-ink-muted">

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { AddMemberForm } from "@/components/add-member-form";
 import { MemberList } from "@/components/member-list";
 import { OrganisationProfileForm } from "@/components/organisation-profile-form";
-import { DataTable, TableActionRow, formatTableDate } from "@/components/data-table";
+import { DataTable, DataTableRowExtras, TableActionRow } from "@/components/data-table";
 import { LedgerTable } from "@/components/ledger-table";
+import { formatTableDate } from "@/lib/format";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers } from "@/lib/organisations/queries";
 import { accountPath } from "@/lib/organisations/paths";
@@ -148,7 +149,7 @@ export async function AccountHoldingsSection({
           { key: "quotaType", header: "Quota type", sortable: true },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
         ]}
-        rows={holdingLedgers.map(({ holding, entries }) => {
+        rows={holdingLedgers.map(({ holding }) => {
           const stock = stocks.find((item) => item.id === holding.stock_id);
           const season = seasons.find((item) => item.id === holding.season_id);
           const quotaType = quotaTypes.find(
@@ -168,32 +169,41 @@ export async function AccountHoldingsSection({
             display: {
               quantity: `${holding.quantity} ${quotaType?.unit_label ?? ""}`.trim(),
             },
-            expandedLabel: "Ledger",
-            expanded: (
+          };
+        })}
+      >
+        {holdingLedgers.map(({ holding, entries }) => (
+          <DataTableRowExtras
+            key={holding.id}
+            id={holding.id}
+            expandedLabel="Ledger"
+            expanded={
               <LedgerTable
                 caption={`Ledger for holding ${holding.id}`}
                 entries={entries}
               />
-            ),
-            actions: canList ? (
-              <TableActionRow>
-                <Link
-                  href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
-                  className="text-sm underline"
-                >
-                  Create listing
-                </Link>
-                <Link
-                  href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
-                  className="text-sm underline"
-                >
-                  Create auction
-                </Link>
-              </TableActionRow>
-            ) : undefined,
-          };
-        })}
-      />
+            }
+            actions={
+              canList ? (
+                <TableActionRow>
+                  <Link
+                    href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
+                    className="text-sm underline"
+                  >
+                    Create listing
+                  </Link>
+                  <Link
+                    href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
+                    className="text-sm underline"
+                  >
+                    Create auction
+                  </Link>
+                </TableActionRow>
+              ) : null
+            }
+          />
+        ))}
+      </DataTable>
     </div>
   );
 }
@@ -282,40 +292,47 @@ export async function AccountListingsSection({
             status: listingStatusLabel(listing.status),
             created: formatTableDate(listing.created_at),
           },
-          actions: (
-            <TableActionRow>
-              <Link
-                href={
-                  listing.listing_type === "AUCTION"
-                    ? `/auctions/${listing.id}`
-                    : `/marketplace/${listing.id}`
-                }
-                className="text-sm underline"
-              >
-                View
-              </Link>
-              {canList &&
-              (listing.status === "PENDING_APPROVAL" ||
-                listing.status === "PUBLISHED") ? (
-                <form action={cancelListingAction}>
-                  <input type="hidden" name="listing_id" value={listing.id} />
-                  <input
-                    type="hidden"
-                    name="next"
-                    value={accountPath(organisationId, "/dashboard/listings")}
-                  />
-                  <button
-                    type="submit"
-                    className={tableSecondaryButtonClassName}
-                  >
-                    Cancel
-                  </button>
-                </form>
-              ) : null}
-            </TableActionRow>
-          ),
         }))}
-      />
+      >
+        {listings.map((listing) => (
+          <DataTableRowExtras
+            key={listing.id}
+            id={listing.id}
+            actions={
+              <TableActionRow>
+                <Link
+                  href={
+                    listing.listing_type === "AUCTION"
+                      ? `/auctions/${listing.id}`
+                      : `/marketplace/${listing.id}`
+                  }
+                  className="text-sm underline"
+                >
+                  View
+                </Link>
+                {canList &&
+                (listing.status === "PENDING_APPROVAL" ||
+                  listing.status === "PUBLISHED") ? (
+                  <form action={cancelListingAction}>
+                    <input type="hidden" name="listing_id" value={listing.id} />
+                    <input
+                      type="hidden"
+                      name="next"
+                      value={accountPath(organisationId, "/dashboard/listings")}
+                    />
+                    <button
+                      type="submit"
+                      className={tableSecondaryButtonClassName}
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : null}
+              </TableActionRow>
+            }
+          />
+        ))}
+      </DataTable>
     </div>
   );
 }
@@ -402,14 +419,21 @@ export async function AccountOrdersSection({
               status: orderStatusLabel(order.status),
               created: formatTableDate(order.created_at),
             },
-            actions: (
+          };
+        })}
+      >
+        {orders.map((order) => (
+          <DataTableRowExtras
+            key={order.id}
+            id={order.id}
+            actions={
               <Link href={`/orders/${order.id}`} className="text-sm underline">
                 View
               </Link>
-            ),
-          };
-        })}
-      />
+            }
+          />
+        ))}
+      </DataTable>
     </div>
   );
 }
