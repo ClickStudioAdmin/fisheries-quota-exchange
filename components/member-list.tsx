@@ -29,6 +29,8 @@ export function MemberList({
   actorRole,
   actorEmail,
 }: MemberListProps) {
+  const ownerCount = members.filter((member) => member.role === "OWNER").length;
+
   return (
     <DataTable
       caption="Account members"
@@ -66,7 +68,12 @@ export function MemberList({
       {members.map((member) => {
         const isSelf = member.email === actorEmail.toLowerCase();
         const showRoleForm = canChangeMemberRole(actorRole) && !isSelf;
-        const showRemove = canRemoveMember(actorRole, member.role, isSelf);
+        const showRemove = canRemoveMember(
+          actorRole,
+          member.role,
+          isSelf,
+          ownerCount,
+        );
 
         if (!showRoleForm && !showRemove) {
           return null;

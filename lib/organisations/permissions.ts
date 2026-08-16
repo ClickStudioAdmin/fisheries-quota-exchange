@@ -31,7 +31,12 @@ export function canRemoveMember(
   actorRole: OrganisationRole,
   targetRole: OrganisationRole,
   isSelf: boolean,
+  ownerCount: number,
 ) {
+  if (targetRole === "OWNER" && ownerCount <= 1) {
+    return false;
+  }
+
   if (isSelf) {
     return true;
   }

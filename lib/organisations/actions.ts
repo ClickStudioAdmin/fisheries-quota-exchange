@@ -248,8 +248,16 @@ export async function removeMemberAction(
 
   const actorRole = await getMyRole(organisationId);
   const isSelf = targetEmail === user.email.toLowerCase();
+  const { count: ownerCount } = await supabase
+    .from("organisation_users")
+    .select("id", { count: "exact", head: true })
+    .eq("organisation_id", organisationId)
+    .eq("role", "OWNER");
 
-  if (!actorRole || !canRemoveMember(actorRole, targetRole, isSelf)) {
+  if (
+    !actorRole ||
+    !canRemoveMember(actorRole, targetRole, isSelf, ownerCount ?? 0)
+  ) {
     return { error: "You do not have permission to remove that person." };
   }
 
