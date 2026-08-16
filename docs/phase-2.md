@@ -15,15 +15,17 @@ There is no marketplace, auction, or fishery functionality in this phase.
 | `/fisheries` | Placeholder for fishery data |
 | `/auctions` | Placeholder for auctions |
 | `/about` | Product context |
+| `/contact` | Contact us |
 
 ## Layout
 
-- Header: FQX identity and primary navigation
-- Footer: Australia, development-site notice
+- Header: FQX logo (links home), primary navigation, and member links
+- Primary navigation: Fisheries, Marketplace, Auctions
+- Footer: pinned to the bottom of the page, with About and Contact us
 - Shared intro layout in `components/page-intro.tsx`
 - Colours and type tokens in `app/globals.css`
 
-The header marks the current route. Navigation wraps on small screens.
+The header marks the current route. Navigation wraps on small screens. Dashboard and Admin use a left-hand sub-navigation panel.
 
 ## Not in this phase
 

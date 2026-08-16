@@ -64,7 +64,7 @@ export default async function AuctionPage({
   const isSeller = role !== null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <p className="text-sm text-ink-muted">
         <Link href="/auctions" className="underline">
           Auctions

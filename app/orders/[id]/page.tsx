@@ -53,13 +53,8 @@ export default async function OrderPage({
     order.status === "AWAITING_COMPLIANCE" && (admin || buyerRole !== null);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-      <p className="text-sm text-ink-muted">
-        <Link href="/dashboard" className="underline">
-          Dashboard
-        </Link>
-      </p>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">
+    <div>
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">
         Order {order.id}
       </h1>
       <p className="mt-2 text-ink-muted">{orderStatusLabel(order.status)}</p>

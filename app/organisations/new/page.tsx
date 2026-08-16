@@ -16,7 +16,7 @@ export default async function NewOrganisationPage() {
   }
 
   return (
-    <AuthCard title="Create organisation">
+    <AuthCard title="Create organisation" flush>
       <p className="mb-4 text-sm text-ink-muted">
         You will be the owner of this organisation.
       </p>

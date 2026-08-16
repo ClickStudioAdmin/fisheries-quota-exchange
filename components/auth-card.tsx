@@ -3,18 +3,25 @@ import type { ReactNode } from "react";
 type AuthCardProps = {
   title: string;
   children: ReactNode;
+  flush?: boolean;
 };
 
-export function AuthCard({ title, children }: AuthCardProps) {
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-      <div className="max-w-md">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          {title}
-        </h1>
-        <div className="mt-6">{children}</div>
-      </div>
+export function AuthCard({ title, children, flush = false }: AuthCardProps) {
+  const inner = (
+    <div className="max-w-md">
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">
+        {title}
+      </h1>
+      <div className="mt-6">{children}</div>
     </div>
+  );
+
+  if (flush) {
+    return inner;
+  }
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">{inner}</div>
   );
 }
 

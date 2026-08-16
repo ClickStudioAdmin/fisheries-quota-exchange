@@ -60,7 +60,7 @@ export default async function NewListingPage({
   const quotaType = quotaTypes.find((item) => item.id === holding.quota_type_id);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+    <div>
       <p className="text-sm text-ink-muted">
         <Link href={`/organisations/${organisationId}`} className="underline">
           {result.organisation.legal_name}

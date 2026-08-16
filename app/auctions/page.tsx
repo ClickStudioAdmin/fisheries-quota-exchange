@@ -19,7 +19,7 @@ export default async function AuctionsPage() {
           is no live payment.
         </p>
       </PageIntro>
-      <div className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
         {auctions.length === 0 ? (
           <p className="text-ink-muted">No auctions at the moment.</p>
         ) : (

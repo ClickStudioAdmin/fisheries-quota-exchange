@@ -70,12 +70,9 @@ export default async function OrganisationPage({
   const canList = canEditOrganisation(result.role);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
+    <div className="space-y-10">
       <p className="text-sm text-ink-muted">
-        <Link href="/dashboard" className="underline">
-          Dashboard
-        </Link>
-        <span> · Your role: {result.role}</span>
+        <span>Your role: {result.role}</span>
       </p>
       <section>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
