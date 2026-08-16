@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   removeMemberAction,
   updateMemberRoleAction,
@@ -35,6 +36,7 @@ export function MemberActions({
   showRemove,
   isSelf,
 }: MemberActionsProps) {
+  const router = useRouter();
   const [roleState, roleAction, rolePending] = useActionState(
     updateMemberRoleAction,
     initialState,
@@ -44,11 +46,28 @@ export function MemberActions({
     initialState,
   );
 
+  useEffect(() => {
+    if (removeState.left) {
+      router.push("/dashboard");
+      router.refresh();
+      return;
+    }
+
+    if (removeState.message || roleState.message) {
+      router.refresh();
+    }
+  }, [removeState.left, removeState.message, roleState.message, router]);
+
   return (
     <div className="space-y-2">
       {roleState.error || removeState.error ? (
         <p className="text-sm text-red-800" role="alert">
           {roleState.error ?? removeState.error}
+        </p>
+      ) : null}
+      {roleState.message || removeState.message ? (
+        <p className="text-sm text-sea" role="status">
+          {roleState.message ?? removeState.message}
         </p>
       ) : null}
       <TableActionRow>

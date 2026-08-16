@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import {
@@ -167,6 +168,8 @@ export async function addMemberAction(
 
 export type MemberActionState = {
   error?: string;
+  message?: string;
+  left?: boolean;
 };
 
 function readPositiveInt(formData: FormData, name: string) {
@@ -202,17 +205,24 @@ export async function updateMemberRoleAction(
     return { error: "You do not have permission to change roles." };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("organisation_users")
     .update({ role: memberRole })
     .eq("id", memberId)
-    .eq("organisation_id", organisationId);
+    .eq("organisation_id", organisationId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
   }
 
-  redirect(accountPath(organisationId, "/dashboard/members"));
+  if (!data?.length) {
+    return { error: "Could not update that role." };
+  }
+
+  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard");
+  return { message: "Role updated." };
 }
 
 export async function removeMemberAction(
@@ -253,9 +263,25 @@ export async function removeMemberAction(
     return { error: error.message };
   }
 
-  if (isSelf) {
-    redirect("/dashboard");
+  const { data: remaining } = await supabase
+    .from("organisation_users")
+    .select("id")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (remaining) {
+    return {
+      error:
+        "Could not remove that person. The last owner of an account cannot be removed.",
+    };
   }
 
-  redirect(accountPath(organisationId, "/dashboard/members"));
+  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard");
+
+  if (isSelf) {
+    return { left: true, message: "You left the account." };
+  }
+
+  return { message: "Person removed." };
 }
