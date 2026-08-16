@@ -1,5 +1,7 @@
 name: Deploy Database
 
+# Phase 0 pipeline proof. Runs on every push to main.
+
 on:
   push:
     branches:

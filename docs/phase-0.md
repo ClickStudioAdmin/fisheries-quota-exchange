@@ -53,7 +53,7 @@ Future schema changes must be new migration files in the same folder, committed 
 
 ## GitHub Actions process
 
-The workflow `.github/workflows/deploy-database.yml` runs on every push to `main` and when started manually from the Actions tab.
+The workflow `.github/workflows/deploy-database.yml` runs on every push to `main` and when started manually from the Actions tab. A successful first apply of `system_health` was confirmed against the hosted project.
 
 It links to the hosted project and applies pending migrations. If a migration fails, the workflow fails.
 
