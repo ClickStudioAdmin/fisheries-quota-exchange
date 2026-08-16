@@ -12,7 +12,7 @@ Current tables:
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`.
 
-All three tables have Row Level Security enabled. There are no public policies yet.
+Row Level Security is enabled. From Phase 4, authenticated members can only read organisations they belong to. Writes follow the role rules in [phase-4.md](phase-4.md).
 
 Do not add later-phase tables (quota, listings, auctions, payments, ledgers) until that phase starts.
 

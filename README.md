@@ -6,11 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 3 — Authentication**
+**Phase 4 — Organisations**
 
-Supabase Auth: register, log in, log out, password reset, and a protected `/dashboard`. Organisation screens are not in this phase.
+Create an organisation, view its profile, manage members, and enforce `OWNER` / `ADMIN` / `MEMBER` permissions.
 
-See [docs/phase-3.md](docs/phase-3.md).
+See [docs/phase-4.md](docs/phase-4.md).
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -33,7 +33,7 @@ Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 3 acceptance is that a user can register, log in, log out, and cannot open `/dashboard` while signed out.
+Phase 4 acceptance is that a signed-in user can create an organisation, open it, and that members without permission cannot change it.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
@@ -52,4 +52,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-3.md](docs/phase-3.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
+See [docs/phase-4.md](docs/phase-4.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

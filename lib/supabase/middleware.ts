@@ -6,7 +6,9 @@ export async function updateSession(request: NextRequest) {
   const env = getSupabasePublicEnv();
   const pathname = request.nextUrl.pathname;
   const isProtected =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/update-password");
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/update-password") ||
+    pathname.startsWith("/organisations");
 
   if (!env) {
     if (isProtected) {
