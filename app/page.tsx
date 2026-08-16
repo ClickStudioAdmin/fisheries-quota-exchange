@@ -8,7 +8,7 @@ export default function Home() {
         <p className="mt-4 text-lg text-zinc-600">
           FQX development environment is operational.
         </p>
-        <p className="mt-8 text-sm font-medium text-zinc-500">Build: 001</p>
+        <p className="mt-8 text-sm font-medium text-zinc-500">Build: 002</p>
       </div>
     </main>
   );
