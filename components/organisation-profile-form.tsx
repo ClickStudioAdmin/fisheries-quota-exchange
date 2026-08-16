@@ -77,11 +77,11 @@ export function OrganisationProfileForm({
       </div>
       {canEdit ? (
         <button type="submit" className={buttonClassName} disabled={pending}>
-          {pending ? "Saving…" : "Save profile"}
+          {pending ? "Saving…" : "Save business details"}
         </button>
       ) : (
         <p className="text-sm text-ink-muted">
-          Only owners and admins can edit this profile.
+          Only owners and admins can edit these details.
         </p>
       )}
     </form>

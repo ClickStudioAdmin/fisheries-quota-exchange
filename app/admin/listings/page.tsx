@@ -1,12 +1,23 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   approveListingAction,
   rejectListingAction,
 } from "@/lib/listings/actions";
 import { listAllListings } from "@/lib/listings/queries";
-import { formatAud } from "@/lib/listings/types";
+import {
+  formatAud,
+  listingOfferingLabel,
+  listingStatusLabel,
+  listingTypeLabel,
+} from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import {
+  compactFieldClassName,
+  tableButtonClassName,
+  tableSecondaryButtonClassName,
+} from "@/components/auth-card";
+import { DataTable, formatTableDate } from "@/components/data-table";
 
 export const metadata = {
   title: "Listings",
@@ -18,40 +29,103 @@ export default async function AdminListingsPage() {
   }
 
   const listings = await listAllListings();
-  const pending = listings.filter((item) => item.status === "PENDING_APPROVAL");
-  const others = listings.filter((item) => item.status !== "PENDING_APPROVAL");
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         Listing approval
       </h1>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Waiting for approval</h2>
-        {pending.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No pending listings.</p>
-        ) : (
-          <div className="mt-4 space-y-4">
-            {pending.map((listing) => (
-              <div key={listing.id} className="border border-line p-4">
-                <p className="font-medium text-ink">
-                  {listing.listing_type === "AUCTION" ? "Auction · " : ""}
-                  {listing.seller_name} · {listing.fishery_name} ·{" "}
-                  {listing.stock_name}
-                </p>
-                <p className="text-sm text-ink-muted">
-                  {listing.offering} · {listing.quantity} {listing.unit_label} ·{" "}
-                  {formatAud(listing.unit_price_aud)} / {listing.unit_label}
-                </p>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+      <DataTable
+        caption="Listings"
+        empty="No listings yet."
+        searchPlaceholder="Filter listings…"
+        defaultSort={{ key: "created", direction: "desc" }}
+        columns={[
+          { key: "seller", header: "Seller", sortable: true, filter: "select" },
+          {
+            key: "type",
+            header: "Type",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "FIXED_PRICE", label: "Fixed price" },
+              { value: "AUCTION", label: "Auction" },
+            ],
+          },
+          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
+          { key: "stock", header: "Stock", sortable: true },
+          {
+            key: "offering",
+            header: "Offering",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "SALE", label: "Sale" },
+              { value: "LEASE", label: "Lease" },
+            ],
+          },
+          { key: "quantity", header: "Quantity", sortable: true, align: "right" },
+          { key: "price", header: "Price", sortable: true, align: "right" },
+          {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "PENDING_APPROVAL", label: "Pending approval" },
+              { value: "PUBLISHED", label: "Published" },
+              { value: "RESERVED", label: "Reserved" },
+              { value: "SOLD", label: "Sold" },
+              { value: "UNSOLD", label: "Unsold" },
+              { value: "CANCELLED", label: "Cancelled" },
+              { value: "REJECTED", label: "Rejected" },
+            ],
+          },
+          { key: "created", header: "Created", sortable: true },
+        ]}
+        rows={listings.map((listing) => ({
+          id: listing.id,
+          values: {
+            seller: listing.seller_name,
+            type: listing.listing_type,
+            fishery: listing.fishery_name,
+            stock: listing.stock_name,
+            offering: listing.offering,
+            quantity: listing.quantity,
+            price: listing.unit_price_aud,
+            status: listing.status,
+            created: listing.created_at,
+          },
+          display: {
+            type: listingTypeLabel(listing.listing_type),
+            offering: listingOfferingLabel(listing.offering),
+            quantity: `${listing.quantity} ${listing.unit_label}`,
+            price: formatAud(listing.unit_price_aud),
+            status: listingStatusLabel(listing.status),
+            created: formatTableDate(listing.created_at),
+          },
+          actions: (
+            <>
+              <Link
+                href={
+                  listing.listing_type === "AUCTION"
+                    ? `/auctions/${listing.id}`
+                    : `/marketplace/${listing.id}`
+                }
+                className="text-sm underline"
+              >
+                View
+              </Link>
+              {listing.status === "PENDING_APPROVAL" ? (
+                <>
                   <form action={approveListingAction} className="flex gap-2">
                     <input type="hidden" name="listing_id" value={listing.id} />
                     <input
                       name="review_note"
                       placeholder="Note (optional)"
-                      className={fieldClassName}
+                      className={compactFieldClassName}
                     />
-                    <button type="submit" className={buttonClassName}>
+                    <button type="submit" className={tableButtonClassName}>
                       Approve
                     </button>
                   </form>
@@ -60,32 +134,21 @@ export default async function AdminListingsPage() {
                     <input
                       name="review_note"
                       placeholder="Reason (optional)"
-                      className={fieldClassName}
+                      className={compactFieldClassName}
                     />
                     <button
                       type="submit"
-                      className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
+                      className={tableSecondaryButtonClassName}
                     >
                       Reject
                     </button>
                   </form>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Other listings</h2>
-        <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-          {others.map((listing) => (
-            <li key={listing.id}>
-              {listing.status} · {listing.listing_type} · {listing.seller_name}{" "}
-              · {listing.fishery_name} · {listing.quantity} {listing.unit_label}
-            </li>
-          ))}
-        </ul>
-      </section>
+                </>
+              ) : null}
+            </>
+          ),
+        }))}
+      />
     </div>
   );
 }

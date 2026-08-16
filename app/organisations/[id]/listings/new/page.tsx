@@ -7,8 +7,9 @@ import {
   listAllStocks,
   listHoldingsForOrganisation,
 } from "@/lib/fisheries/queries";
-import { getOrganisation } from "@/lib/organisations/queries";
+import { accountPath } from "@/lib/organisations/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
+import { getOrganisation } from "@/lib/organisations/queries";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -62,7 +63,7 @@ export default async function NewListingPage({
   return (
     <div>
       <p className="text-sm text-ink-muted">
-        <Link href={`/organisations/${organisationId}`} className="underline">
+        <Link href={accountPath(organisationId, "/dashboard/listings")} className="underline">
           {result.organisation.legal_name}
         </Link>
       </p>

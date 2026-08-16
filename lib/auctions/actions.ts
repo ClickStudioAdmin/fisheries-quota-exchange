@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
+import { accountPath } from "@/lib/organisations/paths";
 import type { AuctionFormState, BidFormState } from "@/lib/auctions/types";
 
 function read(formData: FormData, name: string) {
@@ -75,7 +76,7 @@ export async function createAuctionAction(
     return { error: error.message };
   }
 
-  redirect(`/organisations/${organisationId}`);
+  redirect(accountPath(organisationId, "/dashboard/holdings"));
 }
 
 export async function placeBidAction(

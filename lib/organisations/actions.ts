@@ -10,9 +10,8 @@ import {
   canRemoveMember,
 } from "@/lib/organisations/permissions";
 import { getMyRole } from "@/lib/organisations/queries";
-import {
-  isOrganisationRole,
-} from "@/lib/organisations/types";
+import { accountPath } from "@/lib/organisations/paths";
+import { isOrganisationRole } from "@/lib/organisations/types";
 
 export type OrganisationFormState = {
   error?: string;
@@ -70,7 +69,7 @@ export async function createOrganisationAction(
     return { error: error.message };
   }
 
-  redirect(`/organisations/${data}`);
+  redirect(accountPath(Number(data)));
 }
 
 export async function updateOrganisationAction(
@@ -115,7 +114,7 @@ export async function updateOrganisationAction(
     return { error: error.message };
   }
 
-  return { message: "Organisation updated." };
+  return { message: "Account updated." };
 }
 
 export async function addMemberAction(
@@ -192,7 +191,7 @@ export async function updateMemberRoleAction(formData: FormData) {
     .eq("id", memberId)
     .eq("organisation_id", organisationId);
 
-  redirect(`/organisations/${organisationId}`);
+  redirect(accountPath(organisationId, "/dashboard/members"));
 }
 
 export async function removeMemberAction(formData: FormData) {
@@ -234,5 +233,5 @@ export async function removeMemberAction(formData: FormData) {
     redirect("/dashboard");
   }
 
-  redirect(`/organisations/${organisationId}`);
+  redirect(accountPath(organisationId, "/dashboard/members"));
 }

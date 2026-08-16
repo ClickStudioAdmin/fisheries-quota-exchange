@@ -24,6 +24,7 @@ Quantity cannot exceed the holding at create time. The holding quantity is not r
 | --- | --- |
 | `/marketplace` | Published listings |
 | `/marketplace/[id]` | Listing detail |
+| `/dashboard/listings` | Seller listings for the selected account |
 | `/organisations/[id]/listings/new` | Create listing from a holding |
 | `/admin/listings` | Approve or reject |
 

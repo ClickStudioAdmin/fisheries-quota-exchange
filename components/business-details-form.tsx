@@ -9,7 +9,7 @@ import { buttonClassName, fieldClassName } from "@/components/auth-card";
 
 const initialState: OrganisationFormState = {};
 
-export function CreateOrganisationForm() {
+export function BusinessDetailsForm() {
   const [state, formAction, pending] = useActionState(
     createOrganisationAction,
     initialState,
@@ -56,7 +56,7 @@ export function CreateOrganisationForm() {
         />
       </div>
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Creating…" : "Create organisation"}
+        {pending ? "Saving…" : "Save account"}
       </button>
     </form>
   );

@@ -24,6 +24,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | --- | --- |
 | `/auctions` | Auction list |
 | `/auctions/[id]` | Bid, history, close |
+| `/dashboard/holdings` | Create an auction from a holding |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
 

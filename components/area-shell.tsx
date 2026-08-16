@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { SideNav, type SideNavItem } from "@/components/side-nav";
 
 type AreaShellProps = {
@@ -9,10 +9,20 @@ type AreaShellProps = {
 
 export function AreaShell({ title, items, children }: AreaShellProps) {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:py-12">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:py-12">
       <aside className="lg:w-56 lg:shrink-0">
         <div className="lg:sticky lg:top-6">
-          <SideNav title={title} items={items} />
+          <Suspense
+            fallback={
+              <nav className="border border-line bg-paper-raised p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-ink-muted">
+                  {title}
+                </p>
+              </nav>
+            }
+          >
+            <SideNav title={title} items={items} />
+          </Suspense>
         </div>
       </aside>
       <div className="min-w-0 flex-1">{children}</div>

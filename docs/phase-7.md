@@ -24,7 +24,7 @@ A second purchase of the same listing fails because it is no longer `PUBLISHED`.
 | --- | --- |
 | `/marketplace/[id]` | Purchase (reserves quota) |
 | `/orders/[id]` | Order, reservation, simulated transaction, audit |
-| `/dashboard` | Orders for organisations the user belongs to |
+| `/dashboard/orders` | Buys and sells for the selected account |
 | `/admin/orders` | Compliance, transfer, and settlement simulation |
 
 ## Database

@@ -60,7 +60,7 @@ export function AddMemberForm({
         </select>
       </div>
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Adding…" : "Add member"}
+        {pending ? "Adding…" : "Add person"}
       </button>
     </form>
   );

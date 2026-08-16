@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
+import { accountPath } from "@/lib/organisations/paths";
 
 export type ListingFormState = {
   error?: string;
@@ -64,7 +65,7 @@ export async function createListingAction(
     return { error: error.message };
   }
 
-  redirect(`/organisations/${organisationId}`);
+  redirect(accountPath(organisationId, "/dashboard/listings"));
 }
 
 export async function cancelListingAction(formData: FormData) {

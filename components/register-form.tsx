@@ -1,9 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  registerAction,
-} from "@/lib/auth/actions";
+import { registerAction } from "@/lib/auth/actions";
 import type { AuthFormState } from "@/lib/auth/types";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 
@@ -28,6 +26,19 @@ export function RegisterForm() {
         </p>
       ) : null}
       <div>
+        <label htmlFor="full_name" className="block text-sm text-ink">
+          Your name
+        </label>
+        <input
+          id="full_name"
+          name="full_name"
+          type="text"
+          autoComplete="name"
+          required
+          className={fieldClassName}
+        />
+      </div>
+      <div>
         <label htmlFor="email" className="block text-sm text-ink">
           Email
         </label>
@@ -51,6 +62,40 @@ export function RegisterForm() {
           autoComplete="new-password"
           required
           minLength={8}
+          className={fieldClassName}
+        />
+      </div>
+      <p className="pt-2 text-sm font-medium text-ink">Business details</p>
+      <div>
+        <label htmlFor="legal_name" className="block text-sm text-ink">
+          Legal name
+        </label>
+        <input
+          id="legal_name"
+          name="legal_name"
+          required
+          className={fieldClassName}
+        />
+      </div>
+      <div>
+        <label htmlFor="trading_name" className="block text-sm text-ink">
+          Trading name
+        </label>
+        <input
+          id="trading_name"
+          name="trading_name"
+          className={fieldClassName}
+        />
+      </div>
+      <div>
+        <label htmlFor="abn" className="block text-sm text-ink">
+          ABN
+        </label>
+        <input
+          id="abn"
+          name="abn"
+          inputMode="numeric"
+          autoComplete="off"
           className={fieldClassName}
         />
       </div>

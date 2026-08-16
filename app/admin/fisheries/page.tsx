@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
+import { DataTable } from "@/components/data-table";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createFisheryAction } from "@/lib/fisheries/actions";
 import { listAuthorities, listFisheries } from "@/lib/fisheries/queries";
@@ -22,19 +23,48 @@ export default async function FisheriesAdminPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         Fisheries
       </h1>
-      <ul className="divide-y divide-line border border-line">
-        {fisheries.map((fishery) => (
-          <li key={fishery.id}>
-            <Link
-              href={`/admin/fisheries/${fishery.id}`}
-              className="block px-4 py-3 hover:bg-paper-raised"
-            >
-              {fishery.name}
-              {fishery.code ? ` (${fishery.code})` : ""}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <DataTable
+        caption="Fisheries"
+        empty="No fisheries yet. Create an authority first if needed."
+        searchPlaceholder="Filter fisheries…"
+        defaultSort={{ key: "name", direction: "asc" }}
+        columns={[
+          { key: "name", header: "Name", sortable: true },
+          { key: "code", header: "Code", sortable: true },
+          {
+            key: "authority",
+            header: "Authority",
+            sortable: true,
+            filter: "select",
+          },
+        ]}
+        rows={fisheries.map((fishery) => {
+          const authority = authorities.find(
+            (item) => item.id === fishery.authority_id,
+          );
+
+          return {
+            id: fishery.id,
+            values: {
+              name: fishery.name,
+              code: fishery.code ?? "",
+              authority: authority?.name ?? "",
+            },
+            display: {
+              code: fishery.code ?? "—",
+              authority: authority?.name ?? "—",
+            },
+            actions: (
+              <Link
+                href={`/admin/fisheries/${fishery.id}`}
+                className="text-sm underline"
+              >
+                Open
+              </Link>
+            ),
+          };
+        })}
+      />
       <div className="max-w-md">
         <h2 className="text-xl font-semibold text-ink">Create fishery</h2>
         <p className="mt-2 text-sm text-ink-muted">

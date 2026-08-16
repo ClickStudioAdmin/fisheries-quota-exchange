@@ -19,7 +19,7 @@ export default async function RegisterPage() {
   const configured = getSupabasePublicEnv() !== null;
 
   return (
-    <AuthCard title="Register">
+    <AuthCard title="Create account">
       {!configured ? (
         <p className="mb-4 text-sm text-red-800" role="alert">
           Supabase public environment variables are not set for this deployment.

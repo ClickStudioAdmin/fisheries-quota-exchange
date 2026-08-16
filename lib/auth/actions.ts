@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/paths";
+import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 import type { AuthFormState } from "@/lib/auth/types";
 
 async function getSiteUrl() {
@@ -39,6 +40,20 @@ function readEmailPassword(formData: FormData) {
   return { email, password } as const;
 }
 
+function readAbn(value: string) {
+  const abn = value.replace(/\s/g, "");
+
+  if (!abn) {
+    return { abn: null } as const;
+  }
+
+  if (!/^\d{11}$/.test(abn)) {
+    return { error: "ABN must be 11 digits if provided." } as const;
+  }
+
+  return { abn } as const;
+}
+
 export async function registerAction(
   _prev: AuthFormState,
   formData: FormData,
@@ -47,6 +62,23 @@ export async function registerAction(
 
   if ("error" in parsed) {
     return { error: parsed.error };
+  }
+
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const legalName = String(formData.get("legal_name") ?? "").trim();
+  const tradingName = String(formData.get("trading_name") ?? "").trim();
+  const abnResult = readAbn(String(formData.get("abn") ?? "").trim());
+
+  if (!fullName) {
+    return { error: "Enter your name." };
+  }
+
+  if (!legalName) {
+    return { error: "Legal name is required." };
+  }
+
+  if ("error" in abnResult) {
+    return { error: abnResult.error };
   }
 
   const supabase = await createClient();
@@ -61,6 +93,12 @@ export async function registerAction(
     password: parsed.password,
     options: {
       emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
+      data: {
+        full_name: fullName,
+        pending_legal_name: legalName,
+        pending_trading_name: tradingName,
+        pending_abn: abnResult.abn,
+      },
     },
   });
 
@@ -72,6 +110,10 @@ export async function registerAction(
     return {
       message: "Check your email to confirm your account, then sign in.",
     };
+  }
+
+  if (data.user) {
+    await ensureOwnedAccount(supabase, data.user);
   }
 
   redirect("/dashboard");
@@ -100,6 +142,14 @@ export async function loginAction(
 
   if (error) {
     return { error: error.message };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureOwnedAccount(supabase, user);
   }
 
   redirect(safeNextPath(String(formData.get("next") ?? "")));

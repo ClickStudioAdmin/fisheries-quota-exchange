@@ -47,3 +47,30 @@ export function formatAud(value: string | number) {
     currency: "AUD",
   }).format(Number(value));
 }
+
+export function listingTypeLabel(type: ListingType) {
+  return type === "AUCTION" ? "Auction" : "Fixed price";
+}
+
+export function listingOfferingLabel(offering: ListingOffering) {
+  return offering === "SALE" ? "Sale" : "Lease";
+}
+
+export function listingStatusLabel(status: ListingStatus) {
+  switch (status) {
+    case "PENDING_APPROVAL":
+      return "Pending approval";
+    case "PUBLISHED":
+      return "Published";
+    case "RESERVED":
+      return "Reserved";
+    case "SOLD":
+      return "Sold";
+    case "UNSOLD":
+      return "Unsold";
+    case "CANCELLED":
+      return "Cancelled";
+    case "REJECTED":
+      return "Rejected";
+  }
+}

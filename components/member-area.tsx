@@ -1,23 +1,46 @@
 import type { ReactNode } from "react";
 import { AreaShell } from "@/components/area-shell";
+import { accountPath } from "@/lib/organisations/paths";
 import { listMyOrganisations } from "@/lib/organisations/queries";
+
+const sectionItems = [
+  { href: "/dashboard", label: "Profile details" },
+  { href: "/dashboard/members", label: "Account members" },
+  {
+    href: "/dashboard/holdings",
+    label: "Quota holdings",
+    alsoMatch: ["auctions"],
+  },
+  {
+    href: "/dashboard/listings",
+    label: "Listings",
+    alsoMatch: ["listings"],
+  },
+  {
+    href: "/dashboard/orders",
+    label: "Orders",
+    alsoMatch: ["/orders"],
+  },
+];
 
 export async function MemberArea({ children }: { children: ReactNode }) {
   const organisations = await listMyOrganisations();
+  const defaultAccount =
+    organisations.find((organisation) => organisation.role === "OWNER") ??
+    organisations[0];
+
+  const accountItems =
+    organisations.length > 1
+      ? organisations.map((organisation) => ({
+          href: accountPath(organisation.id),
+          label: organisation.legal_name,
+          accountId: organisation.id,
+          isDefault: organisation.id === defaultAccount?.id,
+        }))
+      : [];
 
   return (
-    <AreaShell
-      title="Dashboard"
-      items={[
-        { href: "/dashboard", label: "Overview" },
-        ...organisations.map((organisation) => ({
-          href: `/organisations/${organisation.id}`,
-          label: organisation.legal_name,
-          match: "prefix" as const,
-        })),
-        { href: "/organisations/new", label: "Create organisation" },
-      ]}
-    >
+    <AreaShell title="Account" items={[...accountItems, ...sectionItems]}>
       {children}
     </AreaShell>
   );

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
+import { DataTable, formatTableDate } from "@/components/data-table";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
   createFisheryRuleAction,
@@ -68,118 +69,181 @@ export default async function FisheryAdminPage({
           OTHER — do not assume kilograms.
         </p>
       </div>
-      <section className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold text-ink">Stocks</h2>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-muted">
-            {stocks.map((item) => {
-              const row = species.find((entry) => entry.id === item.species_id);
-              return (
-                <li key={item.id}>
-                  {item.name}
-                  {row ? ` · ${row.common_name}` : ""}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-        <AdminCreateForm
-          action={createStockAction}
-          hidden={{ fishery_id: fisheryId }}
-          submitLabel="Add stock"
-          fields={[
+      <section className="space-y-6">
+        <h2 className="text-xl font-semibold text-ink">Stocks</h2>
+        <DataTable
+          caption="Stocks"
+          empty="No stocks yet."
+          searchPlaceholder="Filter stocks…"
+          defaultSort={{ key: "name", direction: "asc" }}
+          columns={[
+            { key: "name", header: "Name", sortable: true },
             {
-              name: "species_id",
-              label: "Species",
-              type: "select",
-              required: true,
-              options: species.map((item) => ({
-                value: String(item.id),
-                label: item.common_name,
-              })),
-            },
-            { name: "name", label: "Stock name", required: true },
-          ]}
-        />
-      </section>
-      <section className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold text-ink">Seasons</h2>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-muted">
-            {seasons.map((item) => (
-              <li key={item.id}>
-                {item.name}: {item.starts_on} – {item.ends_on}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <AdminCreateForm
-          action={createSeasonAction}
-          hidden={{ fishery_id: fisheryId }}
-          submitLabel="Add season"
-          fields={[
-            { name: "name", label: "Name", required: true },
-            { name: "starts_on", label: "Starts on", type: "date", required: true },
-            { name: "ends_on", label: "Ends on", type: "date", required: true },
-          ]}
-        />
-      </section>
-      <section className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold text-ink">Quota types</h2>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-muted">
-            {quotaTypes.map((item) => (
-              <li key={item.id}>
-                {item.name} · {item.measurement_kind} · {item.unit_label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <AdminCreateForm
-          action={createQuotaTypeAction}
-          hidden={{ fishery_id: fisheryId }}
-          submitLabel="Add quota type"
-          fields={[
-            { name: "name", label: "Name", required: true },
-            {
-              name: "measurement_kind",
-              label: "Measurement kind",
-              type: "select",
-              required: true,
-              options: MEASUREMENT_KINDS.map((kind) => ({
-                value: kind,
-                label: kind,
-              })),
-            },
-            { name: "unit_label", label: "Unit label", required: true },
-          ]}
-        />
-      </section>
-      <section className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold text-ink">Fishery rules</h2>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-muted">
-            {rules.map((item) => (
-              <li key={item.id}>
-                {item.code}: {JSON.stringify(item.value)}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <AdminCreateForm
-          action={createFisheryRuleAction}
-          hidden={{ fishery_id: fisheryId }}
-          submitLabel="Add rule"
-          fields={[
-            { name: "code", label: "Code", required: true },
-            {
-              name: "value",
-              label: "Value (JSON or text)",
-              type: "textarea",
-              defaultValue: "true",
+              key: "species",
+              header: "Species",
+              sortable: true,
+              filter: "select",
             },
           ]}
+          rows={stocks.map((item) => {
+            const row = species.find((entry) => entry.id === item.species_id);
+            return {
+              id: item.id,
+              values: {
+                name: item.name,
+                species: row?.common_name ?? "",
+              },
+              display: {
+                species: row?.common_name ?? "—",
+              },
+            };
+          })}
         />
+        <div className="max-w-md">
+          <AdminCreateForm
+            action={createStockAction}
+            hidden={{ fishery_id: fisheryId }}
+            submitLabel="Add stock"
+            fields={[
+              {
+                name: "species_id",
+                label: "Species",
+                type: "select",
+                required: true,
+                options: species.map((item) => ({
+                  value: String(item.id),
+                  label: item.common_name,
+                })),
+              },
+              { name: "name", label: "Stock name", required: true },
+            ]}
+          />
+        </div>
+      </section>
+      <section className="space-y-6">
+        <h2 className="text-xl font-semibold text-ink">Seasons</h2>
+        <DataTable
+          caption="Seasons"
+          empty="No seasons yet."
+          searchPlaceholder="Filter seasons…"
+          defaultSort={{ key: "starts", direction: "desc" }}
+          columns={[
+            { key: "name", header: "Name", sortable: true },
+            { key: "starts", header: "Starts", sortable: true },
+            { key: "ends", header: "Ends", sortable: true },
+          ]}
+          rows={seasons.map((item) => ({
+            id: item.id,
+            values: {
+              name: item.name,
+              starts: item.starts_on,
+              ends: item.ends_on,
+            },
+            display: {
+              starts: formatTableDate(item.starts_on),
+              ends: formatTableDate(item.ends_on),
+            },
+          }))}
+        />
+        <div className="max-w-md">
+          <AdminCreateForm
+            action={createSeasonAction}
+            hidden={{ fishery_id: fisheryId }}
+            submitLabel="Add season"
+            fields={[
+              { name: "name", label: "Name", required: true },
+              { name: "starts_on", label: "Starts on", type: "date", required: true },
+              { name: "ends_on", label: "Ends on", type: "date", required: true },
+            ]}
+          />
+        </div>
+      </section>
+      <section className="space-y-6">
+        <h2 className="text-xl font-semibold text-ink">Quota types</h2>
+        <DataTable
+          caption="Quota types"
+          empty="No quota types yet."
+          searchPlaceholder="Filter quota types…"
+          defaultSort={{ key: "name", direction: "asc" }}
+          columns={[
+            { key: "name", header: "Name", sortable: true },
+            {
+              key: "kind",
+              header: "Measurement",
+              sortable: true,
+              filter: "select",
+            },
+            { key: "unit", header: "Unit", sortable: true },
+          ]}
+          rows={quotaTypes.map((item) => ({
+            id: item.id,
+            values: {
+              name: item.name,
+              kind: item.measurement_kind,
+              unit: item.unit_label,
+            },
+          }))}
+        />
+        <div className="max-w-md">
+          <AdminCreateForm
+            action={createQuotaTypeAction}
+            hidden={{ fishery_id: fisheryId }}
+            submitLabel="Add quota type"
+            fields={[
+              { name: "name", label: "Name", required: true },
+              {
+                name: "measurement_kind",
+                label: "Measurement kind",
+                type: "select",
+                required: true,
+                options: MEASUREMENT_KINDS.map((kind) => ({
+                  value: kind,
+                  label: kind,
+                })),
+              },
+              { name: "unit_label", label: "Unit label", required: true },
+            ]}
+          />
+        </div>
+      </section>
+      <section className="space-y-6">
+        <h2 className="text-xl font-semibold text-ink">Fishery rules</h2>
+        <DataTable
+          caption="Fishery rules"
+          empty="No rules yet."
+          searchPlaceholder="Filter rules…"
+          defaultSort={{ key: "code", direction: "asc" }}
+          columns={[
+            { key: "code", header: "Code", sortable: true },
+            { key: "value", header: "Value", sortable: true },
+          ]}
+          rows={rules.map((item) => ({
+            id: item.id,
+            values: {
+              code: item.code,
+              value:
+                typeof item.value === "string"
+                  ? item.value
+                  : JSON.stringify(item.value),
+            },
+          }))}
+        />
+        <div className="max-w-md">
+          <AdminCreateForm
+            action={createFisheryRuleAction}
+            hidden={{ fishery_id: fisheryId }}
+            submitLabel="Add rule"
+            fields={[
+              { name: "code", label: "Code", required: true },
+              {
+                name: "value",
+                label: "Value (JSON or text)",
+                type: "textarea",
+                defaultValue: "true",
+              },
+            ]}
+          />
+        </div>
       </section>
     </div>
   );

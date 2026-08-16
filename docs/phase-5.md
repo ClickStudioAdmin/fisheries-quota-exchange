@@ -43,7 +43,7 @@ Admin can then:
 3. Add stock, season, quota type and optional rules
 4. Create a test holding for an organisation
 
-Members of that organisation can see the holding and ledger on the organisation page.
+Members of that organisation can see the holding and ledger at `/dashboard/holdings`.
 
 ## Not in this phase
 

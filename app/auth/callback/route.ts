@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
+import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -21,6 +22,12 @@ export async function GET(request: Request) {
 
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
+  }
+
+  const user = await getUser();
+
+  if (user) {
+    await ensureOwnedAccount(supabase, user);
   }
 
   return NextResponse.redirect(`${origin}${safeNext}`);
