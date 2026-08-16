@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { AuthLinks } from "@/components/auth-links";
 import { Nav } from "@/components/nav";
+import { canSeeAdmin } from "@/lib/admin/access";
 import { getUser } from "@/lib/supabase/server";
 
 export async function Header() {
   const user = await getUser();
+  const showAdmin = user ? await canSeeAdmin() : false;
 
   return (
     <header className="bg-ink text-paper">
@@ -20,7 +22,14 @@ export async function Header() {
           </Link>
           <AuthLinks email={user?.email ?? null} />
         </div>
-        <Nav />
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <Nav />
+          {showAdmin ? (
+            <Link href="/admin" className="text-sm text-paper/75 hover:text-paper">
+              Admin
+            </Link>
+          ) : null}
+        </div>
       </div>
     </header>
   );

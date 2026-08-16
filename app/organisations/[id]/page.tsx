@@ -8,6 +8,18 @@ import {
   getOrganisation,
   listMembers,
 } from "@/lib/organisations/queries";
+import {
+  listAllQuotaTypes,
+  listAllSeasons,
+  listAllStocks,
+  listHoldingsForOrganisation,
+  listLedger,
+} from "@/lib/fisheries/queries";
+import { listOrganisationListings } from "@/lib/listings/queries";
+import { formatAud } from "@/lib/listings/types";
+import { cancelListingAction } from "@/lib/listings/actions";
+import { listOrganisationOrders } from "@/lib/orders/queries";
+import { orderStatusLabel } from "@/lib/orders/types";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -41,6 +53,21 @@ export default async function OrganisationPage({
   const members = await listMembers(organisationId);
   const canEdit = canEditOrganisation(result.role);
   const canInvite = canAddMember(result.role);
+  const [holdings, stocks, seasons, quotaTypes] = await Promise.all([
+    listHoldingsForOrganisation(organisationId),
+    listAllStocks(),
+    listAllSeasons(),
+    listAllQuotaTypes(),
+  ]);
+  const holdingLedgers = await Promise.all(
+    holdings.map(async (holding) => ({
+      holding,
+      entries: await listLedger(holding.id),
+    })),
+  );
+  const listings = await listOrganisationListings(organisationId);
+  const orders = await listOrganisationOrders(organisationId);
+  const canList = canEditOrganisation(result.role);
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
@@ -71,6 +98,148 @@ export default async function OrganisationPage({
             actorEmail={user.email}
           />
         </div>
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold text-ink">Quota holdings</h2>
+        {holdingLedgers.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-muted">
+            No holdings yet. A platform admin can create a test holding.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-4">
+            {holdingLedgers.map(({ holding, entries }) => {
+              const stock = stocks.find((item) => item.id === holding.stock_id);
+              const season = seasons.find((item) => item.id === holding.season_id);
+              const quotaType = quotaTypes.find(
+                (item) => item.id === holding.quota_type_id,
+              );
+              return (
+                <div key={holding.id} className="border border-line p-4">
+                  <p className="text-ink">
+                    {stock?.name ?? "Stock"} · {season?.name ?? "Season"} ·{" "}
+                    {holding.quantity} {quotaType?.unit_label ?? ""}
+                  </p>
+                  <p className="text-sm text-ink-muted">
+                    {quotaType
+                      ? `${quotaType.name} (${quotaType.measurement_kind})`
+                      : "Quota type"}
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-ink-muted">
+                    {entries.map((entry) => (
+                      <li key={entry.id}>
+                        {entry.event_type}: {entry.quantity_delta} →{" "}
+                        {entry.quantity_after}
+                      </li>
+                    ))}
+                  </ul>
+                  {canList ? (
+                    <p className="mt-3 flex gap-4">
+                      <Link
+                        href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
+                        className="text-sm underline"
+                      >
+                        Create listing
+                      </Link>
+                      <Link
+                        href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
+                        className="text-sm underline"
+                      >
+                        Create auction
+                      </Link>
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold text-ink">Listings</h2>
+        {listings.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-muted">
+            No listings yet. Owners and admins can list quota from a holding.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line border border-line">
+            {listings.map((listing) => (
+              <li
+                key={listing.id}
+                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-ink">
+                    {listing.listing_type === "AUCTION" ? "Auction · " : ""}
+                    {listing.fishery_name} · {listing.offering} ·{" "}
+                    {listing.quantity} {listing.unit_label} ·{" "}
+                    {formatAud(listing.unit_price_aud)}
+                  </p>
+                  <p className="text-sm text-ink-muted">{listing.status}</p>
+                </div>
+                <div className="flex gap-3 text-sm">
+                  <Link
+                    href={
+                      listing.listing_type === "AUCTION"
+                        ? `/auctions/${listing.id}`
+                        : `/marketplace/${listing.id}`
+                    }
+                    className="underline"
+                  >
+                    View
+                  </Link>
+                  {canList &&
+                  (listing.status === "PENDING_APPROVAL" ||
+                    listing.status === "PUBLISHED") ? (
+                    <form action={cancelListingAction}>
+                      <input type="hidden" name="listing_id" value={listing.id} />
+                      <input
+                        type="hidden"
+                        name="next"
+                        value={`/organisations/${organisationId}`}
+                      />
+                      <button type="submit" className="underline">
+                        Cancel
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold text-ink">Orders</h2>
+        {orders.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-muted">
+            No buys or sells for this organisation yet.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line border border-line">
+            {orders.map((order) => {
+              const side =
+                order.seller_organisation_id === organisationId
+                  ? "Selling"
+                  : "Buying";
+              return (
+                <li key={order.id}>
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="block px-4 py-3 hover:bg-paper-raised"
+                  >
+                    <span className="block text-ink">
+                      {side} · Order {order.id} · {order.offering} ·{" "}
+                      {order.quantity} {order.unit_label}
+                    </span>
+                    <span className="block text-sm text-ink-muted">
+                      {orderStatusLabel(order.status)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
       {canInvite ? (
         <section className="max-w-md">
