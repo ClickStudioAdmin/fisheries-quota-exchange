@@ -1,11 +1,9 @@
+"use server";
+
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-export type AuthFormState = {
-  error?: string;
-  message?: string;
-};
+import type { AuthFormState } from "@/lib/auth/types";
 
 async function getSiteUrl() {
   const headerList = await headers();

@@ -3,8 +3,8 @@
 import { useActionState } from "react";
 import {
   forgotPasswordAction,
-  type AuthFormState,
 } from "@/lib/auth/actions";
+import type { AuthFormState } from "@/lib/auth/types";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 
 const initialState: AuthFormState = {};
