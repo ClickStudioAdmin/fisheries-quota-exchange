@@ -4,6 +4,8 @@ Master development specification, version 3.0.
 
 This document is the canonical development specification for FQX.
 
+Current implementation phase: Phase 4 — Organisations.
+
 ## Development philosophy
 
 - Build incrementally.
@@ -142,7 +144,7 @@ For Phase 0, database migration deployment is the primary CI/CD test.
 
 ## 10. Phase 0 — Pipeline proof
 
-Current phase.
+Completed.
 
 Objective: prove Cursor → GitHub → GitHub Actions → Supabase → Vercel works.
 

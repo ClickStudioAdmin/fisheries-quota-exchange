@@ -1,15 +1,13 @@
+import { PageIntro } from "@/components/page-intro";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
-      <div className="w-full max-w-xl text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
-          Fisheries Quota Exchange
-        </h1>
-        <p className="mt-4 text-lg text-zinc-600">
-          FQX development environment is operational.
-        </p>
-        <p className="mt-8 text-sm font-medium text-zinc-500">Build: 002</p>
-      </div>
-    </main>
+    <PageIntro title="Fisheries Quota Exchange">
+      <p>FQX is an Australian commercial fisheries quota marketplace.</p>
+      <p>
+        This is the application shell. Marketplace listings, fisheries data, and
+        auctions are placeholder pages until those phases are built.
+      </p>
+    </PageIntro>
   );
 }

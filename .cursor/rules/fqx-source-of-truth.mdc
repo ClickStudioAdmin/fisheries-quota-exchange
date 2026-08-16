@@ -13,6 +13,10 @@ All database schema changes must be Supabase migration files under `supabase/mig
 
 Do not edit the production schema in the Supabase dashboard as the normal process.
 
-Production migrations are applied by GitHub Actions, not by hand.
+Production migrations are applied by GitHub Actions from `main`, not by hand.
+
+Do daily work on `develop`. Pushes to `develop` migrate the development database only.
+
+Never apply `develop` to the production Supabase project. Never use production database secrets on `develop`.
 
 Update documentation when architecture changes.

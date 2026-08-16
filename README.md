@@ -6,15 +6,13 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 0 — Pipeline proof**
+**Phase 4 — Organisations**
 
-The application only confirms that the development environment works. It does not include marketplace, authentication, organisations, quota, auctions, or payments.
+Create an organisation, view its profile, manage members, and enforce `OWNER` / `ADMIN` / `MEMBER` permissions.
 
-Homepage copy:
+See [docs/phase-4.md](docs/phase-4.md).
 
-- Fisheries Quota Exchange
-- FQX development environment is operational.
-- Build: 001
+Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
 ## Technology stack
 
@@ -27,28 +25,31 @@ Homepage copy:
 
 This is a Next.js App Router project. The homepage lives in `app/page.tsx`.
 
-`package.json` defines `dev`, `lint`, `build`, and `start` scripts. Phase 0 does not require a local database connection.
+`package.json` defines `dev`, `lint`, `build`, and `start` scripts. The homepage does not require a local database connection.
 
-Copy `.env.example` to `.env.local` only if you need local public Supabase values. The Phase 0 homepage does not read them.
+Copy `.env.example` to `.env.local` and add the development Supabase URL and publishable key. Do not use the production project.
 
 Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 0 acceptance is the homepage, a valid `system_health` migration, GitHub Actions applying that migration, and Vercel serving the same homepage.
+Phase 4 acceptance is that a signed-in user can create an organisation, open it, and that members without permission cannot change it.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
 ## Deployment
 
-1. Push or merge to `main` on GitHub.
-2. Vercel builds the Next.js app for production and pull-request previews.
-3. GitHub Actions applies new files in `supabase/migrations/` to the hosted Supabase project.
+Work on `develop`. Merge to `main` when ready.
 
-Required GitHub Actions secrets:
+| Branch | Database | App |
+| --- | --- | --- |
+| `develop` | Development Supabase | Vercel Preview |
+| `main` | Production Supabase | [https://fisheries-quota-exchange.vercel.app/](https://fisheries-quota-exchange.vercel.app/) |
 
-- `SUPABASE_ACCESS_TOKEN`
-- `SUPABASE_DB_PASSWORD`
-- `SUPABASE_PROJECT_ID`
+GitHub Actions secrets:
 
-See [docs/phase-0.md](docs/phase-0.md) for setup, acceptance criteria, and troubleshooting.
+- Shared: `SUPABASE_ACCESS_TOKEN`
+- Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
+- Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
+
+See [docs/phase-4.md](docs/phase-4.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

@@ -7,9 +7,11 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Work only on the current phase. The current phase is Phase 0 until the user explicitly starts Phase 1.
+Work only on the current phase. The current phase is Phase 4.
 
-Do not implement later-phase features: authentication, organisations, quota, listings, auctions, payments, Stripe, dashboards, notifications, or authority integrations.
+Do feature work on `develop`. Merge to `main` only when the user is ready for production.
+
+Phase 4 may add organisation creation, profile, membership, roles, and permissions. Do not add quota data, listings, auctions, payments, Stripe, or authority integrations.
 
 Do not create later-phase tables or speculative architecture.
 
