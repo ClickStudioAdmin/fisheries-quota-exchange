@@ -6,11 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 1 — Database pipeline**
+**Phase 2 — Application shell**
 
-Prove that the schema can evolve through GitHub-controlled migrations. This phase adds `organisations` and `organisation_users` only. There is no marketplace or organisation UI.
+Header, navigation, footer, and placeholder pages at `/`, `/marketplace`, `/fisheries`, `/auctions`, and `/about`. No live marketplace functionality.
 
-See [docs/phase-1.md](docs/phase-1.md) and [docs/database.md](docs/database.md).
+See [docs/phase-2.md](docs/phase-2.md).
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -33,7 +33,7 @@ Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 1 acceptance is a GitHub migration that creates `organisations` and `organisation_users`, GitHub Actions applying it to the development database, and Vercel still building the app.
+Phase 2 acceptance is that every shell page loads on the `develop` Vercel Preview and the production build still succeeds after merge.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
@@ -52,4 +52,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-1.md](docs/phase-1.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
+See [docs/phase-2.md](docs/phase-2.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

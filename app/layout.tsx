@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Fisheries Quota Exchange",
-  description: "FQX development environment is operational.",
+  title: {
+    default: "Fisheries Quota Exchange",
+    template: "%s · FQX",
+  },
+  description:
+    "Australian commercial fisheries quota marketplace. Development site.",
 };
 
 export default function RootLayout({
@@ -13,7 +19,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }

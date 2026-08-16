@@ -4,7 +4,7 @@ Master development specification, version 3.0.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 1 — Database pipeline.
+Current implementation phase: Phase 2 — Application shell.
 
 ## Development philosophy
 

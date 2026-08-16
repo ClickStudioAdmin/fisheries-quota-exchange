@@ -1,12 +1,21 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8fafc;
-  --foreground: #18181b;
+@theme {
+  --color-ink: #10232b;
+  --color-ink-muted: #3d4f56;
+  --color-sea: #1a5c63;
+  --color-paper: #f5f2ea;
+  --color-paper-raised: #fffcf6;
+  --color-line: #d9d3c7;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
