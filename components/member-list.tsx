@@ -1,17 +1,5 @@
-import {
-  removeMemberAction,
-  updateMemberRoleAction,
-} from "@/lib/organisations/actions";
-import {
-  compactFieldClassName,
-  tableButtonClassName,
-  tableSecondaryButtonClassName,
-} from "@/components/auth-card";
-import {
-  DataTable,
-  DataTableRowExtras,
-  TableActionRow,
-} from "@/components/data-table";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { MemberActions } from "@/components/member-actions";
 import { formatTableDate } from "@/lib/format";
 import {
   canChangeMemberRole,
@@ -85,74 +73,17 @@ export function MemberList({
         }
 
         return (
-          <DataTableRowExtras
-            key={member.id}
-            id={member.id}
-            actions={
-              <TableActionRow>
-                {showRoleForm ? (
-                  <form action={updateMemberRoleAction} className="flex gap-2">
-                    <input
-                      type="hidden"
-                      name="organisation_id"
-                      value={String(organisationId)}
-                    />
-                    <input
-                      type="hidden"
-                      name="member_id"
-                      value={String(member.id)}
-                    />
-                    <label className="sr-only" htmlFor={`role-${member.id}`}>
-                      Role for {member.email}
-                    </label>
-                    <select
-                      id={`role-${member.id}`}
-                      name="role"
-                      defaultValue={member.role}
-                      className={compactFieldClassName}
-                    >
-                      <option value="OWNER">Owner</option>
-                      <option value="ADMIN">Admin</option>
-                      <option value="MEMBER">Member</option>
-                    </select>
-                    <button type="submit" className={tableButtonClassName}>
-                      Update
-                    </button>
-                  </form>
-                ) : null}
-                {showRemove ? (
-                  <form action={removeMemberAction}>
-                    <input
-                      type="hidden"
-                      name="organisation_id"
-                      value={String(organisationId)}
-                    />
-                    <input
-                      type="hidden"
-                      name="member_id"
-                      value={String(member.id)}
-                    />
-                    <input
-                      type="hidden"
-                      name="target_role"
-                      value={member.role}
-                    />
-                    <input
-                      type="hidden"
-                      name="target_email"
-                      value={member.email}
-                    />
-                    <button
-                      type="submit"
-                      className={tableSecondaryButtonClassName}
-                    >
-                      {isSelf ? "Leave" : "Remove"}
-                    </button>
-                  </form>
-                ) : null}
-              </TableActionRow>
-            }
-          />
+          <DataTableRowExtras key={member.id} id={member.id}>
+            <MemberActions
+              organisationId={organisationId}
+              memberId={member.id}
+              email={member.email}
+              role={member.role}
+              showRoleForm={showRoleForm}
+              showRemove={showRemove}
+              isSelf={isSelf}
+            />
+          </DataTableRowExtras>
         );
       })}
     </DataTable>

@@ -165,58 +165,82 @@ export async function addMemberAction(
   return { message: "Member added." };
 }
 
-export async function updateMemberRoleAction(formData: FormData) {
+export type MemberActionState = {
+  error?: string;
+};
+
+function readPositiveInt(formData: FormData, name: string) {
+  const value = Number(String(formData.get(name) ?? "").trim());
+
+  if (!Number.isInteger(value) || value <= 0) {
+    return null;
+  }
+
+  return value;
+}
+
+export async function updateMemberRoleAction(
+  _prev: MemberActionState,
+  formData: FormData,
+): Promise<MemberActionState> {
   const supabase = await createClient();
-  const organisationId = Number(formData.get("organisation_id"));
-  const memberId = Number(formData.get("member_id"));
+  const organisationId = readPositiveInt(formData, "organisation_id");
+  const memberId = readPositiveInt(formData, "member_id");
   const memberRole = String(formData.get("role") ?? "");
 
-  if (!supabase || !Number.isInteger(organisationId) || !Number.isInteger(memberId)) {
-    return;
+  if (!supabase || organisationId == null || memberId == null) {
+    return { error: "Could not update that role." };
   }
 
   if (!isOrganisationRole(memberRole)) {
-    return;
+    return { error: "Choose a valid role." };
   }
 
   const actorRole = await getMyRole(organisationId);
 
   if (!actorRole || !canChangeMemberRole(actorRole)) {
-    return;
+    return { error: "You do not have permission to change roles." };
   }
 
-  await supabase
+  const { error } = await supabase
     .from("organisation_users")
     .update({ role: memberRole })
     .eq("id", memberId)
     .eq("organisation_id", organisationId);
 
+  if (error) {
+    return { error: error.message };
+  }
+
   redirect(accountPath(organisationId, "/dashboard/members"));
 }
 
-export async function removeMemberAction(formData: FormData) {
+export async function removeMemberAction(
+  _prev: MemberActionState,
+  formData: FormData,
+): Promise<MemberActionState> {
   const user = await getUser();
   const supabase = await createClient();
-  const organisationId = Number(formData.get("organisation_id"));
-  const memberId = Number(formData.get("member_id"));
+  const organisationId = readPositiveInt(formData, "organisation_id");
+  const memberId = readPositiveInt(formData, "member_id");
   const targetRole = String(formData.get("target_role") ?? "");
   const targetEmail = String(formData.get("target_email") ?? "").toLowerCase();
 
   if (
     !user?.email ||
     !supabase ||
-    !Number.isInteger(organisationId) ||
-    !Number.isInteger(memberId) ||
+    organisationId == null ||
+    memberId == null ||
     !isOrganisationRole(targetRole)
   ) {
-    return;
+    return { error: "Could not remove that person." };
   }
 
   const actorRole = await getMyRole(organisationId);
   const isSelf = targetEmail === user.email.toLowerCase();
 
   if (!actorRole || !canRemoveMember(actorRole, targetRole, isSelf)) {
-    return;
+    return { error: "You do not have permission to remove that person." };
   }
 
   const { error } = await supabase
@@ -226,7 +250,7 @@ export async function removeMemberAction(formData: FormData) {
     .eq("organisation_id", organisationId);
 
   if (error) {
-    return;
+    return { error: error.message };
   }
 
   if (isSelf) {

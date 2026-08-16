@@ -31,6 +31,7 @@ type DataTableRowExtrasProps = {
   actions?: ReactNode;
   expanded?: ReactNode;
   expandedLabel?: string;
+  children?: ReactNode;
 };
 
 type DataTableProps = {
@@ -107,8 +108,11 @@ export function TableActionRow({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap items-center gap-2">{children}</div>;
 }
 
-export function DataTableRowExtras({ actions }: DataTableRowExtrasProps) {
-  return actions ?? null;
+export function DataTableRowExtras({
+  actions,
+  children,
+}: DataTableRowExtrasProps) {
+  return <>{actions ?? children}</>;
 }
 
 export function DataTable({
@@ -341,7 +345,9 @@ export function DataTable({
                             </button>
                           ) : null}
                           {extra}
-                          {!extraProps?.expanded && !extraProps?.actions ? (
+                          {!extraProps?.expanded &&
+                          !extraProps?.actions &&
+                          !extraProps?.children ? (
                             <span className="text-ink-muted">—</span>
                           ) : null}
                         </TableActions>
