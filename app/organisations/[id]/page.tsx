@@ -18,6 +18,8 @@ import {
 import { listOrganisationListings } from "@/lib/listings/queries";
 import { formatAud } from "@/lib/listings/types";
 import { cancelListingAction } from "@/lib/listings/actions";
+import { listOrganisationOrders } from "@/lib/orders/queries";
+import { orderStatusLabel } from "@/lib/orders/types";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -64,6 +66,7 @@ export default async function OrganisationPage({
     })),
   );
   const listings = await listOrganisationListings(organisationId);
+  const orders = await listOrganisationOrders(organisationId);
   const canList = canEditOrganisation(result.role);
 
   return (
@@ -188,6 +191,39 @@ export default async function OrganisationPage({
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold text-ink">Orders</h2>
+        {orders.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-muted">
+            No buys or sells for this organisation yet.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line border border-line">
+            {orders.map((order) => {
+              const side =
+                order.seller_organisation_id === organisationId
+                  ? "Selling"
+                  : "Buying";
+              return (
+                <li key={order.id}>
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="block px-4 py-3 hover:bg-paper-raised"
+                  >
+                    <span className="block text-ink">
+                      {side} · Order {order.id} · {order.offering} ·{" "}
+                      {order.quantity} {order.unit_label}
+                    </span>
+                    <span className="block text-sm text-ink-muted">
+                      {orderStatusLabel(order.status)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

@@ -14,8 +14,8 @@ export default async function MarketplacePage() {
     <>
       <PageIntro title="Marketplace">
         <p>
-          Approved fixed-price listings. Purchases and auctions are not available
-          yet.
+          Approved fixed-price listings. Purchase reserves quota and starts a
+          simulated transaction. There is no live payment.
         </p>
       </PageIntro>
       <div className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">

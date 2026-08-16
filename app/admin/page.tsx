@@ -46,7 +46,7 @@ export default async function AdminPage() {
       <p className="text-sm text-ink-muted">
         Create reference data, a fishery, then a holding. Creating a holding
         writes an immutable INITIAL_ALLOCATION ledger row. Quota is not assumed
-        to be weight.
+        to be weight. Simulated purchases are on Orders.
       </p>
     </div>
   );

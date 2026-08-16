@@ -2,6 +2,8 @@ export const LISTING_OFFERINGS = ["SALE", "LEASE"] as const;
 export const LISTING_STATUSES = [
   "PENDING_APPROVAL",
   "PUBLISHED",
+  "RESERVED",
+  "SOLD",
   "CANCELLED",
   "REJECTED",
 ] as const;

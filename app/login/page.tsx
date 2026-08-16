@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
 import { LoginForm } from "@/components/login-form";
+import { safeNextPath } from "@/lib/auth/paths";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { getUser } from "@/lib/supabase/server";
 
@@ -12,15 +13,16 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
+  const params = await searchParams;
+  const next = params.next ? safeNextPath(params.next) : "/dashboard";
   const user = await getUser();
 
   if (user) {
-    redirect("/dashboard");
+    redirect(next);
   }
 
-  const params = await searchParams;
   const configured = getSupabasePublicEnv() !== null;
 
   return (
@@ -35,7 +37,7 @@ export default async function LoginPage({
           Sign-in could not be completed. Try again.
         </p>
       ) : null}
-      <LoginForm />
+      <LoginForm next={next === "/dashboard" ? undefined : next} />
       <p className="mt-4 text-sm text-ink-muted">
         <Link href="/forgot-password" className="underline">
           Forgot password

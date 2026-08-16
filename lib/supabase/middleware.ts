@@ -9,6 +9,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/update-password") ||
     pathname.startsWith("/organisations") ||
+    pathname.startsWith("/orders") ||
     pathname.startsWith("/admin");
 
   if (!env) {

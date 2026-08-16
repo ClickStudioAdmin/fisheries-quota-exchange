@@ -9,7 +9,11 @@ import { buttonClassName, fieldClassName } from "@/components/auth-card";
 
 const initialState: AuthFormState = {};
 
-export function LoginForm() {
+type LoginFormProps = {
+  next?: string;
+};
+
+export function LoginForm({ next }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(
     loginAction,
     initialState,
@@ -17,6 +21,7 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}

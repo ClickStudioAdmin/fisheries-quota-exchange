@@ -21,11 +21,15 @@ Current tables:
 | `quota_holdings` | 5 | Organisation quota balances. |
 | `quota_ledger` | 5 | Immutable quota events. |
 | `listings` | 6 | Fixed-price sale or lease offers. |
+| `orders` | 7 | Simulated purchase of a listing. |
+| `quota_reservations` | 7 | Active reserved quantity against a holding. |
+| `transactions` | 7 | Simulated settlement record. No live payment. |
+| `audit_events` | 7 | Order workflow audit. |
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`.
 
 `quota_types.measurement_kind` must be `WEIGHT`, `UNITS`, `EFFORT`, or `OTHER`.
 
-`quota_ledger` is immutable. Corrections later require adjustment or reversal rows.
+`quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`.
 
-See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md) and [phase-6.md](phase-6.md).
+See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md) and [phase-7.md](phase-7.md).

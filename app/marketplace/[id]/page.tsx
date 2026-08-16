@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PurchaseForm } from "@/components/purchase-form";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { getListing } from "@/lib/listings/queries";
 import { formatAud } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { getMyRole } from "@/lib/organisations/queries";
+import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -32,11 +33,18 @@ export default async function ListingPage({
   const user = await getUser();
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
+  const organisations = user ? await listMyOrganisations() : [];
+  const buyerOrganisations = organisations.filter(
+    (organisation) => organisation.id !== listing.organisation_id,
+  );
   const canCancel =
     listing.status === "PENDING_APPROVAL" || listing.status === "PUBLISHED";
   const showCancel =
     canCancel && (admin || role === "OWNER" || role === "ADMIN");
   const expired = new Date(listing.expires_at) <= new Date();
+  const canPurchase =
+    listing.status === "PUBLISHED" && !expired && buyerOrganisations.length > 0;
+  const isSeller = role !== null;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
@@ -87,10 +95,40 @@ export default async function ListingPage({
           </dd>
         </div>
       </dl>
-      <p className="mt-8 text-sm text-ink-muted">
-        Purchase is not available in this phase. This listing is view-only for
-        buyers.
-      </p>
+      {listing.status === "PUBLISHED" && !expired ? (
+        <div className="mt-8">
+          {!user ? (
+            <p className="text-sm text-ink-muted">
+              <Link
+                href={`/login?next=/marketplace/${listing.id}`}
+                className="underline"
+              >
+                Sign in
+              </Link>{" "}
+              to purchase. Quota is reserved immediately. There is no live
+              payment.
+            </p>
+          ) : organisations.length === 0 ? (
+            <p className="text-sm text-ink-muted">
+              Create an organisation from the dashboard before purchasing.
+            </p>
+          ) : isSeller && buyerOrganisations.length === 0 ? (
+            <p className="text-sm text-ink-muted">
+              You cannot purchase your organisation&apos;s listing. Use a
+              different organisation to test a buy.
+            </p>
+          ) : canPurchase ? (
+            <PurchaseForm
+              listingId={listing.id}
+              organisations={buyerOrganisations}
+            />
+          ) : null}
+        </div>
+      ) : (
+        <p className="mt-8 text-sm text-ink-muted">
+          This listing is not available to purchase.
+        </p>
+      )}
       {showCancel ? (
         <form action={cancelListingAction} className="mt-6">
           <input type="hidden" name="listing_id" value={listing.id} />

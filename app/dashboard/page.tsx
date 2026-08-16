@@ -4,6 +4,8 @@ import { logoutAction } from "@/lib/auth/actions";
 import { buttonClassName } from "@/components/auth-card";
 import { PageIntro } from "@/components/page-intro";
 import { listMyOrganisations } from "@/lib/organisations/queries";
+import { listMyOrders } from "@/lib/orders/queries";
+import { orderStatusLabel } from "@/lib/orders/types";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -18,6 +20,7 @@ export default async function DashboardPage() {
   }
 
   const organisations = await listMyOrganisations();
+  const orders = await listMyOrders();
 
   return (
     <PageIntro title="Dashboard">
@@ -49,6 +52,34 @@ export default async function DashboardPage() {
           ))}
         </ul>
       )}
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold text-ink">Orders</h2>
+        {orders.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-muted">
+            No simulated purchases yet. Buy a published listing from the
+            marketplace using a different organisation than the seller.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line border border-line">
+            {orders.map((order) => (
+              <li key={order.id}>
+                <Link
+                  href={`/orders/${order.id}`}
+                  className="block px-4 py-3 hover:bg-paper-raised"
+                >
+                  <span className="block text-ink">
+                    Order {order.id} · {order.fishery_name} · {order.offering}
+                  </span>
+                  <span className="block text-sm text-ink-muted">
+                    {orderStatusLabel(order.status)} · {order.buyer_name} buying
+                    from {order.seller_name}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <form action={logoutAction} className="mt-8">
         <button
           type="submit"

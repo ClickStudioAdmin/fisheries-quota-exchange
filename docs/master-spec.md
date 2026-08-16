@@ -4,7 +4,7 @@ Master development specification, version 3.0.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 6 — Listings.
+Current implementation phase: Phase 7 — Test transactions.
 
 ## Development philosophy
 

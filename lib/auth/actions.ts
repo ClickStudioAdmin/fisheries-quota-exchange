@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeNextPath } from "@/lib/auth/paths";
 import type { AuthFormState } from "@/lib/auth/types";
 
 async function getSiteUrl() {
@@ -101,7 +102,7 @@ export async function loginAction(
     return { error: error.message };
   }
 
-  redirect("/dashboard");
+  redirect(safeNextPath(String(formData.get("next") ?? "")));
 }
 
 export async function forgotPasswordAction(
