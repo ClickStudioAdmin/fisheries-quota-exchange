@@ -6,15 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 0 — Pipeline proof**
+**Phase 1 — Database pipeline**
 
-The application only confirms that the development environment works. It does not include marketplace, authentication, organisations, quota, auctions, or payments.
+Prove that the schema can evolve through GitHub-controlled migrations. This phase adds `organisations` and `organisation_users` only. There is no marketplace or organisation UI.
 
-Homepage copy:
-
-- Fisheries Quota Exchange
-- FQX development environment is operational.
-- Build: 002
+See [docs/phase-1.md](docs/phase-1.md) and [docs/database.md](docs/database.md).
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -29,15 +25,15 @@ Work happens on `develop`. Merge to `main` for production. See [docs/environment
 
 This is a Next.js App Router project. The homepage lives in `app/page.tsx`.
 
-`package.json` defines `dev`, `lint`, `build`, and `start` scripts. Phase 0 does not require a local database connection.
+`package.json` defines `dev`, `lint`, `build`, and `start` scripts. The homepage does not require a local database connection.
 
-Copy `.env.example` to `.env.local` only if you need local public Supabase values. The Phase 0 homepage does not read them.
+Copy `.env.example` to `.env.local` only if you need local public Supabase values. The homepage does not read them.
 
 Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 0 acceptance is the homepage, a valid `system_health` migration, GitHub Actions applying that migration, and Vercel serving the same homepage.
+Phase 1 acceptance is a GitHub migration that creates `organisations` and `organisation_users`, GitHub Actions applying it to the development database, and Vercel still building the app.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
@@ -56,4 +52,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-0.md](docs/phase-0.md) and [docs/environments.md](docs/environments.md).
+See [docs/phase-1.md](docs/phase-1.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
