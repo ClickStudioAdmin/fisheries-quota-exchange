@@ -48,6 +48,27 @@ export async function listAllOrders() {
   return (data ?? []) as Order[];
 }
 
+export async function getOrderForListing(listingId: number) {
+  const supabase = await createClient();
+  if (!supabase) return null;
+
+  const { data } = await supabase
+    .from("orders")
+    .select(orderColumns)
+    .eq("listing_id", listingId)
+    .in("status", [
+      "AWAITING_COMPLIANCE",
+      "AWAITING_TRANSFER",
+      "AWAITING_SETTLEMENT",
+      "COMPLETED",
+    ])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return (data as Order | null) ?? null;
+}
+
 export async function getOrder(id: number) {
   const supabase = await createClient();
   if (!supabase) return null;

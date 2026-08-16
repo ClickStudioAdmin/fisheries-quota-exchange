@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { getListing } from "@/lib/listings/queries";
@@ -28,6 +28,10 @@ export default async function ListingPage({
 
   if (!listing) {
     notFound();
+  }
+
+  if (listing.listing_type === "AUCTION") {
+    redirect(`/auctions/${listing.id}`);
   }
 
   const user = await getUser();

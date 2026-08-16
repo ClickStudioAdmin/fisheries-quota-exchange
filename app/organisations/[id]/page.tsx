@@ -133,12 +133,18 @@ export default async function OrganisationPage({
                     ))}
                   </ul>
                   {canList ? (
-                    <p className="mt-3">
+                    <p className="mt-3 flex gap-4">
                       <Link
                         href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
                         className="text-sm underline"
                       >
                         Create listing
+                      </Link>
+                      <Link
+                        href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
+                        className="text-sm underline"
+                      >
+                        Create auction
                       </Link>
                     </p>
                   ) : null}
@@ -163,6 +169,7 @@ export default async function OrganisationPage({
               >
                 <div>
                   <p className="text-ink">
+                    {listing.listing_type === "AUCTION" ? "Auction · " : ""}
                     {listing.fishery_name} · {listing.offering} ·{" "}
                     {listing.quantity} {listing.unit_label} ·{" "}
                     {formatAud(listing.unit_price_aud)}
@@ -170,7 +177,14 @@ export default async function OrganisationPage({
                   <p className="text-sm text-ink-muted">{listing.status}</p>
                 </div>
                 <div className="flex gap-3 text-sm">
-                  <Link href={`/marketplace/${listing.id}`} className="underline">
+                  <Link
+                    href={
+                      listing.listing_type === "AUCTION"
+                        ? `/auctions/${listing.id}`
+                        : `/marketplace/${listing.id}`
+                    }
+                    className="underline"
+                  >
                     View
                   </Link>
                   {canList &&

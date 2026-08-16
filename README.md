@@ -6,11 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 7 — Test transactions**
+**Phase 8 — Auctions**
 
-Simulated purchase: order, quota reservation, compliance review, transfer, and settlement. No live payment, auctions, or Stripe.
+English auctions with server-side bid timestamps. A winning close creates a simulated Phase 7 order. No Stripe.
 
-See [docs/phase-7.md](docs/phase-7.md).
+See [docs/phase-8.md](docs/phase-8.md).
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -33,7 +33,7 @@ Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 7 acceptance is that a buyer can complete a simulated purchase, quota cannot be sold twice, and seller and buyer ledgers stay consistent.
+Phase 8 acceptance is that a bidder can place and outbid, the auction closes on server time, and a winning close reserves quota.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
@@ -52,4 +52,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-7.md](docs/phase-7.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
+See [docs/phase-8.md](docs/phase-8.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

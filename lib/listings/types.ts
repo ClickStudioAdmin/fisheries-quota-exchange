@@ -4,18 +4,20 @@ export const LISTING_STATUSES = [
   "PUBLISHED",
   "RESERVED",
   "SOLD",
+  "UNSOLD",
   "CANCELLED",
   "REJECTED",
 ] as const;
 
 export type ListingOffering = (typeof LISTING_OFFERINGS)[number];
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
+export type ListingType = "FIXED_PRICE" | "AUCTION";
 
 export type Listing = {
   id: number;
   organisation_id: number;
   holding_id: number;
-  listing_type: "FIXED_PRICE";
+  listing_type: ListingType;
   offering: ListingOffering;
   quantity: string;
   unit_price_aud: string;
@@ -33,6 +35,10 @@ export type Listing = {
   reviewed_by_email: string | null;
   reviewed_at: string | null;
   review_note: string | null;
+  starting_price_aud: string | null;
+  reserve_price_aud: string | null;
+  bid_increment_aud: string | null;
+  starts_at: string | null;
 };
 
 export function formatAud(value: string | number) {

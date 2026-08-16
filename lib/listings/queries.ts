@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Listing } from "@/lib/listings/types";
 
 const columns =
-  "id, organisation_id, holding_id, listing_type, offering, quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, stock_name, season_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note";
+  "id, organisation_id, holding_id, listing_type, offering, quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, stock_name, season_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note, starting_price_aud, reserve_price_aud, bid_increment_aud, starts_at";
 
 export async function listPublishedListings() {
   const supabase = await createClient();
@@ -12,6 +12,7 @@ export async function listPublishedListings() {
     .from("listings")
     .select(columns)
     .eq("status", "PUBLISHED")
+    .eq("listing_type", "FIXED_PRICE")
     .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false });
 

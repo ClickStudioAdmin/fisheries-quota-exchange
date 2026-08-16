@@ -12,8 +12,8 @@ export default async function FisheriesPage() {
   return (
     <PageIntro title="Fisheries">
       <p>
-        These are reference fisheries. Listings and trading are not in this
-        phase.
+        These are reference fisheries. Trading happens on Marketplace and
+        Auctions.
       </p>
       {fisheries.length === 0 ? (
         <p>No fisheries have been created yet.</p>

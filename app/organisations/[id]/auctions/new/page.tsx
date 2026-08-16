@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CreateListingForm } from "@/components/create-listing-form";
+import { CreateAuctionForm } from "@/components/create-auction-form";
 import {
   listAllQuotaTypes,
   listAllSeasons,
@@ -12,10 +12,10 @@ import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Create listing",
+  title: "Create auction",
 };
 
-export default async function NewListingPage({
+export default async function NewAuctionPage({
   params,
   searchParams,
 }: {
@@ -67,19 +67,19 @@ export default async function NewListingPage({
         </Link>
       </p>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">
-        Create listing
+        Create auction
       </h1>
       <p className="mt-2 max-w-lg text-sm text-ink-muted">
-        Fixed-price only. A platform admin must approve the listing before it
-        appears on the marketplace. Quota is reserved when a buyer purchases,
-        not when you create the listing.
+        English auction. A platform admin must approve it before bidding starts.
+        Bid timestamps are recorded by the database, not the browser. A winning
+        close creates a simulated order.
       </p>
       <p className="mt-4 text-sm text-ink">
         {stock?.name} · {season?.name} · {holding.quantity}{" "}
         {quotaType?.unit_label} available
       </p>
       <div className="mt-6 max-w-md">
-        <CreateListingForm
+        <CreateAuctionForm
           organisationId={organisationId}
           holdingId={holding.id}
           maxQuantity={holding.quantity}

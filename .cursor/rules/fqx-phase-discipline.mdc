@@ -7,11 +7,11 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Work only on the current phase. The current phase is Phase 7.
+Work only on the current phase. The current phase is Phase 8.
 
 Do feature work on `develop`. Merge to `main` only when the user is ready for production.
 
-Phase 7 may add simulated purchases, quota reservation, compliance review, transfer simulation, and settlement simulation. Do not add auctions, Stripe, live payments, seller payouts, or authority integrations. Never delete quota ledger rows. Never trust the browser for quota availability.
+Phase 8 may add English auctions with server-side bids and close times. Do not add Stripe, live payments, seller payouts, or authority integrations. Never trust the browser for bid time or quota availability. Never delete quota ledger rows.
 
 Do not create later-phase tables or speculative architecture.
 

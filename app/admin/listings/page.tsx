@@ -35,6 +35,7 @@ export default async function AdminListingsPage() {
             {pending.map((listing) => (
               <div key={listing.id} className="border border-line p-4">
                 <p className="font-medium text-ink">
+                  {listing.listing_type === "AUCTION" ? "Auction · " : ""}
                   {listing.seller_name} · {listing.fishery_name} ·{" "}
                   {listing.stock_name}
                 </p>
@@ -79,8 +80,8 @@ export default async function AdminListingsPage() {
         <ul className="mt-3 space-y-2 text-sm text-ink-muted">
           {others.map((listing) => (
             <li key={listing.id}>
-              {listing.status} · {listing.seller_name} · {listing.fishery_name} ·{" "}
-              {listing.quantity} {listing.unit_label}
+              {listing.status} · {listing.listing_type} · {listing.seller_name}{" "}
+              · {listing.fishery_name} · {listing.quantity} {listing.unit_label}
             </li>
           ))}
         </ul>

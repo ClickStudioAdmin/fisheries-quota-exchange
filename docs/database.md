@@ -20,11 +20,12 @@ Current tables:
 | `fishery_rules` | 5 | Configurable rules. |
 | `quota_holdings` | 5 | Organisation quota balances. |
 | `quota_ledger` | 5 | Immutable quota events. |
-| `listings` | 6 | Fixed-price sale or lease offers. |
-| `orders` | 7 | Simulated purchase of a listing. |
+| `listings` | 6–8 | Fixed-price or auction offers. |
+| `orders` | 7 | Simulated purchase of a listing or winning auction. |
 | `quota_reservations` | 7 | Active reserved quantity against a holding. |
 | `transactions` | 7 | Simulated settlement record. No live payment. |
 | `audit_events` | 7 | Order workflow audit. |
+| `bids` | 8 | Auction bids. `created_at` is server time. |
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`.
 
@@ -32,4 +33,4 @@ Current tables:
 
 `quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`.
 
-See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md) and [phase-7.md](phase-7.md).
+See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).
