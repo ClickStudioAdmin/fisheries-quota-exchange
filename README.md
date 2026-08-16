@@ -6,11 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 5 — Fisheries and quota data**
+**Phase 6 — Listings**
 
-Configurable fisheries, quota types (not only weight), holdings, and an immutable quota ledger. No marketplace listings.
+Fixed-price sale or lease listings, admin approval, and a public marketplace view. No checkout or auctions.
 
-See [docs/phase-5.md](docs/phase-5.md).
+See [docs/phase-6.md](docs/phase-6.md).
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -33,7 +33,7 @@ Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 5 acceptance is that a platform admin can create a test fishery and a test quota holding, and the quota ledger records the initial allocation.
+Phase 6 acceptance is that a seller can create a listing, a platform admin can approve it, and a buyer can see it on `/marketplace`.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
@@ -52,4 +52,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-5.md](docs/phase-5.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
+See [docs/phase-6.md](docs/phase-6.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

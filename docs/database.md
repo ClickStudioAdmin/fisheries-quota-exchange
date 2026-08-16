@@ -20,6 +20,7 @@ Current tables:
 | `fishery_rules` | 5 | Configurable rules. |
 | `quota_holdings` | 5 | Organisation quota balances. |
 | `quota_ledger` | 5 | Immutable quota events. |
+| `listings` | 6 | Fixed-price sale or lease offers. |
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`.
 
@@ -27,4 +28,4 @@ Current tables:
 
 `quota_ledger` is immutable. Corrections later require adjustment or reversal rows.
 
-See [phase-4.md](phase-4.md) and [phase-5.md](phase-5.md).
+See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md) and [phase-6.md](phase-6.md).

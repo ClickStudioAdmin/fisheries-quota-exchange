@@ -4,7 +4,7 @@ Master development specification, version 3.0.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 5 — Fisheries and quota data.
+Current implementation phase: Phase 6 — Listings.
 
 ## Development philosophy
 

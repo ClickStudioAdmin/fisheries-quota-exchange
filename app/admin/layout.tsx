@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/reference", label: "Reference data" },
   { href: "/admin/fisheries", label: "Fisheries" },
   { href: "/admin/holdings", label: "Holdings" },
+  { href: "/admin/listings", label: "Listings" },
 ];
 
 export default async function AdminLayout({

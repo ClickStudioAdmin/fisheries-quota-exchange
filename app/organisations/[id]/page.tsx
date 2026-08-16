@@ -15,6 +15,9 @@ import {
   listHoldingsForOrganisation,
   listLedger,
 } from "@/lib/fisheries/queries";
+import { listOrganisationListings } from "@/lib/listings/queries";
+import { formatAud } from "@/lib/listings/types";
+import { cancelListingAction } from "@/lib/listings/actions";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -60,6 +63,8 @@ export default async function OrganisationPage({
       entries: await listLedger(holding.id),
     })),
   );
+  const listings = await listOrganisationListings(organisationId);
+  const canList = canEditOrganisation(result.role);
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
@@ -124,10 +129,66 @@ export default async function OrganisationPage({
                       </li>
                     ))}
                   </ul>
+                  {canList ? (
+                    <p className="mt-3">
+                      <Link
+                        href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
+                        className="text-sm underline"
+                      >
+                        Create listing
+                      </Link>
+                    </p>
+                  ) : null}
                 </div>
               );
             })}
           </div>
+        )}
+      </section>
+      <section>
+        <h2 className="text-xl font-semibold text-ink">Listings</h2>
+        {listings.length === 0 ? (
+          <p className="mt-2 text-sm text-ink-muted">
+            No listings yet. Owners and admins can list quota from a holding.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line border border-line">
+            {listings.map((listing) => (
+              <li
+                key={listing.id}
+                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-ink">
+                    {listing.fishery_name} · {listing.offering} ·{" "}
+                    {listing.quantity} {listing.unit_label} ·{" "}
+                    {formatAud(listing.unit_price_aud)}
+                  </p>
+                  <p className="text-sm text-ink-muted">{listing.status}</p>
+                </div>
+                <div className="flex gap-3 text-sm">
+                  <Link href={`/marketplace/${listing.id}`} className="underline">
+                    View
+                  </Link>
+                  {canList &&
+                  (listing.status === "PENDING_APPROVAL" ||
+                    listing.status === "PUBLISHED") ? (
+                    <form action={cancelListingAction}>
+                      <input type="hidden" name="listing_id" value={listing.id} />
+                      <input
+                        type="hidden"
+                        name="next"
+                        value={`/organisations/${organisationId}`}
+                      />
+                      <button type="submit" className="underline">
+                        Cancel
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
       {canInvite ? (
