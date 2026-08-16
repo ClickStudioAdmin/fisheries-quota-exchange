@@ -270,10 +270,7 @@ export async function removeMemberAction(
     .maybeSingle();
 
   if (remaining) {
-    return {
-      error:
-        "Could not remove that person. The last owner of an account cannot be removed.",
-    };
+    return { error: "Could not remove that person." };
   }
 
   revalidatePath("/dashboard/members");

@@ -35,6 +35,8 @@ Registration collects the user’s name plus legal name, trading name, and ABN. 
 
 The last owner cannot be removed. Membership is keyed by email and matches the signed-in Auth user.
 
+`prevent_last_owner_removal` only blocks deleting or demoting the last owner. Admins and members can be removed. Fixed in `supabase/migrations/20260817110000_fix_member_delete_trigger.sql`.
+
 Changing email on the profile updates Auth. After the new email is confirmed (if confirmation is on), a database trigger updates `organisation_users.email` so membership still matches.
 
 Migration: `supabase/migrations/20260817100000_sync_membership_email.sql`
