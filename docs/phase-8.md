@@ -22,12 +22,12 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 
 | Path | Purpose |
 | --- | --- |
-| `/marketplace` | Fixed-price listings and auctions |
+| `/marketplace` | Fixed-price listings and auctions, filterable by listing type and sale/lease |
 | `/marketplace/[id]` | Fixed-price listing detail and purchase |
 | `/auctions` | Redirects to Marketplace |
 | `/auctions/[id]` | Bid, history, close |
 | `/fisheries` | Public list of fisheries |
-| `/fisheries/[id]` | Open listings, auctions, and sale-price history |
+| `/fisheries/[id]` | Sales and leases (each with fixed-price listings and auctions) plus sale-price history |
 | `/dashboard/holdings` | Create an auction from a holding. Holding value uses the latest sale. |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |

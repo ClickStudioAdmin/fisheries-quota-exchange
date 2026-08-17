@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MarketplaceListingCard } from "@/components/listing-card";
+import { MarketplaceList } from "@/components/marketplace-list";
 import { PageIntro } from "@/components/page-intro";
 import { listMarketplaceListings } from "@/lib/listings/queries";
 
@@ -23,11 +23,7 @@ export default async function MarketplacePage() {
         {listings.length === 0 ? (
           <p className="text-ink-muted">No published listings at the moment.</p>
         ) : (
-          <div className="space-y-3">
-            {listings.map((listing) => (
-              <MarketplaceListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          <MarketplaceList listings={listings} />
         )}
       </div>
     </>

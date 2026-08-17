@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MarketplaceListingCard } from "@/components/listing-card";
+import { FisheryOfferingSection } from "@/components/listing-card";
 import { PriceChart } from "@/components/price-chart";
 import { getFishery, listJurisdictions } from "@/lib/fisheries/queries";
 import { quantityTypeLabel } from "@/lib/fisheries/types";
@@ -134,20 +134,14 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </section>
 
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold text-ink">Current listings</h2>
-        <div className="mt-4 space-y-3">
-          {offers.length === 0 ? (
-            <p className="text-sm text-ink-muted">
-              No published listings at the moment.
-            </p>
-          ) : (
-            offers.map((listing) => (
-              <MarketplaceListingCard key={listing.id} listing={listing} />
-            ))
-          )}
-        </div>
-      </section>
+      <FisheryOfferingSection
+        title="Sales"
+        listings={offers.filter((listing) => listing.offering === "SALE")}
+      />
+      <FisheryOfferingSection
+        title="Leases"
+        listings={offers.filter((listing) => listing.offering === "LEASE")}
+      />
     </div>
   );
 }
