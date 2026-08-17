@@ -55,7 +55,7 @@ export default async function AdminUsersPage() {
             "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
         }}
         columns={[
-          { key: "name", header: "Name", sortable: true, details: true },
+          { key: "name", header: "Name", sortable: true, details: true, nowrap: true },
           { key: "email", header: "Email", sortable: true },
           {
             key: "listings",

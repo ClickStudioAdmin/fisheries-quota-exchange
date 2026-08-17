@@ -31,6 +31,7 @@ export type DataTableColumn = {
   filterOptions?: { value: string; label: string }[];
   align?: "left" | "right";
   details?: boolean;
+  nowrap?: boolean;
 };
 
 export type DataTableDetail = {
@@ -86,7 +87,9 @@ const actionFilterClassName =
 const actionFilterActiveClassName =
   "border border-amber-800 bg-amber-800 px-3 py-2 text-sm font-medium text-amber-50";
 
-function compareValues(a: string | number | undefined, b: string | number | undefined) {
+function columnWidthClass(column: DataTableColumn) {
+  return column.nowrap ? "min-w-[16rem] whitespace-nowrap" : "";
+}
   return String(a ?? "").localeCompare(String(b ?? ""), "en", {
     numeric: true,
     sensitivity: "base",
@@ -576,7 +579,9 @@ export function DataTable({
                           ? "descending"
                           : "none"
                     }
-                    className={`whitespace-nowrap px-3 py-2 font-medium ${aligned}`}
+                    className={`whitespace-nowrap px-3 py-2 font-medium ${aligned} ${
+                      column.nowrap ? "min-w-[16rem]" : ""
+                    }`.trim()}
                   >
                     {column.sortable ? (
                       <button
@@ -660,7 +665,7 @@ export function DataTable({
                           key={column.key}
                           className={`px-3 py-3 text-ink ${
                             column.align === "right" ? "text-right" : ""
-                          }`}
+                          } ${columnWidthClass(column)}`.trim()}
                         >
                           {cellContent(row, column)}
                         </td>
