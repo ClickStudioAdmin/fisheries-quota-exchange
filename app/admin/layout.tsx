@@ -1,16 +1,24 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AreaShell } from "@/components/area-shell";
+import type { SideNavItem } from "@/components/side-nav";
 import { canSeeAdmin, isPlatformAdmin } from "@/lib/admin/access";
 import { getUser } from "@/lib/supabase/server";
 
-const links = [
+const links: SideNavItem[] = [
   { href: "/admin", label: "Overview" },
-  { href: "/admin/reference", label: "Reference data", match: "prefix" as const },
-  { href: "/admin/fisheries", label: "Fisheries", match: "prefix" as const },
-  { href: "/admin/holdings", label: "Holdings", match: "prefix" as const },
-  { href: "/admin/listings", label: "Listings", match: "prefix" as const },
-  { href: "/admin/orders", label: "Orders", match: "prefix" as const },
+  {
+    label: "Reference data",
+    children: [
+      { href: "/admin/reference/jurisdictions", label: "Jurisdictions" },
+      { href: "/admin/reference/authorities", label: "Authorities" },
+      { href: "/admin/reference/species", label: "Species" },
+      { href: "/admin/reference/fisheries", label: "Fisheries", match: "prefix" },
+    ],
+  },
+  { href: "/admin/holdings", label: "Holdings", match: "prefix" },
+  { href: "/admin/listings", label: "Listings", match: "prefix" },
+  { href: "/admin/orders", label: "Orders", match: "prefix" },
 ];
 
 export default async function AdminLayout({

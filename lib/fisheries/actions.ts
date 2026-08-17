@@ -131,7 +131,7 @@ export async function createFisheryAction(
     .single();
 
   if (error) return { error: error.message };
-  redirect(`/admin/fisheries/${data.id}`);
+  redirect(`/admin/reference/fisheries/${data.id}`);
 }
 
 export async function createStockAction(

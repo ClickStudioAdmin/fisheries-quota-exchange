@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-export type SideNavItem = {
+export type SideNavLink = {
   href: string;
   label: string;
   match?: "exact" | "prefix";
@@ -12,10 +13,21 @@ export type SideNavItem = {
   alsoMatch?: string[];
 };
 
+export type SideNavGroup = {
+  label: string;
+  children: SideNavLink[];
+};
+
+export type SideNavItem = SideNavLink | SideNavGroup;
+
 type SideNavProps = {
   title: string;
   items: SideNavItem[];
 };
+
+function isNavGroup(item: SideNavItem): item is SideNavGroup {
+  return "children" in item;
+}
 
 function accountFromLocation(
   pathname: string,
@@ -65,7 +77,7 @@ function withAccount(href: string, accountParam: string | null) {
 function isActive(
   pathname: string,
   accountParam: string | null,
-  item: SideNavItem,
+  item: SideNavLink,
 ) {
   if (item.accountId != null) {
     if (accountParam) {
@@ -94,6 +106,100 @@ function isActive(
   return pathname === item.href;
 }
 
+function itemHref(
+  item: SideNavLink,
+  pathname: string,
+  accountParam: string | null,
+) {
+  if (item.accountId) {
+    return `${dashboardSectionPath(pathname)}?account=${item.accountId}`;
+  }
+
+  return withAccount(item.href, accountParam);
+}
+
+function navLinkClassName(active: boolean) {
+  return active
+    ? "block bg-paper px-3 py-2 font-medium text-ink"
+    : "block px-3 py-2 text-ink-muted hover:bg-paper hover:text-ink";
+}
+
+function NavLink({
+  item,
+  pathname,
+  accountParam,
+}: {
+  item: SideNavLink;
+  pathname: string;
+  accountParam: string | null;
+}) {
+  const active = isActive(pathname, accountParam, item);
+
+  return (
+    <Link
+      href={itemHref(item, pathname, accountParam)}
+      className={navLinkClassName(active)}
+      aria-current={active ? "page" : undefined}
+    >
+      {item.label}
+    </Link>
+  );
+}
+
+function NavGroup({
+  item,
+  pathname,
+  accountParam,
+}: {
+  item: SideNavGroup;
+  pathname: string;
+  accountParam: string | null;
+}) {
+  const childActive = item.children.some((child) =>
+    isActive(pathname, accountParam, child),
+  );
+  const [open, setOpen] = useState(childActive);
+
+  useEffect(() => {
+    if (childActive) {
+      setOpen(true);
+    }
+  }, [childActive]);
+
+  return (
+    <li>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className={
+          childActive
+            ? "flex w-full items-center justify-between px-3 py-2 text-left font-medium text-ink"
+            : "flex w-full items-center justify-between px-3 py-2 text-left text-ink-muted hover:bg-paper hover:text-ink"
+        }
+      >
+        <span>{item.label}</span>
+        <span aria-hidden className="text-xs">
+          {open ? "▾" : "▸"}
+        </span>
+      </button>
+      {open ? (
+        <ul className="mt-1 space-y-1 border-l border-line ml-3 pl-1">
+          {item.children.map((child) => (
+            <li key={`${child.href}-${child.label}`}>
+              <NavLink
+                item={child}
+                pathname={pathname}
+                accountParam={accountParam}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </li>
+  );
+}
+
 export function SideNav({ title, items }: SideNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -109,24 +215,24 @@ export function SideNav({ title, items }: SideNavProps) {
       </p>
       <ul className="mt-3 space-y-1 text-sm">
         {items.map((item) => {
-          const active = isActive(pathname, accountParam, item);
-          const href = item.accountId
-            ? `${dashboardSectionPath(pathname)}?account=${item.accountId}`
-            : withAccount(item.href, accountParam);
+          if (isNavGroup(item)) {
+            return (
+              <NavGroup
+                key={item.label}
+                item={item}
+                pathname={pathname}
+                accountParam={accountParam}
+              />
+            );
+          }
 
           return (
             <li key={`${item.href}-${item.label}`}>
-              <Link
-                href={href}
-                className={
-                  active
-                    ? "block bg-paper px-3 py-2 font-medium text-ink"
-                    : "block px-3 py-2 text-ink-muted hover:bg-paper hover:text-ink"
-                }
-                aria-current={active ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
+              <NavLink
+                item={item}
+                pathname={pathname}
+                accountParam={accountParam}
+              />
             </li>
           );
         })}
