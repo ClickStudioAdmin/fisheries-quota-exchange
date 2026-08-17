@@ -13,7 +13,7 @@ import {
   listMarketSales,
   listOpenListingsForFishery,
 } from "@/lib/market/queries";
-import { averageRecentUnitPrice, type MarketSale } from "@/lib/market/types";
+import { averageRecentUnitPrice } from "@/lib/market/types";
 
 type FisheryPageProps = {
   params: Promise<{ id: string }>;
@@ -62,10 +62,6 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
   const lastLease = leases[leases.length - 1];
   const averageSale = averageRecentUnitPrice(sales);
   const averageLease = averageRecentUnitPrice(leases);
-  const volume = sales.reduce(
-    (sum: number, sale: MarketSale) => sum + Number(sale.quantity),
-    0,
-  );
 
   return (
     <div className={`${pageWidthClassName} py-12 sm:py-16`}>
@@ -87,9 +83,9 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </div>
 
-      <dl className="mt-8 grid grid-cols-5 gap-3 text-sm">
+      <dl className="mt-8 grid grid-cols-4 gap-3 text-sm">
         <div className={statClassName}>
-          <dt className="font-medium text-ink">Last sale</dt>
+          <dt className="font-medium text-ink">Last Sale</dt>
           <dd className="mt-1 text-ink">
             {lastSale
               ? `${formatAud(lastSale.unit_price_aud)} / ${unit}`
@@ -102,7 +98,14 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
           ) : null}
         </div>
         <div className={statClassName}>
-          <dt className="font-medium text-ink">Last lease</dt>
+          <dt className="font-medium text-ink">Average Sale</dt>
+          <dd className="mt-1 text-ink">
+            {averageSale != null ? `${formatAud(averageSale)} / ${unit}` : "—"}
+          </dd>
+          <dd className="mt-1 text-ink-muted">Last 5</dd>
+        </div>
+        <div className={statClassName}>
+          <dt className="font-medium text-ink">Last Lease</dt>
           <dd className="mt-1 text-ink">
             {lastLease
               ? `${formatAud(lastLease.unit_price_aud)} / ${unit}`
@@ -115,28 +118,11 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
           ) : null}
         </div>
         <div className={statClassName}>
-          <dt className="font-medium text-ink">Average sale</dt>
-          <dd className="mt-1 text-ink">
-            {averageSale != null ? `${formatAud(averageSale)} / ${unit}` : "—"}
-          </dd>
-          <dd className="mt-1 text-ink-muted">Last 5</dd>
-        </div>
-        <div className={statClassName}>
-          <dt className="font-medium text-ink">Average lease</dt>
+          <dt className="font-medium text-ink">Average Lease</dt>
           <dd className="mt-1 text-ink">
             {averageLease != null ? `${formatAud(averageLease)} / ${unit}` : "—"}
           </dd>
           <dd className="mt-1 text-ink-muted">Last 5</dd>
-        </div>
-        <div className={statClassName}>
-          <dt className="font-medium text-ink">Volume traded</dt>
-          <dd className="mt-1 text-ink">
-            {sales.length === 0
-              ? "—"
-              : `${volume} ${unit} · ${sales.length} ${
-                  sales.length === 1 ? "sale" : "sales"
-                }`}
-          </dd>
         </div>
       </dl>
 
