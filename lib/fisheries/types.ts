@@ -8,21 +8,9 @@ export type Jurisdiction = {
   name: string;
 };
 
-export type Authority = {
-  id: number;
-  jurisdiction_id: number;
-  name: string;
-};
-
-export type Species = {
-  id: number;
-  common_name: string;
-  scientific_name: string | null;
-};
-
 export type Fishery = {
   id: number;
-  authority_id: number;
+  jurisdiction_id: number;
   name: string;
   code: string | null;
 };
@@ -30,7 +18,6 @@ export type Fishery = {
 export type Stock = {
   id: number;
   fishery_id: number;
-  species_id: number;
   name: string;
 };
 

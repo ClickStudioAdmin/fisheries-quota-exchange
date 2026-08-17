@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
-  Authority,
   Fishery,
   FisheryRule,
   Jurisdiction,
@@ -8,7 +7,6 @@ import type {
   QuotaLedgerEntry,
   QuotaType,
   Season,
-  Species,
   Stock,
 } from "@/lib/fisheries/types";
 
@@ -22,32 +20,12 @@ export async function listJurisdictions() {
   return (data ?? []) as Jurisdiction[];
 }
 
-export async function listAuthorities() {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("authorities")
-    .select("id, jurisdiction_id, name")
-    .order("name");
-  return (data ?? []) as Authority[];
-}
-
-export async function listSpecies() {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("species")
-    .select("id, common_name, scientific_name")
-    .order("common_name");
-  return (data ?? []) as Species[];
-}
-
 export async function listFisheries() {
   const supabase = await createClient();
   if (!supabase) return [];
   const { data } = await supabase
     .from("fisheries")
-    .select("id, authority_id, name, code")
+    .select("id, jurisdiction_id, name, code")
     .order("name");
   return (data ?? []) as Fishery[];
 }
@@ -57,7 +35,7 @@ export async function getFishery(id: number) {
   if (!supabase) return null;
   const { data } = await supabase
     .from("fisheries")
-    .select("id, authority_id, name, code")
+    .select("id, jurisdiction_id, name, code")
     .eq("id", id)
     .maybeSingle();
   return (data as Fishery | null) ?? null;
@@ -68,7 +46,7 @@ export async function listStocks(fisheryId: number) {
   if (!supabase) return [];
   const { data } = await supabase
     .from("stocks")
-    .select("id, fishery_id, species_id, name")
+    .select("id, fishery_id, name")
     .eq("fishery_id", fisheryId)
     .order("name");
   return (data ?? []) as Stock[];
@@ -112,7 +90,7 @@ export async function listAllStocks() {
   if (!supabase) return [];
   const { data } = await supabase
     .from("stocks")
-    .select("id, fishery_id, species_id, name")
+    .select("id, fishery_id, name")
     .order("name");
   return (data ?? []) as Stock[];
 }

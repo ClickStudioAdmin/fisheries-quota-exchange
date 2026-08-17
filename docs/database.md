@@ -11,10 +11,8 @@ Current tables:
 | `organisation_users` | 1 | Email membership and role. |
 | `platform_admins` | 5 | Platform administrators. |
 | `jurisdictions` | 5 | Australian jurisdictions. |
-| `authorities` | 5 | Fisheries authorities. |
-| `fisheries` | 5 | Managed fisheries. |
-| `species` | 5 | Species. |
-| `stocks` | 5 | Species/stock within a fishery. |
+| `fisheries` | 5 | Managed fisheries under a jurisdiction. |
+| `stocks` | 5 | Named stock or area within a fishery. |
 | `seasons` | 5 | Fishery seasons. |
 | `quota_types` | 5 | Measurement kind and unit label. |
 | `fishery_rules` | 5 | Configurable rules. |

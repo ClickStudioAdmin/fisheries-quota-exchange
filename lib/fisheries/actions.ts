@@ -63,48 +63,6 @@ export async function createJurisdictionAction(
   return { message: "Jurisdiction created." };
 }
 
-export async function createAuthorityAction(
-  _prev: AdminFormState,
-  formData: FormData,
-): Promise<AdminFormState> {
-  const admin = await requireAdmin();
-  if (admin.error || !admin.supabase) return { error: admin.error };
-
-  const name = read(formData, "name");
-  const jurisdictionId = Number(formData.get("jurisdiction_id"));
-
-  if (!name || !Number.isInteger(jurisdictionId)) {
-    return { error: "Jurisdiction and name are required." };
-  }
-
-  const { error } = await admin.supabase.from("authorities").insert({
-    name,
-    jurisdiction_id: jurisdictionId,
-  });
-  if (error) return { error: error.message };
-  return { message: "Authority created." };
-}
-
-export async function createSpeciesAction(
-  _prev: AdminFormState,
-  formData: FormData,
-): Promise<AdminFormState> {
-  const admin = await requireAdmin();
-  if (admin.error || !admin.supabase) return { error: admin.error };
-
-  const commonName = read(formData, "common_name");
-  const scientificName = read(formData, "scientific_name");
-
-  if (!commonName) return { error: "Common name is required." };
-
-  const { error } = await admin.supabase.from("species").insert({
-    common_name: commonName,
-    scientific_name: scientificName || null,
-  });
-  if (error) return { error: error.message };
-  return { message: "Species created." };
-}
-
 export async function createFisheryAction(
   _prev: AdminFormState,
   formData: FormData,
@@ -114,10 +72,10 @@ export async function createFisheryAction(
 
   const name = read(formData, "name");
   const code = read(formData, "code");
-  const authorityId = Number(formData.get("authority_id"));
+  const jurisdictionId = Number(formData.get("jurisdiction_id"));
 
-  if (!name || !Number.isInteger(authorityId)) {
-    return { error: "Authority and name are required." };
+  if (!name || !Number.isInteger(jurisdictionId)) {
+    return { error: "Jurisdiction and name are required." };
   }
 
   const { data, error } = await admin.supabase
@@ -125,7 +83,7 @@ export async function createFisheryAction(
     .insert({
       name,
       code: code || null,
-      authority_id: authorityId,
+      jurisdiction_id: jurisdictionId,
     })
     .select("id")
     .single();
@@ -142,16 +100,14 @@ export async function createStockAction(
   if (admin.error || !admin.supabase) return { error: admin.error };
 
   const fisheryId = Number(formData.get("fishery_id"));
-  const speciesId = Number(formData.get("species_id"));
   const name = read(formData, "name");
 
-  if (!Number.isInteger(fisheryId) || !Number.isInteger(speciesId) || !name) {
-    return { error: "Species and stock name are required." };
+  if (!Number.isInteger(fisheryId) || !name) {
+    return { error: "Stock name is required." };
   }
 
   const { error } = await admin.supabase.from("stocks").insert({
     fishery_id: fisheryId,
-    species_id: speciesId,
     name,
   });
   if (error) return { error: error.message };

@@ -4,7 +4,7 @@ import { AdminCreateForm } from "@/components/admin-create-form";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createFisheryAction } from "@/lib/fisheries/actions";
-import { listAuthorities, listFisheries } from "@/lib/fisheries/queries";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 
 export const metadata = {
   title: "Fisheries",
@@ -15,7 +15,7 @@ export default async function FisheriesAdminPage() {
     redirect("/admin");
   }
 
-  const authorities = await listAuthorities();
+  const jurisdictions = await listJurisdictions();
   const fisheries = await listFisheries();
 
   return (
@@ -25,34 +25,37 @@ export default async function FisheriesAdminPage() {
       </h1>
       <DataTable
         caption="Fisheries"
-        empty="No fisheries yet. Create an authority first if needed."
+        empty="No fisheries yet."
         searchPlaceholder="Filter fisheries…"
         defaultSort={{ key: "name", direction: "asc" }}
         columns={[
           { key: "name", header: "Name", sortable: true },
           { key: "code", header: "Code", sortable: true },
           {
-            key: "authority",
-            header: "Authority",
+            key: "jurisdiction",
+            header: "Jurisdiction",
             sortable: true,
             filter: "select",
           },
         ]}
         rows={fisheries.map((fishery) => {
-          const authority = authorities.find(
-            (item) => item.id === fishery.authority_id,
+          const jurisdiction = jurisdictions.find(
+            (item) => item.id === fishery.jurisdiction_id,
           );
+          const jurisdictionLabel = jurisdiction
+            ? `${jurisdiction.code} — ${jurisdiction.name}`
+            : "";
 
           return {
             id: fishery.id,
             values: {
               name: fishery.name,
               code: fishery.code ?? "",
-              authority: authority?.name ?? "",
+              jurisdiction: jurisdictionLabel,
             },
             display: {
               code: fishery.code ?? "—",
-              authority: authority?.name ?? "—",
+              jurisdiction: jurisdictionLabel || "—",
             },
           };
         })}
@@ -75,7 +78,7 @@ export default async function FisheriesAdminPage() {
       <div className="max-w-md">
         <h2 className="text-xl font-semibold text-ink">Create fishery</h2>
         <p className="mt-2 text-sm text-ink-muted">
-          Create an authority first if the list is empty.
+          Create a jurisdiction first if the list is empty.
         </p>
         <div className="mt-4">
           <AdminCreateForm
@@ -83,13 +86,13 @@ export default async function FisheriesAdminPage() {
             submitLabel="Create fishery"
             fields={[
               {
-                name: "authority_id",
-                label: "Authority",
+                name: "jurisdiction_id",
+                label: "Jurisdiction",
                 type: "select",
                 required: true,
-                options: authorities.map((item) => ({
+                options: jurisdictions.map((item) => ({
                   value: String(item.id),
-                  label: item.name,
+                  label: `${item.code} — ${item.name}`,
                 })),
               },
               { name: "name", label: "Name", required: true },

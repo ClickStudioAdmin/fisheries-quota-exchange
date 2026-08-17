@@ -13,9 +13,9 @@ import {
 import {
   getFishery,
   listFisheryRules,
+  listJurisdictions,
   listQuotaTypes,
   listSeasons,
-  listSpecies,
   listStocks,
 } from "@/lib/fisheries/queries";
 import { MEASUREMENT_KINDS } from "@/lib/fisheries/types";
@@ -46,13 +46,17 @@ export default async function FisheryAdminPage({
     notFound();
   }
 
-  const [species, stocks, seasons, quotaTypes, rules] = await Promise.all([
-    listSpecies(),
+  const [jurisdictions, stocks, seasons, quotaTypes, rules] = await Promise.all([
+    listJurisdictions(),
     listStocks(fisheryId),
     listSeasons(fisheryId),
     listQuotaTypes(fisheryId),
     listFisheryRules(fisheryId),
   ]);
+
+  const jurisdiction = jurisdictions.find(
+    (item) => item.id === fishery.jurisdiction_id,
+  );
 
   return (
     <div className="space-y-12">
@@ -66,8 +70,11 @@ export default async function FisheryAdminPage({
           {fishery.name}
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Rules are configurable. Quota types choose WEIGHT, UNITS, EFFORT or
-          OTHER — do not assume kilograms.
+          {jurisdiction
+            ? `${jurisdiction.code} — ${jurisdiction.name}`
+            : "Jurisdiction not found"}
+          . Quota types choose WEIGHT, UNITS, EFFORT or OTHER — do not assume
+          kilograms.
         </p>
       </div>
       <section className="space-y-6">
@@ -79,26 +86,13 @@ export default async function FisheryAdminPage({
           defaultSort={{ key: "name", direction: "asc" }}
           columns={[
             { key: "name", header: "Name", sortable: true },
-            {
-              key: "species",
-              header: "Species",
-              sortable: true,
-              filter: "select",
-            },
           ]}
-          rows={stocks.map((item) => {
-            const row = species.find((entry) => entry.id === item.species_id);
-            return {
-              id: item.id,
-              values: {
-                name: item.name,
-                species: row?.common_name ?? "",
-              },
-              display: {
-                species: row?.common_name ?? "—",
-              },
-            };
-          })}
+          rows={stocks.map((item) => ({
+            id: item.id,
+            values: {
+              name: item.name,
+            },
+          }))}
         />
         <div className="max-w-md">
           <AdminCreateForm
@@ -106,16 +100,6 @@ export default async function FisheryAdminPage({
             hidden={{ fishery_id: fisheryId }}
             submitLabel="Add stock"
             fields={[
-              {
-                name: "species_id",
-                label: "Species",
-                type: "select",
-                required: true,
-                options: species.map((item) => ({
-                  value: String(item.id),
-                  label: item.common_name,
-                })),
-              },
               { name: "name", label: "Stock name", required: true },
             ]}
           />

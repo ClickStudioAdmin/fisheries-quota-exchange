@@ -7,18 +7,16 @@ import { getUser } from "@/lib/supabase/server";
 
 const links: SideNavItem[] = [
   { href: "/admin", label: "Overview" },
+  { href: "/admin/holdings", label: "Holdings", match: "prefix" },
+  { href: "/admin/listings", label: "Listings", match: "prefix" },
+  { href: "/admin/orders", label: "Orders", match: "prefix" },
   {
     label: "Reference data",
     children: [
       { href: "/admin/reference/jurisdictions", label: "Jurisdictions" },
-      { href: "/admin/reference/authorities", label: "Authorities" },
-      { href: "/admin/reference/species", label: "Species" },
       { href: "/admin/reference/fisheries", label: "Fisheries", match: "prefix" },
     ],
   },
-  { href: "/admin/holdings", label: "Holdings", match: "prefix" },
-  { href: "/admin/listings", label: "Listings", match: "prefix" },
-  { href: "/admin/orders", label: "Orders", match: "prefix" },
 ];
 
 export default async function AdminLayout({
