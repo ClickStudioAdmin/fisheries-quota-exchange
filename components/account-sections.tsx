@@ -307,13 +307,13 @@ export async function AccountHoldingsSection({
                       minQuantity={String(listed)}
                     />
                     {verified && available <= 0 ? (
-                      <p className="text-sm text-ink-muted">
+                      <p className="max-w-xs whitespace-normal text-sm text-ink-muted">
                         All of this holding is listed. Cancel a listing to list
                         more, or increase the holding quantity.
                       </p>
                     ) : null}
                     {!verified ? (
-                      <p className="text-sm text-ink-muted">
+                      <p className="max-w-xs whitespace-normal text-sm text-ink-muted">
                         Waiting for admin verification before listing.
                       </p>
                     ) : null}
@@ -448,6 +448,8 @@ export async function AccountListingsSection({
                     ? `/auctions/${listing.id}`
                     : `/marketplace/${listing.id}`
                 }
+                target="_blank"
+                rel="noopener noreferrer"
                 className={tableLinkClassName}
               >
                 View
@@ -586,7 +588,12 @@ export async function AccountOrdersSection({
             key={order.id}
             id={order.id}
             links={
-              <Link href={`/orders/${order.id}`} className={tableLinkClassName}>
+              <Link
+                href={`/orders/${order.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
                 View
               </Link>
             }

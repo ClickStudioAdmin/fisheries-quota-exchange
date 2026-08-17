@@ -3,6 +3,7 @@
 import {
   Children,
   Fragment,
+  cloneElement,
   isValidElement,
   useEffect,
   useId,
@@ -292,6 +293,27 @@ function hasNode(node: ReactNode): boolean {
   return true;
 }
 
+function openLinksInNewTab(node: ReactNode): ReactNode {
+  return Children.map(node, (child) => {
+    if (!isValidElement(child)) {
+      return child;
+    }
+
+    const props = child.props as { children?: ReactNode; href?: unknown };
+    const children = openLinksInNewTab(props.children);
+
+    if (child.type === "a" || props.href != null) {
+      return cloneElement(child, {
+        target: "_blank",
+        rel: "noopener noreferrer",
+        children,
+      } as never);
+    }
+
+    return cloneElement(child, { children } as never);
+  });
+}
+
 function collectExtras(children: ReactNode) {
   const extras = new Map<string, ReactElement<DataTableRowExtrasProps>>();
 
@@ -332,14 +354,14 @@ function extrasColumns(extras: Map<string, ReactElement<DataTableRowExtrasProps>
 }
 
 export function TableActions({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col items-start gap-2">{children}</div>;
+  return <div className="flex flex-row flex-wrap items-center gap-2">{children}</div>;
 }
 
 export function TableActionRow({ children }: { children: ReactNode }) {
-  return <div className="flex flex-wrap items-center gap-2">{children}</div>;
+  return <div className="flex flex-nowrap items-center gap-3">{children}</div>;
 }
 
-export const tableLinkClassName = "text-sm underline";
+export const tableLinkClassName = "whitespace-nowrap text-sm underline";
 
 export function DataTableRowExtras(_props: DataTableRowExtrasProps) {
   return null;
@@ -658,7 +680,7 @@ export function DataTable({
               {showLinks ? (
                 <th
                   scope="col"
-                  className="w-px whitespace-nowrap px-3 py-2 font-medium"
+                  className="whitespace-nowrap px-4 py-2 font-medium"
                 >
                   Links
                 </th>
@@ -666,7 +688,7 @@ export function DataTable({
               {showActions ? (
                 <th
                   scope="col"
-                  className="w-px whitespace-nowrap px-3 py-2 font-medium"
+                  className="whitespace-nowrap px-4 py-2 font-medium"
                 >
                   Actions
                 </th>
@@ -726,16 +748,18 @@ export function DataTable({
                         </td>
                       ))}
                       {showLinks ? (
-                        <td className="w-px whitespace-nowrap px-3 py-3">
+                        <td className="whitespace-nowrap px-4 py-3">
                           {hasNode(extraProps?.links) ? (
-                            <TableActions>{extraProps?.links}</TableActions>
+                            <TableActions>
+                              {openLinksInNewTab(extraProps?.links)}
+                            </TableActions>
                           ) : (
                             <span className="text-ink-muted">—</span>
                           )}
                         </td>
                       ) : null}
                       {showActions ? (
-                        <td className="w-px whitespace-nowrap px-3 py-3">
+                        <td className="whitespace-nowrap px-4 py-3">
                           <TableActions>
                             {extraProps?.expanded ? (
                               <button
