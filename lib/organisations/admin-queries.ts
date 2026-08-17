@@ -42,18 +42,22 @@ export async function listUsersForAdmin(): Promise<AdminUser[]> {
   const users = new Map<string, AdminUser>();
 
   for (const row of members ?? []) {
-    const email = row.email.toLowerCase();
+    const email = String(row.email).toLowerCase();
     const organisation = Array.isArray(row.organisations)
       ? row.organisations[0]
       : row.organisations;
-    const existing = users.get(email) ?? {
+    const legalName =
+      organisation && typeof organisation === "object" && "legal_name" in organisation
+        ? String(organisation.legal_name ?? "")
+        : "";
+    const existing: AdminUser = users.get(email) ?? {
       email,
       verified: verifiedEmails.has(email),
       accounts: [],
     };
 
-    if (organisation?.legal_name && !existing.accounts.includes(organisation.legal_name)) {
-      existing.accounts.push(organisation.legal_name);
+    if (legalName && !existing.accounts.includes(legalName)) {
+      existing.accounts.push(legalName);
     }
 
     users.set(email, existing);
