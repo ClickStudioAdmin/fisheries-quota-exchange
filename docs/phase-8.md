@@ -73,7 +73,7 @@ Open listings must be covered by the seller holding. `adjust_quota_holding` cann
 
 `stocks` and `seasons` are removed by `20260817260000_drop_stocks_and_seasons.sql`. Listings and orders no longer snapshot those names.
 
-Development fixture `20260817230000_seed_market_catalogue.sql` adds Australian fisheries by jurisdiction, seed organisations and users, holdings, live listings and auctions, and historical trades for fishery price charts. These are test records, not official market data.
+Development fixture `20260817230000_seed_market_catalogue.sql` adds Australian fisheries by jurisdiction, seed organisations and users, holdings, live listings and auctions, and historical trades for fishery price charts. These are test records, not official market data. `20260817340000_seed_operator_account_orders.sql` adds buy and sell orders for the development operator account when that membership exists.
 
 `insert_simulated_order` is shared with Phase 7 `create_order` and is not granted to clients.
 

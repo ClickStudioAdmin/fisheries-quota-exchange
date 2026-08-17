@@ -24,3 +24,13 @@ body {
   color: var(--color-ink);
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
+
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+::file-selector-button {
+  cursor: pointer;
+}

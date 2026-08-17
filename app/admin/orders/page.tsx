@@ -55,16 +55,7 @@ export default async function AdminOrdersPage() {
         defaultSort={{ key: "id", direction: "desc" }}
         selectable
         columns={[
-          {
-            key: "id",
-            header: "Order / fee",
-            sortable: true,
-            details: true,
-            stacked: [
-              { key: "id", label: "Order" },
-              { key: "fee", label: "Fee" },
-            ],
-          },
+          { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
           {
             key: "parties",
             header: "Buyer / seller",
@@ -90,7 +81,16 @@ export default async function AdminOrdersPage() {
             filter: "select",
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
-          { key: "amount", header: "Amount", sortable: true, align: "right" },
+          {
+            key: "amount",
+            header: "Amount",
+            sortable: true,
+            align: "right",
+            stacked: [
+              { key: "amount", label: "Amount" },
+              { key: "fee", label: "Fee" },
+            ],
+          },
           {
             key: "status",
             header: "Status",

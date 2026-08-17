@@ -323,16 +323,7 @@ export async function HoldingRecord({
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
-          {
-            key: "id",
-            header: "Order / fee",
-            sortable: true,
-            details: true,
-            stacked: [
-              { key: "id", label: "Order" },
-              { key: "fee", label: "Fee" },
-            ],
-          },
+          { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
           {
             key: "parties",
             header: "Buyer / seller",
@@ -358,7 +349,16 @@ export async function HoldingRecord({
             filter: "select",
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
-          { key: "amount", header: "Amount", sortable: true, align: "right" },
+          {
+            key: "amount",
+            header: "Amount",
+            sortable: true,
+            align: "right",
+            stacked: [
+              { key: "amount", label: "Amount" },
+              { key: "fee", label: "Fee" },
+            ],
+          },
           {
             key: "status",
             header: "Status",
