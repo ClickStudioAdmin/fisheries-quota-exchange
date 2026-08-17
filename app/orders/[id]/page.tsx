@@ -79,6 +79,13 @@ export default async function OrderPage({
             },
             { label: "Simulated amount", value: formatAud(order.amount_aud) },
             {
+              label: "Platform fee",
+              value:
+                Number(order.fee_percent) > 0
+                  ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                  : "None",
+            },
+            {
               label: "Quota reservation",
               value: reservation?.status ?? "None",
             },

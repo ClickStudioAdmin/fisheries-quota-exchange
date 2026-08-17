@@ -4,6 +4,7 @@ import { AuthCard } from "@/components/auth-card";
 import { RegisterForm } from "@/components/register-form";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { getUser } from "@/lib/supabase/server";
+import { registrationsAllowed } from "@/lib/settings/queries";
 
 export const metadata = {
   title: "Register",
@@ -17,6 +18,7 @@ export default async function RegisterPage() {
   }
 
   const configured = getSupabasePublicEnv() !== null;
+  const allowRegister = await registrationsAllowed();
 
   return (
     <AuthCard title="Create account">
@@ -25,7 +27,13 @@ export default async function RegisterPage() {
           Supabase public environment variables are not set for this deployment.
         </p>
       ) : null}
-      <RegisterForm />
+      {allowRegister ? (
+        <RegisterForm />
+      ) : (
+        <p className="text-sm text-ink-muted">
+          New registrations are closed. If you already have an account, log in.
+        </p>
+      )}
       <p className="mt-4 text-sm text-ink-muted">
         Already have an account?{" "}
         <Link href="/login" className="underline">

@@ -9,6 +9,7 @@ type AuthLinksProps = {
   showAdmin?: boolean;
   adminBadge?: number;
   dashboardBadge?: number;
+  showRegister?: boolean;
 };
 
 function NavTextLink({
@@ -44,6 +45,7 @@ export function AuthLinks({
   showAdmin = false,
   adminBadge = 0,
   dashboardBadge = 0,
+  showRegister = true,
 }: AuthLinksProps) {
   if (email) {
     return (
@@ -76,9 +78,11 @@ export function AuthLinks({
       <Link href="/login" className="text-paper/75 hover:text-paper">
         Log in
       </Link>
-      <Link href="/register" className="text-paper hover:text-paper">
-        Register
-      </Link>
+      {showRegister ? (
+        <Link href="/register" className="text-paper hover:text-paper">
+          Register
+        </Link>
+      ) : null}
     </div>
   );
 }

@@ -14,6 +14,8 @@ import {
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getUser } from "@/lib/supabase/server";
+import { getPlatformSettings } from "@/lib/settings/queries";
+import { platformFeeLabel } from "@/lib/settings/types";
 
 export const metadata = {
   title: "Listing",
@@ -41,9 +43,10 @@ export default async function ListingPage({
     redirect(`/auctions/${listing.id}`);
   }
 
-  const [user, fisheries] = await Promise.all([
+  const [user, fisheries, settings] = await Promise.all([
     getUser(),
     listFisheries(),
+    getPlatformSettings(),
   ]);
   const fishery = fisheries.find((item) => item.name === listing.fishery_name);
   const role = user ? await getMyRole(listing.organisation_id) : null;
@@ -60,6 +63,7 @@ export default async function ListingPage({
   const canPurchase =
     listing.status === "PUBLISHED" && !expired && buyerOrganisations.length > 0;
   const isSeller = role !== null;
+  const feeLabel = platformFeeLabel(settings, listing.offering);
 
   return (
     <div className={`${pageWidthClassName} py-12 sm:py-16`}>
@@ -96,6 +100,9 @@ export default async function ListingPage({
               label: "Price",
               value: `${formatAud(listing.unit_price_aud)} per ${listing.unit_label}`,
             },
+            ...(feeLabel
+              ? [{ label: "Platform fee", value: feeLabel }]
+              : []),
             {
               label: "Status",
               value: `${listingStatusLabel(listing.status)}${expired ? " · expired" : ""}`,

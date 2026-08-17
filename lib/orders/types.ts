@@ -19,6 +19,8 @@ export type Order = {
   quantity: string;
   unit_price_aud: string;
   amount_aud: string;
+  fee_percent: string;
+  fee_amount_aud: string;
   status: OrderStatus;
   seller_name: string;
   buyer_name: string;

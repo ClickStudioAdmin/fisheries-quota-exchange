@@ -36,6 +36,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/admin/users/[email]` | Admin-only user record: name, email, phone, accounts, holdings, listings, and orders |
 | `/admin/holdings` | Verify holdings created or changed by unverified users |
 | `/admin/holdings/[id]` | Admin-only holding record, including the immutable quota ledger |
+| `/admin/settings` | Platform settings: fees, registrations, and auto-approval |
 | `/admin/reference/fisheries/[id]` | Same fields as create: jurisdiction, name, code, quantity type, and logo |
 
 Admin **Admin** and account **Dashboard** header links, plus matching sidebar items, show a count badge when action is required: holdings pending verification, listings pending approval, orders awaiting compliance/transfer/settlement, and (for members) ended auctions that still need closing. User verification is optional and is not counted. Admin holdings, listings, and orders tables have a **Needs action** filter for those same rows.
@@ -55,6 +56,10 @@ Functions:
 - `admin_auth_people` (platform admin only; names and phones for the users table)
 - `admin_list_listings` (platform admin only; all listing rows, bypassing RLS)
 - `admin_action_counts` (platform admin only; pending holdings, listings, and orders)
+- `update_platform_settings` (platform admin only)
+- `registrations_allowed` (anon and authenticated)
+
+`platform_settings` is a singleton. Sale and lease fees are percentages recorded on simulated orders (`orders.fee_percent`, `orders.fee_amount_aud`). There is no live payment. `allow_registrations` blocks `/register` and `signUp` when off. `auto_approve_holdings` and `auto_approve_listings` apply only to `verified_users`. Defaults: registrations on, auto-approve holdings on, auto-approve listings off, fees 0.
 
 Public market data (no buyer or seller identity):
 

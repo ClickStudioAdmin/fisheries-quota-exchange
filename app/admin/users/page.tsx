@@ -47,10 +47,10 @@ export default async function AdminUsersPage() {
           Users
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Verified users can create and change holdings without waiting for
-          admin approval. Everyone else needs each holding verified before they
-          can list or auction quota. Select users to remove them from all
-          accounts.
+          Verified users can skip holding and listing approval when those
+          platform settings are on. Everyone else needs each holding verified
+          before they can list or auction quota. Select users to remove them
+          from all accounts.
         </p>
       </div>
       <DataTable

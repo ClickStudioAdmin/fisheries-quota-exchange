@@ -15,6 +15,8 @@ type CreateAuctionFormProps = {
   holdingId: number;
   maxQuantity: string;
   unitLabel: string;
+  autoPublish?: boolean;
+  feeNote?: string | null;
 };
 
 export function CreateAuctionForm({
@@ -22,6 +24,8 @@ export function CreateAuctionForm({
   holdingId,
   maxQuantity,
   unitLabel,
+  autoPublish = false,
+  feeNote = null,
 }: CreateAuctionFormProps) {
   const [state, formAction, pending] = useActionState(
     createAuctionAction,
@@ -127,8 +131,13 @@ export function CreateAuctionForm({
           className={fieldClassName}
         />
       </div>
+      {feeNote ? <p className="text-sm text-ink-muted">{feeNote}</p> : null}
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Submitting…" : "Submit auction for approval"}
+        {pending
+          ? "Submitting…"
+          : autoPublish
+            ? "Publish auction"
+            : "Submit auction for approval"}
       </button>
     </form>
   );

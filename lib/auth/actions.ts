@@ -111,6 +111,18 @@ export async function registerAction(
     return { error: "Supabase is not configured for this environment." };
   }
 
+  const { data: allowed, error: allowedError } = await supabase.rpc(
+    "registrations_allowed",
+  );
+
+  if (allowedError) {
+    return { error: allowedError.message };
+  }
+
+  if (allowed !== true) {
+    return { error: "New registrations are closed." };
+  }
+
   const siteUrl = await getSiteUrl();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.email,

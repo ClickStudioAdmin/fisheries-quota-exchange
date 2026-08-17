@@ -56,6 +56,7 @@ export default async function AdminLayout({
       match: "prefix",
       badge: counts.orders,
     },
+    { href: "/admin/settings", label: "Platform settings" },
     {
       label: "Reference data",
       children: [

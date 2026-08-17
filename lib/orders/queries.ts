@@ -7,7 +7,7 @@ import type {
 } from "@/lib/orders/types";
 
 const orderColumns =
-  "id, listing_id, holding_id, seller_organisation_id, buyer_organisation_id, offering, quantity, unit_price_aud, amount_aud, status, seller_name, buyer_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, updated_at, review_note";
+  "id, listing_id, holding_id, seller_organisation_id, buyer_organisation_id, offering, quantity, unit_price_aud, amount_aud, fee_percent, fee_amount_aud, status, seller_name, buyer_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, updated_at, review_note";
 
 export async function listMyOrders() {
   const supabase = await createClient();

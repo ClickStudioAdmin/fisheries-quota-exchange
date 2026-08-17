@@ -15,6 +15,8 @@ type CreateListingFormProps = {
   holdingId: number;
   maxQuantity: string;
   unitLabel: string;
+  autoPublish?: boolean;
+  feeNote?: string | null;
 };
 
 export function CreateListingForm({
@@ -22,6 +24,8 @@ export function CreateListingForm({
   holdingId,
   maxQuantity,
   unitLabel,
+  autoPublish = false,
+  feeNote = null,
 }: CreateListingFormProps) {
   const [state, formAction, pending] = useActionState(
     createListingAction,
@@ -89,8 +93,13 @@ export function CreateListingForm({
           className={fieldClassName}
         />
       </div>
+      {feeNote ? <p className="text-sm text-ink-muted">{feeNote}</p> : null}
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Submitting…" : "Submit for approval"}
+        {pending
+          ? "Submitting…"
+          : autoPublish
+            ? "Publish listing"
+            : "Submit for approval"}
       </button>
     </form>
   );

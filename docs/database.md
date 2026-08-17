@@ -23,6 +23,7 @@ Current tables:
 | `transactions` | 7 | Simulated settlement record. No live payment. |
 | `audit_events` | 7 | Order workflow audit. |
 | `bids` | 8 | Auction bids. `created_at` is server time. |
+| `platform_settings` | 8 | Singleton: sale/lease fee %, registrations, auto-approve holdings/listings. |
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Platform admins read a person's name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
 
@@ -32,7 +33,9 @@ Current tables:
 
 `quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`. Members change quantity through `adjust_quota_holding`, which writes an `ADJUSTMENT` ledger row. A holding cannot be reduced below the quantity on its open listings (`PENDING_APPROVAL` and `PUBLISHED`) plus active reservations. A listing cannot be created without a covering holding.
 
-Creating or changing a holding sets `VERIFIED` only if the actor is in `verified_users`. Otherwise it is `PENDING_VERIFICATION`, including when a platform admin updates a holding for an unverified account. A listing or auction cannot be created from an unverified holding. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`. `/admin/users/[email]` is an admin-only record of that person, including holdings in their accounts. `/admin/holdings/[id]` and `/dashboard/holdings/[id]` show the holding, its ledger, and related listings and orders. `admin_delete_users` removes selected users from `organisation_users`, `verified_users`, and `platform_admins`. Admins cannot delete themselves or the last platform admin. Organisations and quota ledgers stay in place.
+Creating or changing a holding sets `VERIFIED` only if the actor is in `verified_users` and `platform_settings.auto_approve_holdings` is on. Otherwise it is `PENDING_VERIFICATION`, including when a platform admin updates a holding for an unverified account. A listing or auction cannot be created from an unverified holding. If `auto_approve_listings` is on, a verified holder’s new listing or auction is published immediately; otherwise it waits on `/admin/listings`. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`. `/admin/users/[email]` is an admin-only record of that person, including holdings in their accounts. `/admin/holdings/[id]` and `/dashboard/holdings/[id]` show the holding, its ledger, and related listings and orders. `admin_delete_users` removes selected users from `organisation_users`, `verified_users`, and `platform_admins`. Admins cannot delete themselves or the last platform admin. Organisations and quota ledgers stay in place.
+
+`platform_settings` is one row. Platform admins change it on `/admin/settings`. Sale and lease fees are separate percentages, snapshotted onto each new order. No live payment. `allow_registrations` is enforced in `registerAction`, not only in the browser.
 
 Anonymous visitors can read `fisheries` and `jurisdictions`. Sale and lease prices for `/fisheries/[id]` come from `list_market_sales` (quantity, unit price, and offering only). Holding valuation uses `latest_sale_prices` and SALE prices only. Fishery logos are public files in the `fishery-logos` bucket; only platform admins can upload, replace, or remove them.
 

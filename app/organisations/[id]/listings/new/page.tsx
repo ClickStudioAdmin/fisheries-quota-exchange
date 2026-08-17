@@ -11,6 +11,8 @@ import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
 import { holdingIsVerified, quantityTypeLabel } from "@/lib/fisheries/types";
 import { getUser } from "@/lib/supabase/server";
+import { getPlatformSettings, isVerifiedUser } from "@/lib/settings/queries";
+import { platformFeeDisclosure } from "@/lib/settings/types";
 
 export const metadata = {
   title: "Create listing",
@@ -44,9 +46,11 @@ export default async function NewListingPage({
     notFound();
   }
 
-  const [holdings, fisheries] = await Promise.all([
+  const [holdings, fisheries, settings, verified] = await Promise.all([
     listHoldingsForOrganisation(organisationId),
     listFisheries(),
+    getPlatformSettings(),
+    isVerifiedUser(),
   ]);
   const holding = holdings.find((item) => item.id === holdingId);
 
@@ -70,6 +74,8 @@ export default async function NewListingPage({
     ? quantityTypeLabel(fishery.quantity_type)
     : "units";
   const availableLabel = String(available);
+  const autoPublish = verified && settings.auto_approve_listings;
+  const feeNote = platformFeeDisclosure(settings);
 
   return (
     <div>
@@ -82,9 +88,11 @@ export default async function NewListingPage({
         Create listing
       </h1>
       <p className="mt-2 max-w-lg text-sm text-ink-muted">
-        Fixed-price only. A platform admin must approve the listing before it
-        appears on the marketplace. Quota is reserved when a buyer purchases,
-        not when you create the listing.
+        {autoPublish
+          ? "Fixed-price only. This listing will be published immediately."
+          : "Fixed-price only. A platform admin must approve the listing before it appears on the marketplace."}{" "}
+        Quota is reserved when a buyer purchases, not when you create the
+        listing.
       </p>
       <p className="mt-4 text-sm text-ink">
         {fishery?.name ?? "Fishery"} · {availableLabel} {unitLabel} available
@@ -95,6 +103,8 @@ export default async function NewListingPage({
           holdingId={holding.id}
           maxQuantity={availableLabel}
           unitLabel={unitLabel}
+          autoPublish={autoPublish}
+          feeNote={feeNote}
         />
       </div>
     </div>

@@ -19,6 +19,8 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
+import { getPlatformSettings } from "@/lib/settings/queries";
+import { platformFeeLabel } from "@/lib/settings/types";
 
 export const metadata = {
   title: "Auction",
@@ -43,10 +45,11 @@ export default async function AuctionPage({
   }
 
   const listing = await ensureAuctionClosed(initial);
-  const [bids, order, fisheries] = await Promise.all([
+  const [bids, order, fisheries, settings] = await Promise.all([
     listBids(listing.id),
     getOrderForListing(listing.id),
     listFisheries(),
+    getPlatformSettings(),
   ]);
   const fishery = fisheries.find((item) => item.name === listing.fishery_name);
   const user = await getUser();
@@ -66,6 +69,7 @@ export default async function AuctionPage({
     listing.status === "PUBLISHED" && ended && Boolean(user);
   const minBid = minimumBid(listing, bids.length);
   const isSeller = role !== null;
+  const feeLabel = platformFeeLabel(settings, listing.offering);
 
   return (
     <div className={`${pageWidthClassName} py-12 sm:py-16`}>
@@ -102,6 +106,9 @@ export default async function AuctionPage({
               label: "Current Bid",
               value: `${formatAud(listing.unit_price_aud)} per ${listing.unit_label}`,
             },
+            ...(feeLabel
+              ? [{ label: "Platform fee", value: feeLabel }]
+              : []),
             {
               label: "Starting price",
               value: formatAud(listing.starting_price_aud ?? listing.unit_price_aud),
