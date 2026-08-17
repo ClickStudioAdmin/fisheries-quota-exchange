@@ -79,7 +79,6 @@ export default async function AdminUsersPage() {
               { value: "Unverified", label: "Unverified" },
             ],
           },
-          { key: "joined", header: "Joined", sortable: true },
         ]}
         rows={users.map((item) => {
           const accountLines = item.memberships.map(
@@ -100,6 +99,10 @@ export default async function AdminUsersPage() {
                 label: "Accounts",
                 value: accountLines.length > 0 ? accountLines.join("\n") : "—",
               },
+              {
+                label: "Joined",
+                value: item.joinedAt ? formatTableDate(item.joinedAt) : "—",
+              },
             ],
             values: {
               name: item.fullName || item.email,
@@ -115,7 +118,6 @@ export default async function AdminUsersPage() {
               name: item.fullName ?? "—",
               email:
                 item.email === currentEmail ? `${item.email} (you)` : item.email,
-              joined: item.joinedAt ? formatTableDate(item.joinedAt) : "—",
             },
           };
         })}
