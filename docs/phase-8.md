@@ -22,9 +22,13 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 
 | Path | Purpose |
 | --- | --- |
-| `/auctions` | Auction list |
+| `/marketplace` | Fixed-price listings and auctions |
+| `/marketplace/[id]` | Fixed-price listing detail and purchase |
+| `/auctions` | Redirects to Marketplace |
 | `/auctions/[id]` | Bid, history, close |
-| `/dashboard/holdings` | Create an auction from a holding |
+| `/fisheries` | Public list of fisheries |
+| `/fisheries/[id]` | Open listings, auctions, and sale-price history |
+| `/dashboard/holdings` | Create an auction from a holding. Holding value uses the latest sale. |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
 | `/admin/users` | Verify users so their holdings skip approval |
@@ -41,6 +45,14 @@ Functions:
 - `create_auction`
 - `place_bid`
 - `close_auction`
+
+Public market data (no buyer or seller identity):
+
+- `list_open_listings_for_fishery`
+- `list_market_sales`
+- `latest_sale_prices`
+
+Fisheries and jurisdictions are readable by anonymous visitors. Holding valuation is quantity × most recent `SALE` unit price for that fishery.
 
 `insert_simulated_order` is shared with Phase 7 `create_order` and is not granted to clients.
 

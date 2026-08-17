@@ -66,8 +66,8 @@ export default async function AuctionPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <p className="text-sm text-ink-muted">
-        <Link href="/auctions" className="underline">
-          Auctions
+        <Link href="/marketplace" className="underline">
+          Marketplace
         </Link>
       </p>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">

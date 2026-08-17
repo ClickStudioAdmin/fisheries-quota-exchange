@@ -21,17 +21,26 @@ import {
   holdingVerificationLabel,
   quantityTypeLabel,
 } from "@/lib/fisheries/types";
-import { listOrganisationListings } from "@/lib/listings/queries";
 import {
   formatAud,
   listingOfferingLabel,
   listingStatusLabel,
   listingTypeLabel,
 } from "@/lib/listings/types";
+import { listOrganisationListings } from "@/lib/listings/queries";
+import {
+  latestSalePriceMap,
+  listLatestSalePrices,
+} from "@/lib/market/queries";
+import { marketValue } from "@/lib/market/types";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { tableSecondaryButtonClassName } from "@/components/auth-card";
+import { formatTableDate } from "@/lib/format";
+import { accountPath } from "@/lib/organisations/paths";
+import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
+import { getOrganisation, listMembers } from "@/lib/organisations/queries";
 
 type AccountSectionProps = {
   organisationId: number;
@@ -138,16 +147,31 @@ export async function AccountHoldingsSection({
   }
 
   const canManage = canEditOrganisation(result.role);
-  const [holdings, fisheries] = await Promise.all([
+  const [holdings, fisheries, prices] = await Promise.all([
     listHoldingsForOrganisation(organisationId),
     listFisheries(),
+    listLatestSalePrices(),
   ]);
+  const lastSale = latestSalePriceMap(prices);
   const holdingLedgers = await Promise.all(
     holdings.map(async (holding) => ({
       holding,
       entries: await listLedger(holding.id),
     })),
   );
+  const valued = holdings.map((holding) => {
+    const sale = lastSale.get(holding.fishery_id);
+    if (!sale) {
+      return null;
+    }
+
+    return marketValue(holding.quantity, sale.unit_price_aud);
+  });
+  const portfolioValue = valued.reduce<number>(
+    (sum, value) => sum + (value ?? 0),
+    0,
+  );
+  const missingPrices = valued.some((value) => value == null);
 
   return (
     <div className="space-y-10">
@@ -160,6 +184,20 @@ export async function AccountHoldingsSection({
             ? "Create or update a holding here. Unverified holdings must be approved by a platform admin before you can list or auction them. Changing quantity records an ADJUSTMENT on the ledger."
             : "Owners and admins can create and update holdings for this account."}
         </p>
+        {holdings.length > 0 ? (
+          <div className="mt-4 border border-line p-4">
+            <p className="text-sm text-ink-muted">Portfolio value</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-ink">
+              {formatAud(portfolioValue)}
+            </p>
+            <p className="mt-1 text-sm text-ink-muted">
+              Estimated from the most recent sale in each fishery.
+              {missingPrices
+                ? " Holdings with no sale yet are counted as $0."
+                : ""}
+            </p>
+          </div>
+        ) : null}
       </div>
       <DataTable
         caption="Quota holdings"
@@ -169,6 +207,18 @@ export async function AccountHoldingsSection({
         columns={[
           { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
+          {
+            key: "lastSale",
+            header: "Last sale",
+            sortable: true,
+            align: "right",
+          },
+          {
+            key: "marketValue",
+            header: "Market value",
+            sortable: true,
+            align: "right",
+          },
           {
             key: "status",
             header: "Status",
@@ -183,16 +233,26 @@ export async function AccountHoldingsSection({
         rows={holdingLedgers.map(({ holding }) => {
           const fishery = fisheries.find((item) => item.id === holding.fishery_id);
           const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "";
+          const sale = lastSale.get(holding.fishery_id);
+          const value = sale
+            ? marketValue(holding.quantity, sale.unit_price_aud)
+            : null;
 
           return {
             id: holding.id,
             values: {
               fishery: fishery?.name ?? "Fishery",
               quantity: holding.quantity,
+              lastSale: sale ? Number(sale.unit_price_aud) : "",
+              marketValue: value ?? "",
               status: holdingVerificationLabel(holding.verification_status),
             },
             display: {
               quantity: `${holding.quantity} ${unit}`.trim(),
+              lastSale: sale
+                ? `${formatAud(sale.unit_price_aud)} / ${unit}`
+                : "No sales yet",
+              marketValue: value != null ? formatAud(value) : "—",
             },
           };
         })}
@@ -214,35 +274,45 @@ export async function AccountHoldingsSection({
                 />
               }
               actions={
-                canManage ? (
-                  <div className="space-y-3">
-                    <HoldingActions
-                      holdingId={holding.id}
-                      quantity={holding.quantity}
-                      unitLabel={unit}
-                    />
-                    {verified ? (
-                      <TableActionRow>
-                        <Link
-                          href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
-                          className="text-sm underline"
-                        >
-                          Create listing
-                        </Link>
-                        <Link
-                          href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
-                          className="text-sm underline"
-                        >
-                          Create auction
-                        </Link>
-                      </TableActionRow>
-                    ) : (
-                      <p className="text-sm text-ink-muted">
-                        Waiting for admin verification before listing.
-                      </p>
-                    )}
-                  </div>
-                ) : null
+                <div className="space-y-3">
+                  <TableActionRow>
+                    <Link
+                      href={`/fisheries/${holding.fishery_id}`}
+                      className="text-sm underline"
+                    >
+                      View market
+                    </Link>
+                  </TableActionRow>
+                  {canManage ? (
+                    <>
+                      <HoldingActions
+                        holdingId={holding.id}
+                        quantity={holding.quantity}
+                        unitLabel={unit}
+                      />
+                      {verified ? (
+                        <TableActionRow>
+                          <Link
+                            href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
+                            className="text-sm underline"
+                          >
+                            Create listing
+                          </Link>
+                          <Link
+                            href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
+                            className="text-sm underline"
+                          >
+                            Create auction
+                          </Link>
+                        </TableActionRow>
+                      ) : (
+                        <p className="text-sm text-ink-muted">
+                          Waiting for admin verification before listing.
+                        </p>
+                      )}
+                    </>
+                  ) : null}
+                </div>
               }
             />
           );

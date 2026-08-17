@@ -5,8 +5,8 @@ export default function Home() {
     <PageIntro title="Fisheries Quota Exchange">
       <p>FQX is an Australian commercial fisheries quota marketplace.</p>
       <p>
-        This is the application shell. Use Marketplace for fixed-price listings
-        and Auctions for English auctions.
+        This is the application shell. Use Fisheries for market data and
+        Marketplace for fixed-price listings and auctions.
       </p>
     </PageIntro>
   );
