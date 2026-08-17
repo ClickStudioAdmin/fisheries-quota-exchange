@@ -56,7 +56,7 @@ Do not create organisations in the Supabase dashboard as the normal process.
 
 ## Not in this phase
 
-- Invitation emails
+- Invitation emails (added later; see Phase 8 `sendEmail`)
 - Quota, listings, auctions, payments
 - Linking membership to `auth.users.id` (email remains the key)
 

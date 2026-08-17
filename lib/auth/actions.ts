@@ -1,32 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/paths";
+import { getSiteUrl } from "@/lib/site-url";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getMyRole } from "@/lib/organisations/queries";
 import type { AuthFormState } from "@/lib/auth/types";
-
-async function getSiteUrl() {
-  const headerList = await headers();
-  const origin = headerList.get("origin");
-
-  if (origin) {
-    return origin;
-  }
-
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
-  const protocol = headerList.get("x-forwarded-proto") ?? "https";
-
-  if (!host) {
-    return null;
-  }
-
-  return `${protocol}://${host}`;
-}
 
 function readEmailPassword(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();

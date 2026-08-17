@@ -9,9 +9,14 @@ import {
   canChangeMemberRole,
   canRemoveMember,
 } from "@/lib/organisations/permissions";
-import { getMyRole } from "@/lib/organisations/queries";
+import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
 import { accountPath } from "@/lib/organisations/paths";
-import { isOrganisationRole } from "@/lib/organisations/types";
+import {
+  isOrganisationRole,
+  organisationRoleLabel,
+} from "@/lib/organisations/types";
+import { sendEmail } from "@/lib/email/send";
+import { getSiteUrl } from "@/lib/site-url";
 
 export type OrganisationFormState = {
   error?: string;
@@ -117,7 +122,36 @@ export async function addMemberAction(
     return { error: error.message };
   }
 
-  return { message: "Member added." };
+  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard");
+
+  const siteUrl = await getSiteUrl();
+  const accountName =
+    (await getOrganisationLegalName(organisationId)) ?? "an FQX account";
+  const mail = siteUrl
+    ? await sendEmail({
+        to: email,
+        template: "member_added",
+        data: {
+          accountName,
+          role: organisationRoleLabel(memberRole),
+          registerUrl: `${siteUrl}/register`,
+          loginUrl: `${siteUrl}/login`,
+        },
+      })
+    : { sent: false as const, skipped: true as const };
+
+  if (mail.sent) {
+    return { message: "Member added. An invitation email was sent." };
+  }
+
+  if ("skipped" in mail && mail.skipped) {
+    return { message: "Member added." };
+  }
+
+  return {
+    message: "Member added. The invitation email could not be sent.",
+  };
 }
 
 export type MemberActionState = {

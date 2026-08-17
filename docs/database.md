@@ -42,3 +42,5 @@ Anonymous visitors can read `fisheries` and `jurisdictions`. Sale and lease pric
 Development fixtures may include extra fisheries, organisations, users, listings, and completed trades for local and development display. They are not official regulatory or market data.
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).
+
+Transactional email is sent from the app server with Resend. There is no email table. Auth confirmation and password reset stay on Supabase Auth.

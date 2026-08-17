@@ -98,6 +98,7 @@ Database migrations must be executed by CI/CD rather than requiring the develope
 
 - Next.js, TypeScript, App Router, Tailwind CSS
 - Supabase PostgreSQL and Supabase Auth
+- Resend for transactional email (server only)
 - Vercel
 - GitHub and GitHub Actions
 - Cursor

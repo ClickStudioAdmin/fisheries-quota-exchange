@@ -20,6 +20,7 @@ Work happens on `develop`. Merge to `main` for production. See [docs/environment
 - Supabase PostgreSQL
 - Vercel hosting
 - GitHub Actions for database migrations
+- Resend for transactional email (server only)
 
 ## Local development
 
@@ -28,6 +29,8 @@ This is a Next.js App Router project. The homepage lives in `app/page.tsx`.
 `package.json` defines `dev`, `lint`, `build`, and `start` scripts. The homepage does not require a local database connection.
 
 Copy `.env.example` to `.env.local` and add the development Supabase URL and publishable key. Do not use the production project.
+
+To send member invitation emails locally, also set `RESEND_API_KEY` and `EMAIL_FROM`. Leave them blank to skip sending.
 
 Never commit `.env.local` or production secrets.
 

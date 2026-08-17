@@ -65,8 +65,10 @@ When the app starts using Supabase from the browser, set Vercel environment vari
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Development project URL | Production project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Development publishable key | Production publishable key |
+| `RESEND_API_KEY` | Development Resend key | Production Resend key |
+| `EMAIL_FROM` | Test sender, e.g. `FQX <beth.t@example.com>` | Verified domain, e.g. `FQX <noreply@yourdomain>` |
 
-These are required from Phase 3. After adding them, redeploy. Do not add service-role keys to Vercel.
+Supabase variables are required from Phase 3. Resend variables are needed from Phase 8 to send product email. After adding them, redeploy. Do not add service-role keys or Resend keys to the frontend. If Resend is unset, the app still runs; member invites are not sent.
 
 Auth redirect URLs must be set on each Supabase project. See [phase-3.md](phase-3.md).
 

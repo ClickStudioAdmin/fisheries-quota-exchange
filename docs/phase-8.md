@@ -77,6 +77,8 @@ Development fixture `20260817230000_seed_market_catalogue.sql` adds Australian f
 
 `insert_simulated_order` is shared with Phase 7 `create_order` and is not granted to clients.
 
+Transactional email uses Resend from the server. `sendEmail({ to, template, data })` in `lib/email/` sends after the database write. Auth mail (confirm, reset password) stays on Supabase Auth. The first product template is `member_added`, sent when someone is added to an account. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; adding the member still succeeds. Do not put Resend keys in `NEXT_PUBLIC_` variables. Open/click tracking stays off for transactional mail.
+
 ## Not in this phase
 
 - Stripe or any live payment
