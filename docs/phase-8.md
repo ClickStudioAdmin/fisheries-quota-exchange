@@ -54,6 +54,7 @@ Functions:
 - `admin_auth_person` (platform admin only; name and phone from Auth metadata)
 - `admin_auth_people` (platform admin only; names and phones for the users table)
 - `admin_list_listings` (platform admin only; all listing rows, bypassing RLS)
+- `admin_action_counts` (platform admin only; pending holdings, listings, and orders)
 
 Public market data (no buyer or seller identity):
 

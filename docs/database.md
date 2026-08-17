@@ -24,7 +24,7 @@ Current tables:
 | `audit_events` | 7 | Order workflow audit. |
 | `bids` | 8 | Auction bids. `created_at` is server time. |
 
-`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Platform admins read a person's name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies.
+`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Platform admins read a person's name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
 
 `fisheries.quantity_type` must be `KG` or `UNITS`. Holdings and listings show that unit beside quantity.
 

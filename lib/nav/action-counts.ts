@@ -35,30 +35,24 @@ function addCount(counts: Record<number, number>, organisationId: unknown) {
 
 export const getAdminActionCounts = cache(
   async (): Promise<AdminActionCounts> => {
+    const empty = { holdings: 0, listings: 0, orders: 0, total: 0 };
     const supabase = await createClient();
 
     if (!supabase) {
-      return { holdings: 0, listings: 0, orders: 0, total: 0 };
+      return empty;
     }
 
-    const [holdings, listings, orders] = await Promise.all([
-      supabase
-        .from("quota_holdings")
-        .select("id", { count: "exact", head: true })
-        .eq("verification_status", "PENDING_VERIFICATION"),
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "PENDING_APPROVAL"),
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .in("status", [...OPEN_ORDER_STATUSES]),
-    ]);
+    const { data, error } = await supabase.rpc("admin_action_counts");
 
-    const holdingsCount = holdings.count ?? 0;
-    const listingsCount = listings.count ?? 0;
-    const ordersCount = orders.count ?? 0;
+    if (error) {
+      console.error("admin_action_counts failed", error.message);
+      return empty;
+    }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    const holdingsCount = Number(row?.holdings) || 0;
+    const listingsCount = Number(row?.listings) || 0;
+    const ordersCount = Number(row?.orders) || 0;
 
     return {
       holdings: holdingsCount,

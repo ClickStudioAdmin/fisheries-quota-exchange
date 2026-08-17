@@ -24,6 +24,49 @@ $$;
 revoke all on function public.admin_list_listings() from public;
 grant execute on function public.admin_list_listings() to authenticated;
 
+create function public.admin_action_counts()
+returns table (
+    holdings integer,
+    listings integer,
+    orders integer
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+    if not public.is_platform_admin() then
+        raise exception 'Not a platform admin';
+    end if;
+
+    return query
+    select
+        (
+            select count(*)::integer
+            from public.quota_holdings
+            where verification_status = 'PENDING_VERIFICATION'
+        ),
+        (
+            select count(*)::integer
+            from public.listings
+            where status = 'PENDING_APPROVAL'
+        ),
+        (
+            select count(*)::integer
+            from public.orders
+            where status in (
+                'AWAITING_COMPLIANCE',
+                'AWAITING_TRANSFER',
+                'AWAITING_SETTLEMENT'
+            )
+        );
+end;
+$$;
+
+revoke all on function public.admin_action_counts() from public;
+grant execute on function public.admin_action_counts() to authenticated;
+
 create or replace function public.list_open_listings_for_fishery(p_fishery_id bigint)
 returns setof public.listings
 language sql
