@@ -10,7 +10,6 @@ import {
 import {
   fieldClassName,
   tableButtonClassName,
-  tableSecondaryButtonClassName,
 } from "@/components/auth-card";
 import { TableModal } from "@/components/table-modal";
 import type { OrganisationRole } from "@/lib/organisations/types";
@@ -92,7 +91,7 @@ export function MemberActions({
             <input type="hidden" name="target_email" value={email} />
             <button
               type="submit"
-              className={tableSecondaryButtonClassName}
+              className={tableButtonClassName}
               disabled={removePending}
             >
               {removePending ? "Removing…" : isSelf ? "Leave" : "Remove"}

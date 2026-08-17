@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cancelOrderAction } from "@/lib/orders/actions";
+import { buttonClassName } from "@/components/auth-card";
 import {
   getOrder,
   getReservationForOrder,
@@ -105,7 +106,7 @@ export default async function OrderPage({
           <input type="hidden" name="next" value={`/orders/${order.id}`} />
           <button
             type="submit"
-            className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
+            className={buttonClassName}
           >
             Cancel order
           </button>

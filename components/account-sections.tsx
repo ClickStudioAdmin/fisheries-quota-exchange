@@ -38,7 +38,7 @@ import { marketValue } from "@/lib/market/types";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
-import { tableButtonClassName, tableSecondaryButtonClassName } from "@/components/auth-card";
+import { tableButtonClassName } from "@/components/auth-card";
 import { formatTableDate } from "@/lib/format";
 import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
@@ -468,7 +468,7 @@ export async function AccountListingsSection({
                   />
                   <button
                     type="submit"
-                    className={tableSecondaryButtonClassName}
+                    className={tableButtonClassName}
                   >
                     Cancel
                   </button>

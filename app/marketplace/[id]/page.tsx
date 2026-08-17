@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
+import { buttonClassName } from "@/components/auth-card";
 import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { listFisheries } from "@/lib/fisheries/queries";
@@ -154,7 +155,7 @@ export default async function ListingPage({
           <input type="hidden" name="next" value={`/marketplace/${listing.id}`} />
           <button
             type="submit"
-            className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
+            className={buttonClassName}
           >
             Cancel listing
           </button>

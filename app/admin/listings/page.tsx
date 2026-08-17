@@ -17,7 +17,6 @@ import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import {
   fieldClassName,
   tableButtonClassName,
-  tableSecondaryButtonClassName,
 } from "@/components/auth-card";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { TableModal } from "@/components/table-modal";
@@ -170,10 +169,7 @@ export default async function AdminListingsPage() {
                           className={fieldClassName}
                         />
                       </div>
-                      <button
-                        type="submit"
-                        className={tableSecondaryButtonClassName}
-                      >
+                      <button type="submit" className={tableButtonClassName}>
                         Reject
                       </button>
                     </form>

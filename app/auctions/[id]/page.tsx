@@ -211,7 +211,7 @@ export default async function AuctionPage({
           <input type="hidden" name="next" value={`/auctions/${listing.id}`} />
           <button
             type="submit"
-            className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
+            className={buttonClassName}
           >
             Cancel auction
           </button>

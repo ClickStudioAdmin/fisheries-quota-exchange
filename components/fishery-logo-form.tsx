@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import {
   buttonClassName,
   fieldClassName,
-  tableSecondaryButtonClassName,
+  tableButtonClassName,
 } from "@/components/auth-card";
 import {
   removeFisheryLogoAction,
@@ -75,7 +75,7 @@ export function FisheryLogoForm({
           <input type="hidden" name="fishery_id" value={String(fisheryId)} />
           <button
             type="submit"
-            className={tableSecondaryButtonClassName}
+            className={tableButtonClassName}
             disabled={removing}
           >
             {removing ? "Removing…" : "Remove logo"}

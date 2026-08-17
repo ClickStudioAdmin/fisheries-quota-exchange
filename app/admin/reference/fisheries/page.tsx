@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { tableButtonClassName } from "@/components/auth-card";
 import { FisheryAdminForm } from "@/components/fishery-admin-form";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createFisheryAction } from "@/lib/fisheries/actions";
@@ -72,7 +73,7 @@ export default async function FisheriesAdminPage() {
             actions={
               <Link
                 href={`/admin/reference/fisheries/${fishery.id}`}
-                className={tableLinkClassName}
+                className={tableButtonClassName}
               >
                 Edit
               </Link>

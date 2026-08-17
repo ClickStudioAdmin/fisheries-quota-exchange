@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
-import { tableButtonClassName, tableSecondaryButtonClassName } from "@/components/auth-card";
+import { tableButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { deleteUsersAction, setUserVerifiedAction } from "@/lib/admin/actions";
 import { formatTableDate } from "@/lib/format";
@@ -147,14 +147,7 @@ export default async function AdminUsersPage() {
                   name="verified"
                   value={item.verified ? "false" : "true"}
                 />
-                <button
-                  type="submit"
-                  className={
-                    item.verified
-                      ? tableSecondaryButtonClassName
-                      : tableButtonClassName
-                  }
-                >
+                <button type="submit" className={tableButtonClassName}>
                   {item.verified ? "Revoke verification" : "Mark as verified"}
                 </button>
               </form>

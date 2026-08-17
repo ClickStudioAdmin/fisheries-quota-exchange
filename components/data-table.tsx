@@ -13,10 +13,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import {
-  tableButtonClassName,
-  tableSecondaryButtonClassName,
-} from "@/components/auth-card";
+import { tableButtonClassName } from "@/components/auth-card";
 import { StatusBadge, isStatusColumn } from "@/components/status-badge";
 import {
   ListPager,
@@ -766,7 +763,7 @@ export function DataTable({
                                 type="button"
                                 onClick={() => toggleExpanded(row.id)}
                                 aria-expanded={expanded}
-                                className={tableSecondaryButtonClassName}
+                                className={tableButtonClassName}
                               >
                                 {expanded
                                   ? "Hide"
