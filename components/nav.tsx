@@ -9,6 +9,14 @@ const links = [
 ];
 
 function isActive(pathname: string, href: string) {
+  if (href === "/marketplace") {
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`) ||
+      pathname.startsWith("/auctions/")
+    );
+  }
+
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
