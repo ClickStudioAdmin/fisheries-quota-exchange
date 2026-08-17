@@ -9,6 +9,7 @@ const WARNING = new Set([
   "pending approval",
   "pending verification",
   "unverified",
+  "awaiting payment",
   "awaiting compliance",
   "awaiting transfer",
   "awaiting settlement",

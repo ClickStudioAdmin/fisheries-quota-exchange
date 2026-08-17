@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cancelOrderAction } from "@/lib/orders/actions";
+import { PayOrderButton } from "@/components/pay-order-button";
 import { buttonClassName } from "@/components/auth-card";
 import {
   getOrder,
@@ -13,6 +14,7 @@ import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { LabeledFields, panelClassName } from "@/components/surface";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getMyRole } from "@/lib/organisations/queries";
+import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -21,8 +23,10 @@ export const metadata = {
 
 export default async function OrderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ paid?: string; pay?: string }>;
 }) {
   const user = await getUser();
 
@@ -31,6 +35,7 @@ export default async function OrderPage({
   }
 
   const { id } = await params;
+  const query = await searchParams;
   const orderId = Number(id);
 
   if (!Number.isInteger(orderId)) {
@@ -43,16 +48,21 @@ export default async function OrderPage({
     notFound();
   }
 
-  const [reservation, transaction, events, buyerRole, admin] = await Promise.all([
-    getReservationForOrder(order.id),
-    getTransactionForOrder(order.id),
-    listOrderAuditEvents(order.id),
-    getMyRole(order.buyer_organisation_id),
-    isPlatformAdmin(),
-  ]);
+  const [reservation, transaction, events, buyerRole, admin, payment] =
+    await Promise.all([
+      getReservationForOrder(order.id),
+      getTransactionForOrder(order.id),
+      listOrderAuditEvents(order.id),
+      getMyRole(order.buyer_organisation_id),
+      isPlatformAdmin(),
+      getPaymentForOrder(order.id),
+    ]);
 
   const canCancel =
-    order.status === "AWAITING_COMPLIANCE" && (admin || buyerRole !== null);
+    (order.status === "AWAITING_COMPLIANCE" ||
+      order.status === "AWAITING_PAYMENT") &&
+    (admin || buyerRole !== null);
+  const canPay = order.status === "AWAITING_PAYMENT" && buyerRole !== null;
 
   return (
     <div>
@@ -60,6 +70,24 @@ export default async function OrderPage({
         Order {order.id}
       </h1>
       <p className="mt-2 text-ink-muted">{orderStatusLabel(order.status)}</p>
+      {query.paid === "1" && order.status === "AWAITING_PAYMENT" ? (
+        <p className="mt-3 text-sm text-ink-muted">
+          Stripe returned you here. Payment is confirmed only after the webhook
+          arrives — refresh in a moment if this still says awaiting payment.
+        </p>
+      ) : null}
+      {query.pay === "cancelled" ? (
+        <p className="mt-3 text-sm text-ink-muted">
+          Checkout was cancelled. The quota is still reserved until you pay or
+          cancel the order.
+        </p>
+      ) : null}
+      {query.pay === "setup" ? (
+        <p className="mt-3 text-sm text-ink-muted">
+          The order was reserved. Use Pay with card below if Checkout did not
+          open.
+        </p>
+      ) : null}
       <div className={`mt-8 max-w-lg ${panelClassName}`}>
         <LabeledFields
           items={[
@@ -78,7 +106,7 @@ export default async function OrderPage({
               label: "Quantity",
               value: `${order.quantity} ${order.unit_label}`,
             },
-            { label: "Simulated amount", value: formatAud(order.amount_aud) },
+            { label: "Amount", value: formatAud(order.amount_aud) },
             {
               label: "Platform fee",
               value:
@@ -91,6 +119,18 @@ export default async function OrderPage({
               value: reservation?.status ?? "None",
             },
             {
+              label: "Card payment",
+              value: payment?.status
+                ? payment.status === "PAID"
+                  ? "Paid"
+                  : payment.status === "PENDING"
+                    ? "Pending"
+                    : payment.status === "EXPIRED"
+                      ? "Expired"
+                      : "Failed"
+                : "None",
+            },
+            {
               label: "Settlement simulation",
               value: transaction?.status ?? "None",
             },
@@ -99,6 +139,11 @@ export default async function OrderPage({
       </div>
       {order.review_note ? (
         <p className="mt-6 text-sm text-ink-muted">Note: {order.review_note}</p>
+      ) : null}
+      {canPay ? (
+        <div className="mt-6 max-w-md">
+          <PayOrderButton orderId={order.id} />
+        </div>
       ) : null}
       {canCancel ? (
         <form action={cancelOrderAction} className="mt-6">

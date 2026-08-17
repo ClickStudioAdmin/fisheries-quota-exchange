@@ -448,6 +448,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             sortable: true,
             filter: "select",
             filterOptions: [
+              { value: "AWAITING_PAYMENT", label: "Awaiting payment" },
               { value: "AWAITING_COMPLIANCE", label: "Awaiting compliance" },
               { value: "AWAITING_TRANSFER", label: "Awaiting transfer" },
               { value: "AWAITING_SETTLEMENT", label: "Awaiting settlement" },

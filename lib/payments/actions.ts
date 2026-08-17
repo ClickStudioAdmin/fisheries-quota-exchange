@@ -1,0 +1,134 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { createClient, getUser } from "@/lib/supabase/server";
+import { canEditOrganisation } from "@/lib/organisations/permissions";
+import { getMyRole, getOrganisation } from "@/lib/organisations/queries";
+import { getPaymentProvider } from "@/lib/payments/provider";
+import {
+  getOrderSellerPaymentAccount,
+  getOrganisationPaymentStatus,
+} from "@/lib/payments/queries";
+import { getOrder } from "@/lib/orders/queries";
+import { listingOfferingLabel } from "@/lib/listings/types";
+import { getSiteUrl } from "@/lib/site-url";
+import { orderChargeAud } from "@/lib/payments/money";
+
+export type PaymentFormState = {
+  error?: string;
+};
+
+export async function createAccountSessionAction(
+  organisationId: number,
+): Promise<{ clientSecret?: string; error?: string }> {
+  const user = await getUser();
+  const provider = getPaymentProvider();
+  const supabase = await createClient();
+
+  if (!user?.email || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  if (!provider) {
+    return { error: "Card payments are not configured." };
+  }
+
+  const role = await getMyRole(organisationId);
+
+  if (!role || !canEditOrganisation(role)) {
+    return { error: "You cannot connect payments for that account." };
+  }
+
+  const result = await getOrganisation(organisationId);
+
+  if (!result) {
+    return { error: "Account not found." };
+  }
+
+  const status = await getOrganisationPaymentStatus(organisationId);
+  let accountId = status?.accountId ?? null;
+
+  if (!accountId) {
+    accountId = await provider.createConnectedAccount({
+      organisationId,
+      legalName: result.organisation.legal_name,
+      email: user.email,
+    });
+
+    const { error } = await supabase.rpc("attach_organisation_stripe_account", {
+      p_organisation_id: organisationId,
+      p_account_id: accountId,
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+  }
+
+  const clientSecret = await provider.createAccountSession(accountId);
+  return { clientSecret };
+}
+
+export async function startOrderCheckoutAction(
+  orderId: number,
+): Promise<PaymentFormState> {
+  const user = await getUser();
+  const provider = getPaymentProvider();
+  const supabase = await createClient();
+
+  if (!user?.email || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  if (!provider) {
+    return { error: "Card payments are not configured." };
+  }
+
+  const order = await getOrder(orderId);
+
+  if (!order) {
+    return { error: "Order not found." };
+  }
+
+  if (order.status !== "AWAITING_PAYMENT") {
+    return { error: "This order is not waiting for payment." };
+  }
+
+  const seller = await getOrderSellerPaymentAccount(order.id);
+
+  if (!seller?.accountId || !seller.chargesEnabled) {
+    return { error: "This seller cannot accept card payments yet." };
+  }
+
+  const siteUrl = await getSiteUrl();
+
+  if (!siteUrl) {
+    return { error: "Could not build the payment return URL." };
+  }
+
+  const checkout = await provider.createCheckout({
+    orderId: order.id,
+    fisheryName: order.fishery_name,
+    offeringLabel: listingOfferingLabel(order.offering),
+    amountAud: order.amount_aud,
+    feeAmountAud: order.fee_amount_aud,
+    sellerAccountId: seller.accountId,
+    buyerEmail: user.email,
+    successUrl: `${siteUrl}/orders/${order.id}?paid=1`,
+    cancelUrl: `${siteUrl}/orders/${order.id}?pay=cancelled`,
+  });
+
+  const { error } = await supabase.rpc("upsert_order_payment", {
+    p_order_id: order.id,
+    p_checkout_session_id: checkout.checkoutSessionId,
+    p_payment_intent_id: checkout.paymentIntentId,
+    p_amount_aud: orderChargeAud(order.amount_aud, order.fee_amount_aud),
+    p_fee_amount_aud: Number(order.fee_amount_aud),
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  redirect(checkout.url);
+}

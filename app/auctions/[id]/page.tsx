@@ -181,13 +181,15 @@ export default async function AuctionPage({
         </p>
       ) : listing.status === "RESERVED" || listing.status === "SOLD" ? (
         <p className="mt-8 text-sm text-ink-muted">
-          Closed with a winning bid. Quota is reserved and the order follows
-          the Phase 7 compliance workflow.
+          Closed with a winning bid. Quota is reserved. If the seller accepts
+          cards, the winner pays FQX before compliance.
           {order ? (
             <>
               {" "}
               <Link href={`/orders/${order.id}`} className="underline">
-                View order {order.id}
+                {order.status === "AWAITING_PAYMENT"
+                  ? `Pay order ${order.id}`
+                  : `View order ${order.id}`}
               </Link>
             </>
           ) : null}

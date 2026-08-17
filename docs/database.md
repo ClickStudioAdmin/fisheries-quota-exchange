@@ -21,11 +21,15 @@ Current tables:
 | `orders` | 7 | Simulated purchase of a listing or winning auction. |
 | `quota_reservations` | 7 | Active reserved quantity against a holding. |
 | `transactions` | 7 | Simulated settlement record. No live payment. |
+| `payments` | 9 | Stripe Checkout / PaymentIntent for an order. |
+| `stripe_webhook_events` | 9 | Processed Stripe event ids (idempotency). |
 | `audit_events` | 7 | Order workflow audit. |
 | `bids` | 8 | Auction bids. `created_at` is server time. |
 | `platform_settings` | 8 | Singleton: sale/lease fee %, registrations, auto-approve holdings/listings. |
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. `organisation_users.full_name` is required. Auth metadata still overrides that name when present. The insert trigger `organisation_users_fill_name` reads `auth.users` as `security definer` so adding a member does not require the signed-in role to select from Auth. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Changing Auth name updates `organisation_users.full_name`. Platform admins also read name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
+
+`organisations` may store a Stripe Connect account id and charge flags. Members cannot change those columns; `attach_organisation_stripe_account` and the signed `account.updated` webhook do. `orders.status` may be `AWAITING_PAYMENT` until a signed webhook marks the order paid. `payments` and `stripe_webhook_events` are written by the app server. The browser is not trusted for payment status.
 
 `fisheries.quantity_type` must be `KG` or `UNITS`. Holdings and listings show that unit beside quantity.
 
@@ -41,6 +45,6 @@ Anonymous visitors can read `fisheries` and `jurisdictions`. Sale and lease pric
 
 Development fixtures may include extra fisheries, organisations, users, listings, and completed trades for local and development display. They are not official regulatory or market data.
 
-See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).
+See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md), [phase-8.md](phase-8.md) and [phase-9.md](phase-9.md).
 
 Transactional email is sent from the app server with Resend. There is no email table. Auth confirmation and password reset stay on Supabase Auth. Simulated settlement emails a dummy tax invoice PDF generated in the app; the PDF is not stored in the database.

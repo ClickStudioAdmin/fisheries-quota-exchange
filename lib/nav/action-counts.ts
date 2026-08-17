@@ -18,6 +18,7 @@ export type MemberActionCounts = {
 };
 
 const OPEN_ORDER_STATUSES = [
+  "AWAITING_PAYMENT",
   "AWAITING_COMPLIANCE",
   "AWAITING_TRANSFER",
   "AWAITING_SETTLEMENT",
@@ -164,7 +165,7 @@ export const getMemberActionCounts = cache(
           .in("organisation_id", organisationIds),
         supabase
           .from("orders")
-          .select("buyer_organisation_id, seller_organisation_id")
+          .select("buyer_organisation_id, seller_organisation_id, status")
           .in("status", [...OPEN_ORDER_STATUSES])
           .or(
             `buyer_organisation_id.in.(${organisationIds.join(",")}),seller_organisation_id.in.(${organisationIds.join(",")})`,
@@ -187,6 +188,13 @@ export const getMemberActionCounts = cache(
     }
 
     for (const row of orders ?? []) {
+      if (row.status === "AWAITING_PAYMENT") {
+        if (memberOrgs.has(Number(row.buyer_organisation_id))) {
+          addCount(byOrganisation, row.buyer_organisation_id);
+        }
+        continue;
+      }
+
       if (memberOrgs.has(Number(row.buyer_organisation_id))) {
         addCount(byOrganisation, row.buyer_organisation_id);
       } else {

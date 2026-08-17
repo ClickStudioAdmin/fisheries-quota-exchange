@@ -83,6 +83,7 @@ export async function getOrderForListing(listingId: number) {
     .select(orderColumns)
     .eq("listing_id", listingId)
     .in("status", [
+      "AWAITING_PAYMENT",
       "AWAITING_COMPLIANCE",
       "AWAITING_TRANSFER",
       "AWAITING_SETTLEMENT",

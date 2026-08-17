@@ -67,8 +67,12 @@ When the app starts using Supabase from the browser, set Vercel environment vari
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Development publishable key | Production publishable key |
 | `RESEND_API_KEY` | Development Resend key | Production Resend key |
 | `EMAIL_FROM` | Test sender: `FQX <beth.t@example.com>` | Verified domain, e.g. `FQX <noreply@yourdomain>` |
+| `STRIPE_SECRET_KEY` | Stripe test secret (`sk_test_...`) | Keep test keys until live mode is a later phase |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe test publishable (`pk_test_...`) | Test publishable until live mode |
+| `STRIPE_WEBHOOK_SECRET` | Sandbox webhook secret | Sandbox or later live webhook secret |
+| `SUPABASE_SERVICE_ROLE_KEY` | Development service role | Production service role |
 
-Supabase variables are required from Phase 3. Resend variables are needed from Phase 8 to send product email. After adding them, redeploy. Do not add service-role keys or Resend keys to the frontend. If Resend is unset, the app still runs; member invites are not sent.
+Supabase variables are required from Phase 3. Resend variables are needed to send product email. Stripe test keys and the service-role key are needed from Phase 9 to take card payments. After adding them, redeploy. Do not add service-role keys, Resend keys, or Stripe secrets to the frontend except `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. If Stripe is unset, purchases stay simulated.
 
 Auth redirect URLs must be set on each Supabase project. See [phase-3.md](phase-3.md).
 

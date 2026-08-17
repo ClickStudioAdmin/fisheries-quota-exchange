@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     "resend",
     "@react-email/components",
     "@react-pdf/renderer",
+    "stripe",
+    "@stripe/connect-js",
+    "@stripe/react-connect-js",
   ],
 };
 

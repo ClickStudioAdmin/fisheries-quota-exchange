@@ -4,6 +4,10 @@ import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import type { OrderFormState } from "@/lib/orders/types";
+import { isPaymentsConfigured } from "@/lib/payments/env";
+import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
+import { startOrderCheckoutAction } from "@/lib/payments/actions";
+import { getListing } from "@/lib/listings/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 
 function read(formData: FormData, name: string) {
@@ -28,6 +32,23 @@ export async function createOrderAction(
     return { error: "Choose an organisation to buy with." };
   }
 
+  const listing = await getListing(listingId);
+
+  if (!listing) {
+    return { error: "Listing not found." };
+  }
+
+  if (isPaymentsConfigured()) {
+    const accepts = await organisationAcceptsCardPayments(listing.organisation_id);
+
+    if (!accepts) {
+      return {
+        error:
+          "This seller has not completed card payment setup, so the listing cannot be purchased yet.",
+      };
+    }
+  }
+
   const { data, error } = await supabase.rpc("create_order", {
     p_listing_id: listingId,
     p_buyer_organisation_id: buyerOrganisationId,
@@ -35,6 +56,14 @@ export async function createOrderAction(
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (isPaymentsConfigured()) {
+    const pay = await startOrderCheckoutAction(Number(data));
+
+    if (pay?.error) {
+      redirect(`/orders/${data}?pay=setup`);
+    }
   }
 
   redirect(`/orders/${data}`);

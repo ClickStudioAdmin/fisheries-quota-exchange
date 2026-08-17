@@ -57,12 +57,12 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
         </div>
       )}
       <p className="text-sm text-ink-muted">
-        This creates an order and reserves the quota. There is no live payment.
-        A platform admin then runs compliance, transfer, and settlement
-        simulation.
+        This creates an order and reserves the quota. If the seller accepts
+        cards, you will pay FQX in Stripe test mode. A platform admin then
+        runs compliance, transfer, and settlement.
       </p>
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Reserving…" : "Purchase"}
+                {pending ? "Continuing…" : "Purchase"}
       </button>
     </form>
   );

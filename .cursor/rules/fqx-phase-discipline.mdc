@@ -7,11 +7,11 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Work only on the current phase. The current phase is Phase 8.
+Work only on the current phase. The current phase is Phase 9.
 
 Do feature work on `develop`. Merge to `main` only when the user is ready for production.
 
-Phase 8 may add English auctions with server-side bids and close times. Do not add Stripe, live payments, seller payouts, or authority integrations. Never trust the browser for bid time or quota availability. Never delete quota ledger rows.
+Phase 9 may add Stripe Connect in **test mode**, embedded seller onboarding, Checkout, and idempotent webhooks. Do not add live Stripe keys, seller payouts, refund/chargeback workflows, or authority integrations. Never trust the browser for payment status, bid time, or quota availability. Never delete quota ledger rows.
 
 Do not create later-phase tables or speculative architecture.
 

@@ -15,6 +15,8 @@ import {
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getUser } from "@/lib/supabase/server";
+import { isPaymentsConfigured } from "@/lib/payments/env";
+import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
 import { getPlatformSettings } from "@/lib/settings/queries";
 import { platformFeeLabel } from "@/lib/settings/types";
 
@@ -61,8 +63,15 @@ export default async function ListingPage({
   const showCancel =
     canCancel && (admin || role === "OWNER" || role === "ADMIN");
   const expired = new Date(listing.expires_at) <= new Date();
+  const paymentsOn = isPaymentsConfigured();
+  const sellerAcceptsCards = paymentsOn
+    ? await organisationAcceptsCardPayments(listing.organisation_id)
+    : true;
   const canPurchase =
-    listing.status === "PUBLISHED" && !expired && buyerOrganisations.length > 0;
+    listing.status === "PUBLISHED" &&
+    !expired &&
+    buyerOrganisations.length > 0 &&
+    sellerAcceptsCards;
   const isSeller = role !== null;
   const feeLabel = platformFeeLabel(settings, listing.offering);
 
@@ -125,8 +134,8 @@ export default async function ListingPage({
               >
                 Sign in
               </Link>{" "}
-              to purchase. Quota is reserved immediately. There is no live
-              payment.
+              to purchase. Quota is reserved when you buy. If the seller
+              accepts cards, you pay FQX in Stripe test mode.
             </p>
           ) : organisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
@@ -136,6 +145,11 @@ export default async function ListingPage({
             <p className="text-sm text-ink-muted">
               You cannot purchase your organisation&apos;s listing. Use a
               different organisation to test a buy.
+            </p>
+          ) : !sellerAcceptsCards ? (
+            <p className="text-sm text-ink-muted">
+              This seller has not completed card payment setup, so the listing
+              cannot be purchased yet.
             </p>
           ) : canPurchase ? (
             <PurchaseForm

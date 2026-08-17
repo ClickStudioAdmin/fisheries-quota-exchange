@@ -4,7 +4,7 @@ Master development specification, version 3.0.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 8 — Auctions.
+Current implementation phase: Phase 9 — Stripe test payments.
 
 ## Development philosophy
 
@@ -99,12 +99,12 @@ Database migrations must be executed by CI/CD rather than requiring the develope
 - Next.js, TypeScript, App Router, Tailwind CSS
 - Supabase PostgreSQL and Supabase Auth
 - Resend for transactional email (server only)
+- Stripe Connect in test mode
 - `@react-pdf/renderer` for dummy tax invoice PDFs
 - Vercel
 - GitHub and GitHub Actions
 - Cursor
 - Supabase CLI migrations deployed by GitHub Actions
-- Stripe Connect later
 - Vitest and Playwright later
 - Zod where appropriate
 

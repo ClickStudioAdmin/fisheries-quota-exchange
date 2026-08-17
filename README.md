@@ -6,11 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 8 — Auctions**
+**Phase 9 — Stripe test payments**
 
-English auctions with server-side bid timestamps. A winning close creates a simulated Phase 7 order. No Stripe.
+Stripe Connect in test mode. Buyers pay FQX. Sellers onboard in the app. Webhooks mark payment. Settlement is still simulated.
 
-See [docs/phase-8.md](docs/phase-8.md).
+See [docs/phase-9.md](docs/phase-9.md).
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -21,6 +21,7 @@ Work happens on `develop`. Merge to `main` for production. See [docs/environment
 - Vercel hosting
 - GitHub Actions for database migrations
 - Resend for transactional email (server only)
+- Stripe Connect in test mode
 - `@react-pdf/renderer` for dummy tax invoice PDFs
 
 ## Local development
@@ -33,11 +34,13 @@ Copy `.env.example` to `.env.local` and add the development Supabase URL and pub
 
 To send member invitation emails locally, also set `RESEND_API_KEY` and `EMAIL_FROM`. Leave them blank to skip sending.
 
+To take test card payments, set the Stripe test keys, webhook secret, and `SUPABASE_SERVICE_ROLE_KEY`. Leave them blank to keep simulated purchase.
+
 Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 8 acceptance is that a bidder can place and outbid, the auction closes on server time, and a winning close reserves quota.
+Phase 9 acceptance is that a seller can onboard in the Stripe sandbox, a buyer can pay a listing with a test card, and the webhook marks the order paid without trusting the browser.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 
@@ -56,4 +59,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-8.md](docs/phase-8.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
+See [docs/phase-8.md](docs/phase-8.md), [docs/phase-9.md](docs/phase-9.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

@@ -1,4 +1,5 @@
 export const ORDER_STATUSES = [
+  "AWAITING_PAYMENT",
   "AWAITING_COMPLIANCE",
   "AWAITING_TRANSFER",
   "AWAITING_SETTLEMENT",
@@ -70,6 +71,8 @@ export type OrderFormState = {
 
 export function orderStatusLabel(status: OrderStatus) {
   switch (status) {
+    case "AWAITING_PAYMENT":
+      return "Awaiting payment";
     case "AWAITING_COMPLIANCE":
       return "Awaiting compliance";
     case "AWAITING_TRANSFER":
