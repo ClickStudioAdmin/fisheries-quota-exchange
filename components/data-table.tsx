@@ -7,6 +7,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
   type ReactNode,
@@ -29,6 +30,12 @@ export type DataTableColumn = {
   filter?: "select";
   filterOptions?: { value: string; label: string }[];
   align?: "left" | "right";
+  details?: boolean;
+};
+
+export type DataTableDetail = {
+  label: string;
+  value: string;
 };
 
 export type DataTableRow = {
@@ -36,6 +43,7 @@ export type DataTableRow = {
   values: Record<string, string | number>;
   display?: Record<string, string>;
   needsAction?: boolean;
+  details?: DataTableDetail[];
 };
 
 type DataTableRowExtrasProps = {
@@ -88,13 +96,80 @@ function compareValues(a: string | number | undefined, b: string | number | unde
 function rowText(row: DataTableRow) {
   const values = Object.values(row.values).map((value) => String(value));
   const labels = Object.values(row.display ?? {});
-  return [...values, ...labels].join(" ").toLowerCase();
+  const details = (row.details ?? []).flatMap((item) => [
+    item.label,
+    item.value,
+  ]);
+  return [...values, ...labels, ...details].join(" ").toLowerCase();
 }
 
 function uniqueValues(rows: DataTableRow[], key: string) {
   return [...new Set(rows.map((row) => String(row.values[key] ?? "")))]
     .filter((value) => value !== "")
     .sort((a, b) => a.localeCompare(b, "en", { numeric: true, sensitivity: "base" }));
+}
+
+function DetailsTooltip({ details }: { details: DataTableDetail[] }) {
+  const tooltipId = useId();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  function show() {
+    const rect = buttonRef.current?.getBoundingClientRect();
+
+    if (!rect) {
+      return;
+    }
+
+    const width = 288;
+    const left = Math.min(
+      rect.left,
+      Math.max(8, window.innerWidth - width - 8),
+    );
+
+    setPosition({ top: rect.bottom + 8, left });
+    setOpen(true);
+  }
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-label="More details"
+        aria-describedby={open ? tooltipId : undefined}
+        onMouseEnter={show}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={show}
+        onBlur={() => setOpen(false)}
+        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-[11px] font-medium leading-none text-ink-muted hover:border-sea hover:text-sea"
+      >
+        i
+      </button>
+      {open ? (
+        <span
+          id={tooltipId}
+          role="tooltip"
+          style={{ top: position.top, left: position.left }}
+          className="fixed z-50 w-72 border border-line bg-paper-raised p-3 text-left shadow-sm"
+        >
+          <dl className="space-y-2">
+            {details.map((item) => (
+              <div key={item.label}>
+                <dt className="text-[10px] uppercase tracking-[0.12em] text-ink-muted">
+                  {item.label}
+                </dt>
+                <dd className="mt-0.5 whitespace-pre-line text-xs text-ink">
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </span>
+      ) : null}
+    </>
+  );
 }
 
 function cellContent(row: DataTableRow, column: DataTableColumn) {
@@ -107,15 +182,24 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
         ? ""
         : String(value);
 
-  if (isStatusColumn(column.key, column.header)) {
-    return <StatusBadge label={label || "—"} code={value} />;
+  const content = isStatusColumn(column.key, column.header) ? (
+    <StatusBadge label={label || "—"} code={value} />
+  ) : label ? (
+    label
+  ) : (
+    "—"
+  );
+
+  if (!column.details || !row.details?.length) {
+    return content;
   }
 
-  if (!label) {
-    return "—";
-  }
-
-  return label;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span>{content}</span>
+      <DetailsTooltip details={row.details} />
+    </span>
+  );
 }
 
 function hasNode(node: ReactNode): boolean {

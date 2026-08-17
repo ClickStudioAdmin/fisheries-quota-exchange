@@ -17,18 +17,6 @@ export const metadata = {
   title: "Users",
 };
 
-function accountLabel(names: string[]) {
-  if (names.length === 0) {
-    return "—";
-  }
-
-  if (names.length === 1) {
-    return names[0];
-  }
-
-  return `${names.length} · ${names.join(", ")}`;
-}
-
 export default async function AdminUsersPage() {
   if (!(await isPlatformAdmin())) {
     redirect("/admin");
@@ -68,20 +56,8 @@ export default async function AdminUsersPage() {
             "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
         }}
         columns={[
-          { key: "name", header: "Name", sortable: true },
+          { key: "name", header: "Name", sortable: true, details: true },
           { key: "email", header: "Email", sortable: true },
-          {
-            key: "role",
-            header: "Role",
-            sortable: true,
-            filter: "select",
-            filterOptions: [
-              { value: "OWNER", label: "Owner" },
-              { value: "ADMIN", label: "Admin" },
-              { value: "MEMBER", label: "Member" },
-            ],
-          },
-          { key: "accounts", header: "Accounts", sortable: true },
           {
             key: "listings",
             header: "Listings",
@@ -121,10 +97,26 @@ export default async function AdminUsersPage() {
           const accountNames = item.memberships.map(
             (membership) => membership.organisation,
           );
+          const accountLines = item.memberships.map(
+            (membership) =>
+              `${membership.organisation} (${organisationRoleLabel(membership.role)})`,
+          );
 
           return {
             id: item.email,
-            needsAction: !item.verified,
+            details: [
+              ...(item.phone
+                ? [{ label: "Phone", value: item.phone }]
+                : []),
+              {
+                label: "Role",
+                value: role ? organisationRoleLabel(role) : "—",
+              },
+              {
+                label: "Accounts",
+                value: accountLines.length > 0 ? accountLines.join("\n") : "—",
+              },
+            ],
             values: {
               name: item.fullName || item.email,
               email: item.email,
@@ -140,8 +132,6 @@ export default async function AdminUsersPage() {
               name: item.fullName ?? "—",
               email:
                 item.email === currentEmail ? `${item.email} (you)` : item.email,
-              role: role ? organisationRoleLabel(role) : "—",
-              accounts: accountLabel(accountNames),
               joined: item.joinedAt ? formatTableDate(item.joinedAt) : "—",
             },
           };
