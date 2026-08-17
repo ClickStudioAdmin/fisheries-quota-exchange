@@ -35,6 +35,7 @@ export type DataTableRow = {
   id: string | number;
   values: Record<string, string | number>;
   display?: Record<string, string>;
+  needsAction?: boolean;
 };
 
 type DataTableRowExtrasProps = {
@@ -63,7 +64,6 @@ type DataTableProps = {
   selectable?: boolean;
   lockedIds?: Array<string | number>;
   bulkAction?: DataTableBulkAction;
-  needsAction?: (row: DataTableRow) => boolean;
   children?: ReactNode;
 };
 
@@ -203,7 +203,6 @@ export function DataTable({
   selectable = false,
   lockedIds = [],
   bulkAction,
-  needsAction,
   children,
 }: DataTableProps) {
   const searchId = useId();
@@ -216,8 +215,8 @@ export function DataTable({
   const [page, setPage] = useState(1);
   const extras = useMemo(() => collectExtras(children), [children]);
   const actionCount = useMemo(
-    () => (needsAction ? rows.filter(needsAction).length : 0),
-    [needsAction, rows],
+    () => rows.filter((row) => row.needsAction).length,
+    [rows],
   );
   const locked = useMemo(
     () => new Set(lockedIds.map((id) => String(id))),
@@ -245,7 +244,7 @@ export function DataTable({
     const activeFilters = columns.filter((column) => column.filter === "select");
 
     return rows.filter((row) => {
-      if (actionOnly && needsAction && !needsAction(row)) {
+      if (actionOnly && !row.needsAction) {
         return false;
       }
 
@@ -262,7 +261,7 @@ export function DataTable({
         return String(row.values[column.key] ?? "") === selected;
       });
     });
-  }, [actionOnly, columns, filters, needsAction, query, rows]);
+  }, [actionOnly, columns, filters, query, rows]);
 
   const visible = useMemo(() => {
     if (!sort) {
@@ -371,7 +370,7 @@ export function DataTable({
           placeholder={searchPlaceholder}
           className={`${filterFieldClassName} w-full sm:max-w-xs`}
         />
-        {needsAction ? (
+        {actionCount > 0 || actionOnly ? (
           <button
             type="button"
             aria-pressed={actionOnly}

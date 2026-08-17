@@ -46,7 +46,6 @@ export default async function HoldingsAdminPage() {
         empty="No holdings yet."
         searchPlaceholder="Filter holdings…"
         defaultSort={{ key: "id", direction: "desc" }}
-        needsAction={(row) => row.values.status === "Pending verification"}
         columns={[
           { key: "id", header: "ID", sortable: true },
           {
@@ -77,6 +76,7 @@ export default async function HoldingsAdminPage() {
 
           return {
             id: holding.id,
+            needsAction: !holdingIsVerified(holding),
             values: {
               id: holding.id,
               organisation: organisation?.legal_name ?? "Organisation",

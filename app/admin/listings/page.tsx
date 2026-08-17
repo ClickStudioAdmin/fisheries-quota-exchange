@@ -45,7 +45,6 @@ export default async function AdminListingsPage() {
         empty="No listings yet."
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "created", direction: "desc" }}
-        needsAction={(row) => row.values.status === "PENDING_APPROVAL"}
         columns={[
           { key: "seller", header: "Seller", sortable: true, filter: "select" },
           {
@@ -90,6 +89,7 @@ export default async function AdminListingsPage() {
         ]}
         rows={listings.map((listing) => ({
           id: listing.id,
+          needsAction: listing.status === "PENDING_APPROVAL",
           values: {
             seller: listing.seller_name,
             type: listing.listing_type,
