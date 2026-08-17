@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AuctionCard } from "@/components/auction-card";
-import { ListingCard } from "@/components/listing-card";
+import { MarketplaceListingCard } from "@/components/listing-card";
 import { PriceChart } from "@/components/price-chart";
 import { getFishery, listJurisdictions } from "@/lib/fisheries/queries";
 import { quantityTypeLabel } from "@/lib/fisheries/types";
@@ -54,8 +53,6 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
     (item) => item.id === fishery.jurisdiction_id,
   );
   const unit = quantityTypeLabel(fishery.quantity_type);
-  const listings = offers.filter((item) => item.listing_type === "FIXED_PRICE");
-  const auctions = offers.filter((item) => item.listing_type === "AUCTION");
   const lastSale = sales[sales.length - 1];
   const volume = sales.reduce((sum, sale) => sum + Number(sale.quantity), 0);
   const average =
@@ -134,26 +131,13 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
       <section className="mt-12">
         <h2 className="text-xl font-semibold text-ink">Current listings</h2>
         <div className="mt-4 space-y-3">
-          {listings.length === 0 ? (
+          {offers.length === 0 ? (
             <p className="text-sm text-ink-muted">
               No published listings at the moment.
             </p>
           ) : (
-            listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))
-          )}
-        </div>
-      </section>
-
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold text-ink">Current auctions</h2>
-        <div className="mt-4 space-y-3">
-          {auctions.length === 0 ? (
-            <p className="text-sm text-ink-muted">No auctions at the moment.</p>
-          ) : (
-            auctions.map((listing) => (
-              <AuctionCard key={listing.id} listing={listing} />
+            offers.map((listing) => (
+              <MarketplaceListingCard key={listing.id} listing={listing} />
             ))
           )}
         </div>
