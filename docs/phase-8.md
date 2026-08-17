@@ -22,7 +22,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 
 | Path | Purpose |
 | --- | --- |
-| `/marketplace` | Fixed-price listings and auctions, filterable by listing type and sale/lease |
+| `/marketplace` | Fixed-price listings and auctions, filterable by jurisdiction, fishery, listing type and sale/lease, sorted by price or quantity, 20 per page |
 | `/marketplace/[id]` | Fixed-price listing detail and purchase |
 | `/auctions` | Redirects to Marketplace |
 | `/auctions/[id]` | Bid, history, close |
