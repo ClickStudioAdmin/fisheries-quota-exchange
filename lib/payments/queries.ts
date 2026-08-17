@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { getPaymentProvider } from "@/lib/payments/provider";
 import type { OrganisationPaymentStatus } from "@/lib/payments/types";
 
 export async function organisationAcceptsCardPayments(organisationId: number) {
@@ -43,6 +45,41 @@ export async function getOrganisationPaymentStatus(
     payoutsEnabled: Boolean(data.stripe_payouts_enabled),
     detailsSubmitted: Boolean(data.stripe_details_submitted),
   };
+}
+
+export async function refreshOrganisationPaymentStatus(
+  organisationId: number,
+): Promise<OrganisationPaymentStatus | null> {
+  const status = await getOrganisationPaymentStatus(organisationId);
+  const provider = getPaymentProvider();
+  const service = createServiceClient();
+
+  if (!status?.accountId || !provider || !service) {
+    return status;
+  }
+
+  try {
+    const live = await provider.getConnectedAccountStatus(status.accountId);
+    const { error } = await service.rpc("sync_organisation_stripe_status", {
+      p_account_id: status.accountId,
+      p_charges_enabled: live.chargesEnabled,
+      p_payouts_enabled: live.payoutsEnabled,
+      p_details_submitted: live.detailsSubmitted,
+    });
+
+    if (error) {
+      return status;
+    }
+
+    return {
+      accountId: status.accountId,
+      chargesEnabled: live.chargesEnabled,
+      payoutsEnabled: live.payoutsEnabled,
+      detailsSubmitted: live.detailsSubmitted,
+    };
+  } catch {
+    return status;
+  }
 }
 
 export async function getOrderSellerPaymentAccount(orderId: number) {

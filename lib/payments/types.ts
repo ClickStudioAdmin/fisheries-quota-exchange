@@ -30,6 +30,11 @@ export type PaymentProvider = {
     email: string;
   }): Promise<string>;
   createAccountSession(accountId: string): Promise<string>;
+  getConnectedAccountStatus(accountId: string): Promise<{
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    detailsSubmitted: boolean;
+  }>;
   createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult>;
   parseWebhook(
     payload: string,

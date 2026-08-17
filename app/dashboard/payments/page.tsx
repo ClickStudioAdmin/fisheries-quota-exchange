@@ -3,7 +3,7 @@ import { panelClassName } from "@/components/surface";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { isPaymentsConfigured, getStripePublishableKey } from "@/lib/payments/env";
-import { getOrganisationPaymentStatus } from "@/lib/payments/queries";
+import { refreshOrganisationPaymentStatus } from "@/lib/payments/queries";
 
 export const metadata = {
   title: "Payments",
@@ -35,7 +35,7 @@ export default async function DashboardPaymentsPage({
 
   const configured = isPaymentsConfigured();
   const publishableKey = getStripePublishableKey();
-  const status = await getOrganisationPaymentStatus(account.selected.id);
+  const status = await refreshOrganisationPaymentStatus(account.selected.id);
   const canManage = canEditOrganisation(account.selected.role);
 
   return (
@@ -60,7 +60,9 @@ export default async function DashboardPaymentsPage({
           <p className="text-sm text-ink">
             {status?.chargesEnabled
               ? "This account can accept test card payments."
-              : "Complete onboarding to accept test card payments on your listings."}
+              : status?.detailsSubmitted
+                ? "Stripe has your details and is reviewing them. Refresh this page in a minute."
+                : "Complete onboarding to accept test card payments on your listings."}
           </p>
           {canManage ? (
             <PaymentsConnect

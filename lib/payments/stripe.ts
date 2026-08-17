@@ -75,6 +75,16 @@ export function createStripePaymentProvider(): PaymentProvider {
       return session.client_secret;
     },
 
+    async getConnectedAccountStatus(accountId) {
+      const account = await stripeClient().accounts.retrieve(accountId);
+
+      return {
+        chargesEnabled: Boolean(account.charges_enabled),
+        payoutsEnabled: Boolean(account.payouts_enabled),
+        detailsSubmitted: Boolean(account.details_submitted),
+      };
+    },
+
     async createCheckout(input) {
       const stripe = stripeClient();
       const totalCents = audToCents(
