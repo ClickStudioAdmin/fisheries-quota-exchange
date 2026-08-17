@@ -297,7 +297,12 @@ export async function HoldingRecord({
             key={listing.id}
             id={listing.id}
             links={
-              <Link href={listingHref(listing)} className={tableLinkClassName}>
+              <Link
+                href={listingHref(listing)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
                 View
               </Link>
             }
@@ -371,7 +376,12 @@ export async function HoldingRecord({
             key={order.id}
             id={order.id}
             links={
-              <Link href={`/orders/${order.id}`} className={tableLinkClassName}>
+              <Link
+                href={`/orders/${order.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
                 View
               </Link>
             }
