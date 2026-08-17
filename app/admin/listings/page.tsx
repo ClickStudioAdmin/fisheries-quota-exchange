@@ -35,7 +35,7 @@ export default async function AdminListingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Listing approval
+        Listings
       </h1>
       <DataTable
         caption="Listings"
@@ -117,6 +117,8 @@ export default async function AdminListingsPage() {
                     ? `/auctions/${listing.id}`
                     : `/marketplace/${listing.id}`
                 }
+                target="_blank"
+                rel="noopener noreferrer"
                 className={tableLinkClassName}
               >
                 View
