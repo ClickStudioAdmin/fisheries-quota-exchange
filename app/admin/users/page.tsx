@@ -70,16 +70,6 @@ export default async function AdminUsersPage() {
             align: "right",
           },
           {
-            key: "access",
-            header: "Access",
-            sortable: true,
-            filter: "select",
-            filterOptions: [
-              { value: "Platform admin", label: "Platform admin" },
-              { value: "User", label: "User" },
-            ],
-          },
-          {
             key: "verified",
             header: "Verified",
             sortable: true,
@@ -102,6 +92,9 @@ export default async function AdminUsersPage() {
             details: [
               ...(item.phone
                 ? [{ label: "Phone", value: item.phone }]
+                : []),
+              ...(item.platformAdmin
+                ? [{ label: "Access", value: "Platform admin" }]
                 : []),
               {
                 label: "Accounts",
