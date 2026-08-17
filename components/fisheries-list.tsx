@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { FisheryLogo } from "@/components/fishery-logo";
 import { cardClassName, LabeledFields } from "@/components/surface";
@@ -31,24 +31,38 @@ export function FisheriesList({
   prices: LatestSalePrice[];
 }) {
   const [jurisdictionId, setJurisdictionId] = useState("ALL");
+  const [query, setQuery] = useState("");
+  const searchId = useId();
   const lastSale = useMemo(
     () => new Map(prices.map((price) => [price.fishery_id, price])),
     [prices],
   );
-  const visible = useMemo(
-    () =>
-      fisheries.filter((fishery) => {
-        if (jurisdictionId === "ALL") {
-          return true;
-        }
-        return String(fishery.jurisdiction_id) === jurisdictionId;
-      }),
-    [fisheries, jurisdictionId],
-  );
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return fisheries.filter((fishery) => {
+      if (jurisdictionId !== "ALL" && String(fishery.jurisdiction_id) !== jurisdictionId) {
+        return false;
+      }
+      if (needle && !fishery.name.toLowerCase().includes(needle)) {
+        return false;
+      }
+      return true;
+    });
+  }, [fisheries, jurisdictionId, query]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="sr-only" htmlFor={searchId}>
+          Search fisheries
+        </label>
+        <input
+          id={searchId}
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search fishery name…"
+          className={`${filterFieldClassName} w-full sm:max-w-xs`}
+        />
         <label className="flex items-center gap-2 text-sm text-ink-muted">
           <span className="whitespace-nowrap">Jurisdiction</span>
           <select
