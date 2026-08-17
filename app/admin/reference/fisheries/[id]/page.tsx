@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
 import { DataTable } from "@/components/data-table";
+import { FisheryLogo } from "@/components/fishery-logo";
+import { FisheryLogoForm } from "@/components/fishery-logo-form";
 import { formatTableDate } from "@/lib/format";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
@@ -66,16 +68,31 @@ export default async function FisheryAdminPage({
             Fisheries
           </Link>
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
-          {fishery.name}
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          {jurisdiction
-            ? `${jurisdiction.code} — ${jurisdiction.name}`
-            : "Jurisdiction not found"}
-          . Quantity type: {fishery.quantity_type === "KG" ? "Kg" : "Units"}.
-        </p>
+        <div className="mt-2 flex items-start gap-4">
+          <FisheryLogo fishery={fishery} size="lg" />
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-ink">
+              {fishery.name}
+            </h1>
+            <p className="mt-2 text-sm text-ink-muted">
+              {jurisdiction
+                ? `${jurisdiction.code} — ${jurisdiction.name}`
+                : "Jurisdiction not found"}
+              . Quantity type: {fishery.quantity_type === "KG" ? "Kg" : "Units"}.
+            </p>
+          </div>
+        </div>
       </div>
+      <section className="max-w-md space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Logo</h2>
+        <p className="text-sm text-ink-muted">
+          Shown on the public fishery list and fishery page.
+        </p>
+        <FisheryLogoForm
+          fisheryId={fishery.id}
+          hasLogo={Boolean(fishery.logo_path)}
+        />
+      </section>
       <section className="space-y-6">
         <h2 className="text-xl font-semibold text-ink">Stocks</h2>
         <DataTable

@@ -5,6 +5,12 @@ import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { MEASUREMENT_KINDS, isQuantityType } from "@/lib/fisheries/types";
+import {
+  FISHERY_LOGO_BUCKET,
+  fisheryLogoExtension,
+  readLogoFile,
+  validateFisheryLogo,
+} from "@/lib/fisheries/logo";
 
 export type AdminFormState = {
   error?: string;
@@ -28,6 +34,57 @@ async function requireAdmin() {
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
+}
+
+type AdminClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
+
+function revalidateFishery(id: number) {
+  revalidatePath("/fisheries");
+  revalidatePath(`/fisheries/${id}`);
+  revalidatePath("/admin/reference/fisheries");
+  revalidatePath(`/admin/reference/fisheries/${id}`);
+}
+
+async function storeFisheryLogo(
+  supabase: AdminClient,
+  fisheryId: number,
+  file: File,
+  previousPath: string | null,
+) {
+  const invalid = validateFisheryLogo(file);
+  if (invalid) {
+    return { error: invalid };
+  }
+
+  const ext = fisheryLogoExtension(file.type);
+  if (!ext) {
+    return { error: "Use a JPEG, PNG, WebP, or GIF image." };
+  }
+
+  const path = `${fisheryId}/${Date.now()}.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from(FISHERY_LOGO_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: true });
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const { error: updateError } = await supabase
+    .from("fisheries")
+    .update({ logo_path: path })
+    .eq("id", fisheryId);
+
+  if (updateError) {
+    await supabase.storage.from(FISHERY_LOGO_BUCKET).remove([path]);
+    return { error: updateError.message };
+  }
+
+  if (previousPath && previousPath !== path) {
+    await supabase.storage.from(FISHERY_LOGO_BUCKET).remove([previousPath]);
+  }
+
+  return { error: null };
 }
 
 export async function claimFirstAdminAction() {
@@ -84,6 +141,14 @@ export async function createFisheryAction(
     return { error: "Choose Kg or Units." };
   }
 
+  const logo = readLogoFile(formData);
+  if (logo) {
+    const invalid = validateFisheryLogo(logo);
+    if (invalid) {
+      return { error: invalid };
+    }
+  }
+
   const { data, error } = await admin.supabase
     .from("fisheries")
     .insert({
@@ -96,6 +161,11 @@ export async function createFisheryAction(
     .single();
 
   if (error) return { error: error.message };
+
+  if (logo) {
+    await storeFisheryLogo(admin.supabase, data.id, logo, null);
+  }
+
   redirect(`/admin/reference/fisheries/${data.id}`);
 }
 
@@ -294,4 +364,88 @@ export async function verifyHoldingAction(formData: FormData) {
 
   revalidatePath("/admin/holdings");
   revalidatePath("/dashboard/holdings");
+}
+
+export async function updateFisheryLogoAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const admin = await requireAdmin();
+  if (admin.error || !admin.supabase) return { error: admin.error };
+
+  const fisheryId = Number(formData.get("fishery_id"));
+  const logo = readLogoFile(formData);
+
+  if (!Number.isInteger(fisheryId)) {
+    return { error: "Fishery is required." };
+  }
+
+  if (!logo) {
+    return { error: "Choose an image." };
+  }
+
+  const { data: fishery } = await admin.supabase
+    .from("fisheries")
+    .select("logo_path")
+    .eq("id", fisheryId)
+    .maybeSingle();
+
+  if (!fishery) {
+    return { error: "Fishery not found." };
+  }
+
+  const stored = await storeFisheryLogo(
+    admin.supabase,
+    fisheryId,
+    logo,
+    (fishery.logo_path as string | null) ?? null,
+  );
+
+  if (stored.error) {
+    return { error: stored.error };
+  }
+
+  revalidateFishery(fisheryId);
+  return { message: "Logo saved." };
+}
+
+export async function removeFisheryLogoAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const admin = await requireAdmin();
+  if (admin.error || !admin.supabase) return { error: admin.error };
+
+  const fisheryId = Number(formData.get("fishery_id"));
+
+  if (!Number.isInteger(fisheryId)) {
+    return { error: "Fishery is required." };
+  }
+
+  const { data: fishery } = await admin.supabase
+    .from("fisheries")
+    .select("logo_path")
+    .eq("id", fisheryId)
+    .maybeSingle();
+
+  if (!fishery) {
+    return { error: "Fishery not found." };
+  }
+
+  const { error } = await admin.supabase
+    .from("fisheries")
+    .update({ logo_path: null })
+    .eq("id", fisheryId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  const previousPath = (fishery.logo_path as string | null) ?? null;
+  if (previousPath) {
+    await admin.supabase.storage.from(FISHERY_LOGO_BUCKET).remove([previousPath]);
+  }
+
+  revalidateFishery(fisheryId);
+  return { message: "Logo removed." };
 }

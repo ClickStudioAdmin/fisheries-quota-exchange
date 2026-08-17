@@ -114,6 +114,12 @@ export default async function FisheriesAdminPage() {
                   { value: "UNITS", label: "Units" },
                 ],
               },
+              {
+                name: "logo",
+                label: "Logo (optional)",
+                type: "file",
+                accept: "image/jpeg,image/png,image/webp,image/gif",
+              },
             ]}
           />
         </div>

@@ -26,6 +26,7 @@ export type Fishery = {
   name: string;
   code: string | null;
   quantity_type: QuantityType;
+  logo_path: string | null;
 };
 
 export type Stock = {

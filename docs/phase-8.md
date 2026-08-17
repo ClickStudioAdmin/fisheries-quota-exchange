@@ -27,12 +27,13 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/auctions` | Redirects to Marketplace |
 | `/auctions/[id]` | Bid, history, close |
 | `/fisheries` | Public list of fisheries |
-| `/fisheries/[id]` | Sales and leases (each with fixed-price listings and auctions) plus sale-price history |
+| `/fisheries/[id]` | Last sale and lease prices, sale-price history, sales and leases (each with fixed-price listings and auctions) |
 | `/dashboard/holdings` | Create an auction from a holding. Holding value uses the latest sale. |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
 | `/admin/users` | Verify users so their holdings skip approval |
 | `/admin/holdings` | Verify holdings created or changed by unverified users |
+| `/admin/reference/fisheries/[id]` | Stocks, seasons, quota types, rules, and logo |
 
 ## Database
 
@@ -49,10 +50,10 @@ Functions:
 Public market data (no buyer or seller identity):
 
 - `list_open_listings_for_fishery`
-- `list_market_sales`
+- `list_market_sales` (sale and lease prices; no identities)
 - `latest_sale_prices`
 
-Fisheries and jurisdictions are readable by anonymous visitors. Holding valuation is quantity × most recent `SALE` unit price for that fishery.
+Fisheries and jurisdictions are readable by anonymous visitors. Holding valuation is quantity × most recent `SALE` unit price for that fishery. `fisheries.logo_path` points at a public object in the `fishery-logos` bucket. Platform admins upload, replace, or remove logos.
 
 Open listings must be covered by the seller holding. `adjust_quota_holding` cannot reduce quantity below `holding_committed_quantity`. Uncovered listings from earlier data are cancelled by migration `20260817180000_listing_holding_cover.sql`.
 

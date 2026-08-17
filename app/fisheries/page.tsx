@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FisheryLogo } from "@/components/fishery-logo";
 import { PageIntro } from "@/components/page-intro";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { quantityTypeLabel } from "@/lib/fisheries/types";
@@ -44,18 +45,21 @@ export default async function FisheriesPage() {
                 <Link
                   key={fishery.id}
                   href={`/fisheries/${fishery.id}`}
-                  className="block border border-line p-4 hover:bg-paper-raised"
+                  className="flex items-center gap-4 border border-line p-4 hover:bg-paper-raised"
                 >
-                  <p className="font-medium text-ink">{fishery.name}</p>
-                  <p className="mt-1 text-sm text-ink-muted">
-                    {jurisdiction
-                      ? `${jurisdiction.code} — ${jurisdiction.name}`
-                      : "Jurisdiction"}
-                    {fishery.code ? ` · ${fishery.code}` : ""} · {unit}
-                    {sale
-                      ? ` · last sale ${formatAud(sale.unit_price_aud)} / ${unit}`
-                      : " · no sales yet"}
-                  </p>
+                  <FisheryLogo fishery={fishery} size="md" />
+                  <div>
+                    <p className="font-medium text-ink">{fishery.name}</p>
+                    <p className="mt-1 text-sm text-ink-muted">
+                      {jurisdiction
+                        ? `${jurisdiction.code} — ${jurisdiction.name}`
+                        : "Jurisdiction"}
+                      {fishery.code ? ` · ${fishery.code}` : ""} · {unit}
+                      {sale
+                        ? ` · last sale ${formatAud(sale.unit_price_aud)} / ${unit}`
+                        : " · no sales yet"}
+                    </p>
+                  </div>
                 </Link>
               );
             })}

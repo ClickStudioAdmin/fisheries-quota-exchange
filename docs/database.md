@@ -11,7 +11,7 @@ Current tables:
 | `organisation_users` | 1 | Email membership and role. |
 | `platform_admins` | 5 | Platform administrators. |
 | `jurisdictions` | 5 | Australian jurisdictions. |
-| `fisheries` | 5 | Managed fisheries under a jurisdiction. `quantity_type` is `KG` or `UNITS`. |
+| `fisheries` | 5 | Managed fisheries under a jurisdiction. `quantity_type` is `KG` or `UNITS`. `logo_path` is an optional image in the `fishery-logos` storage bucket. |
 | `stocks` | 5 | Named stock or area within a fishery. |
 | `seasons` | 5 | Fishery seasons. |
 | `quota_types` | 5 | Measurement kind and unit label. |
@@ -36,6 +36,6 @@ Current tables:
 
 Creating or changing a holding sets `VERIFIED` only if the actor is in `verified_users`. Otherwise it is `PENDING_VERIFICATION`, including when a platform admin updates a holding for an unverified account. A listing or auction cannot be created from an unverified holding. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`.
 
-Anonymous visitors can read `fisheries` and `jurisdictions`. Sale prices for `/fisheries/[id]` and holding valuation come from `list_market_sales` and `latest_sale_prices`, which return quantity and unit price only.
+Anonymous visitors can read `fisheries` and `jurisdictions`. Sale and lease prices for `/fisheries/[id]` come from `list_market_sales` (quantity, unit price, and offering only). Holding valuation uses `latest_sale_prices` and SALE prices only. Fishery logos are public files in the `fishery-logos` bucket; only platform admins can upload, replace, or remove them.
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).

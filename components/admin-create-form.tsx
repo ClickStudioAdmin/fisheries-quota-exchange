@@ -15,6 +15,13 @@ type Field =
   | {
       name: string;
       label: string;
+      type: "file";
+      accept?: string;
+      required?: boolean;
+    }
+  | {
+      name: string;
+      label: string;
       type: "select";
       required?: boolean;
       options: { value: string; label: string }[];
@@ -83,6 +90,15 @@ export function AdminCreateForm({
                 </option>
               ))}
             </select>
+          ) : field.type === "file" ? (
+            <input
+              id={field.name}
+              name={field.name}
+              type="file"
+              accept={field.accept}
+              required={field.required}
+              className={fieldClassName}
+            />
           ) : field.type === "textarea" ? (
             <textarea
               id={field.name}
