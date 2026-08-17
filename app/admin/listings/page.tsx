@@ -45,6 +45,7 @@ export default async function AdminListingsPage() {
         empty="No listings yet."
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "created", direction: "desc" }}
+        needsAction={(row) => row.values.status === "PENDING_APPROVAL"}
         columns={[
           { key: "seller", header: "Seller", sortable: true, filter: "select" },
           {

@@ -47,6 +47,11 @@ export default async function AdminOrdersPage() {
         empty="No orders yet."
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
+        needsAction={(row) =>
+          row.values.status === "AWAITING_COMPLIANCE" ||
+          row.values.status === "AWAITING_TRANSFER" ||
+          row.values.status === "AWAITING_SETTLEMENT"
+        }
         columns={[
           { key: "id", header: "Order", sortable: true },
           { key: "buyer", header: "Buyer", sortable: true, filter: "select" },

@@ -63,6 +63,7 @@ type DataTableProps = {
   selectable?: boolean;
   lockedIds?: Array<string | number>;
   bulkAction?: DataTableBulkAction;
+  needsAction?: (row: DataTableRow) => boolean;
   children?: ReactNode;
 };
 
@@ -202,16 +203,22 @@ export function DataTable({
   selectable = false,
   lockedIds = [],
   bulkAction,
+  needsAction,
   children,
 }: DataTableProps) {
   const searchId = useId();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [actionOnly, setActionOnly] = useState(false);
   const [sort, setSort] = useState<SortState>(defaultSort ?? null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const extras = useMemo(() => collectExtras(children), [children]);
+  const actionCount = useMemo(
+    () => (needsAction ? rows.filter(needsAction).length : 0),
+    [needsAction, rows],
+  );
   const locked = useMemo(
     () => new Set(lockedIds.map((id) => String(id))),
     [lockedIds],
@@ -238,6 +245,10 @@ export function DataTable({
     const activeFilters = columns.filter((column) => column.filter === "select");
 
     return rows.filter((row) => {
+      if (actionOnly && needsAction && !needsAction(row)) {
+        return false;
+      }
+
       if (needle && !rowText(row).includes(needle)) {
         return false;
       }
@@ -251,7 +262,7 @@ export function DataTable({
         return String(row.values[column.key] ?? "") === selected;
       });
     });
-  }, [columns, filters, query, rows]);
+  }, [actionOnly, columns, filters, needsAction, query, rows]);
 
   const visible = useMemo(() => {
     if (!sort) {
@@ -272,7 +283,7 @@ export function DataTable({
 
   useEffect(() => {
     setPage(1);
-  }, [filters, query, sort]);
+  }, [actionOnly, filters, query, sort]);
 
   const selectableVisible = useMemo(
     () =>
@@ -360,6 +371,19 @@ export function DataTable({
           placeholder={searchPlaceholder}
           className={`${filterFieldClassName} w-full sm:max-w-xs`}
         />
+        {needsAction ? (
+          <button
+            type="button"
+            aria-pressed={actionOnly}
+            onClick={() => setActionOnly((current) => !current)}
+            className={
+              actionOnly ? tableButtonClassName : tableSecondaryButtonClassName
+            }
+          >
+            Needs action
+            {actionCount > 0 ? ` (${actionCount})` : ""}
+          </button>
+        ) : null}
         {selectFilters.map((column) => {
           const options =
             column.filterOptions ??
