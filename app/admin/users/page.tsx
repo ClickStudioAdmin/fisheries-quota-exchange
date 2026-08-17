@@ -6,7 +6,6 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { deleteUsersAction, setUserVerifiedAction } from "@/lib/admin/actions";
 import { formatTableDate } from "@/lib/format";
 import {
-  adminUserRole,
   listUsersForAdmin,
 } from "@/lib/organisations/admin-queries";
 import { adminUserPath } from "@/lib/organisations/paths";
@@ -93,10 +92,6 @@ export default async function AdminUsersPage() {
           { key: "joined", header: "Joined", sortable: true },
         ]}
         rows={users.map((item) => {
-          const role = adminUserRole(item);
-          const accountNames = item.memberships.map(
-            (membership) => membership.organisation,
-          );
           const accountLines = item.memberships.map(
             (membership) =>
               `${membership.organisation} (${organisationRoleLabel(membership.role)})`,
@@ -109,10 +104,6 @@ export default async function AdminUsersPage() {
                 ? [{ label: "Phone", value: item.phone }]
                 : []),
               {
-                label: "Role",
-                value: role ? organisationRoleLabel(role) : "—",
-              },
-              {
                 label: "Accounts",
                 value: accountLines.length > 0 ? accountLines.join("\n") : "—",
               },
@@ -120,8 +111,7 @@ export default async function AdminUsersPage() {
             values: {
               name: item.fullName || item.email,
               email: item.email,
-              role: role ?? "",
-              accounts: accountNames.join(", "),
+              accounts: accountLines.join(", "),
               listings: item.listingCount,
               orders: item.orderCount,
               access: item.platformAdmin ? "Platform admin" : "User",

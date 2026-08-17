@@ -33,6 +33,7 @@ export default async function AdminLayout({
   const counts = await getAdminActionCounts();
   const links: SideNavItem[] = [
     { href: "/admin", label: "Overview" },
+    { href: "/admin/settings", label: "Platform settings" },
     {
       href: "/admin/users",
       label: "Users",
@@ -56,7 +57,6 @@ export default async function AdminLayout({
       match: "prefix",
       badge: counts.orders,
     },
-    { href: "/admin/settings", label: "Platform settings" },
     {
       label: "Reference data",
       children: [
