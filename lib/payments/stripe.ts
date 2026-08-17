@@ -28,6 +28,7 @@ export function createStripePaymentProvider(): PaymentProvider {
         controller: {
           fees: { payer: "application" },
           losses: { payments: "application" },
+          requirement_collection: "application",
           stripe_dashboard: { type: "none" },
         },
         capabilities: {
@@ -44,13 +45,32 @@ export function createStripePaymentProvider(): PaymentProvider {
 
     async createAccountSession(accountId) {
       const stripe = stripeClient();
+      const account = await stripe.accounts.retrieve(accountId);
+      const platformCollects =
+        account.controller?.requirement_collection === "application";
+      const features = platformCollects
+        ? {
+            disable_stripe_user_authentication: true,
+            external_account_collection: true,
+          }
+        : undefined;
       const session = await stripe.accountSessions.create({
         account: accountId,
         components: {
-          account_onboarding: { enabled: true },
-          account_management: { enabled: true },
+          account_onboarding: {
+            enabled: true,
+            ...(features ? { features } : {}),
+          },
+          account_management: {
+            enabled: true,
+            ...(features ? { features } : {}),
+          },
         },
       });
+
+      if (!session.client_secret) {
+        throw new Error("Stripe did not return an account session.");
+      }
 
       return session.client_secret;
     },

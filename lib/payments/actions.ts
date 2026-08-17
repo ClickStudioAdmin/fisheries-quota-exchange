@@ -48,25 +48,53 @@ export async function createAccountSessionAction(
   const status = await getOrganisationPaymentStatus(organisationId);
   let accountId = status?.accountId ?? null;
 
-  if (!accountId) {
-    accountId = await provider.createConnectedAccount({
-      organisationId,
-      legalName: result.organisation.legal_name,
-      email: user.email,
-    });
+  try {
+    if (!accountId) {
+      accountId = await provider.createConnectedAccount({
+        organisationId,
+        legalName: result.organisation.legal_name,
+        email: user.email,
+      });
 
-    const { error } = await supabase.rpc("attach_organisation_stripe_account", {
-      p_organisation_id: organisationId,
-      p_account_id: accountId,
-    });
+      const { error } = await supabase.rpc("attach_organisation_stripe_account", {
+        p_organisation_id: organisationId,
+        p_account_id: accountId,
+      });
 
-    if (error) {
-      return { error: error.message };
+      if (error) {
+        return { error: error.message };
+      }
     }
-  }
 
-  const clientSecret = await provider.createAccountSession(accountId);
-  return { clientSecret };
+    try {
+      return { clientSecret: await provider.createAccountSession(accountId) };
+    } catch (sessionError) {
+      if (status?.chargesEnabled) {
+        throw sessionError;
+      }
+
+      accountId = await provider.createConnectedAccount({
+        organisationId,
+        legalName: result.organisation.legal_name,
+        email: user.email,
+      });
+
+      const { error } = await supabase.rpc("attach_organisation_stripe_account", {
+        p_organisation_id: organisationId,
+        p_account_id: accountId,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { clientSecret: await provider.createAccountSession(accountId) };
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Could not start Stripe onboarding.";
+    return { error: message };
+  }
 }
 
 export async function startOrderCheckoutAction(

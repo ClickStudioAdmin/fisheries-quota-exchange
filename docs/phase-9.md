@@ -10,7 +10,7 @@ Never trust the browser or the Checkout success URL for payment status. The webh
 
 ## Flow
 
-1. Organisation `OWNER` or `ADMIN` opens **Payments** and completes Stripe Connect embedded onboarding (sandbox).
+1. Organisation `OWNER` or `ADMIN` opens **Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
 2. Stripe sends `account.updated`. The app stores whether the account can accept charges. The browser is not trusted for that flag.
 3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and the buyer is sent to Stripe Checkout (destination charge, platform fee as `application_fee_amount`).
 4. Stripe sends `checkout.session.completed`. The app marks the order paid, then records the event id so a retry after a failed write still applies. Refreshing the success URL does not charge again.
