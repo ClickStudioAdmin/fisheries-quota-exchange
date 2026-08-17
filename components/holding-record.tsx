@@ -233,7 +233,7 @@ export async function HoldingRecord({
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
-          { key: "id", header: "ID", sortable: true },
+          { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
           {
             key: "type",
             header: "Listing type",
@@ -256,7 +256,6 @@ export async function HoldingRecord({
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "price", header: "Price", sortable: true, align: "right" },
-          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -275,6 +274,9 @@ export async function HoldingRecord({
         ]}
         rows={listings.map((listing) => ({
           id: listing.id,
+          details: [
+            { label: "Created", value: formatTableDate(listing.created_at) },
+          ],
           values: {
             id: listing.id,
             type: listing.listing_type,
@@ -290,7 +292,6 @@ export async function HoldingRecord({
             quantity: `${listing.quantity} ${listing.unit_label}`,
             price: formatAud(listing.unit_price_aud),
             status: listingStatusLabel(listing.status),
-            created: formatTableDate(listing.created_at),
           },
         }))}
       >
@@ -321,7 +322,7 @@ export async function HoldingRecord({
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
-          { key: "id", header: "Order", sortable: true },
+          { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
           { key: "buyer", header: "Buyer", sortable: true, filter: "select" },
           { key: "seller", header: "Seller", sortable: true, filter: "select" },
           {
@@ -336,7 +337,6 @@ export async function HoldingRecord({
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "amount", header: "Amount", sortable: true, align: "right" },
-          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -354,6 +354,9 @@ export async function HoldingRecord({
         ]}
         rows={orders.map((order) => ({
           id: order.id,
+          details: [
+            { label: "Created", value: formatTableDate(order.created_at) },
+          ],
           values: {
             id: order.id,
             buyer: order.buyer_name,
@@ -369,7 +372,6 @@ export async function HoldingRecord({
             quantity: `${order.quantity} ${order.unit_label}`,
             amount: formatAud(order.amount_aud),
             status: orderStatusLabel(order.status),
-            created: formatTableDate(order.created_at),
           },
         }))}
       >

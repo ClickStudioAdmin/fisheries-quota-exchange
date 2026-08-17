@@ -49,7 +49,7 @@ export default async function AdminOrdersPage() {
         defaultSort={{ key: "id", direction: "desc" }}
         selectable
         columns={[
-          { key: "id", header: "Order", sortable: true },
+          { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
           { key: "buyer", header: "Buyer", sortable: true, filter: "select", nowrap: true },
           { key: "seller", header: "Seller", sortable: true, filter: "select", nowrap: true },
           {
@@ -65,7 +65,6 @@ export default async function AdminOrdersPage() {
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "amount", header: "Amount", sortable: true, align: "right" },
           { key: "fee", header: "Fee", sortable: true, align: "right" },
-          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -87,6 +86,9 @@ export default async function AdminOrdersPage() {
             order.status === "AWAITING_COMPLIANCE" ||
             order.status === "AWAITING_TRANSFER" ||
             order.status === "AWAITING_SETTLEMENT",
+          details: [
+            { label: "Created", value: formatTableDate(order.created_at) },
+          ],
           values: {
             id: order.id,
             buyer: order.buyer_name,
@@ -107,7 +109,6 @@ export default async function AdminOrdersPage() {
                 ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
                 : formatAud(order.fee_amount_aud),
             status: orderStatusLabel(order.status),
-            created: formatTableDate(order.created_at),
           },
         }))}
       >

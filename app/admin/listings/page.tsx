@@ -47,7 +47,7 @@ export default async function AdminListingsPage() {
         defaultSort={{ key: "id", direction: "desc" }}
         selectable
         columns={[
-          { key: "id", header: "ID", sortable: true },
+          { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
           { key: "seller", header: "Seller", sortable: true, filter: "select" },
           {
             key: "type",
@@ -72,7 +72,6 @@ export default async function AdminListingsPage() {
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "price", header: "Price", sortable: true, align: "right" },
-          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -92,6 +91,9 @@ export default async function AdminListingsPage() {
         rows={listings.map((listing) => ({
           id: listing.id,
           needsAction: listing.status === "PENDING_APPROVAL",
+          details: [
+            { label: "Created", value: formatTableDate(listing.created_at) },
+          ],
           values: {
             id: listing.id,
             seller: listing.seller_name,
@@ -109,7 +111,6 @@ export default async function AdminListingsPage() {
             quantity: `${listing.quantity} ${listing.unit_label}`,
             price: formatAud(listing.unit_price_aud),
             status: listingStatusLabel(listing.status),
-            created: formatTableDate(listing.created_at),
           },
         }))}
       >
