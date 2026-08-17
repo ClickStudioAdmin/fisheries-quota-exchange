@@ -10,7 +10,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 
 ## Flow
 
-1. Organisation `OWNER` or `ADMIN` creates an auction from a holding (`starting` price, increment, optional reserve, start, end).
+1. Organisation `OWNER` or `ADMIN` creates an auction from a **verified** holding (`starting` price, increment, optional reserve, start, end).
 2. Status is `PENDING_APPROVAL`. Platform admin approves it (`PUBLISHED`) on `/admin/listings`.
 3. A member of a different organisation places a bid. `place_bid` locks the listing, compares `now()` to start/end, and stores `bids.created_at` with `now()`.
 4. A later bid must be at least the current price plus the increment.
@@ -27,6 +27,8 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/dashboard/holdings` | Create an auction from a holding |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
+| `/admin/users` | Verify users so their holdings skip approval |
+| `/admin/holdings` | Verify holdings created or changed by unverified users |
 
 ## Database
 

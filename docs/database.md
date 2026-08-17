@@ -16,8 +16,9 @@ Current tables:
 | `seasons` | 5 | Fishery seasons. |
 | `quota_types` | 5 | Measurement kind and unit label. |
 | `fishery_rules` | 5 | Configurable rules. |
-| `quota_holdings` | 5 | Organisation quota balances. |
+| `quota_holdings` | 5 | Organisation quota balances. `verification_status` is `PENDING_VERIFICATION` or `VERIFIED`. |
 | `quota_ledger` | 5 | Immutable quota events. |
+| `verified_users` | 8 | Emails whose holdings skip admin verification. |
 | `listings` | 6–8 | Fixed-price or auction offers. |
 | `orders` | 7 | Simulated purchase of a listing or winning auction. |
 | `quota_reservations` | 7 | Active reserved quantity against a holding. |
@@ -29,6 +30,8 @@ Current tables:
 
 `quota_types.measurement_kind` must be `WEIGHT`, `UNITS`, `EFFORT`, or `OTHER`.
 
-`quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`.
+`quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`. Members change quantity through `adjust_quota_holding`, which writes an `ADJUSTMENT` ledger row.
+
+Creating or changing a holding sets `VERIFIED` if the actor is a platform admin or a verified user, otherwise `PENDING_VERIFICATION`. A listing or auction cannot be created from an unverified holding. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`.
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).

@@ -7,6 +7,7 @@ import { getUser } from "@/lib/supabase/server";
 
 const links: SideNavItem[] = [
   { href: "/admin", label: "Overview" },
+  { href: "/admin/users", label: "Users", match: "prefix" },
   { href: "/admin/holdings", label: "Holdings", match: "prefix" },
   { href: "/admin/listings", label: "Listings", match: "prefix" },
   { href: "/admin/orders", label: "Orders", match: "prefix" },

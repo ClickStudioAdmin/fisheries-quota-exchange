@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -205,8 +206,12 @@ export async function createHoldingAction(
   _prev: AdminFormState,
   formData: FormData,
 ): Promise<AdminFormState> {
-  const admin = await requireAdmin();
-  if (admin.error || !admin.supabase) return { error: admin.error };
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return { error: "You must be signed in." };
+  }
 
   const organisationId = Number(formData.get("organisation_id"));
   const stockId = Number(formData.get("stock_id"));
@@ -225,7 +230,7 @@ export async function createHoldingAction(
     return { error: "Organisation, stock, season, quota type and quantity are required." };
   }
 
-  const { error } = await admin.supabase.rpc("create_quota_holding", {
+  const { error } = await supabase.rpc("create_quota_holding", {
     p_organisation_id: organisationId,
     p_stock_id: stockId,
     p_season_id: seasonId,
@@ -235,5 +240,58 @@ export async function createHoldingAction(
   });
 
   if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/holdings");
+  revalidatePath("/admin/holdings");
   return { message: "Holding created. Ledger recorded INITIAL_ALLOCATION." };
+}
+
+export async function adjustHoldingAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const holdingId = Number(formData.get("holding_id"));
+  const quantity = Number(read(formData, "quantity"));
+  const note = read(formData, "note");
+
+  if (!Number.isInteger(holdingId) || !Number.isFinite(quantity)) {
+    return { error: "Holding and quantity are required." };
+  }
+
+  const { error } = await supabase.rpc("adjust_quota_holding", {
+    p_holding_id: holdingId,
+    p_quantity: quantity,
+    p_note: note || null,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/holdings");
+  revalidatePath("/admin/holdings");
+  return { message: "Holding updated. Ledger recorded ADJUSTMENT." };
+}
+
+export async function verifyHoldingAction(formData: FormData) {
+  const admin = await requireAdmin();
+  if (admin.error || !admin.supabase) return;
+
+  const holdingId = Number(formData.get("holding_id"));
+
+  if (!Number.isInteger(holdingId)) {
+    return;
+  }
+
+  await admin.supabase.rpc("verify_quota_holding", {
+    p_holding_id: holdingId,
+  });
+
+  revalidatePath("/admin/holdings");
+  revalidatePath("/dashboard/holdings");
 }

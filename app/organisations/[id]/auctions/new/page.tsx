@@ -10,6 +10,7 @@ import {
 import { accountPath } from "@/lib/organisations/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
+import { holdingIsVerified } from "@/lib/fisheries/types";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -54,6 +55,10 @@ export default async function NewAuctionPage({
 
   if (!holding) {
     notFound();
+  }
+
+  if (!holdingIsVerified(holding)) {
+    redirect(accountPath(organisationId, "/dashboard/holdings"));
   }
 
   const stock = stocks.find((item) => item.id === holding.stock_id);

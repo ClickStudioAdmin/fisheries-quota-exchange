@@ -120,7 +120,9 @@ export async function listHoldingsForOrganisation(organisationId: number) {
   if (!supabase) return [];
   const { data } = await supabase
     .from("quota_holdings")
-    .select("id, organisation_id, stock_id, season_id, quota_type_id, quantity")
+    .select(
+      "id, organisation_id, stock_id, season_id, quota_type_id, quantity, verification_status",
+    )
     .eq("organisation_id", organisationId)
     .order("id");
   return (data ?? []) as QuotaHolding[];
@@ -144,7 +146,9 @@ export async function listAllHoldings() {
   if (!supabase) return [];
   const { data } = await supabase
     .from("quota_holdings")
-    .select("id, organisation_id, stock_id, season_id, quota_type_id, quantity")
+    .select(
+      "id, organisation_id, stock_id, season_id, quota_type_id, quantity, verification_status",
+    )
     .order("id", { ascending: false });
   return (data ?? []) as QuotaHolding[];
 }

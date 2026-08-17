@@ -44,6 +44,14 @@ export type FisheryRule = {
   value: unknown;
 };
 
+export const HOLDING_VERIFICATION_STATUSES = [
+  "PENDING_VERIFICATION",
+  "VERIFIED",
+] as const;
+
+export type HoldingVerificationStatus =
+  (typeof HOLDING_VERIFICATION_STATUSES)[number];
+
 export type QuotaHolding = {
   id: number;
   organisation_id: number;
@@ -51,7 +59,24 @@ export type QuotaHolding = {
   season_id: number;
   quota_type_id: number;
   quantity: string;
+  verification_status: HoldingVerificationStatus;
 };
+
+export function isHoldingVerificationStatus(
+  value: string,
+): value is HoldingVerificationStatus {
+  return HOLDING_VERIFICATION_STATUSES.includes(
+    value as HoldingVerificationStatus,
+  );
+}
+
+export function holdingIsVerified(holding: QuotaHolding) {
+  return holding.verification_status === "VERIFIED";
+}
+
+export function holdingVerificationLabel(status: HoldingVerificationStatus) {
+  return status === "VERIFIED" ? "Verified" : "Pending verification";
+}
 
 export type QuotaLedgerEntry = {
   id: number;

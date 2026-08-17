@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 
+export type AdminUser = {
+  email: string;
+  verified: boolean;
+  accounts: string[];
+};
+
 export async function listOrganisationsForAdmin() {
   const supabase = await createClient();
 
@@ -13,4 +19,45 @@ export async function listOrganisationsForAdmin() {
     .order("legal_name");
 
   return (data ?? []) as { id: number; legal_name: string }[];
+}
+
+export async function listUsersForAdmin(): Promise<AdminUser[]> {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const [{ data: members }, { data: verified }] = await Promise.all([
+    supabase
+      .from("organisation_users")
+      .select("email, organisations ( legal_name )")
+      .order("email"),
+    supabase.from("verified_users").select("email"),
+  ]);
+
+  const verifiedEmails = new Set(
+    (verified ?? []).map((row) => row.email.toLowerCase()),
+  );
+  const users = new Map<string, AdminUser>();
+
+  for (const row of members ?? []) {
+    const email = row.email.toLowerCase();
+    const organisation = Array.isArray(row.organisations)
+      ? row.organisations[0]
+      : row.organisations;
+    const existing = users.get(email) ?? {
+      email,
+      verified: verifiedEmails.has(email),
+      accounts: [],
+    };
+
+    if (organisation?.legal_name && !existing.accounts.includes(organisation.legal_name)) {
+      existing.accounts.push(organisation.legal_name);
+    }
+
+    users.set(email, existing);
+  }
+
+  return [...users.values()].sort((a, b) => a.email.localeCompare(b.email));
 }

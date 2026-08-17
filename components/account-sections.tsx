@@ -9,17 +9,25 @@ import { userFullName, userPhone } from "@/lib/auth/display-name";
 import type { User } from "@supabase/supabase-js";
 import { DataTable, DataTableRowExtras, TableActionRow } from "@/components/data-table";
 import { LedgerTable } from "@/components/ledger-table";
+import { AdminCreateForm } from "@/components/admin-create-form";
+import { HoldingActions } from "@/components/holding-actions";
 import { formatTableDate } from "@/lib/format";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers } from "@/lib/organisations/queries";
 import { accountPath } from "@/lib/organisations/paths";
+import { createHoldingAction } from "@/lib/fisheries/actions";
 import {
   listAllQuotaTypes,
   listAllSeasons,
   listAllStocks,
+  listFisheries,
   listHoldingsForOrganisation,
   listLedger,
 } from "@/lib/fisheries/queries";
+import {
+  holdingIsVerified,
+  holdingVerificationLabel,
+} from "@/lib/fisheries/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
 import {
   formatAud,
@@ -136,9 +144,10 @@ export async function AccountHoldingsSection({
     return <p>Account not found.</p>;
   }
 
-  const canList = canEditOrganisation(result.role);
-  const [holdings, stocks, seasons, quotaTypes] = await Promise.all([
+  const canManage = canEditOrganisation(result.role);
+  const [holdings, fisheries, stocks, seasons, quotaTypes] = await Promise.all([
     listHoldingsForOrganisation(organisationId),
+    listFisheries(),
     listAllStocks(),
     listAllSeasons(),
     listAllQuotaTypes(),
@@ -150,14 +159,25 @@ export async function AccountHoldingsSection({
     })),
   );
 
+  function fisheryName(fisheryId: number) {
+    return fisheries.find((item) => item.id === fisheryId)?.name ?? "Fishery";
+  }
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Quota holdings
-      </h1>
+    <div className="space-y-10">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          Quota holdings
+        </h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          {canManage
+            ? "Create or update a holding here. Unverified holdings must be approved by a platform admin before you can list or auction them. Changing quantity records an ADJUSTMENT on the ledger."
+            : "Owners and admins can create and update holdings for this account."}
+        </p>
+      </div>
       <DataTable
         caption="Quota holdings"
-        empty="No holdings yet. A platform admin can create a test holding."
+        empty="No holdings yet."
         searchPlaceholder="Filter holdings…"
         defaultSort={{ key: "stock", direction: "asc" }}
         columns={[
@@ -165,6 +185,16 @@ export async function AccountHoldingsSection({
           { key: "season", header: "Season", sortable: true, filter: "select" },
           { key: "quotaType", header: "Quota type", sortable: true },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
+          {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "Verified", label: "Verified" },
+              { value: "Pending verification", label: "Pending verification" },
+            ],
+          },
         ]}
         rows={holdingLedgers.map(({ holding }) => {
           const stock = stocks.find((item) => item.id === holding.stock_id);
@@ -182,6 +212,7 @@ export async function AccountHoldingsSection({
                 ? `${quotaType.name} (${quotaType.measurement_kind})`
                 : "Quota type",
               quantity: holding.quantity,
+              status: holdingVerificationLabel(holding.verification_status),
             },
             display: {
               quantity: `${holding.quantity} ${quotaType?.unit_label ?? ""}`.trim(),
@@ -189,38 +220,112 @@ export async function AccountHoldingsSection({
           };
         })}
       >
-        {holdingLedgers.map(({ holding, entries }) => (
-          <DataTableRowExtras
-            key={holding.id}
-            id={holding.id}
-            expandedLabel="Ledger"
-            expanded={
-              <LedgerTable
-                caption={`Ledger for holding ${holding.id}`}
-                entries={entries}
-              />
-            }
-            actions={
-              canList ? (
-                <TableActionRow>
-                  <Link
-                    href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
-                    className="text-sm underline"
-                  >
-                    Create listing
-                  </Link>
-                  <Link
-                    href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
-                    className="text-sm underline"
-                  >
-                    Create auction
-                  </Link>
-                </TableActionRow>
-              ) : null
-            }
-          />
-        ))}
+        {holdingLedgers.map(({ holding, entries }) => {
+          const quotaType = quotaTypes.find(
+            (item) => item.id === holding.quota_type_id,
+          );
+          const verified = holdingIsVerified(holding);
+
+          return (
+            <DataTableRowExtras
+              key={holding.id}
+              id={holding.id}
+              expandedLabel="Ledger"
+              expanded={
+                <LedgerTable
+                  caption={`Ledger for holding ${holding.id}`}
+                  entries={entries}
+                />
+              }
+              actions={
+                canManage ? (
+                  <div className="space-y-3">
+                    <HoldingActions
+                      holdingId={holding.id}
+                      quantity={holding.quantity}
+                      unitLabel={quotaType?.unit_label ?? "units"}
+                    />
+                    {verified ? (
+                      <TableActionRow>
+                        <Link
+                          href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
+                          className="text-sm underline"
+                        >
+                          Create listing
+                        </Link>
+                        <Link
+                          href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
+                          className="text-sm underline"
+                        >
+                          Create auction
+                        </Link>
+                      </TableActionRow>
+                    ) : (
+                      <p className="text-sm text-ink-muted">
+                        Waiting for admin verification before listing.
+                      </p>
+                    )}
+                  </div>
+                ) : null
+              }
+            />
+          );
+        })}
       </DataTable>
+      {canManage ? (
+        <div className="max-w-md">
+          <h2 className="text-xl font-semibold text-ink">Add holding</h2>
+          <p className="mt-2 text-sm text-ink-muted">
+            Stock, season and quota type must belong to the same fishery.
+          </p>
+          <div className="mt-4">
+            <AdminCreateForm
+              action={createHoldingAction}
+              hidden={{ organisation_id: organisationId }}
+              submitLabel="Add holding"
+              fields={[
+                {
+                  name: "stock_id",
+                  label: "Stock",
+                  type: "select",
+                  required: true,
+                  options: stocks.map((item) => ({
+                    value: String(item.id),
+                    label: `${fisheryName(item.fishery_id)} · ${item.name}`,
+                  })),
+                },
+                {
+                  name: "season_id",
+                  label: "Season",
+                  type: "select",
+                  required: true,
+                  options: seasons.map((item) => ({
+                    value: String(item.id),
+                    label: `${fisheryName(item.fishery_id)} · ${item.name}`,
+                  })),
+                },
+                {
+                  name: "quota_type_id",
+                  label: "Quota type",
+                  type: "select",
+                  required: true,
+                  options: quotaTypes.map((item) => ({
+                    value: String(item.id),
+                    label: `${fisheryName(item.fishery_id)} · ${item.name} (${item.unit_label})`,
+                  })),
+                },
+                {
+                  name: "quantity",
+                  label: "Quantity",
+                  type: "number",
+                  required: true,
+                },
+                { name: "note", label: "Note" },
+              ]}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -2,8 +2,12 @@ import { redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { LedgerTable } from "@/components/ledger-table";
+import { tableButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { createHoldingAction } from "@/lib/fisheries/actions";
+import {
+  createHoldingAction,
+  verifyHoldingAction,
+} from "@/lib/fisheries/actions";
 import {
   listAllHoldings,
   listAllQuotaTypes,
@@ -12,6 +16,10 @@ import {
   listFisheries,
   listLedger,
 } from "@/lib/fisheries/queries";
+import {
+  holdingIsVerified,
+  holdingVerificationLabel,
+} from "@/lib/fisheries/types";
 import { listOrganisationsForAdmin } from "@/lib/organisations/admin-queries";
 
 export const metadata = {
@@ -51,8 +59,9 @@ export default async function HoldingsAdminPage() {
           Quota holdings
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Creating a holding records INITIAL_ALLOCATION on the quota ledger.
-          Stock, season and quota type must belong to the same fishery.
+          Users create and update their own holdings. Unverified holdings must
+          be approved here before they can be listed or auctioned. Quantity
+          changes write an ADJUSTMENT ledger row.
         </p>
       </div>
       <DataTable
@@ -72,6 +81,16 @@ export default async function HoldingsAdminPage() {
           { key: "season", header: "Season", sortable: true, filter: "select" },
           { key: "quotaType", header: "Quota type", sortable: true },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
+          {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "Verified", label: "Verified" },
+              { value: "Pending verification", label: "Pending verification" },
+            ],
+          },
         ]}
         rows={ledgers.map(({ holding }) => {
           const organisation = organisations.find(
@@ -94,6 +113,7 @@ export default async function HoldingsAdminPage() {
                 ? `${quotaType.name} (${quotaType.measurement_kind})`
                 : "Quota type",
               quantity: holding.quantity,
+              status: holdingVerificationLabel(holding.verification_status),
             },
             display: {
               quantity: `${holding.quantity} ${quotaType?.unit_label ?? ""}`.trim(),
@@ -111,6 +131,20 @@ export default async function HoldingsAdminPage() {
                 caption={`Ledger for holding ${holding.id}`}
                 entries={entries}
               />
+            }
+            actions={
+              holdingIsVerified(holding) ? null : (
+                <form action={verifyHoldingAction}>
+                  <input
+                    type="hidden"
+                    name="holding_id"
+                    value={String(holding.id)}
+                  />
+                  <button type="submit" className={tableButtonClassName}>
+                    Verify holding
+                  </button>
+                </form>
+              )
             }
           />
         ))}
