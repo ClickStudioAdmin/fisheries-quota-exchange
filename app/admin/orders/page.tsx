@@ -47,10 +47,11 @@ export default async function AdminOrdersPage() {
         empty="No orders yet."
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
+        selectable
         columns={[
           { key: "id", header: "Order", sortable: true },
-          { key: "buyer", header: "Buyer", sortable: true, filter: "select" },
-          { key: "seller", header: "Seller", sortable: true, filter: "select" },
+          { key: "buyer", header: "Buyer", sortable: true, filter: "select", nowrap: true },
+          { key: "seller", header: "Seller", sortable: true, filter: "select", nowrap: true },
           {
             key: "offering",
             header: "Offering",
@@ -63,6 +64,7 @@ export default async function AdminOrdersPage() {
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "amount", header: "Amount", sortable: true, align: "right" },
+          { key: "fee", header: "Fee", sortable: true, align: "right" },
           { key: "created", header: "Created", sortable: true },
           {
             key: "status",
@@ -92,6 +94,7 @@ export default async function AdminOrdersPage() {
             offering: order.offering,
             quantity: order.quantity,
             amount: order.amount_aud,
+            fee: order.fee_amount_aud,
             status: order.status,
             created: order.created_at,
           },
@@ -99,6 +102,10 @@ export default async function AdminOrdersPage() {
             offering: listingOfferingLabel(order.offering),
             quantity: `${order.quantity} ${order.unit_label}`,
             amount: formatAud(order.amount_aud),
+            fee:
+              Number(order.fee_percent) > 0
+                ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                : formatAud(order.fee_amount_aud),
             status: orderStatusLabel(order.status),
             created: formatTableDate(order.created_at),
           },

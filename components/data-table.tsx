@@ -613,7 +613,7 @@ export function DataTable({
               {showActions ? (
                 <th
                   scope="col"
-                  className="min-w-[14rem] whitespace-nowrap px-3 py-2 font-medium"
+                  className="w-px whitespace-nowrap px-3 py-2 font-medium"
                 >
                   Actions
                 </th>
@@ -682,7 +682,7 @@ export function DataTable({
                         </td>
                       ) : null}
                       {showActions ? (
-                        <td className="min-w-[14rem] whitespace-nowrap px-3 py-3">
+                        <td className="w-px whitespace-nowrap px-3 py-3">
                           <TableActions>
                             {extraProps?.expanded ? (
                               <button
