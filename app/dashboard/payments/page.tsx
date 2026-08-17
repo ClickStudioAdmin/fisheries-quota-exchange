@@ -45,9 +45,9 @@ export default async function DashboardPaymentsPage({
           Payments
         </h1>
         <p className="mt-2 max-w-lg text-sm text-ink-muted">
-          Buyers pay FQX. Your account is paid out on each successful test
-          charge. FQX is responsible for refunds and chargebacks. This is
-          Stripe test mode only.
+          FQX uses Stripe to process payments. We do not hold or handle the
+          funds. You must complete Stripe account setup here before you can
+          list quota for sale or lease. This is Stripe test mode only.
         </p>
       </div>
       {!configured || !publishableKey ? (

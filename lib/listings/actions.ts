@@ -5,6 +5,7 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
 import { accountPath } from "@/lib/organisations/paths";
+import { organisationCanSellError } from "@/lib/payments/sell-access";
 
 export type ListingFormState = {
   error?: string;
@@ -51,6 +52,12 @@ export async function createListingAction(
 
   if (!expiresAt) {
     return { error: "Expiry is required." };
+  }
+
+  const sellError = await organisationCanSellError(organisationId);
+
+  if (sellError) {
+    return { error: sellError };
   }
 
   const { data, error } = await supabase.rpc("create_listing", {

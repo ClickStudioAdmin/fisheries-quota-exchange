@@ -43,6 +43,7 @@ import { formatTableDate } from "@/lib/format";
 import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers } from "@/lib/organisations/queries";
+import { organisationCanSellError } from "@/lib/payments/sell-access";
 
 type AccountSectionProps = {
   organisationId: number;
@@ -149,12 +150,14 @@ export async function AccountHoldingsSection({
   }
 
   const canManage = canEditOrganisation(result.role);
-  const [holdings, fisheries, jurisdictions, prices] = await Promise.all([
-    listHoldingsForOrganisation(organisationId),
-    listFisheries(),
-    listJurisdictions(),
-    listLatestSalePrices(),
-  ]);
+  const [holdings, fisheries, jurisdictions, prices, sellError] =
+    await Promise.all([
+      listHoldingsForOrganisation(organisationId),
+      listFisheries(),
+      listJurisdictions(),
+      listLatestSalePrices(),
+      organisationCanSellError(organisationId),
+    ]);
   const commitments = await listHoldingCommitments(
     holdings.map((holding) => holding.id),
   );
@@ -184,6 +187,17 @@ export async function AccountHoldingsSection({
             ? "Create or update a holding here. Unverified holdings must be approved by a platform admin before you can list or auction them. Changing quantity records an ADJUSTMENT on the ledger."
             : "Owners and admins can create and update holdings for this account."}
         </p>
+        {canManage && sellError ? (
+          <p className="mt-3 text-sm text-ink-muted">
+            {sellError}{" "}
+            <Link
+              href={accountPath(organisationId, "/dashboard/payments")}
+              className="underline"
+            >
+              Go to Payments
+            </Link>
+          </p>
+        ) : null}
         {holdings.length > 0 ? (
           <div className="mt-4 border border-line bg-paper-raised p-4">
             <p className="text-sm text-ink-muted">Portfolio value</p>
@@ -285,18 +299,39 @@ export async function AccountHoldingsSection({
                   <>
                     {verified && available > 0 ? (
                       <>
-                        <Link
-                          href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
-                          className={tableButtonClassName}
-                        >
-                          Create listing
-                        </Link>
-                        <Link
-                          href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
-                          className={tableButtonClassName}
-                        >
-                          Create auction
-                        </Link>
+                        {sellError ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled
+                              className={tableButtonClassName}
+                            >
+                              Create listing
+                            </button>
+                            <button
+                              type="button"
+                              disabled
+                              className={tableButtonClassName}
+                            >
+                              Create auction
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
+                              className={tableButtonClassName}
+                            >
+                              Create listing
+                            </Link>
+                            <Link
+                              href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
+                              className={tableButtonClassName}
+                            >
+                              Create auction
+                            </Link>
+                          </>
+                        )}
                       </>
                     ) : null}
                     <EditHoldingButton
@@ -352,9 +387,10 @@ export async function AccountListingsSection({
   }
 
   const listings = await listOrganisationListings(organisationId);
-  const [fisheries, jurisdictions] = await Promise.all([
+  const [fisheries, jurisdictions, sellError] = await Promise.all([
     listFisheries(),
     listJurisdictions(),
+    organisationCanSellError(organisationId),
   ]);
   const canList = canEditOrganisation(result.role);
 
@@ -363,6 +399,17 @@ export async function AccountListingsSection({
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         Listings
       </h1>
+      {canList && sellError ? (
+        <p className="text-sm text-ink-muted">
+          {sellError}{" "}
+          <Link
+            href={accountPath(organisationId, "/dashboard/payments")}
+            className="underline"
+          >
+            Go to Payments
+          </Link>
+        </p>
+      ) : null}
       <DataTable
         caption="Listings"
         empty="No listings yet. Owners and admins can list quota from a holding."

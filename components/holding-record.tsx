@@ -42,6 +42,8 @@ import { listOrdersByHolding } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { getOrganisation, getOrganisationLegalName } from "@/lib/organisations/queries";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
+import { accountPath } from "@/lib/organisations/paths";
+import { organisationCanSellError } from "@/lib/payments/sell-access";
 
 export async function HoldingRecord({
   holding,
@@ -64,6 +66,7 @@ export async function HoldingRecord({
     listings,
     orders,
     prices,
+    sellError,
   ] = await Promise.all([
     getFishery(holding.fishery_id),
     listJurisdictions(),
@@ -74,6 +77,9 @@ export async function HoldingRecord({
     listListingsByHolding(holding.id),
     listOrdersByHolding(holding.id),
     listLatestSalePrices(),
+    variant === "account"
+      ? organisationCanSellError(holding.organisation_id)
+      : Promise.resolve(null),
   ]);
   const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "units";
   const listed = commitments.get(holding.id) ?? 0;
@@ -188,20 +194,44 @@ export async function HoldingRecord({
           />
         </div>
         {canManage && verified && available > 0 ? (
-          <div className="mt-4">
+          <div className="mt-4 space-y-3">
+            {sellError ? (
+              <p className="text-sm text-ink-muted">
+                {sellError}{" "}
+                <Link
+                  href={accountPath(holding.organisation_id, "/dashboard/payments")}
+                  className="underline"
+                >
+                  Go to Payments
+                </Link>
+              </p>
+            ) : null}
             <TableActionRow>
-              <Link
-                href={`/organisations/${holding.organisation_id}/listings/new?holding_id=${holding.id}`}
-                className={tableLinkClassName}
-              >
-                Create listing
-              </Link>
-              <Link
-                href={`/organisations/${holding.organisation_id}/auctions/new?holding_id=${holding.id}`}
-                className={tableLinkClassName}
-              >
-                Create auction
-              </Link>
+              {sellError ? (
+                <>
+                  <button type="button" disabled className={tableButtonClassName}>
+                    Create listing
+                  </button>
+                  <button type="button" disabled className={tableButtonClassName}>
+                    Create auction
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={`/organisations/${holding.organisation_id}/listings/new?holding_id=${holding.id}`}
+                    className={tableLinkClassName}
+                  >
+                    Create listing
+                  </Link>
+                  <Link
+                    href={`/organisations/${holding.organisation_id}/auctions/new?holding_id=${holding.id}`}
+                    className={tableLinkClassName}
+                  >
+                    Create auction
+                  </Link>
+                </>
+              )}
             </TableActionRow>
           </div>
         ) : null}

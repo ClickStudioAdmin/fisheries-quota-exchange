@@ -21,6 +21,8 @@ If Stripe keys are missing, purchase stays on the Phase 7 path (`AWAITING_COMPLI
 
 Auction wins use the same rule: if the seller can accept charges, the order waits for payment.
 
+When Stripe is configured, an organisation cannot create a listing or auction until `stripe_charges_enabled` is true.
+
 ## Pages
 
 | Path | Purpose |

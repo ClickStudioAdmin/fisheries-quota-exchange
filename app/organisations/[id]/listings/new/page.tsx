@@ -11,6 +11,7 @@ import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
 import { holdingIsVerified, quantityTypeLabel } from "@/lib/fisheries/types";
 import { getUser } from "@/lib/supabase/server";
+import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { getPlatformSettings, isVerifiedUser } from "@/lib/settings/queries";
 import { platformFeeDisclosure } from "@/lib/settings/types";
 
@@ -46,11 +47,12 @@ export default async function NewListingPage({
     notFound();
   }
 
-  const [holdings, fisheries, settings, verified] = await Promise.all([
+  const [holdings, fisheries, settings, verified, sellError] = await Promise.all([
     listHoldingsForOrganisation(organisationId),
     listFisheries(),
     getPlatformSettings(),
     isVerifiedUser(),
+    organisationCanSellError(organisationId),
   ]);
   const holding = holdings.find((item) => item.id === holdingId);
 
@@ -98,14 +100,26 @@ export default async function NewListingPage({
         {fishery?.name ?? "Fishery"} · {availableLabel} {unitLabel} available
       </p>
       <div className="mt-6 max-w-md">
-        <CreateListingForm
-          organisationId={organisationId}
-          holdingId={holding.id}
-          maxQuantity={availableLabel}
-          unitLabel={unitLabel}
-          autoPublish={autoPublish}
-          feeNote={feeNote}
-        />
+        {sellError ? (
+          <p className="text-sm text-ink-muted">
+            {sellError}{" "}
+            <Link
+              href={accountPath(organisationId, "/dashboard/payments")}
+              className="underline"
+            >
+              Go to Payments
+            </Link>
+          </p>
+        ) : (
+          <CreateListingForm
+            organisationId={organisationId}
+            holdingId={holding.id}
+            maxQuantity={availableLabel}
+            unitLabel={unitLabel}
+            autoPublish={autoPublish}
+            feeNote={feeNote}
+          />
+        )}
       </div>
     </div>
   );
