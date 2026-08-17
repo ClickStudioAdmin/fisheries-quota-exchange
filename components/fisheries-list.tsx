@@ -63,16 +63,6 @@ export function FisheriesList({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <label className="sr-only" htmlFor={searchId}>
-          Search fisheries
-        </label>
-        <input
-          id={searchId}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search fishery name…"
-          className={`${filterFieldClassName} w-full sm:max-w-xs`}
-        />
         <label className="flex items-center gap-2 text-sm text-ink-muted">
           <span className="whitespace-nowrap">Jurisdiction</span>
           <select
@@ -88,6 +78,16 @@ export function FisheriesList({
             ))}
           </select>
         </label>
+        <label className="sr-only" htmlFor={searchId}>
+          Search fisheries
+        </label>
+        <input
+          id={searchId}
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search fishery name…"
+          className={`${filterFieldClassName} w-full sm:max-w-xs`}
+        />
       </div>
       {visible.length === 0 ? (
         <p className="text-ink-muted">No fisheries match these filters.</p>

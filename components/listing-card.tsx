@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AuctionCard } from "@/components/auction-card";
 import {
   ListPager,
@@ -8,7 +8,6 @@ import {
   paginateItems,
 } from "@/components/list-pager";
 import { OfferCard } from "@/components/offer-card";
-import { panelClassName } from "@/components/surface";
 import type { Fishery } from "@/lib/fisheries/types";
 import { formatTableDateTime } from "@/lib/format";
 import {
@@ -118,12 +117,10 @@ export function FisheryOfferingSection({
   title,
   kind,
   listings,
-  chart,
 }: {
   title: string;
   kind: "sale" | "lease";
   listings: Listing[];
-  chart?: ReactNode;
 }) {
   const [listingType, setListingType] = useState<"ALL" | ListingType>("ALL");
   const [page, setPage] = useState(1);
@@ -175,7 +172,6 @@ export function FisheryOfferingSection({
         </label>
       </div>
       <div className="mt-4 space-y-4">
-        {chart ? <div className={`min-w-0 overflow-hidden ${panelClassName}`}>{chart}</div> : null}
         {visible.length > 0 ? (
           <p className="text-xs text-ink-muted">
             {listRangeLabel(from, to, visible.length, rangeLabel)}
@@ -198,28 +194,18 @@ export function FisheryOfferingSection({
   );
 }
 
-export function FisheryOfferings({
-  listings,
-  saleChart,
-  leaseChart,
-}: {
-  listings: Listing[];
-  saleChart?: ReactNode;
-  leaseChart?: ReactNode;
-}) {
+export function FisheryOfferings({ listings }: { listings: Listing[] }) {
   return (
     <div className="mt-12 grid min-w-0 items-start gap-10 md:grid-cols-2">
       <FisheryOfferingSection
         title="Current Sale Listings"
         kind="sale"
         listings={listings.filter((listing) => listing.offering === "SALE")}
-        chart={saleChart}
       />
       <FisheryOfferingSection
         title="Current Lease Listings"
         kind="lease"
         listings={listings.filter((listing) => listing.offering === "LEASE")}
-        chart={leaseChart}
       />
     </div>
   );

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { FisheryOfferings } from "@/components/listing-card";
 import { FisheryLogo } from "@/components/fishery-logo";
 import { PriceChart } from "@/components/price-chart";
-import { pageWidthClassName, statClassName } from "@/components/surface";
+import { pageWidthClassName, panelClassName, statClassName } from "@/components/surface";
 import { getFishery, listJurisdictions } from "@/lib/fisheries/queries";
 import { jurisdictionLabel, quantityTypeLabel } from "@/lib/fisheries/types";
 import { formatTableDate } from "@/lib/format";
@@ -140,33 +140,37 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </dl>
 
-      <FisheryOfferings
-        listings={offers}
-        saleChart={
-          <PriceChart
-            kind="sale"
-            unitLabel={unit}
-            points={sales
-              .map((sale) => ({
-                at: sale.created_at,
-                price: Number(sale.unit_price_aud),
-              }))
-              .filter((point) => Number.isFinite(point.price))}
-          />
-        }
-        leaseChart={
-          <PriceChart
-            kind="lease"
-            unitLabel={unit}
-            points={leases
-              .map((lease) => ({
-                at: lease.created_at,
-                price: Number(lease.unit_price_aud),
-              }))
-              .filter((point) => Number.isFinite(point.price))}
-          />
-        }
-      />
+      <FisheryOfferings listings={offers} />
+
+      <section className="mt-12">
+        <h2 className="text-xl font-semibold text-ink">Historical Prices</h2>
+        <div className="mt-4 grid min-w-0 items-start gap-10 md:grid-cols-2">
+          <div className={`min-w-0 overflow-hidden ${panelClassName}`}>
+            <PriceChart
+              kind="sale"
+              unitLabel={unit}
+              points={sales
+                .map((sale) => ({
+                  at: sale.created_at,
+                  price: Number(sale.unit_price_aud),
+                }))
+                .filter((point) => Number.isFinite(point.price))}
+            />
+          </div>
+          <div className={`min-w-0 overflow-hidden ${panelClassName}`}>
+            <PriceChart
+              kind="lease"
+              unitLabel={unit}
+              points={leases
+                .map((lease) => ({
+                  at: lease.created_at,
+                  price: Number(lease.unit_price_aud),
+                }))
+                .filter((point) => Number.isFinite(point.price))}
+            />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

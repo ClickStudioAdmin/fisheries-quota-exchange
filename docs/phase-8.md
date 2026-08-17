@@ -27,7 +27,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/auctions` | Redirects to Marketplace |
 | `/auctions/[id]` | Bid, history, close |
 | `/fisheries` | Public list of fisheries |
-| `/fisheries/[id]` | Last sale and lease prices, sale and lease price charts, sales and leases (each with fixed-price listings and auctions) |
+| `/fisheries/[id]` | Last sale and lease prices, current sale and lease listings, historical sale and lease price charts |
 | `/dashboard/holdings` | Create an auction from a holding. Holding value uses the latest sale. |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
