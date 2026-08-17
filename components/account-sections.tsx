@@ -8,14 +8,12 @@ import {
 import { userFullName, userPhone } from "@/lib/auth/display-name";
 import type { User } from "@supabase/supabase-js";
 import { DataTable, DataTableRowExtras, TableActionRow, tableLinkClassName } from "@/components/data-table";
-import { LedgerTable } from "@/components/ledger-table";
 import { HoldingForm } from "@/components/holding-form";
 import { EditHoldingButton } from "@/components/holding-actions";
 import {
   listFisheries,
   listHoldingCommitments,
   listHoldingsForOrganisation,
-  listLedger,
 } from "@/lib/fisheries/queries";
 import {
   holdingIsVerified,
@@ -39,7 +37,7 @@ import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { tableSecondaryButtonClassName } from "@/components/auth-card";
 import { formatTableDate } from "@/lib/format";
-import { accountPath } from "@/lib/organisations/paths";
+import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers } from "@/lib/organisations/queries";
 
@@ -157,12 +155,6 @@ export async function AccountHoldingsSection({
     holdings.map((holding) => holding.id),
   );
   const lastSale = latestSalePriceMap(prices);
-  const holdingLedgers = await Promise.all(
-    holdings.map(async (holding) => ({
-      holding,
-      entries: await listLedger(holding.id),
-    })),
-  );
   const valued = holdings.map((holding) => {
     const sale = lastSale.get(holding.fishery_id);
     if (!sale) {
@@ -228,7 +220,7 @@ export async function AccountHoldingsSection({
             ],
           },
         ]}
-        rows={holdingLedgers.map(({ holding }) => {
+        rows={holdings.map((holding) => {
           const fishery = fisheries.find((item) => item.id === holding.fishery_id);
           const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "";
           const sale = lastSale.get(holding.fishery_id);
@@ -251,7 +243,7 @@ export async function AccountHoldingsSection({
           };
         })}
       >
-        {holdingLedgers.map(({ holding, entries }) => {
+        {holdings.map((holding) => {
           const fishery = fisheries.find((item) => item.id === holding.fishery_id);
           const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "units";
           const verified = holdingIsVerified(holding);
@@ -262,16 +254,17 @@ export async function AccountHoldingsSection({
             <DataTableRowExtras
               key={holding.id}
               id={holding.id}
-              expandedLabel="Ledger"
-              expanded={
-                <LedgerTable
-                  caption={`Ledger for holding ${holding.id}`}
-                  entries={entries}
-                />
-              }
               links={
                 <div className="space-y-2">
                   <TableActionRow>
+                    <Link
+                      href={dashboardHoldingPath(holding.id, organisationId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={tableLinkClassName}
+                    >
+                      Details
+                    </Link>
                     <Link
                       href={`/fisheries/${holding.fishery_id}`}
                       className={tableLinkClassName}

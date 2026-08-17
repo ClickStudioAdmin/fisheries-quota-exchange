@@ -148,49 +148,14 @@ export default async function AdminUsersPage() {
             key={item.email}
             id={item.email}
             links={
-              <Link href={adminUserPath(item.email)} className={tableLinkClassName}>
-                View
+              <Link
+                href={adminUserPath(item.email)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
+                Details
               </Link>
-            }
-            expandedLabel="Details"
-            expanded={
-              <div className="space-y-4 text-sm text-ink">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-ink-muted">
-                    Accounts
-                  </p>
-                  {item.memberships.length === 0 ? (
-                    <p className="mt-2 text-ink-muted">No account memberships.</p>
-                  ) : (
-                    <ul className="mt-2 space-y-1">
-                      {item.memberships.map((membership) => (
-                        <li
-                          key={`${item.email}-${membership.organisation}-${membership.role}`}
-                        >
-                          {organisationRoleLabel(membership.role)} ·{" "}
-                          {membership.organisation}
-                          {membership.joinedAt
-                            ? ` · joined ${formatTableDate(membership.joinedAt)}`
-                            : ""}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <p className="text-ink-muted">
-                  {item.verified
-                    ? [
-                        "Verified",
-                        item.verifiedAt
-                          ? formatTableDate(item.verifiedAt)
-                          : null,
-                        item.verifiedBy ? `by ${item.verifiedBy}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" ")
-                    : "Not verified. Holdings need admin approval before listing or auction."}
-                </p>
-              </div>
             }
             actions={
               <form action={setUserVerifiedAction}>

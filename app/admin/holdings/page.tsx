@@ -1,17 +1,18 @@
 import { redirect } from "next/navigation";
-import { DataTable, DataTableRowExtras } from "@/components/data-table";
-import { LedgerTable } from "@/components/ledger-table";
+import Link from "next/link";
+import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { HoldingForm } from "@/components/holding-form";
 import { tableButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { verifyHoldingAction } from "@/lib/fisheries/actions";
-import { listAllHoldings, listFisheries, listLedger } from "@/lib/fisheries/queries";
+import { listAllHoldings, listFisheries } from "@/lib/fisheries/queries";
 import {
   holdingIsVerified,
   holdingVerificationLabel,
   quantityTypeLabel,
 } from "@/lib/fisheries/types";
 import { listOrganisationsForAdmin } from "@/lib/organisations/admin-queries";
+import { adminHoldingPath } from "@/lib/organisations/paths";
 
 export const metadata = {
   title: "Holdings",
@@ -27,13 +28,6 @@ export default async function HoldingsAdminPage() {
     listFisheries(),
     listAllHoldings(),
   ]);
-
-  const ledgers = await Promise.all(
-    holdings.map(async (holding) => ({
-      holding,
-      entries: await listLedger(holding.id),
-    })),
-  );
 
   return (
     <div className="space-y-10">
@@ -73,7 +67,7 @@ export default async function HoldingsAdminPage() {
             ],
           },
         ]}
-        rows={ledgers.map(({ holding }) => {
+        rows={holdings.map((holding) => {
           const organisation = organisations.find(
             (item) => item.id === holding.organisation_id,
           );
@@ -95,16 +89,19 @@ export default async function HoldingsAdminPage() {
           };
         })}
       >
-        {ledgers.map(({ holding, entries }) => (
+        {holdings.map((holding) => (
           <DataTableRowExtras
             key={holding.id}
             id={holding.id}
-            expandedLabel="Ledger"
-            expanded={
-              <LedgerTable
-                caption={`Ledger for holding ${holding.id}`}
-                entries={entries}
-              />
+            links={
+              <Link
+                href={adminHoldingPath(holding.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
+                Details
+              </Link>
             }
             actions={
               holdingIsVerified(holding) ? null : (

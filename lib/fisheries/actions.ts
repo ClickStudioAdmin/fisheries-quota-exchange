@@ -298,6 +298,8 @@ export async function adjustHoldingAction(
 
   revalidatePath("/dashboard/holdings");
   revalidatePath("/admin/holdings");
+  revalidatePath(`/dashboard/holdings/${holdingId}`);
+  revalidatePath(`/admin/holdings/${holdingId}`);
   return { message: "Holding updated. Ledger recorded ADJUSTMENT." };
 }
 
@@ -317,6 +319,8 @@ export async function verifyHoldingAction(formData: FormData) {
 
   revalidatePath("/admin/holdings");
   revalidatePath("/dashboard/holdings");
+  revalidatePath(`/admin/holdings/${holdingId}`);
+  revalidatePath(`/dashboard/holdings/${holdingId}`);
   revalidatePath("/admin/users", "layout");
 }
 

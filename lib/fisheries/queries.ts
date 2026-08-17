@@ -63,6 +63,19 @@ export async function listHoldingsForOrganisations(organisationIds: number[]) {
   return (data ?? []) as QuotaHolding[];
 }
 
+export async function getHolding(id: number) {
+  const supabase = await createClient();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("quota_holdings")
+    .select(
+      "id, organisation_id, fishery_id, quantity, verification_status",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  return (data as QuotaHolding | null) ?? null;
+}
+
 export async function listHoldingCommitments(holdingIds: number[]) {
   const committed = new Map<number, number>();
 

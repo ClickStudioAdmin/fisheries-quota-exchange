@@ -46,6 +46,26 @@ export async function listMyOrganisations(): Promise<OrganisationSummary[]> {
   return organisations;
 }
 
+export async function getOrganisationLegalName(id: number) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("organisations")
+    .select("legal_name")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data?.legal_name) {
+    return null;
+  }
+
+  return String(data.legal_name);
+}
+
 export async function getOrganisation(
   id: number,
 ): Promise<{ organisation: Organisation; role: OrganisationRole } | null> {

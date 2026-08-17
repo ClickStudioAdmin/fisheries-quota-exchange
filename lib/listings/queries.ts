@@ -67,3 +67,16 @@ export async function listListingsByCreator(email: string) {
 
   return (data ?? []) as Listing[];
 }
+
+export async function listListingsByHolding(holdingId: number) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("listings")
+    .select(columns)
+    .eq("holding_id", holdingId)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as Listing[];
+}

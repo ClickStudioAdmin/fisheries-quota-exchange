@@ -42,7 +42,7 @@ Admin can then:
 2. Add a logo
 3. Create a test holding for an organisation (organisation, fishery, quantity, note)
 
-Members of that organisation can see the holding and ledger at `/dashboard/holdings`.
+Members of that organisation can see the holding at `/dashboard/holdings` and the ledger on `/dashboard/holdings/[id]`.
 
 ## Not in this phase
 

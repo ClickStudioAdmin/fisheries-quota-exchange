@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import {
   highestOrganisationRole,
@@ -14,6 +15,8 @@ export type AdminUserMembership = {
 
 export type AdminUser = {
   email: string;
+  fullName: string | null;
+  phone: string | null;
   verified: boolean;
   verifiedAt: string | null;
   verifiedBy: string | null;
@@ -61,6 +64,8 @@ function countByEmail(rows: Array<{ created_by_email?: string | null }>) {
 function emptyUser(email: string): AdminUser {
   return {
     email,
+    fullName: null,
+    phone: null,
     verified: false,
     verifiedAt: null,
     verifiedBy: null,
@@ -221,6 +226,30 @@ export function adminUserRole(user: AdminUser) {
   return highestOrganisationRole(user.memberships.map((membership) => membership.role));
 }
 
+export function adminUserDisplayName(user: Pick<AdminUser, "email" | "fullName">) {
+  return user.fullName || user.email;
+}
+
+function readAuthPerson(data: unknown) {
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row || typeof row !== "object") {
+    return { fullName: null, phone: null };
+  }
+
+  const record = row as { full_name?: unknown; phone?: unknown };
+  const fullName =
+    typeof record.full_name === "string" && record.full_name.trim()
+      ? record.full_name.trim()
+      : null;
+  const phone =
+    typeof record.phone === "string" && record.phone.trim()
+      ? record.phone.trim()
+      : null;
+
+  return { fullName, phone };
+}
+
 async function countCreatedBy(table: "listings" | "orders", email: string) {
   const supabase = await createClient();
 
@@ -236,9 +265,9 @@ async function countCreatedBy(table: "listings" | "orders", email: string) {
   return count ?? 0;
 }
 
-export async function getAdminUserForAdmin(
+export const getAdminUserForAdmin = cache(async (
   email: string,
-): Promise<AdminUser | null> {
+): Promise<AdminUser | null> => {
   const normalised = asEmail(email);
 
   if (!normalised.includes("@")) {
@@ -255,6 +284,7 @@ export async function getAdminUserForAdmin(
     { data: members },
     { data: verified },
     { data: admin },
+    { data: person },
     listingCount,
     orderCount,
   ] = await Promise.all([
@@ -272,11 +302,15 @@ export async function getAdminUserForAdmin(
       .select("email")
       .eq("email", normalised)
       .maybeSingle(),
+    supabase.rpc("admin_auth_person", { p_email: normalised }),
     countCreatedBy("listings", normalised),
     countCreatedBy("orders", normalised),
   ]);
 
   const user = emptyUser(normalised);
+  const authPerson = readAuthPerson(person);
+  user.fullName = authPerson.fullName;
+  user.phone = authPerson.phone;
 
   for (const row of members ?? []) {
     addMembership(user, row);
@@ -304,4 +338,4 @@ export async function getAdminUserForAdmin(
   }
 
   return finishUser(user);
-}
+});

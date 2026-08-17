@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
-import { LedgerTable } from "@/components/ledger-table";
 import { tableButtonClassName, tableSecondaryButtonClassName } from "@/components/auth-card";
 import { LabeledFields } from "@/components/surface";
 import { isPlatformAdmin } from "@/lib/admin/access";
@@ -11,7 +10,6 @@ import { verifyHoldingAction } from "@/lib/fisheries/actions";
 import {
   listFisheries,
   listHoldingsForOrganisations,
-  listLedgersForHoldings,
 } from "@/lib/fisheries/queries";
 import {
   holdingIsVerified,
@@ -30,10 +28,11 @@ import {
 import { listOrdersByCreator } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import {
+  adminUserDisplayName,
   adminUserRole,
   getAdminUserForAdmin,
 } from "@/lib/organisations/admin-queries";
-import { parseAdminUserEmailParam } from "@/lib/organisations/paths";
+import { parseAdminUserEmailParam, adminHoldingPath } from "@/lib/organisations/paths";
 import { organisationRoleLabel } from "@/lib/organisations/types";
 
 type AdminUserPageProps = {
@@ -45,7 +44,13 @@ export async function generateMetadata({
 }: AdminUserPageProps): Promise<Metadata> {
   const { email: raw } = await params;
   const email = parseAdminUserEmailParam(raw);
-  return { title: email ?? "User" };
+
+  if (!email) {
+    return { title: "User" };
+  }
+
+  const profile = await getAdminUserForAdmin(email);
+  return { title: profile ? adminUserDisplayName(profile) : email };
 }
 
 export default async function AdminUserPage({ params }: AdminUserPageProps) {
@@ -75,7 +80,6 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     listOrdersByCreator(profile.email),
     listFisheries(),
   ]);
-  const ledgers = await listLedgersForHoldings(holdings.map((holding) => holding.id));
   const role = adminUserRole(profile);
   const organisations = new Map(
     profile.memberships.map((membership) => [
@@ -83,6 +87,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
       membership.organisation,
     ]),
   );
+  const name = adminUserDisplayName(profile);
 
   return (
     <div className="space-y-10">
@@ -95,12 +100,11 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-ink">
-              {profile.email}
+              {name}
             </h1>
-            <p className="mt-2 text-sm text-ink-muted">
-              Admin-only record of this person, including holdings in their
-              accounts.
-            </p>
+            {profile.fullName ? (
+              <p className="mt-1 text-sm text-ink-muted">{profile.email}</p>
+            ) : null}
           </div>
           <form action={setUserVerifiedAction}>
             <input type="hidden" name="email" value={profile.email} />
@@ -121,49 +125,65 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             </button>
           </form>
         </div>
-        <div className="mt-6">
-          <LabeledFields
-            columns={5}
-            items={[
-              {
-                label: "Role",
-                value: role ? organisationRoleLabel(role) : "—",
-              },
-              {
-                label: "Access",
-                value: profile.platformAdmin ? "Platform admin" : "User",
-              },
-              {
-                label: "Verified",
-                value: profile.verified
-                  ? [
-                      "Yes",
-                      profile.verifiedAt
-                        ? formatTableDate(profile.verifiedAt)
-                        : null,
-                      profile.verifiedBy ? `by ${profile.verifiedBy}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")
-                  : "No",
-              },
-              {
-                label: "Joined",
-                value: profile.joinedAt
-                  ? formatTableDate(profile.joinedAt)
-                  : "—",
-              },
-              {
-                label: "Activity",
-                value: `${holdings.length} holdings · ${listings.length} listings · ${orders.length} orders`,
-              },
-            ]}
-          />
-        </div>
       </div>
 
-      <DataTable
-        caption="Accounts"
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Details</h2>
+        <LabeledFields
+          columns={4}
+          items={[
+            {
+              label: "Name",
+              value: profile.fullName ?? "—",
+            },
+            {
+              label: "Email",
+              value: profile.email,
+            },
+            {
+              label: "Phone",
+              value: profile.phone ?? "—",
+            },
+            {
+              label: "Role",
+              value: role ? organisationRoleLabel(role) : "—",
+            },
+            {
+              label: "Access",
+              value: profile.platformAdmin ? "Platform admin" : "User",
+            },
+            {
+              label: "Verified",
+              value: profile.verified
+                ? [
+                    "Yes",
+                    profile.verifiedAt
+                      ? formatTableDate(profile.verifiedAt)
+                      : null,
+                    profile.verifiedBy ? `by ${profile.verifiedBy}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")
+                : "No",
+            },
+            {
+              label: "Joined",
+              value: profile.joinedAt
+                ? formatTableDate(profile.joinedAt)
+                : "—",
+            },
+            {
+              label: "Activity",
+              value: `${holdings.length} holdings · ${listings.length} listings · ${orders.length} orders`,
+            },
+          ]}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Accounts</h2>
+        <DataTable
+          caption="Accounts"
         empty="No account memberships."
         searchPlaceholder="Filter accounts…"
         defaultSort={{ key: "account", direction: "asc" }}
@@ -197,9 +217,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           },
         }))}
       />
+      </section>
 
-      <DataTable
-        caption="Holdings"
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Holdings</h2>
+        <DataTable
+          caption="Holdings"
         empty="No holdings in this person’s accounts."
         searchPlaceholder="Filter holdings…"
         defaultSort={{ key: "id", direction: "desc" }}
@@ -248,12 +271,15 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           <DataTableRowExtras
             key={holding.id}
             id={holding.id}
-            expandedLabel="Ledger"
-            expanded={
-              <LedgerTable
-                caption={`Ledger for holding ${holding.id}`}
-                entries={ledgers.get(holding.id) ?? []}
-              />
+            links={
+              <Link
+                href={adminHoldingPath(holding.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
+                Details
+              </Link>
             }
             actions={
               holdingIsVerified(holding) ? null : (
@@ -272,9 +298,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           />
         ))}
       </DataTable>
+      </section>
 
-      <DataTable
-        caption="Listings"
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Listings</h2>
+        <DataTable
+          caption="Listings"
         empty="No listings created by this person."
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "created", direction: "desc" }}
@@ -354,9 +383,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           />
         ))}
       </DataTable>
+      </section>
 
-      <DataTable
-        caption="Orders"
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Orders</h2>
+        <DataTable
+          caption="Orders"
         empty="No orders created by this person."
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
@@ -425,6 +457,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           />
         ))}
       </DataTable>
+      </section>
     </div>
   );
 }

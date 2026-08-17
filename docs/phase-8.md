@@ -29,11 +29,13 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/fisheries` | Public list of fisheries |
 | `/fisheries/[id]` | Last and average sale and lease prices, current sale and lease listings, historical sale and lease price charts |
 | `/dashboard/holdings` | Create an auction from a holding. Holding value uses the latest sale. |
+| `/dashboard/holdings/[id]` | Holding record: quantity, listed/available, ledger, listings, and orders |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
 | `/admin/users` | Verify users so their holdings skip approval, or remove selected users from all accounts |
-| `/admin/users/[email]` | Admin-only user record: accounts, holdings, listings, and orders |
+| `/admin/users/[email]` | Admin-only user record: name, email, phone, accounts, holdings, listings, and orders |
 | `/admin/holdings` | Verify holdings created or changed by unverified users |
+| `/admin/holdings/[id]` | Admin-only holding record, including the immutable quota ledger |
 | `/admin/reference/fisheries/[id]` | Same fields as create: jurisdiction, name, code, quantity type, and logo |
 
 ## Database
@@ -47,6 +49,7 @@ Functions:
 - `create_auction`
 - `place_bid`
 - `close_auction`
+- `admin_auth_person` (platform admin only; name and phone from Auth metadata)
 
 Public market data (no buyer or seller identity):
 

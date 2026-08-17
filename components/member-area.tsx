@@ -9,6 +9,7 @@ const sectionItems = [
   {
     href: "/dashboard/holdings",
     label: "Quota holdings",
+    match: "prefix",
     alsoMatch: ["auctions"],
   },
   {
