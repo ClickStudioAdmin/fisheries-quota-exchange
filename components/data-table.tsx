@@ -115,6 +115,24 @@ function uniqueValues(rows: DataTableRow[], key: string) {
     .sort((a, b) => a.localeCompare(b, "en", { numeric: true, sensitivity: "base" }));
 }
 
+function filterColumns(columns: DataTableColumn[]): DataTableColumn[] {
+  return columns.flatMap((column) => {
+    if (column.stacked && column.stacked.length > 0) {
+      return column.stacked.map((line) => ({
+        key: line.key,
+        header: line.label,
+        filter: "select" as const,
+      }));
+    }
+
+    if (column.filter === "select") {
+      return [column];
+    }
+
+    return [];
+  });
+}
+
 function DetailsTooltip({ details }: { details: DataTableDetail[] }) {
   const tooltipId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -349,11 +367,7 @@ export function DataTable({
     [extras],
   );
 
-  const selectFilters = columns.filter((column) => {
-    if (column.filter !== "select") {
-      return false;
-    }
-
+  const selectFilters = filterColumns(columns).filter((column) => {
     if (column.filterOptions && column.filterOptions.length > 0) {
       return true;
     }
@@ -363,7 +377,7 @@ export function DataTable({
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const activeFilters = columns.filter((column) => column.filter === "select");
+    const activeFilters = filterColumns(columns);
 
     return rows.filter((row) => {
       if (actionOnly && !row.needsAction) {
