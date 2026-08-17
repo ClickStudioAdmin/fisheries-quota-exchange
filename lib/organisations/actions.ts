@@ -7,7 +7,6 @@ import {
   canAddMember,
   canAssignRole,
   canChangeMemberRole,
-  canEditOrganisation,
   canRemoveMember,
 } from "@/lib/organisations/permissions";
 import { getMyRole } from "@/lib/organisations/queries";
@@ -71,51 +70,6 @@ export async function createOrganisationAction(
   }
 
   redirect(accountPath(Number(data)));
-}
-
-export async function updateOrganisationAction(
-  _prev: OrganisationFormState,
-  formData: FormData,
-): Promise<OrganisationFormState> {
-  const supabase = await createClient();
-  const organisationId = Number(formData.get("organisation_id"));
-
-  if (!supabase || !Number.isInteger(organisationId)) {
-    return { error: "Organisation not found." };
-  }
-
-  const role = await getMyRole(organisationId);
-
-  if (!role || !canEditOrganisation(role)) {
-    return { error: "You do not have permission to update this organisation." };
-  }
-
-  const legalName = readText(formData, "legal_name");
-  const tradingName = readText(formData, "trading_name");
-  const abnResult = readAbn(readText(formData, "abn"));
-
-  if (!legalName) {
-    return { error: "Legal name is required." };
-  }
-
-  if ("error" in abnResult) {
-    return { error: abnResult.error };
-  }
-
-  const { error } = await supabase
-    .from("organisations")
-    .update({
-      legal_name: legalName,
-      trading_name: tradingName || null,
-      abn: abnResult.abn,
-    })
-    .eq("id", organisationId);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { message: "Account updated." };
 }
 
 export async function addMemberAction(

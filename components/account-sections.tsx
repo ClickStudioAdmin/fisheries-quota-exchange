@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AddMemberForm } from "@/components/add-member-form";
 import { MemberList } from "@/components/member-list";
-import { OrganisationProfileForm } from "@/components/organisation-profile-form";
 import {
   PersonProfileForm,
   ProfilePasswordForm,
@@ -64,23 +63,18 @@ export async function AccountProfileSection({
         </p>
       </div>
       <section className="max-w-md space-y-4">
-        <h2 className="text-xl font-semibold text-ink">Your details</h2>
+        <h2 className="text-xl font-semibold text-ink">Details</h2>
         <PersonProfileForm
           fullName={userFullName(user)}
           email={user.email ?? ""}
           phone={userPhone(user)}
+          organisation={result.organisation}
+          canEditOrganisation={canEdit}
         />
       </section>
       <section className="max-w-md space-y-4">
         <h2 className="text-xl font-semibold text-ink">Password</h2>
         <ProfilePasswordForm />
-      </section>
-      <section className="max-w-md space-y-4">
-        <h2 className="text-xl font-semibold text-ink">Business details</h2>
-        <OrganisationProfileForm
-          organisation={result.organisation}
-          canEdit={canEdit}
-        />
       </section>
     </div>
   );

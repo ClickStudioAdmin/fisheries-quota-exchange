@@ -1,10 +1,13 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/paths";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
+import { canEditOrganisation } from "@/lib/organisations/permissions";
+import { getMyRole } from "@/lib/organisations/queries";
 import type { AuthFormState } from "@/lib/auth/types";
 
 async function getSiteUrl() {
@@ -264,6 +267,37 @@ export async function updatePersonAction(
     return { error: phoneResult.error };
   }
 
+  const organisationId = Number(formData.get("organisation_id"));
+  let organisationUpdate: {
+    legal_name: string;
+    trading_name: string | null;
+    abn: string | null;
+  } | null = null;
+
+  if (Number.isInteger(organisationId) && organisationId > 0) {
+    const role = await getMyRole(organisationId);
+
+    if (role && canEditOrganisation(role)) {
+      const legalName = String(formData.get("legal_name") ?? "").trim();
+      const tradingName = String(formData.get("trading_name") ?? "").trim();
+      const abnResult = readAbn(String(formData.get("abn") ?? "").trim());
+
+      if (!legalName) {
+        return { error: "Legal name is required." };
+      }
+
+      if ("error" in abnResult) {
+        return { error: abnResult.error };
+      }
+
+      organisationUpdate = {
+        legal_name: legalName,
+        trading_name: tradingName || null,
+        abn: abnResult.abn,
+      };
+    }
+  }
+
   const currentEmail = user.email?.toLowerCase() ?? "";
   const siteUrl = await getSiteUrl();
   const attributes: {
@@ -290,6 +324,19 @@ export async function updatePersonAction(
   if (error) {
     return { error: error.message };
   }
+
+  if (organisationUpdate) {
+    const { error: organisationError } = await supabase
+      .from("organisations")
+      .update(organisationUpdate)
+      .eq("id", organisationId);
+
+    if (organisationError) {
+      return { error: organisationError.message };
+    }
+  }
+
+  revalidatePath("/dashboard");
 
   if (attributes.email && data.user?.email?.toLowerCase() !== email) {
     return {
