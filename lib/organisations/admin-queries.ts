@@ -14,6 +14,7 @@ export type AdminUserMembership = {
 };
 
 export type AdminUser = {
+  id: number | null;
   email: string;
   fullName: string | null;
   phone: string | null;
@@ -28,6 +29,7 @@ export type AdminUser = {
 };
 
 type MembershipRow = {
+  id?: number | null;
   email?: string | null;
   role?: string | null;
   created_at?: string | null;
@@ -64,6 +66,7 @@ function countByEmail(rows: Array<{ created_by_email?: string | null }>) {
 
 function emptyUser(email: string): AdminUser {
   return {
+    id: null,
     email,
     fullName: null,
     phone: null,
@@ -83,6 +86,16 @@ function addMembership(user: AdminUser, row: MembershipRow) {
 
   if (!Number.isInteger(organisationId) || organisationId <= 0) {
     return;
+  }
+
+  const membershipId = Number(row.id);
+
+  if (
+    Number.isInteger(membershipId) &&
+    membershipId > 0 &&
+    (user.id == null || membershipId < user.id)
+  ) {
+    user.id = membershipId;
   }
 
   const organisation = Array.isArray(row.organisations)
@@ -168,7 +181,7 @@ export async function listUsersForAdmin(): Promise<AdminUser[]> {
   ] = await Promise.all([
     supabase
       .from("organisation_users")
-      .select("email, role, created_at, organisation_id, full_name, organisations ( legal_name )")
+      .select("id, email, role, created_at, organisation_id, full_name, organisations ( legal_name )")
       .order("email"),
     supabase
       .from("verified_users")
@@ -330,7 +343,7 @@ export const getAdminUserForAdmin = cache(async (
   ] = await Promise.all([
     supabase
       .from("organisation_users")
-      .select("email, role, created_at, organisation_id, full_name, organisations ( legal_name )")
+      .select("id, email, role, created_at, organisation_id, full_name, organisations ( legal_name )")
       .eq("email", normalised),
     supabase
       .from("verified_users")

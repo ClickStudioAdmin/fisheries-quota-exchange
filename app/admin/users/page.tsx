@@ -55,6 +55,7 @@ export default async function AdminUsersPage() {
             "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
         }}
         columns={[
+          { key: "id", header: "ID", sortable: true },
           { key: "name", header: "Name", sortable: true, details: true, nowrap: true },
           { key: "email", header: "Email", sortable: true, nowrap: true },
           {
@@ -105,6 +106,7 @@ export default async function AdminUsersPage() {
               },
             ],
             values: {
+              id: item.id ?? "",
               name: item.fullName || item.email,
               email: item.email,
               accounts: accountLines.join(", "),
@@ -115,6 +117,7 @@ export default async function AdminUsersPage() {
               joined: item.joinedAt ?? "",
             },
             display: {
+              id: item.id != null ? String(item.id) : "—",
               name: item.fullName ?? "—",
               email:
                 item.email === currentEmail ? `${item.email} (you)` : item.email,

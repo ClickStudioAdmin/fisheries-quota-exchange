@@ -509,6 +509,8 @@ export function DataTable({
             {actionCount > 0 ? ` (${actionCount})` : ""}
           </button>
         ) : null}
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
         {selectable && bulkAction ? (
           <form
             action={bulkAction.action}
@@ -544,10 +546,10 @@ export function DataTable({
             </button>
           </form>
         ) : null}
+        <p className="text-xs text-ink-muted">
+          {listRangeLabel(from, to, visible.length, visible.length === 1 ? "row" : "rows")}
+        </p>
       </div>
-      <p className="text-xs text-ink-muted">
-        {listRangeLabel(from, to, visible.length, visible.length === 1 ? "row" : "rows")}
-      </p>
       <div className="overflow-x-auto border border-line bg-paper-raised">
         <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
           <caption className="sr-only">{caption}</caption>

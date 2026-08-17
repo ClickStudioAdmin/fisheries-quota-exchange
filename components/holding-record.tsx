@@ -233,6 +233,7 @@ export async function HoldingRecord({
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "created", direction: "desc" }}
         columns={[
+          { key: "id", header: "ID", sortable: true },
           {
             key: "type",
             header: "Listing type",
@@ -275,6 +276,7 @@ export async function HoldingRecord({
         rows={listings.map((listing) => ({
           id: listing.id,
           values: {
+            id: listing.id,
             type: listing.listing_type,
             offering: listing.offering,
             quantity: listing.quantity,

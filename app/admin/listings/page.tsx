@@ -46,6 +46,7 @@ export default async function AdminListingsPage() {
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "created", direction: "desc" }}
         columns={[
+          { key: "id", header: "ID", sortable: true },
           { key: "seller", header: "Seller", sortable: true, filter: "select" },
           {
             key: "type",
@@ -91,6 +92,7 @@ export default async function AdminListingsPage() {
           id: listing.id,
           needsAction: listing.status === "PENDING_APPROVAL",
           values: {
+            id: listing.id,
             seller: listing.seller_name,
             type: listing.listing_type,
             fishery: listing.fishery_name,
