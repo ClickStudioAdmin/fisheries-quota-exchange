@@ -33,7 +33,7 @@ export function AuctionCard({
     <OfferCard
       listing={listing}
       href={`/auctions/${listing.id}`}
-      priceLabel="Current price"
+      priceLabel="Current Bid"
       badge={badge}
       hideFishery={hideFishery}
       hideOffering={hideOffering}

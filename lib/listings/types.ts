@@ -52,6 +52,12 @@ export function listingTypeLabel(type: ListingType) {
   return type === "AUCTION" ? "Auction" : "Fixed price";
 }
 
+export function listingHref(listing: Pick<Listing, "id" | "listing_type">) {
+  return listing.listing_type === "AUCTION"
+    ? `/auctions/${listing.id}`
+    : `/marketplace/${listing.id}`;
+}
+
 export function listingOfferingLabel(offering: ListingOffering) {
   return offering === "SALE" ? "Sale" : "Lease";
 }

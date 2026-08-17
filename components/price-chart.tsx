@@ -6,17 +6,55 @@ type PricePoint = {
   price: number;
 };
 
+type PriceKind = "sale" | "lease";
+
 type PriceChartProps = {
   points: PricePoint[];
   unitLabel: string;
+  kind?: PriceKind;
 };
 
-export function PriceChart({ points, unitLabel }: PriceChartProps) {
-  if (points.length === 0) {
-    return (
-      <p className="text-sm text-ink-muted">No sales recorded yet.</p>
-    );
-  }
+const copy: Record<PriceKind, { empty: string; title: string; last: string }> = {
+  sale: {
+    empty: "No sales recorded yet.",
+    title: "Sales History",
+    last: "Last sale",
+  },
+  lease: {
+    empty: "No leases recorded yet.",
+    title: "Lease History",
+    last: "Last lease",
+  },
+};
+
+export function PriceChart({
+  points,
+  unitLabel,
+  kind = "sale",
+}: PriceChartProps) {
+  const labels = copy[kind];
+
+  return (
+    <div className="min-w-0">
+      <h3 className="text-sm font-semibold text-ink">{labels.title}</h3>
+      {points.length === 0 ? (
+        <p className="mt-2 text-sm text-ink-muted">{labels.empty}</p>
+      ) : (
+        <PriceChartPlot points={points} unitLabel={unitLabel} labels={labels} />
+      )}
+    </div>
+  );
+}
+
+function PriceChartPlot({
+  points,
+  unitLabel,
+  labels,
+}: {
+  points: PricePoint[];
+  unitLabel: string;
+  labels: (typeof copy)[PriceKind];
+}) {
 
   const width = 640;
   const height = 240;
@@ -51,14 +89,14 @@ export function PriceChart({ points, unitLabel }: PriceChartProps) {
   const last = coords[coords.length - 1];
 
   return (
-    <div>
+    <div className="mt-2 min-w-0">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full max-w-3xl text-ink"
+        className="block h-auto w-full max-w-full text-ink"
         role="img"
-        aria-label={`Sale price per ${unitLabel} over time`}
+        aria-label={`${labels.title} per ${unitLabel} over time`}
       >
-        <title>Sale prices</title>
+        <title>{labels.title}</title>
         <line
           x1={left}
           y1={top}
@@ -128,7 +166,7 @@ export function PriceChart({ points, unitLabel }: PriceChartProps) {
         ) : null}
       </svg>
       <p className="mt-2 text-sm text-ink-muted">
-        Price per {unitLabel}. Last sale {formatAud(last.price)} on{" "}
+        Price per {unitLabel}. {labels.last} {formatAud(last.price)} on{" "}
         {formatTableDate(last.at)}.
       </p>
     </div>

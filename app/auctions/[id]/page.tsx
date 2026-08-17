@@ -99,7 +99,7 @@ export default async function AuctionPage({
               value: `${listing.quantity} ${listing.unit_label}`,
             },
             {
-              label: "Current price",
+              label: "Current Bid",
               value: `${formatAud(listing.unit_price_aud)} per ${listing.unit_label}`,
             },
             {

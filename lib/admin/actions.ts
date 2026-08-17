@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
+import { adminUserPath } from "@/lib/organisations/paths";
 import { createClient } from "@/lib/supabase/server";
 
 export async function setUserVerifiedAction(formData: FormData) {
@@ -24,6 +25,7 @@ export async function setUserVerifiedAction(formData: FormData) {
   });
 
   revalidatePath("/admin/users");
+  revalidatePath(adminUserPath(email));
 }
 
 export async function deleteUsersAction(formData: FormData) {
@@ -57,4 +59,5 @@ export async function deleteUsersAction(formData: FormData) {
   revalidatePath("/admin/users");
   revalidatePath("/admin");
   revalidatePath("/dashboard");
+  revalidatePath("/admin/users", "layout");
 }

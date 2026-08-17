@@ -1,14 +1,33 @@
 import { redirect } from "next/navigation";
-import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import Link from "next/link";
+import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { tableButtonClassName, tableSecondaryButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { deleteUsersAction, setUserVerifiedAction } from "@/lib/admin/actions";
-import { listUsersForAdmin } from "@/lib/organisations/admin-queries";
+import { formatTableDate } from "@/lib/format";
+import {
+  adminUserRole,
+  listUsersForAdmin,
+} from "@/lib/organisations/admin-queries";
+import { adminUserPath } from "@/lib/organisations/paths";
+import { organisationRoleLabel } from "@/lib/organisations/types";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Users",
 };
+
+function accountLabel(names: string[]) {
+  if (names.length === 0) {
+    return "—";
+  }
+
+  if (names.length === 1) {
+    return names[0];
+  }
+
+  return `${names.length} · ${names.join(", ")}`;
+}
 
 export default async function AdminUsersPage() {
   if (!(await isPlatformAdmin())) {
@@ -50,10 +69,43 @@ export default async function AdminUsersPage() {
         }}
         columns={[
           { key: "email", header: "Email", sortable: true },
+          {
+            key: "role",
+            header: "Role",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "OWNER", label: "Owner" },
+              { value: "ADMIN", label: "Admin" },
+              { value: "MEMBER", label: "Member" },
+            ],
+          },
           { key: "accounts", header: "Accounts", sortable: true },
           {
-            key: "status",
-            header: "Status",
+            key: "listings",
+            header: "Listings",
+            sortable: true,
+            align: "right",
+          },
+          {
+            key: "orders",
+            header: "Orders",
+            sortable: true,
+            align: "right",
+          },
+          {
+            key: "access",
+            header: "Access",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "Platform admin", label: "Platform admin" },
+              { value: "User", label: "User" },
+            ],
+          },
+          {
+            key: "verified",
+            header: "Verified",
             sortable: true,
             filter: "select",
             filterOptions: [
@@ -61,23 +113,85 @@ export default async function AdminUsersPage() {
               { value: "Unverified", label: "Unverified" },
             ],
           },
+          { key: "joined", header: "Joined", sortable: true },
         ]}
-        rows={users.map((item) => ({
-          id: item.email,
-          values: {
-            email: item.email,
-            accounts: item.accounts.join(", "),
-            status: item.verified ? "Verified" : "Unverified",
-          },
-          display: {
-            accounts: item.accounts.join(", ") || "—",
-          },
-        }))}
+        rows={users.map((item) => {
+          const role = adminUserRole(item);
+          const accountNames = item.memberships.map(
+            (membership) => membership.organisation,
+          );
+
+          return {
+            id: item.email,
+            values: {
+              email: item.email,
+              role: role ?? "",
+              accounts: accountNames.join(", "),
+              listings: item.listingCount,
+              orders: item.orderCount,
+              access: item.platformAdmin ? "Platform admin" : "User",
+              verified: item.verified ? "Verified" : "Unverified",
+              joined: item.joinedAt ?? "",
+            },
+            display: {
+              email:
+                item.email === currentEmail ? `${item.email} (you)` : item.email,
+              role: role ? organisationRoleLabel(role) : "—",
+              accounts: accountLabel(accountNames),
+              joined: item.joinedAt ? formatTableDate(item.joinedAt) : "—",
+            },
+          };
+        })}
       >
         {users.map((item) => (
           <DataTableRowExtras
             key={item.email}
             id={item.email}
+            links={
+              <Link href={adminUserPath(item.email)} className={tableLinkClassName}>
+                View
+              </Link>
+            }
+            expandedLabel="Details"
+            expanded={
+              <div className="space-y-4 text-sm text-ink">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-ink-muted">
+                    Accounts
+                  </p>
+                  {item.memberships.length === 0 ? (
+                    <p className="mt-2 text-ink-muted">No account memberships.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1">
+                      {item.memberships.map((membership) => (
+                        <li
+                          key={`${item.email}-${membership.organisation}-${membership.role}`}
+                        >
+                          {organisationRoleLabel(membership.role)} ·{" "}
+                          {membership.organisation}
+                          {membership.joinedAt
+                            ? ` · joined ${formatTableDate(membership.joinedAt)}`
+                            : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <p className="text-ink-muted">
+                  {item.verified
+                    ? [
+                        "Verified",
+                        item.verifiedAt
+                          ? formatTableDate(item.verifiedAt)
+                          : null,
+                        item.verifiedBy ? `by ${item.verifiedBy}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
+                    : "Not verified. Holdings need admin approval before listing or auction."}
+                </p>
+              </div>
+            }
             actions={
               <form action={setUserVerifiedAction}>
                 <input type="hidden" name="email" value={item.email} />

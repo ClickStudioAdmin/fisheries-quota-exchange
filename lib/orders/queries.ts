@@ -48,6 +48,19 @@ export async function listAllOrders() {
   return (data ?? []) as Order[];
 }
 
+export async function listOrdersByCreator(email: string) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("orders")
+    .select(orderColumns)
+    .eq("created_by_email", email.trim().toLowerCase())
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as Order[];
+}
+
 export async function getOrderForListing(listingId: number) {
   const supabase = await createClient();
   if (!supabase) return null;

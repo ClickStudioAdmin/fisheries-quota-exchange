@@ -98,6 +98,19 @@ export async function listHoldingsForOrganisation(organisationId: number) {
   return (data ?? []) as QuotaHolding[];
 }
 
+export async function listHoldingsForOrganisations(organisationIds: number[]) {
+  const supabase = await createClient();
+  if (!supabase || organisationIds.length === 0) return [];
+  const { data } = await supabase
+    .from("quota_holdings")
+    .select(
+      "id, organisation_id, fishery_id, quantity, verification_status",
+    )
+    .in("organisation_id", organisationIds)
+    .order("id", { ascending: false });
+  return (data ?? []) as QuotaHolding[];
+}
+
 export async function listHoldingCommitments(holdingIds: number[]) {
   const committed = new Map<number, number>();
 
@@ -142,16 +155,42 @@ export async function listHoldingCommitments(holdingIds: number[]) {
 }
 
 export async function listLedger(holdingId: number) {
+  const ledgers = await listLedgersForHoldings([holdingId]);
+  return ledgers.get(holdingId) ?? [];
+}
+
+export async function listLedgersForHoldings(holdingIds: number[]) {
+  const byHolding = new Map<number, QuotaLedgerEntry[]>();
+
+  for (const id of holdingIds) {
+    byHolding.set(id, []);
+  }
+
   const supabase = await createClient();
-  if (!supabase) return [];
+
+  if (!supabase || holdingIds.length === 0) {
+    return byHolding;
+  }
+
   const { data } = await supabase
     .from("quota_ledger")
     .select(
       "id, holding_id, event_type, quantity_delta, quantity_after, note, created_at, created_by_email",
     )
-    .eq("holding_id", holdingId)
+    .in("holding_id", holdingIds)
     .order("id");
-  return (data ?? []) as QuotaLedgerEntry[];
+
+  for (const entry of (data ?? []) as QuotaLedgerEntry[]) {
+    const rows = byHolding.get(entry.holding_id);
+
+    if (rows) {
+      rows.push(entry);
+    } else {
+      byHolding.set(entry.holding_id, [entry]);
+    }
+  }
+
+  return byHolding;
 }
 
 export async function listAllHoldings() {

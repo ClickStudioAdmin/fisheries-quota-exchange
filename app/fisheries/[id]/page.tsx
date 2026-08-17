@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { FisheryOfferings } from "@/components/listing-card";
 import { FisheryLogo } from "@/components/fishery-logo";
 import { PriceChart } from "@/components/price-chart";
-import { panelClassName, pageWidthClassName, statClassName } from "@/components/surface";
+import { pageWidthClassName, statClassName } from "@/components/surface";
 import { getFishery, listJurisdictions } from "@/lib/fisheries/queries";
 import { jurisdictionLabel, quantityTypeLabel } from "@/lib/fisheries/types";
 import { formatTableDate } from "@/lib/format";
@@ -140,25 +140,33 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </dl>
 
-      <FisheryOfferings listings={offers} />
-
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold text-ink">Sale prices</h2>
-        <p className="mt-2 text-sm text-ink-muted">
-          Completed and in-progress sales. Leases are not included.
-        </p>
-        <div className={`mt-4 ${panelClassName}`}>
+      <FisheryOfferings
+        listings={offers}
+        saleChart={
           <PriceChart
+            kind="sale"
+            unitLabel={unit}
             points={sales
               .map((sale) => ({
                 at: sale.created_at,
                 price: Number(sale.unit_price_aud),
               }))
               .filter((point) => Number.isFinite(point.price))}
-            unitLabel={unit}
           />
-        </div>
-      </section>
+        }
+        leaseChart={
+          <PriceChart
+            kind="lease"
+            unitLabel={unit}
+            points={leases
+              .map((lease) => ({
+                at: lease.created_at,
+                price: Number(lease.unit_price_aud),
+              }))
+              .filter((point) => Number.isFinite(point.price))}
+          />
+        }
+      />
     </div>
   );
 }

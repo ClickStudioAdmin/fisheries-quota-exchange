@@ -96,7 +96,7 @@ export function FisheriesList({
           <p className="text-xs text-ink-muted">
             {listRangeLabel(from, to, visible.length, "fisheries")}
           </p>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {paged.map((fishery) => {
             const jurisdiction = jurisdictions.find(
               (item) => item.id === fishery.jurisdiction_id,
@@ -108,7 +108,7 @@ export function FisheriesList({
               <Link
                 key={fishery.id}
                 href={`/fisheries/${fishery.id}`}
-                className={`flex items-start gap-4 ${cardClassName}`}
+                className={`flex min-w-0 items-start gap-4 ${cardClassName}`}
               >
                 <FisheryLogo fishery={fishery} size="md" />
                 <div className="min-w-0 flex-1">

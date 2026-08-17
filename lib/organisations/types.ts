@@ -29,3 +29,29 @@ export type OrganisationSummary = {
 export function isOrganisationRole(value: string): value is OrganisationRole {
   return ORGANISATION_ROLES.includes(value as OrganisationRole);
 }
+
+export function organisationRoleLabel(role: OrganisationRole) {
+  if (role === "OWNER") {
+    return "Owner";
+  }
+
+  if (role === "ADMIN") {
+    return "Admin";
+  }
+
+  return "Member";
+}
+
+export function highestOrganisationRole(
+  roles: readonly OrganisationRole[],
+): OrganisationRole {
+  if (roles.includes("OWNER")) {
+    return "OWNER";
+  }
+
+  if (roles.includes("ADMIN")) {
+    return "ADMIN";
+  }
+
+  return "MEMBER";
+}

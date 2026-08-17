@@ -364,6 +364,7 @@ export async function verifyHoldingAction(formData: FormData) {
 
   revalidatePath("/admin/holdings");
   revalidatePath("/dashboard/holdings");
+  revalidatePath("/admin/users", "layout");
 }
 
 export async function updateFisheryLogoAction(

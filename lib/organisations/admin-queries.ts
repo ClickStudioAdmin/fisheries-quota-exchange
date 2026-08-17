@@ -1,10 +1,124 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  highestOrganisationRole,
+  isOrganisationRole,
+  type OrganisationRole,
+} from "@/lib/organisations/types";
+
+export type AdminUserMembership = {
+  organisationId: number;
+  organisation: string;
+  role: OrganisationRole;
+  joinedAt: string | null;
+};
 
 export type AdminUser = {
   email: string;
   verified: boolean;
-  accounts: string[];
+  verifiedAt: string | null;
+  verifiedBy: string | null;
+  platformAdmin: boolean;
+  memberships: AdminUserMembership[];
+  listingCount: number;
+  orderCount: number;
+  joinedAt: string | null;
 };
+
+type MembershipRow = {
+  email?: string | null;
+  role?: string | null;
+  created_at?: string | null;
+  organisation_id?: number | null;
+  organisations?: { legal_name?: string | null } | { legal_name?: string | null }[] | null;
+};
+
+type VerifiedRow = {
+  email?: string | null;
+  created_at?: string | null;
+  verified_by_email?: string | null;
+};
+
+function asEmail(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function countByEmail(rows: Array<{ created_by_email?: string | null }>) {
+  const counts = new Map<string, number>();
+
+  for (const row of rows) {
+    const email = asEmail(row.created_by_email);
+
+    if (!email) {
+      continue;
+    }
+
+    counts.set(email, (counts.get(email) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+function emptyUser(email: string): AdminUser {
+  return {
+    email,
+    verified: false,
+    verifiedAt: null,
+    verifiedBy: null,
+    platformAdmin: false,
+    memberships: [],
+    listingCount: 0,
+    orderCount: 0,
+    joinedAt: null,
+  };
+}
+
+function addMembership(user: AdminUser, row: MembershipRow) {
+  const organisationId = Number(row.organisation_id);
+
+  if (!Number.isInteger(organisationId) || organisationId <= 0) {
+    return;
+  }
+
+  const organisation = Array.isArray(row.organisations)
+    ? row.organisations[0]
+    : row.organisations;
+  const legalName =
+    organisation && typeof organisation === "object"
+      ? String(organisation.legal_name ?? "")
+      : "";
+  const role = isOrganisationRole(String(row.role)) ? row.role : "MEMBER";
+  const joinedAt =
+    typeof row.created_at === "string" && row.created_at ? row.created_at : null;
+
+  if (
+    !user.memberships.some(
+      (membership) => membership.organisationId === organisationId,
+    )
+  ) {
+    user.memberships.push({
+      organisationId,
+      organisation: legalName || `Account ${organisationId}`,
+      role,
+      joinedAt,
+    });
+  }
+
+  if (joinedAt && (!user.joinedAt || joinedAt < user.joinedAt)) {
+    user.joinedAt = joinedAt;
+  }
+}
+
+function applyVerified(user: AdminUser, row: VerifiedRow) {
+  user.verified = true;
+  user.verifiedAt =
+    typeof row.created_at === "string" && row.created_at ? row.created_at : null;
+  user.verifiedBy = asEmail(row.verified_by_email) || null;
+}
+
+function finishUser(user: AdminUser) {
+  user.memberships.sort((a, b) => a.organisation.localeCompare(b.organisation));
+  return user;
+}
 
 export async function listOrganisationsForAdmin() {
   const supabase = await createClient();
@@ -28,40 +142,163 @@ export async function listUsersForAdmin(): Promise<AdminUser[]> {
     return [];
   }
 
-  const [{ data: members }, { data: verified }] = await Promise.all([
+  const [
+    { data: members },
+    { data: verified },
+    { data: admins },
+    { data: listings },
+    { data: orders },
+  ] = await Promise.all([
     supabase
       .from("organisation_users")
-      .select("email, organisations ( legal_name )")
+      .select("email, role, created_at, organisation_id, organisations ( legal_name )")
       .order("email"),
-    supabase.from("verified_users").select("email"),
+    supabase
+      .from("verified_users")
+      .select("email, created_at, verified_by_email"),
+    supabase.from("platform_admins").select("email"),
+    supabase.from("listings").select("created_by_email"),
+    supabase.from("orders").select("created_by_email"),
   ]);
 
-  const verifiedEmails = new Set(
-    (verified ?? []).map((row) => row.email.toLowerCase()),
-  );
   const users = new Map<string, AdminUser>();
+  const listingCounts = countByEmail(listings ?? []);
+  const orderCounts = countByEmail(orders ?? []);
 
   for (const row of members ?? []) {
-    const email = String(row.email).toLowerCase();
-    const organisation = Array.isArray(row.organisations)
-      ? row.organisations[0]
-      : row.organisations;
-    const legalName =
-      organisation && typeof organisation === "object" && "legal_name" in organisation
-        ? String(organisation.legal_name ?? "")
-        : "";
-    const existing: AdminUser = users.get(email) ?? {
-      email,
-      verified: verifiedEmails.has(email),
-      accounts: [],
-    };
+    const email = asEmail(row.email);
 
-    if (legalName && !existing.accounts.includes(legalName)) {
-      existing.accounts.push(legalName);
+    if (!email) {
+      continue;
     }
 
+    const existing = users.get(email) ?? emptyUser(email);
+    addMembership(existing, row);
     users.set(email, existing);
   }
 
-  return [...users.values()].sort((a, b) => a.email.localeCompare(b.email));
+  for (const row of verified ?? []) {
+    const email = asEmail(row.email);
+
+    if (!email) {
+      continue;
+    }
+
+    const existing = users.get(email) ?? emptyUser(email);
+    applyVerified(existing, row);
+    users.set(email, existing);
+  }
+
+  for (const row of admins ?? []) {
+    const email = asEmail(row.email);
+
+    if (!email) {
+      continue;
+    }
+
+    const existing = users.get(email) ?? emptyUser(email);
+    existing.platformAdmin = true;
+    users.set(email, existing);
+  }
+
+  return [...users.values()]
+    .map((user) => {
+      user.listingCount = listingCounts.get(user.email) ?? 0;
+      user.orderCount = orderCounts.get(user.email) ?? 0;
+      return finishUser(user);
+    })
+    .sort((a, b) => a.email.localeCompare(b.email));
+}
+
+export function adminUserRole(user: AdminUser) {
+  if (user.memberships.length === 0) {
+    return null;
+  }
+
+  return highestOrganisationRole(user.memberships.map((membership) => membership.role));
+}
+
+async function countCreatedBy(table: "listings" | "orders", email: string) {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return 0;
+  }
+
+  const { count } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq("created_by_email", email);
+
+  return count ?? 0;
+}
+
+export async function getAdminUserForAdmin(
+  email: string,
+): Promise<AdminUser | null> {
+  const normalised = asEmail(email);
+
+  if (!normalised.includes("@")) {
+    return null;
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const [
+    { data: members },
+    { data: verified },
+    { data: admin },
+    listingCount,
+    orderCount,
+  ] = await Promise.all([
+    supabase
+      .from("organisation_users")
+      .select("email, role, created_at, organisation_id, organisations ( legal_name )")
+      .eq("email", normalised),
+    supabase
+      .from("verified_users")
+      .select("email, created_at, verified_by_email")
+      .eq("email", normalised)
+      .maybeSingle(),
+    supabase
+      .from("platform_admins")
+      .select("email")
+      .eq("email", normalised)
+      .maybeSingle(),
+    countCreatedBy("listings", normalised),
+    countCreatedBy("orders", normalised),
+  ]);
+
+  const user = emptyUser(normalised);
+
+  for (const row of members ?? []) {
+    addMembership(user, row);
+  }
+
+  if (verified) {
+    applyVerified(user, verified);
+  }
+
+  if (admin) {
+    user.platformAdmin = true;
+  }
+
+  user.listingCount = listingCount;
+  user.orderCount = orderCount;
+
+  if (
+    user.memberships.length === 0 &&
+    !user.verified &&
+    !user.platformAdmin &&
+    user.listingCount === 0 &&
+    user.orderCount === 0
+  ) {
+    return null;
+  }
+
+  return finishUser(user);
 }

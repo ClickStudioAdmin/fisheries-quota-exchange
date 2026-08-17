@@ -54,3 +54,16 @@ export async function listAllListings() {
 
   return (data ?? []) as Listing[];
 }
+
+export async function listListingsByCreator(email: string) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("listings")
+    .select(columns)
+    .eq("created_by_email", email.trim().toLowerCase())
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as Listing[];
+}
