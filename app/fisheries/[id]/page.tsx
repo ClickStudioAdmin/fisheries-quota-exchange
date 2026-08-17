@@ -89,7 +89,7 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
 
       <dl className="mt-8 grid grid-cols-5 gap-3 text-sm">
         <div className={statClassName}>
-          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Last sale</dt>
+          <dt className="font-medium text-ink">Last sale</dt>
           <dd className="mt-1 text-ink">
             {lastSale
               ? `${formatAud(lastSale.unit_price_aud)} / ${unit}`
@@ -102,7 +102,7 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
           ) : null}
         </div>
         <div className={statClassName}>
-          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Last lease</dt>
+          <dt className="font-medium text-ink">Last lease</dt>
           <dd className="mt-1 text-ink">
             {lastLease
               ? `${formatAud(lastLease.unit_price_aud)} / ${unit}`
@@ -115,21 +115,21 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
           ) : null}
         </div>
         <div className={statClassName}>
-          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Average sale</dt>
+          <dt className="font-medium text-ink">Average sale</dt>
           <dd className="mt-1 text-ink">
             {averageSale != null ? `${formatAud(averageSale)} / ${unit}` : "—"}
           </dd>
           <dd className="mt-1 text-ink-muted">Last 5</dd>
         </div>
         <div className={statClassName}>
-          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Average lease</dt>
+          <dt className="font-medium text-ink">Average lease</dt>
           <dd className="mt-1 text-ink">
             {averageLease != null ? `${formatAud(averageLease)} / ${unit}` : "—"}
           </dd>
           <dd className="mt-1 text-ink-muted">Last 5</dd>
         </div>
         <div className={statClassName}>
-          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Volume traded</dt>
+          <dt className="font-medium text-ink">Volume traded</dt>
           <dd className="mt-1 text-ink">
             {sales.length === 0
               ? "—"
