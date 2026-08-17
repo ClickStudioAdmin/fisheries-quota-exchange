@@ -20,11 +20,28 @@ export function quantityTypeLabel(type: QuantityType) {
   return type === "KG" ? "kg" : "units";
 }
 
-export function jurisdictionLabel(
-  jurisdiction: Pick<Jurisdiction, "name"> | null | undefined,
+export function fisherySelectLabel(
+  fishery: Pick<Fishery, "name" | "jurisdiction_id">,
+  jurisdictions: readonly Pick<Jurisdiction, "id" | "code">[],
 ) {
-  const name = jurisdiction?.name?.trim();
-  return name ? name : "Jurisdiction";
+  const code = jurisdictions
+    .find((item) => item.id === fishery.jurisdiction_id)
+    ?.code?.trim();
+
+  if (!code) {
+    return fishery.name;
+  }
+
+  return `${code} - ${fishery.name}`;
+}
+
+export function fisherySelectLabelForName(
+  name: string,
+  fisheries: readonly Fishery[],
+  jurisdictions: readonly Pick<Jurisdiction, "id" | "code">[],
+) {
+  const fishery = fisheries.find((item) => item.name === name);
+  return fishery ? fisherySelectLabel(fishery, jurisdictions) : name;
 }
 
 export type Fishery = {

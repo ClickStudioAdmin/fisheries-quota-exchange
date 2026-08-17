@@ -8,20 +8,24 @@ import {
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 import { QuantityField } from "@/components/quantity-field";
 import {
+  fisherySelectLabel,
   quantityTypeLabel,
   type Fishery,
+  type Jurisdiction,
 } from "@/lib/fisheries/types";
 
 const initialState: AdminFormState = {};
 
 type HoldingFormProps = {
   fisheries: Fishery[];
+  jurisdictions: Jurisdiction[];
   organisationId?: number;
   organisations?: { id: number; legal_name: string }[];
 };
 
 export function HoldingForm({
   fisheries,
+  jurisdictions,
   organisationId,
   organisations,
 }: HoldingFormProps) {
@@ -86,7 +90,7 @@ export function HoldingForm({
           <option value="">Select</option>
           {fisheries.map((item) => (
             <option key={item.id} value={item.id}>
-              {item.name}
+              {fisherySelectLabel(item, jurisdictions)}
             </option>
           ))}
         </select>

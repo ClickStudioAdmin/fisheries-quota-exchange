@@ -10,8 +10,11 @@ import { verifyHoldingAction } from "@/lib/fisheries/actions";
 import {
   listFisheries,
   listHoldingsForOrganisations,
+  listJurisdictions,
 } from "@/lib/fisheries/queries";
 import {
+  fisherySelectLabel,
+  fisherySelectLabelForName,
   holdingIsVerified,
   holdingVerificationLabel,
   quantityTypeLabel,
@@ -74,11 +77,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
   const organisationIds = profile.memberships.map(
     (membership) => membership.organisationId,
   );
-  const [holdings, listings, orders, fisheries] = await Promise.all([
+  const [holdings, listings, orders, fisheries, jurisdictions] = await Promise.all([
     listHoldingsForOrganisations(organisationIds),
     listListingsByCreator(profile.email),
     listOrdersByCreator(profile.email),
     listFisheries(),
+    listJurisdictions(),
   ]);
   const role = adminUserRole(profile);
   const organisations = new Map(
@@ -258,7 +262,9 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               id: holding.id,
               organisation:
                 organisations.get(holding.organisation_id) ?? "Account",
-              fishery: fishery?.name ?? "Fishery",
+              fishery: fishery
+                ? fisherySelectLabel(fishery, jurisdictions)
+                : "Fishery",
               quantity: holding.quantity,
               status: holdingVerificationLabel(holding.verification_status),
             },
@@ -360,7 +366,11 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             id: listing.id,
             seller: listing.seller_name,
             type: listing.listing_type,
-            fishery: listing.fishery_name,
+            fishery: fisherySelectLabelForName(
+              listing.fishery_name,
+              fisheries,
+              jurisdictions,
+            ),
             offering: listing.offering,
             quantity: listing.quantity,
             price: listing.unit_price_aud,
@@ -399,8 +409,20 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
           { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
-          { key: "buyer", header: "Buyer", sortable: true, filter: "select" },
-          { key: "seller", header: "Seller", sortable: true, filter: "select" },
+          {
+            key: "parties",
+            header: "Buyer / seller",
+            stacked: [
+              { key: "buyer", label: "Buyer" },
+              { key: "seller", label: "Seller" },
+            ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
+          },
           {
             key: "offering",
             header: "Offering",
@@ -439,8 +461,14 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           ],
           values: {
             id: order.id,
+            parties: `${order.buyer_name} ${order.seller_name}`,
             buyer: order.buyer_name,
             seller: order.seller_name,
+            fishery: fisherySelectLabelForName(
+              order.fishery_name,
+              fisheries,
+              jurisdictions,
+            ),
             offering: order.offering,
             quantity: order.quantity,
             amount: order.amount_aud,

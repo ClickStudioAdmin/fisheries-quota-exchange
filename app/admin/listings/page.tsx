@@ -12,6 +12,8 @@ import {
   listingTypeLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
+import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import {
   fieldClassName,
   tableButtonClassName,
@@ -30,7 +32,11 @@ export default async function AdminListingsPage() {
     redirect("/admin");
   }
 
-  const { listings, error } = await listAllListings();
+  const [{ listings, error }, fisheries, jurisdictions] = await Promise.all([
+    listAllListings(),
+    listFisheries(),
+    listJurisdictions(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -98,7 +104,11 @@ export default async function AdminListingsPage() {
             id: listing.id,
             seller: listing.seller_name,
             type: listing.listing_type,
-            fishery: listing.fishery_name,
+            fishery: fisherySelectLabelForName(
+              listing.fishery_name,
+              fisheries,
+              jurisdictions,
+            ),
             offering: listing.offering,
             quantity: listing.quantity,
             price: listing.unit_price_aud,

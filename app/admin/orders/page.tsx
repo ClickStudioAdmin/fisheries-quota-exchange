@@ -10,6 +10,8 @@ import { listAllOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
+import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import {
   fieldClassName,
   tableButtonClassName,
@@ -28,7 +30,11 @@ export default async function AdminOrdersPage() {
     redirect("/admin");
   }
 
-  const orders = await listAllOrders();
+  const [orders, fisheries, jurisdictions] = await Promise.all([
+    listAllOrders(),
+    listFisheries(),
+    listJurisdictions(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -50,8 +56,20 @@ export default async function AdminOrdersPage() {
         selectable
         columns={[
           { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
-          { key: "buyer", header: "Buyer", sortable: true, filter: "select", nowrap: true },
-          { key: "seller", header: "Seller", sortable: true, filter: "select", nowrap: true },
+          {
+            key: "parties",
+            header: "Buyer / seller",
+            stacked: [
+              { key: "buyer", label: "Buyer" },
+              { key: "seller", label: "Seller" },
+            ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
+          },
           {
             key: "offering",
             header: "Offering",
@@ -91,8 +109,14 @@ export default async function AdminOrdersPage() {
           ],
           values: {
             id: order.id,
+            parties: `${order.buyer_name} ${order.seller_name}`,
             buyer: order.buyer_name,
             seller: order.seller_name,
+            fishery: fisherySelectLabelForName(
+              order.fishery_name,
+              fisheries,
+              jurisdictions,
+            ),
             offering: order.offering,
             quantity: order.quantity,
             amount: order.amount_aud,

@@ -14,8 +14,11 @@ import {
   listFisheries,
   listHoldingCommitments,
   listHoldingsForOrganisation,
+  listJurisdictions,
 } from "@/lib/fisheries/queries";
 import {
+  fisherySelectLabel,
+  fisherySelectLabelForName,
   holdingIsVerified,
   holdingVerificationLabel,
   quantityTypeLabel,
@@ -146,9 +149,10 @@ export async function AccountHoldingsSection({
   }
 
   const canManage = canEditOrganisation(result.role);
-  const [holdings, fisheries, prices] = await Promise.all([
+  const [holdings, fisheries, jurisdictions, prices] = await Promise.all([
     listHoldingsForOrganisation(organisationId),
     listFisheries(),
+    listJurisdictions(),
     listLatestSalePrices(),
   ]);
   const commitments = await listHoldingCommitments(
@@ -231,7 +235,9 @@ export async function AccountHoldingsSection({
           return {
             id: holding.id,
             values: {
-              fishery: fishery?.name ?? "Fishery",
+              fishery: fishery
+                ? fisherySelectLabel(fishery, jurisdictions)
+                : "Fishery",
               quantity: holding.quantity,
               marketValue: value ?? "",
               status: holdingVerificationLabel(holding.verification_status),
@@ -325,6 +331,7 @@ export async function AccountHoldingsSection({
             <HoldingForm
               organisationId={organisationId}
               fisheries={fisheries}
+              jurisdictions={jurisdictions}
             />
           </div>
         </div>
@@ -345,6 +352,10 @@ export async function AccountListingsSection({
   }
 
   const listings = await listOrganisationListings(organisationId);
+  const [fisheries, jurisdictions] = await Promise.all([
+    listFisheries(),
+    listJurisdictions(),
+  ]);
   const canList = canEditOrganisation(result.role);
 
   return (
@@ -406,7 +417,11 @@ export async function AccountListingsSection({
           values: {
             id: listing.id,
             type: listing.listing_type,
-            fishery: listing.fishery_name,
+            fishery: fisherySelectLabelForName(
+              listing.fishery_name,
+              fisheries,
+              jurisdictions,
+            ),
             offering: listing.offering,
             quantity: listing.quantity,
             price: listing.unit_price_aud,
@@ -476,7 +491,11 @@ export async function AccountOrdersSection({
     return <p>Account not found.</p>;
   }
 
-  const orders = await listOrganisationOrders(organisationId);
+  const [orders, fisheries, jurisdictions] = await Promise.all([
+    listOrganisationOrders(organisationId),
+    listFisheries(),
+    listJurisdictions(),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -497,6 +516,12 @@ export async function AccountOrdersSection({
               { value: "Selling", label: "Selling" },
               { value: "Buying", label: "Buying" },
             ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
           },
           {
             key: "offering",
@@ -538,6 +563,11 @@ export async function AccountOrdersSection({
             values: {
               id: order.id,
               side,
+              fishery: fisherySelectLabelForName(
+                order.fishery_name,
+                fisheries,
+                jurisdictions,
+              ),
               offering: order.offering,
               quantity: order.quantity,
               status: order.status,

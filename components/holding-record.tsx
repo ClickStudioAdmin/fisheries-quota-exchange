@@ -17,6 +17,7 @@ import {
   listLedger,
 } from "@/lib/fisheries/queries";
 import {
+  fisherySelectLabel,
   holdingIsVerified,
   holdingVerificationLabel,
   jurisdictionLabel,
@@ -323,8 +324,20 @@ export async function HoldingRecord({
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
           { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
-          { key: "buyer", header: "Buyer", sortable: true, filter: "select" },
-          { key: "seller", header: "Seller", sortable: true, filter: "select" },
+          {
+            key: "parties",
+            header: "Buyer / seller",
+            stacked: [
+              { key: "buyer", label: "Buyer" },
+              { key: "seller", label: "Seller" },
+            ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
+          },
           {
             key: "offering",
             header: "Offering",
@@ -359,8 +372,12 @@ export async function HoldingRecord({
           ],
           values: {
             id: order.id,
+            parties: `${order.buyer_name} ${order.seller_name}`,
             buyer: order.buyer_name,
             seller: order.seller_name,
+            fishery: fishery
+              ? fisherySelectLabel(fishery, jurisdictions)
+              : order.fishery_name,
             offering: order.offering,
             quantity: order.quantity,
             amount: order.amount_aud,

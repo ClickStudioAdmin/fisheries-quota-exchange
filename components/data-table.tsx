@@ -32,6 +32,7 @@ export type DataTableColumn = {
   align?: "left" | "right";
   details?: boolean;
   nowrap?: boolean;
+  stacked?: { key: string; label: string }[];
 };
 
 export type DataTableDetail = {
@@ -178,6 +179,32 @@ function DetailsTooltip({ details }: { details: DataTableDetail[] }) {
 }
 
 function cellContent(row: DataTableRow, column: DataTableColumn) {
+  if (column.stacked && column.stacked.length > 0) {
+    return (
+      <div className="space-y-1.5">
+        {column.stacked.map((line) => {
+          const displayed = row.display?.[line.key];
+          const value = row.values[line.key];
+          const text =
+            displayed != null && displayed !== ""
+              ? displayed
+              : value == null || value === ""
+                ? "—"
+                : String(value);
+
+          return (
+            <div key={line.key}>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-ink-muted">
+                {line.label}
+              </div>
+              <div>{text}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   const displayed = row.display?.[column.key];
   const value = row.values[column.key];
   const label =

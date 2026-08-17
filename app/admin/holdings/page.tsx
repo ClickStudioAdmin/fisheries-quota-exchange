@@ -5,8 +5,9 @@ import { HoldingForm } from "@/components/holding-form";
 import { tableButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { verifyHoldingAction } from "@/lib/fisheries/actions";
-import { listAllHoldings, listFisheries } from "@/lib/fisheries/queries";
+import { listAllHoldings, listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import {
+  fisherySelectLabel,
   holdingIsVerified,
   holdingVerificationLabel,
   quantityTypeLabel,
@@ -23,9 +24,10 @@ export default async function HoldingsAdminPage() {
     redirect("/admin");
   }
 
-  const [organisations, fisheries, holdings] = await Promise.all([
+  const [organisations, fisheries, jurisdictions, holdings] = await Promise.all([
     listOrganisationsForAdmin(),
     listFisheries(),
+    listJurisdictions(),
     listAllHoldings(),
   ]);
 
@@ -81,7 +83,9 @@ export default async function HoldingsAdminPage() {
             values: {
               id: holding.id,
               organisation: organisation?.legal_name ?? "Organisation",
-              fishery: fishery?.name ?? "Fishery",
+              fishery: fishery
+                ? fisherySelectLabel(fishery, jurisdictions)
+                : "Fishery",
               quantity: holding.quantity,
               status: holdingVerificationLabel(holding.verification_status),
             },
@@ -125,7 +129,11 @@ export default async function HoldingsAdminPage() {
       <div className="max-w-md">
         <h2 className="text-xl font-semibold text-ink">Create holding</h2>
         <div className="mt-4">
-          <HoldingForm organisations={organisations} fisheries={fisheries} />
+          <HoldingForm
+            organisations={organisations}
+            fisheries={fisheries}
+            jurisdictions={jurisdictions}
+          />
         </div>
       </div>
     </div>
