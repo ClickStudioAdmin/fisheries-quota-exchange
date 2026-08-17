@@ -1,10 +1,16 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { FisheryLogo } from "@/components/fishery-logo";
+import {
+  ListPager,
+  listRangeLabel,
+  paginateItems,
+} from "@/components/list-pager";
 import { cardClassName, LabeledFields } from "@/components/surface";
 import {
+  jurisdictionLabel,
   quantityTypeLabel,
   type Fishery,
   type Jurisdiction,
@@ -14,12 +20,6 @@ import type { LatestSalePrice } from "@/lib/market/types";
 
 const filterFieldClassName =
   "border border-line bg-paper-raised px-3 py-2 text-sm text-ink outline-none focus:border-sea";
-
-function jurisdictionLabel(jurisdiction: Jurisdiction | undefined) {
-  return jurisdiction
-    ? `${jurisdiction.code} — ${jurisdiction.name}`
-    : "Jurisdiction";
-}
 
 export function FisheriesList({
   fisheries,
@@ -32,6 +32,7 @@ export function FisheriesList({
 }) {
   const [jurisdictionId, setJurisdictionId] = useState("ALL");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const searchId = useId();
   const lastSale = useMemo(
     () => new Map(prices.map((price) => [price.fishery_id, price])),
@@ -49,6 +50,15 @@ export function FisheriesList({
       return true;
     });
   }, [fisheries, jurisdictionId, query]);
+
+  const { pageCount, currentPage, from, to, paged } = paginateItems(
+    visible,
+    page,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [jurisdictionId, query]);
 
   return (
     <div className="space-y-4">
@@ -82,8 +92,12 @@ export function FisheriesList({
       {visible.length === 0 ? (
         <p className="text-ink-muted">No fisheries match these filters.</p>
       ) : (
+        <>
+          <p className="text-xs text-ink-muted">
+            {listRangeLabel(from, to, visible.length, "fisheries")}
+          </p>
         <div className="space-y-3">
-          {visible.map((fishery) => {
+          {paged.map((fishery) => {
             const jurisdiction = jurisdictions.find(
               (item) => item.id === fishery.jurisdiction_id,
             );
@@ -127,6 +141,13 @@ export function FisheriesList({
             );
           })}
         </div>
+          <ListPager
+            page={currentPage}
+            pageCount={pageCount}
+            onPageChange={setPage}
+            label="Fisheries pages"
+          />
+        </>
       )}
     </div>
   );

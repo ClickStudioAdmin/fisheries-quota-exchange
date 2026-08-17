@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
 import { buttonClassName } from "@/components/auth-card";
-import { LabeledFields, panelClassName } from "@/components/surface";
+import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
 import {
@@ -68,7 +68,7 @@ export default async function AuctionPage({
   const isSeller = role !== null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className={`${pageWidthClassName} py-12 sm:py-16`}>
       <p className="text-sm text-ink-muted">
         <Link href="/marketplace" className="underline">
           Marketplace

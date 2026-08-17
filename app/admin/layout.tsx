@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AreaShell } from "@/components/area-shell";
 import type { SideNavItem } from "@/components/side-nav";
+import { pageWidthClassName } from "@/components/surface";
 import { canSeeAdmin, isPlatformAdmin } from "@/lib/admin/access";
 import { getUser } from "@/lib/supabase/server";
 
@@ -39,7 +40,7 @@ export default async function AdminLayout({
 
   if (!admin) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">{children}</div>
+      <div className={`${pageWidthClassName} py-12`}>{children}</div>
     );
   }
 

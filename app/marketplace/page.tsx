@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MarketplaceList } from "@/components/marketplace-list";
 import { PageIntro } from "@/components/page-intro";
+import { pageWidthClassName } from "@/components/surface";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { listMarketplaceListings } from "@/lib/listings/queries";
 
@@ -24,7 +25,7 @@ export default async function MarketplacePage() {
           is no live payment.
         </p>
       </PageIntro>
-      <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      <div className={`${pageWidthClassName} pb-16`}>
         {listings.length === 0 ? (
           <p className="text-ink-muted">No published listings at the moment.</p>
         ) : (

@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { FisheryOfferings } from "@/components/listing-card";
 import { FisheryLogo } from "@/components/fishery-logo";
 import { PriceChart } from "@/components/price-chart";
-import { panelClassName, statClassName } from "@/components/surface";
+import { panelClassName, pageWidthClassName, statClassName } from "@/components/surface";
 import { getFishery, listJurisdictions } from "@/lib/fisheries/queries";
-import { quantityTypeLabel } from "@/lib/fisheries/types";
+import { jurisdictionLabel, quantityTypeLabel } from "@/lib/fisheries/types";
 import { formatTableDate } from "@/lib/format";
 import { formatAud } from "@/lib/listings/types";
 import {
@@ -68,7 +68,7 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className={`${pageWidthClassName} py-12 sm:py-16`}>
       <p className="text-sm text-ink-muted">
         <Link href="/fisheries" className="underline">
           Fisheries
@@ -81,15 +81,13 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
             {fishery.name}
           </h1>
           <p className="mt-2 text-ink-muted">
-            {jurisdiction
-              ? `${jurisdiction.code} — ${jurisdiction.name}`
-              : "Jurisdiction"}
+            {jurisdictionLabel(jurisdiction)}
             {fishery.code ? ` · ${fishery.code}` : ""} · quantity in {unit}
           </p>
         </div>
       </div>
 
-      <dl className="mt-8 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="mt-8 grid grid-cols-5 gap-3 text-sm">
         <div className={statClassName}>
           <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Last sale</dt>
           <dd className="mt-1 text-ink">

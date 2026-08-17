@@ -4,6 +4,7 @@ import {
   Children,
   Fragment,
   isValidElement,
+  useEffect,
   useId,
   useMemo,
   useState,
@@ -14,6 +15,11 @@ import {
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
+import {
+  ListPager,
+  listRangeLabel,
+  paginateItems,
+} from "@/components/list-pager";
 
 export type DataTableColumn = {
   key: string;
@@ -196,6 +202,7 @@ export function DataTable({
   const [sort, setSort] = useState<SortState>(defaultSort ?? null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
   const extras = useMemo(() => collectExtras(children), [children]);
   const locked = useMemo(
     () => new Set(lockedIds.map((id) => String(id))),
@@ -250,12 +257,21 @@ export function DataTable({
     );
   }, [filtered, sort]);
 
+  const { pageCount, currentPage, from, to, paged } = paginateItems(
+    visible,
+    page,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters, query, sort]);
+
   const selectableVisible = useMemo(
     () =>
       selectable
-        ? visible.filter((row) => !locked.has(String(row.id)))
+        ? paged.filter((row) => !locked.has(String(row.id)))
         : [],
-    [locked, selectable, visible],
+    [locked, paged, selectable],
   );
 
   function toggleSort(key: string) {
@@ -404,9 +420,7 @@ export function DataTable({
         ) : null}
       </div>
       <p className="text-xs text-ink-muted">
-        {visible.length === rows.length
-          ? `${rows.length} ${rows.length === 1 ? "row" : "rows"}`
-          : `${visible.length} of ${rows.length} rows`}
+        {listRangeLabel(from, to, visible.length, visible.length === 1 ? "row" : "rows")}
       </p>
       <div className="overflow-x-auto border border-line bg-paper-raised">
         <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
@@ -489,7 +503,7 @@ export function DataTable({
                 </td>
               </tr>
             ) : (
-              visible.map((row, index) => {
+              paged.map((row, index) => {
                 const extra = extras.get(String(row.id));
                 const extraProps = extra?.props;
                 const rowId = String(row.id);
@@ -581,6 +595,12 @@ export function DataTable({
           </tbody>
         </table>
       </div>
+      <ListPager
+        page={currentPage}
+        pageCount={pageCount}
+        onPageChange={setPage}
+        label={`${caption} pages`}
+      />
     </div>
   );
 }

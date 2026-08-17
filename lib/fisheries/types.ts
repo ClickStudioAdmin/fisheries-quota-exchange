@@ -20,6 +20,13 @@ export function quantityTypeLabel(type: QuantityType) {
   return type === "KG" ? "kg" : "units";
 }
 
+export function jurisdictionLabel(
+  jurisdiction: Pick<Jurisdiction, "name"> | null | undefined,
+) {
+  const name = jurisdiction?.name?.trim();
+  return name ? name : "Jurisdiction";
+}
+
 export type Fishery = {
   id: number;
   jurisdiction_id: number;

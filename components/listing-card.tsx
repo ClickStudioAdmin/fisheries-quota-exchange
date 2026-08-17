@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AuctionCard } from "@/components/auction-card";
+import {
+  ListPager,
+  listRangeLabel,
+  paginateItems,
+} from "@/components/list-pager";
 import { OfferCard } from "@/components/offer-card";
+import type { Fishery } from "@/lib/fisheries/types";
 import { formatTableDateTime } from "@/lib/format";
 import {
   listingTypeLabel,
@@ -15,6 +21,7 @@ type ListingCardProps = {
   hideFishery?: boolean;
   hideOffering?: boolean;
   fisheryId?: number | null;
+  fishery?: Pick<Fishery, "name" | "logo_path"> | null;
 };
 
 export function ListingCard({
@@ -22,6 +29,7 @@ export function ListingCard({
   hideFishery,
   hideOffering,
   fisheryId,
+  fishery,
 }: ListingCardProps) {
   return (
     <OfferCard
@@ -30,6 +38,7 @@ export function ListingCard({
       hideFishery={hideFishery}
       hideOffering={hideOffering}
       fisheryId={fisheryId}
+      fishery={fishery}
       extraFields={[
         { label: "Expires", value: formatTableDateTime(listing.expires_at) },
       ]}
@@ -42,6 +51,7 @@ export function MarketplaceListingCard({
   hideFishery,
   hideOffering,
   fisheryId,
+  fishery,
 }: ListingCardProps) {
   if (listing.listing_type === "AUCTION") {
     return (
@@ -50,6 +60,7 @@ export function MarketplaceListingCard({
         hideFishery={hideFishery}
         hideOffering={hideOffering}
         fisheryId={fisheryId}
+        fishery={fishery}
       />
     );
   }
@@ -60,6 +71,7 @@ export function MarketplaceListingCard({
       hideFishery={hideFishery}
       hideOffering={hideOffering}
       fisheryId={fisheryId}
+      fishery={fishery}
     />
   );
 }
@@ -69,13 +81,13 @@ export function ListingCards({
   empty,
   hideFishery,
   hideOffering,
-  fisheryIds,
+  fisheriesByName,
 }: {
   listings: Listing[];
   empty: string;
   hideFishery?: boolean;
   hideOffering?: boolean;
-  fisheryIds?: Map<string, number>;
+  fisheriesByName?: Map<string, Pick<Fishery, "id" | "name" | "logo_path">>;
 }) {
   if (listings.length === 0) {
     return <p className="text-sm text-ink-muted">{empty}</p>;
@@ -83,15 +95,20 @@ export function ListingCards({
 
   return (
     <div className="space-y-3">
-      {listings.map((listing) => (
-        <MarketplaceListingCard
-          key={listing.id}
-          listing={listing}
-          hideFishery={hideFishery}
-          hideOffering={hideOffering}
-          fisheryId={fisheryIds?.get(listing.fishery_name) ?? null}
-        />
-      ))}
+      {listings.map((listing) => {
+        const fishery = fisheriesByName?.get(listing.fishery_name) ?? null;
+
+        return (
+          <MarketplaceListingCard
+            key={listing.id}
+            listing={listing}
+            hideFishery={hideFishery}
+            hideOffering={hideOffering}
+            fisheryId={fishery?.id ?? null}
+            fishery={fishery}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -104,6 +121,7 @@ export function FisheryOfferingSection({
   listings: Listing[];
 }) {
   const [listingType, setListingType] = useState<"ALL" | ListingType>("ALL");
+  const [page, setPage] = useState(1);
   const kind = title === "Sales" ? "sale" : "lease";
   const visible = useMemo(
     () =>
@@ -115,6 +133,14 @@ export function FisheryOfferingSection({
       }),
     [listings, listingType],
   );
+  const { pageCount, currentPage, from, to, paged } = paginateItems(
+    visible,
+    page,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [listingType]);
   const empty =
     listingType === "AUCTION"
       ? `No ${kind} auctions at the moment.`
@@ -143,12 +169,23 @@ export function FisheryOfferingSection({
           </select>
         </label>
       </div>
-      <div className="mt-4">
+      <div className="mt-4 space-y-4">
+        {visible.length > 0 ? (
+          <p className="text-xs text-ink-muted">
+            {listRangeLabel(from, to, visible.length, title.toLowerCase())}
+          </p>
+        ) : null}
         <ListingCards
-          listings={visible}
+          listings={paged}
           empty={empty}
           hideFishery
           hideOffering
+        />
+        <ListPager
+          page={currentPage}
+          pageCount={pageCount}
+          onPageChange={setPage}
+          label={`${title} pages`}
         />
       </div>
     </section>

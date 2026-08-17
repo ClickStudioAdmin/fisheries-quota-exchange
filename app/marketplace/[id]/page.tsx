@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
-import { LabeledFields, panelClassName } from "@/components/surface";
+import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { listFisheries } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
@@ -62,7 +62,7 @@ export default async function ListingPage({
   const isSeller = role !== null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className={`${pageWidthClassName} py-12 sm:py-16`}>
       <p className="text-sm text-ink-muted">
         <Link href="/marketplace" className="underline">
           Marketplace

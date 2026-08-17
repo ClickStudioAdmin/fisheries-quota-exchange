@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { pageWidthClassName } from "@/components/surface";
 
 type AuthCardProps = {
   title: string;
@@ -21,7 +22,7 @@ export function AuthCard({ title, children, flush = false }: AuthCardProps) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">{inner}</div>
+    <div className={`${pageWidthClassName} py-12 sm:py-16`}>{inner}</div>
   );
 }
 

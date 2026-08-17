@@ -48,21 +48,19 @@ export default async function FisheriesAdminPage() {
           const jurisdiction = jurisdictions.find(
             (item) => item.id === fishery.jurisdiction_id,
           );
-          const jurisdictionLabel = jurisdiction
-            ? `${jurisdiction.code} — ${jurisdiction.name}`
-            : "";
+          const label = jurisdiction?.name ?? "";
 
           return {
             id: fishery.id,
             values: {
               name: fishery.name,
               code: fishery.code ?? "",
-              jurisdiction: jurisdictionLabel,
+              jurisdiction: label,
               quantityType: fishery.quantity_type === "KG" ? "Kg" : "Units",
             },
             display: {
               code: fishery.code ?? "—",
-              jurisdiction: jurisdictionLabel || "—",
+              jurisdiction: label || "—",
             },
           };
         })}
@@ -99,7 +97,7 @@ export default async function FisheriesAdminPage() {
                 required: true,
                 options: jurisdictions.map((item) => ({
                   value: String(item.id),
-                  label: `${item.code} — ${item.name}`,
+                  label: item.name,
                 })),
               },
               { name: "name", label: "Name", required: true },

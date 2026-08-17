@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { FisheryLogo } from "@/components/fishery-logo";
 import { LabeledFields, panelClassName } from "@/components/surface";
+import type { Fishery } from "@/lib/fisheries/types";
 import {
   formatAud,
   listingOfferingLabel,
@@ -16,6 +18,7 @@ type OfferCardProps = {
   hideFishery?: boolean;
   hideOffering?: boolean;
   fisheryId?: number | null;
+  fishery?: Pick<Fishery, "name" | "logo_path"> | null;
 };
 
 export function OfferCard({
@@ -27,6 +30,7 @@ export function OfferCard({
   hideFishery = false,
   hideOffering = false,
   fisheryId = null,
+  fishery = null,
 }: OfferCardProps) {
   const title = hideFishery ? listing.seller_name : listing.fishery_name;
   const fields = [
@@ -45,36 +49,43 @@ export function OfferCard({
     ...extraFields,
   ];
   const showFisheryLink = !hideFishery && fisheryId != null;
+  const logoFishery =
+    fishery ??
+    (hideFishery ? null : { name: listing.fishery_name, logo_path: null });
+  const subtitle = [listing.stock_name, listing.season_name]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <article className={`${panelClassName} p-0 transition-colors hover:border-sea`}>
-      <Link href={href} className="block p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-medium text-ink">{title}</p>
-            {listing.stock_name || listing.season_name ? (
-              <p className="mt-1 text-sm text-ink-muted">
-                {[listing.stock_name, listing.season_name]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            ) : null}
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-xs uppercase tracking-[0.12em] text-sea">
-              {listingTypeLabel(listing.listing_type)}
+    <article
+      className={`${panelClassName} flex items-stretch p-0 transition-colors hover:border-sea`}
+    >
+      <Link href={href} className="flex min-w-0 flex-1 items-center gap-4 p-4">
+        {logoFishery ? <FisheryLogo fishery={logoFishery} size="sm" /> : null}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="min-w-0 truncate">
+              <span className="font-medium text-ink">{title}</span>
+              {subtitle ? (
+                <span className="text-sm text-ink-muted"> · {subtitle}</span>
+              ) : null}
             </p>
-            {badge ? (
-              <p className="mt-1 text-xs text-ink-muted">{badge}</p>
-            ) : null}
+            <p className="shrink-0 text-xs uppercase tracking-[0.12em] text-sea">
+              {listingTypeLabel(listing.listing_type)}
+              {badge ? (
+                <span className="ml-2 normal-case tracking-normal text-ink-muted">
+                  {badge}
+                </span>
+              ) : null}
+            </p>
           </div>
-        </div>
-        <div className="mt-4">
-          <LabeledFields items={fields} />
+          <div className="mt-2">
+            <LabeledFields items={fields} columns={5} />
+          </div>
         </div>
       </Link>
       {showFisheryLink ? (
-        <p className="border-t border-line px-5 py-3">
+        <p className="flex shrink-0 items-center border-l border-line px-4">
           <Link href={`/fisheries/${fisheryId}`} className="text-sm underline">
             View fishery
           </Link>

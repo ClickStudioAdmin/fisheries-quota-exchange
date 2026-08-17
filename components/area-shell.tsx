@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { SideNav, type SideNavItem } from "@/components/side-nav";
+import { pageWidthClassName } from "@/components/surface";
 
 type AreaShellProps = {
   title: string;
@@ -9,7 +10,7 @@ type AreaShellProps = {
 
 export function AreaShell({ title, items, children }: AreaShellProps) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:py-12">
+    <div className={`${pageWidthClassName} flex flex-col gap-8 py-8 lg:flex-row lg:py-12`}>
       <aside className="lg:w-56 lg:shrink-0">
         <div className="lg:sticky lg:top-6">
           <Suspense

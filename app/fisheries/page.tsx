@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FisheriesList } from "@/components/fisheries-list";
 import { PageIntro } from "@/components/page-intro";
+import { pageWidthClassName } from "@/components/surface";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { listLatestSalePrices } from "@/lib/market/queries";
 
@@ -22,7 +23,7 @@ export default async function FisheriesPage() {
           Open a fishery for current listings, auctions, and recent sale prices.
         </p>
       </PageIntro>
-      <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      <div className={`${pageWidthClassName} pb-16`}>
         {fisheries.length === 0 ? (
           <p className="text-ink-muted">No fisheries have been created yet.</p>
         ) : (

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { pageWidthClassName } from "@/components/surface";
 
 type PageIntroProps = {
   title: string;
@@ -7,7 +8,7 @@ type PageIntroProps = {
 
 export function PageIntro({ title, children }: PageIntroProps) {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className={`${pageWidthClassName} py-12 sm:py-16`}>
       <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
         {title}
       </h1>

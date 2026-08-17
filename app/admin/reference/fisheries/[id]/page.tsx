@@ -20,7 +20,7 @@ import {
   listSeasons,
   listStocks,
 } from "@/lib/fisheries/queries";
-import { MEASUREMENT_KINDS } from "@/lib/fisheries/types";
+import { MEASUREMENT_KINDS, jurisdictionLabel } from "@/lib/fisheries/types";
 
 export const metadata = {
   title: "Fishery",
@@ -76,9 +76,9 @@ export default async function FisheryAdminPage({
             </h1>
             <p className="mt-2 text-sm text-ink-muted">
               {jurisdiction
-                ? `${jurisdiction.code} — ${jurisdiction.name}`
-                : "Jurisdiction not found"}
-              . Quantity type: {fishery.quantity_type === "KG" ? "Kg" : "Units"}.
+                ? `${jurisdictionLabel(jurisdiction)}.`
+                : "Jurisdiction not found."}
+              Quantity type: {fishery.quantity_type === "KG" ? "Kg" : "Units"}.
             </p>
           </div>
         </div>

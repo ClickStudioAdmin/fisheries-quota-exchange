@@ -1,6 +1,7 @@
 import { OfferCard } from "@/components/offer-card";
 import { formatTableDateTime } from "@/lib/format";
 import { auctionHasEnded, auctionHasStarted } from "@/lib/auctions/types";
+import type { Fishery } from "@/lib/fisheries/types";
 import type { Listing } from "@/lib/listings/types";
 
 type AuctionCardProps = {
@@ -8,6 +9,7 @@ type AuctionCardProps = {
   hideFishery?: boolean;
   hideOffering?: boolean;
   fisheryId?: number | null;
+  fishery?: Pick<Fishery, "name" | "logo_path"> | null;
 };
 
 export function AuctionCard({
@@ -15,6 +17,7 @@ export function AuctionCard({
   hideFishery,
   hideOffering,
   fisheryId,
+  fishery,
 }: AuctionCardProps) {
   const ended = auctionHasEnded(listing);
   const started = auctionHasStarted(listing);
@@ -35,6 +38,7 @@ export function AuctionCard({
       hideFishery={hideFishery}
       hideOffering={hideOffering}
       fisheryId={fisheryId}
+      fishery={fishery}
       extraFields={[
         { label: "Ends", value: formatTableDateTime(listing.expires_at) },
       ]}
