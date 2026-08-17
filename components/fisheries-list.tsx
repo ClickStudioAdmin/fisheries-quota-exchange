@@ -25,10 +25,12 @@ export function FisheriesList({
   fisheries,
   jurisdictions,
   prices,
+  listingCounts,
 }: {
   fisheries: Fishery[];
   jurisdictions: Jurisdiction[];
   prices: LatestSalePrice[];
+  listingCounts: Record<string, { sale: number; lease: number }>;
 }) {
   const [jurisdictionId, setJurisdictionId] = useState("ALL");
   const [query, setQuery] = useState("");
@@ -103,6 +105,7 @@ export function FisheriesList({
             );
             const sale = lastSale.get(fishery.id);
             const unit = quantityTypeLabel(fishery.quantity_type);
+            const counts = listingCounts[fishery.name] ?? { sale: 0, lease: 0 };
 
             return (
               <Link
@@ -121,18 +124,19 @@ export function FisheriesList({
                           value: jurisdictionLabel(jurisdiction),
                         },
                         {
-                          label: "Quantity type",
-                          value: unit,
-                        },
-                        {
                           label: "Last sale",
                           value: sale
                             ? `${formatAud(sale.unit_price_aud)} / ${unit}`
                             : "No sales yet",
                         },
-                        ...(fishery.code
-                          ? [{ label: "Code", value: fishery.code }]
-                          : []),
+                        {
+                          label: "Sale listings",
+                          value: String(counts.sale),
+                        },
+                        {
+                          label: "Lease listings",
+                          value: String(counts.lease),
+                        },
                       ]}
                     />
                   </div>

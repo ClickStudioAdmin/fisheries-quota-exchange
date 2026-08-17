@@ -60,6 +60,30 @@ export function listingOfferingLabel(offering: ListingOffering) {
   return offering === "SALE" ? "Sale" : "Lease";
 }
 
+export function openListingCountsByFisheryName(listings: Listing[]) {
+  const counts = new Map<string, { sale: number; lease: number }>();
+  const now = Date.now();
+
+  for (const listing of listings) {
+    if (
+      listing.listing_type === "FIXED_PRICE" &&
+      new Date(listing.expires_at).getTime() <= now
+    ) {
+      continue;
+    }
+
+    const current = counts.get(listing.fishery_name) ?? { sale: 0, lease: 0 };
+    if (listing.offering === "LEASE") {
+      current.lease += 1;
+    } else {
+      current.sale += 1;
+    }
+    counts.set(listing.fishery_name, current);
+  }
+
+  return Object.fromEntries(counts);
+}
+
 export function listingStatusLabel(status: ListingStatus) {
   switch (status) {
     case "PENDING_APPROVAL":

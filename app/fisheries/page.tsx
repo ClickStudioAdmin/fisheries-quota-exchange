@@ -3,6 +3,8 @@ import { FisheriesList } from "@/components/fisheries-list";
 import { PageIntro } from "@/components/page-intro";
 import { pageWidthClassName } from "@/components/surface";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
+import { listMarketplaceListings } from "@/lib/listings/queries";
+import { openListingCountsByFisheryName } from "@/lib/listings/types";
 import { listLatestSalePrices } from "@/lib/market/queries";
 
 export const metadata: Metadata = {
@@ -10,10 +12,11 @@ export const metadata: Metadata = {
 };
 
 export default async function FisheriesPage() {
-  const [fisheries, jurisdictions, prices] = await Promise.all([
+  const [fisheries, jurisdictions, prices, listings] = await Promise.all([
     listFisheries(),
     listJurisdictions(),
     listLatestSalePrices(),
+    listMarketplaceListings(),
   ]);
 
   return (
@@ -31,6 +34,7 @@ export default async function FisheriesPage() {
             fisheries={fisheries}
             jurisdictions={jurisdictions}
             prices={prices}
+            listingCounts={openListingCountsByFisheryName(listings)}
           />
         )}
       </div>

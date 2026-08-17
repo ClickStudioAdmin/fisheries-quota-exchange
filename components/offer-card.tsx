@@ -34,6 +34,9 @@ export function OfferCard({
 }: OfferCardProps) {
   const title = hideFishery ? listing.seller_name : listing.fishery_name;
   const fields = [
+    ...(hideOffering
+      ? []
+      : [{ label: "Type", value: listingOfferingLabel(listing.offering) }]),
     {
       label: "Quantity",
       value: `${listing.quantity} ${listing.unit_label}`,
@@ -42,9 +45,6 @@ export function OfferCard({
       label: priceLabel,
       value: `${formatAud(listing.unit_price_aud)} / ${listing.unit_label}`,
     },
-    ...(hideOffering
-      ? []
-      : [{ label: "Type", value: listingOfferingLabel(listing.offering) }]),
     ...(hideFishery ? [] : [{ label: "Seller", value: listing.seller_name }]),
     ...extraFields,
   ];
