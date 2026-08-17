@@ -61,7 +61,7 @@ export async function createAuctionAction(
     return { error: "End time is required." };
   }
 
-  const { error } = await supabase.rpc("create_auction", {
+  const { data, error } = await supabase.rpc("create_auction", {
     p_holding_id: holdingId,
     p_offering: offering,
     p_quantity: quantity,
@@ -76,7 +76,13 @@ export async function createAuctionAction(
     return { error: error.message };
   }
 
-  redirect(accountPath(organisationId, "/dashboard/holdings"));
+  const listingId = Number(data);
+
+  if (!Number.isInteger(listingId)) {
+    redirect(accountPath(organisationId, "/dashboard/listings"));
+  }
+
+  redirect(`/auctions/${listingId}`);
 }
 
 export async function placeBidAction(

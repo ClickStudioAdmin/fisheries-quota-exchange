@@ -65,7 +65,13 @@ export async function createListingAction(
     return { error: error.message };
   }
 
-  redirect(accountPath(organisationId, "/dashboard/listings"));
+  const listingId = Number(data);
+
+  if (!Number.isInteger(listingId)) {
+    redirect(accountPath(organisationId, "/dashboard/listings"));
+  }
+
+  redirect(`/marketplace/${listingId}`);
 }
 
 export async function cancelListingAction(formData: FormData) {

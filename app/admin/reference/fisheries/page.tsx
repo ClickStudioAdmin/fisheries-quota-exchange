@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminCreateForm } from "@/components/admin-create-form";
-import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createFisheryAction } from "@/lib/fisheries/actions";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
@@ -71,10 +71,10 @@ export default async function FisheriesAdminPage() {
           <DataTableRowExtras
             key={fishery.id}
             id={fishery.id}
-            actions={
+            links={
               <Link
                 href={`/admin/reference/fisheries/${fishery.id}`}
-                className="text-sm underline"
+                className={tableLinkClassName}
               >
                 Open
               </Link>

@@ -13,11 +13,12 @@ import {
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
-  compactFieldClassName,
+  fieldClassName,
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
-import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { TableModal } from "@/components/table-modal";
 import { formatTableDate } from "@/lib/format";
 
 export const metadata = {
@@ -111,38 +112,56 @@ export default async function AdminListingsPage() {
           <DataTableRowExtras
             key={listing.id}
             id={listing.id}
+            links={
+              <Link
+                href={
+                  listing.listing_type === "AUCTION"
+                    ? `/auctions/${listing.id}`
+                    : `/marketplace/${listing.id}`
+                }
+                className={tableLinkClassName}
+              >
+                View
+              </Link>
+            }
             actions={
-              <>
-                <Link
-                  href={
-                    listing.listing_type === "AUCTION"
-                      ? `/auctions/${listing.id}`
-                      : `/marketplace/${listing.id}`
-                  }
-                  className="text-sm underline"
-                >
-                  View
-                </Link>
-                {listing.status === "PENDING_APPROVAL" ? (
-                  <>
-                    <form action={approveListingAction} className="flex gap-2">
+              listing.status === "PENDING_APPROVAL" ? (
+                <TableModal title="Review listing" label="Review">
+                  <div className="space-y-4">
+                    <form action={approveListingAction} className="space-y-3">
                       <input type="hidden" name="listing_id" value={listing.id} />
-                      <input
-                        name="review_note"
-                        placeholder="Note (optional)"
-                        className={compactFieldClassName}
-                      />
+                      <div>
+                        <label
+                          htmlFor={`approve-note-${listing.id}`}
+                          className="block text-sm text-ink"
+                        >
+                          Note (optional)
+                        </label>
+                        <input
+                          id={`approve-note-${listing.id}`}
+                          name="review_note"
+                          className={fieldClassName}
+                        />
+                      </div>
                       <button type="submit" className={tableButtonClassName}>
                         Approve
                       </button>
                     </form>
-                    <form action={rejectListingAction} className="flex gap-2">
+                    <form action={rejectListingAction} className="space-y-3">
                       <input type="hidden" name="listing_id" value={listing.id} />
-                      <input
-                        name="review_note"
-                        placeholder="Reason (optional)"
-                        className={compactFieldClassName}
-                      />
+                      <div>
+                        <label
+                          htmlFor={`reject-note-${listing.id}`}
+                          className="block text-sm text-ink"
+                        >
+                          Reason (optional)
+                        </label>
+                        <input
+                          id={`reject-note-${listing.id}`}
+                          name="review_note"
+                          className={fieldClassName}
+                        />
+                      </div>
                       <button
                         type="submit"
                         className={tableSecondaryButtonClassName}
@@ -150,9 +169,9 @@ export default async function AdminListingsPage() {
                         Reject
                       </button>
                     </form>
-                  </>
-                ) : null}
-              </>
+                  </div>
+                </TableModal>
+              ) : null
             }
           />
         ))}

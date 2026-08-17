@@ -10,6 +10,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
+import { tableSecondaryButtonClassName } from "@/components/auth-card";
 
 export type DataTableColumn = {
   key: string;
@@ -28,6 +29,7 @@ export type DataTableRow = {
 
 type DataTableRowExtrasProps = {
   id: string | number;
+  links?: ReactNode;
   actions?: ReactNode;
   expanded?: ReactNode;
   expandedLabel?: string;
@@ -108,11 +110,10 @@ export function TableActionRow({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap items-center gap-2">{children}</div>;
 }
 
-export function DataTableRowExtras({
-  actions,
-  children,
-}: DataTableRowExtrasProps) {
-  return <>{actions ?? children}</>;
+export const tableLinkClassName = "text-sm underline";
+
+export function DataTableRowExtras(_props: DataTableRowExtrasProps) {
+  return null;
 }
 
 export function DataTable({
@@ -198,7 +199,7 @@ export function DataTable({
     return <p className="text-sm text-ink-muted">{empty}</p>;
   }
 
-  const columnCount = columns.length + 1;
+  const columnCount = columns.length + 2;
 
   return (
     <div className="space-y-3">
@@ -291,7 +292,13 @@ export function DataTable({
               })}
               <th
                 scope="col"
-                className="min-w-[10rem] whitespace-nowrap px-3 py-2 font-medium"
+                className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
+              >
+                Links
+              </th>
+              <th
+                scope="col"
+                className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
               >
                 Actions
               </th>
@@ -330,21 +337,28 @@ export function DataTable({
                           {cellContent(row, column.key)}
                         </td>
                       ))}
-                      <td className="min-w-[10rem] px-3 py-3">
+                      <td className="min-w-[8rem] px-3 py-3">
+                        {extraProps?.links ? (
+                          <TableActions>{extraProps.links}</TableActions>
+                        ) : (
+                          <span className="text-ink-muted">—</span>
+                        )}
+                      </td>
+                      <td className="min-w-[8rem] px-3 py-3">
                         <TableActions>
                           {extraProps?.expanded ? (
                             <button
                               type="button"
                               onClick={() => toggleExpanded(row.id)}
                               aria-expanded={expanded}
-                              className="text-sm underline"
+                              className={tableSecondaryButtonClassName}
                             >
                               {expanded
                                 ? "Hide"
                                 : extraProps.expandedLabel ?? "Details"}
                             </button>
                           ) : null}
-                          {extra}
+                          {extraProps?.actions ?? extraProps?.children}
                           {!extraProps?.expanded &&
                           !extraProps?.actions &&
                           !extraProps?.children ? (

@@ -11,11 +11,12 @@ import { orderStatusLabel } from "@/lib/orders/types";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
-  compactFieldClassName,
+  fieldClassName,
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
-import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { TableModal } from "@/components/table-modal";
 import { formatTableDate } from "@/lib/format";
 
 export const metadata = {
@@ -103,39 +104,59 @@ export default async function AdminOrdersPage() {
           <DataTableRowExtras
             key={order.id}
             id={order.id}
+            links={
+              <Link href={`/orders/${order.id}`} className={tableLinkClassName}>
+                View
+              </Link>
+            }
             actions={
               <>
-                <Link href={`/orders/${order.id}`} className="text-sm underline">
-                  View
-                </Link>
                 {order.status === "AWAITING_COMPLIANCE" ? (
-                  <>
-                    <form action={approveComplianceAction} className="flex gap-2">
-                      <input type="hidden" name="order_id" value={order.id} />
-                      <input
-                        name="review_note"
-                        placeholder="Note (optional)"
-                        className={compactFieldClassName}
-                      />
-                      <button type="submit" className={tableButtonClassName}>
-                        Approve
-                      </button>
-                    </form>
-                    <form action={rejectComplianceAction} className="flex gap-2">
-                      <input type="hidden" name="order_id" value={order.id} />
-                      <input
-                        name="review_note"
-                        placeholder="Reason (optional)"
-                        className={compactFieldClassName}
-                      />
-                      <button
-                        type="submit"
-                        className={tableSecondaryButtonClassName}
-                      >
-                        Reject
-                      </button>
-                    </form>
-                  </>
+                  <TableModal title="Review compliance" label="Review">
+                    <div className="space-y-4">
+                      <form action={approveComplianceAction} className="space-y-3">
+                        <input type="hidden" name="order_id" value={order.id} />
+                        <div>
+                          <label
+                            htmlFor={`approve-note-${order.id}`}
+                            className="block text-sm text-ink"
+                          >
+                            Note (optional)
+                          </label>
+                          <input
+                            id={`approve-note-${order.id}`}
+                            name="review_note"
+                            className={fieldClassName}
+                          />
+                        </div>
+                        <button type="submit" className={tableButtonClassName}>
+                          Approve
+                        </button>
+                      </form>
+                      <form action={rejectComplianceAction} className="space-y-3">
+                        <input type="hidden" name="order_id" value={order.id} />
+                        <div>
+                          <label
+                            htmlFor={`reject-note-${order.id}`}
+                            className="block text-sm text-ink"
+                          >
+                            Reason (optional)
+                          </label>
+                          <input
+                            id={`reject-note-${order.id}`}
+                            name="review_note"
+                            className={fieldClassName}
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className={tableSecondaryButtonClassName}
+                        >
+                          Reject
+                        </button>
+                      </form>
+                    </div>
+                  </TableModal>
                 ) : null}
                 {order.status === "AWAITING_TRANSFER" ? (
                   <form action={simulateTransferAction}>

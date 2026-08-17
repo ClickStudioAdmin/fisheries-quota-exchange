@@ -7,7 +7,8 @@ import {
 } from "@/components/person-profile-form";
 import { userFullName, userPhone } from "@/lib/auth/display-name";
 import type { User } from "@supabase/supabase-js";
-import { DataTable, DataTableRowExtras, TableActionRow } from "@/components/data-table";
+import { DataTable, DataTableRowExtras, TableActionRow, tableLinkClassName } from "@/components/data-table";
+import { TableModal } from "@/components/table-modal";
 import { LedgerTable } from "@/components/ledger-table";
 import { HoldingForm } from "@/components/holding-form";
 import { HoldingActions } from "@/components/holding-actions";
@@ -212,12 +213,6 @@ export async function AccountHoldingsSection({
           { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           {
-            key: "lastSale",
-            header: "Last sale",
-            sortable: true,
-            align: "right",
-          },
-          {
             key: "marketValue",
             header: "Market value",
             sortable: true,
@@ -247,15 +242,11 @@ export async function AccountHoldingsSection({
             values: {
               fishery: fishery?.name ?? "Fishery",
               quantity: holding.quantity,
-              lastSale: sale ? Number(sale.unit_price_aud) : "",
               marketValue: value ?? "",
               status: holdingVerificationLabel(holding.verification_status),
             },
             display: {
               quantity: `${holding.quantity} ${unit}`.trim(),
-              lastSale: sale
-                ? `${formatAud(sale.unit_price_aud)} / ${unit}`
-                : "No sales yet",
               marketValue: value != null ? formatAud(value) : "—",
             },
           };
@@ -279,52 +270,59 @@ export async function AccountHoldingsSection({
                   entries={entries}
                 />
               }
-              actions={
-                <div className="space-y-3">
+              links={
+                <div className="space-y-2">
                   <TableActionRow>
                     <Link
                       href={`/fisheries/${holding.fishery_id}`}
-                      className="text-sm underline"
+                      className={tableLinkClassName}
                     >
                       View market
                     </Link>
+                    {canManage && verified && available > 0 ? (
+                      <>
+                        <Link
+                          href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
+                          className={tableLinkClassName}
+                        >
+                          Create listing
+                        </Link>
+                        <Link
+                          href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
+                          className={tableLinkClassName}
+                        >
+                          Create auction
+                        </Link>
+                      </>
+                    ) : null}
                   </TableActionRow>
-                  {canManage ? (
-                    <>
+                  {canManage && verified && available <= 0 ? (
+                    <p className="text-sm text-ink-muted">
+                      All of this holding is listed. Cancel a listing to list
+                      more, or increase the holding quantity.
+                    </p>
+                  ) : null}
+                  {canManage && !verified ? (
+                    <p className="text-sm text-ink-muted">
+                      Waiting for admin verification before listing.
+                    </p>
+                  ) : null}
+                </div>
+              }
+              actions={
+                canManage ? (
+                  <TableModal title={`Edit ${fishery?.name ?? "holding"}`}>
+                    {(close) => (
                       <HoldingActions
                         holdingId={holding.id}
                         quantity={holding.quantity}
                         unitLabel={unit}
                         minQuantity={String(listed)}
+                        onSaved={close}
                       />
-                      {verified && available > 0 ? (
-                        <TableActionRow>
-                          <Link
-                            href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
-                            className="text-sm underline"
-                          >
-                            Create listing
-                          </Link>
-                          <Link
-                            href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
-                            className="text-sm underline"
-                          >
-                            Create auction
-                          </Link>
-                        </TableActionRow>
-                      ) : verified ? (
-                        <p className="text-sm text-ink-muted">
-                          All of this holding is listed. Cancel a listing to
-                          list more, or increase the holding quantity.
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ink-muted">
-                          Waiting for admin verification before listing.
-                        </p>
-                      )}
-                    </>
-                  ) : null}
-                </div>
+                    )}
+                  </TableModal>
+                ) : null
               }
             />
           );
@@ -435,37 +433,37 @@ export async function AccountListingsSection({
           <DataTableRowExtras
             key={listing.id}
             id={listing.id}
+            links={
+              <Link
+                href={
+                  listing.listing_type === "AUCTION"
+                    ? `/auctions/${listing.id}`
+                    : `/marketplace/${listing.id}`
+                }
+                className={tableLinkClassName}
+              >
+                View
+              </Link>
+            }
             actions={
-              <TableActionRow>
-                <Link
-                  href={
-                    listing.listing_type === "AUCTION"
-                      ? `/auctions/${listing.id}`
-                      : `/marketplace/${listing.id}`
-                  }
-                  className="text-sm underline"
-                >
-                  View
-                </Link>
-                {canList &&
-                (listing.status === "PENDING_APPROVAL" ||
-                  listing.status === "PUBLISHED") ? (
-                  <form action={cancelListingAction}>
-                    <input type="hidden" name="listing_id" value={listing.id} />
-                    <input
-                      type="hidden"
-                      name="next"
-                      value={accountPath(organisationId, "/dashboard/listings")}
-                    />
-                    <button
-                      type="submit"
-                      className={tableSecondaryButtonClassName}
-                    >
-                      Cancel
-                    </button>
-                  </form>
-                ) : null}
-              </TableActionRow>
+              canList &&
+              (listing.status === "PENDING_APPROVAL" ||
+                listing.status === "PUBLISHED") ? (
+                <form action={cancelListingAction}>
+                  <input type="hidden" name="listing_id" value={listing.id} />
+                  <input
+                    type="hidden"
+                    name="next"
+                    value={accountPath(organisationId, "/dashboard/listings")}
+                  />
+                  <button
+                    type="submit"
+                    className={tableSecondaryButtonClassName}
+                  >
+                    Cancel
+                  </button>
+                </form>
+              ) : null
             }
           />
         ))}
@@ -563,8 +561,8 @@ export async function AccountOrdersSection({
           <DataTableRowExtras
             key={order.id}
             id={order.id}
-            actions={
-              <Link href={`/orders/${order.id}`} className="text-sm underline">
+            links={
+              <Link href={`/orders/${order.id}`} className={tableLinkClassName}>
                 View
               </Link>
             }

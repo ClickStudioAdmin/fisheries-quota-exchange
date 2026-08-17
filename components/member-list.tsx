@@ -80,7 +80,7 @@ export function MemberList({
         }
 
         return (
-          <DataTableRowExtras key={member.id} id={member.id}>
+          <DataTableRowExtras key={member.id} id={member.id} actions={
             <MemberActions
               organisationId={organisationId}
               memberId={member.id}
@@ -90,7 +90,7 @@ export function MemberList({
               showRemove={showRemove}
               isSelf={isSelf}
             />
-          </DataTableRowExtras>
+          } />
         );
       })}
     </DataTable>

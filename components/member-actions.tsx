@@ -8,11 +8,11 @@ import {
   type MemberActionState,
 } from "@/lib/organisations/actions";
 import {
-  compactFieldClassName,
+  fieldClassName,
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
-import { TableActionRow } from "@/components/data-table";
+import { TableModal } from "@/components/table-modal";
 import type { OrganisationRole } from "@/lib/organisations/types";
 
 const initialState: MemberActionState = {};
@@ -37,10 +37,6 @@ export function MemberActions({
   isSelf,
 }: MemberActionsProps) {
   const router = useRouter();
-  const [roleState, roleAction, rolePending] = useActionState(
-    updateMemberRoleAction,
-    initialState,
-  );
   const [removeState, removeAction, removePending] = useActionState(
     removeMemberAction,
     initialState,
@@ -53,53 +49,36 @@ export function MemberActions({
       return;
     }
 
-    if (removeState.message || roleState.message) {
+    if (removeState.message) {
       router.refresh();
     }
-  }, [removeState.left, removeState.message, roleState.message, router]);
+  }, [removeState.left, removeState.message, router]);
 
   return (
     <div className="space-y-2">
-      {roleState.error || removeState.error ? (
+      {removeState.error ? (
         <p className="text-sm text-red-800" role="alert">
-          {roleState.error ?? removeState.error}
+          {removeState.error}
         </p>
       ) : null}
-      {roleState.message || removeState.message ? (
+      {removeState.message ? (
         <p className="text-sm text-sea" role="status">
-          {roleState.message ?? removeState.message}
+          {removeState.message}
         </p>
       ) : null}
-      <TableActionRow>
+      <div className="flex flex-wrap items-center gap-2">
         {showRoleForm ? (
-          <form action={roleAction} className="flex gap-2">
-            <input
-              type="hidden"
-              name="organisation_id"
-              value={String(organisationId)}
-            />
-            <input type="hidden" name="member_id" value={String(memberId)} />
-            <label className="sr-only" htmlFor={`role-${memberId}`}>
-              Role for {email}
-            </label>
-            <select
-              id={`role-${memberId}`}
-              name="role"
-              defaultValue={role}
-              className={compactFieldClassName}
-            >
-              <option value="OWNER">Owner</option>
-              <option value="ADMIN">Admin</option>
-              <option value="MEMBER">Member</option>
-            </select>
-            <button
-              type="submit"
-              className={tableButtonClassName}
-              disabled={rolePending}
-            >
-              {rolePending ? "Updating…" : "Update"}
-            </button>
-          </form>
+          <TableModal title={`Edit ${email}`}>
+            {(close) => (
+              <MemberRoleForm
+                organisationId={organisationId}
+                memberId={memberId}
+                email={email}
+                role={role}
+                onSaved={close}
+              />
+            )}
+          </TableModal>
         ) : null}
         {showRemove ? (
           <form action={removeAction}>
@@ -120,7 +99,68 @@ export function MemberActions({
             </button>
           </form>
         ) : null}
-      </TableActionRow>
+      </div>
     </div>
+  );
+}
+
+function MemberRoleForm({
+  organisationId,
+  memberId,
+  email,
+  role,
+  onSaved,
+}: {
+  organisationId: number;
+  memberId: number;
+  email: string;
+  role: OrganisationRole;
+  onSaved: () => void;
+}) {
+  const router = useRouter();
+  const [state, action, pending] = useActionState(
+    updateMemberRoleAction,
+    initialState,
+  );
+
+  useEffect(() => {
+    if (state.message) {
+      onSaved();
+      router.refresh();
+    }
+  }, [state.message, onSaved, router]);
+
+  return (
+    <form action={action} className="space-y-3">
+      {state.error ? (
+        <p className="text-sm text-red-800" role="alert">
+          {state.error}
+        </p>
+      ) : null}
+      <input
+        type="hidden"
+        name="organisation_id"
+        value={String(organisationId)}
+      />
+      <input type="hidden" name="member_id" value={String(memberId)} />
+      <div>
+        <label htmlFor={`role-${memberId}`} className="block text-sm text-ink">
+          Role for {email}
+        </label>
+        <select
+          id={`role-${memberId}`}
+          name="role"
+          defaultValue={role}
+          className={fieldClassName}
+        >
+          <option value="OWNER">Owner</option>
+          <option value="ADMIN">Admin</option>
+          <option value="MEMBER">Member</option>
+        </select>
+      </div>
+      <button type="submit" className={tableButtonClassName} disabled={pending}>
+        {pending ? "Saving…" : "Save"}
+      </button>
+    </form>
   );
 }
