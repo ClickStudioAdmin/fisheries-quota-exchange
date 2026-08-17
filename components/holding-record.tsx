@@ -225,8 +225,10 @@ export async function HoldingRecord({
         />
       </section>
 
-      <DataTable
-        caption="Listings"
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Current Listings</h2>
+        <DataTable
+        caption="Current listings"
         empty="No listings from this holding."
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "created", direction: "desc" }}
@@ -302,8 +304,11 @@ export async function HoldingRecord({
           />
         ))}
       </DataTable>
+      </section>
 
-      <DataTable
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Orders</h2>
+        <DataTable
         caption="Orders"
         empty="No orders against this holding."
         searchPlaceholder="Filter orders…"
@@ -373,6 +378,7 @@ export async function HoldingRecord({
           />
         ))}
       </DataTable>
+      </section>
     </div>
   );
 }

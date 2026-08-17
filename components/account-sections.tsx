@@ -35,7 +35,7 @@ import { marketValue } from "@/lib/market/types";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
-import { tableSecondaryButtonClassName } from "@/components/auth-card";
+import { tableButtonClassName, tableSecondaryButtonClassName } from "@/components/auth-card";
 import { formatTableDate } from "@/lib/format";
 import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
@@ -255,61 +255,63 @@ export async function AccountHoldingsSection({
               key={holding.id}
               id={holding.id}
               links={
-                <div className="space-y-2">
-                  <TableActionRow>
-                    <Link
-                      href={dashboardHoldingPath(holding.id, organisationId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={tableLinkClassName}
-                    >
-                      Details
-                    </Link>
-                    <Link
-                      href={`/fisheries/${holding.fishery_id}`}
-                      className={tableLinkClassName}
-                    >
-                      View market
-                    </Link>
-                    {canManage && verified && available > 0 ? (
+                <TableActionRow>
+                  <Link
+                    href={dashboardHoldingPath(holding.id, organisationId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={tableLinkClassName}
+                  >
+                    Details
+                  </Link>
+                  <Link
+                    href={`/fisheries/${holding.fishery_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={tableLinkClassName}
+                  >
+                    View market
+                  </Link>
+                </TableActionRow>
+              }
+              actions={
+                canManage ? (
+                  <>
+                    {verified && available > 0 ? (
                       <>
                         <Link
                           href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
-                          className={tableLinkClassName}
+                          className={tableButtonClassName}
                         >
                           Create listing
                         </Link>
                         <Link
                           href={`/organisations/${organisationId}/auctions/new?holding_id=${holding.id}`}
-                          className={tableLinkClassName}
+                          className={tableButtonClassName}
                         >
                           Create auction
                         </Link>
                       </>
                     ) : null}
-                  </TableActionRow>
-                  {canManage && verified && available <= 0 ? (
-                    <p className="text-sm text-ink-muted">
-                      All of this holding is listed. Cancel a listing to list
-                      more, or increase the holding quantity.
-                    </p>
-                  ) : null}
-                  {canManage && !verified ? (
-                    <p className="text-sm text-ink-muted">
-                      Waiting for admin verification before listing.
-                    </p>
-                  ) : null}
-                </div>
-              }
-              actions={
-                canManage ? (
-                  <EditHoldingButton
-                    title={`Edit ${fishery?.name ?? "holding"}`}
-                    holdingId={holding.id}
-                    quantity={holding.quantity}
-                    unitLabel={unit}
-                    minQuantity={String(listed)}
-                  />
+                    <EditHoldingButton
+                      title={`Edit ${fishery?.name ?? "holding"}`}
+                      holdingId={holding.id}
+                      quantity={holding.quantity}
+                      unitLabel={unit}
+                      minQuantity={String(listed)}
+                    />
+                    {verified && available <= 0 ? (
+                      <p className="text-sm text-ink-muted">
+                        All of this holding is listed. Cancel a listing to list
+                        more, or increase the holding quantity.
+                      </p>
+                    ) : null}
+                    {!verified ? (
+                      <p className="text-sm text-ink-muted">
+                        Waiting for admin verification before listing.
+                      </p>
+                    ) : null}
+                  </>
                 ) : null
               }
             />
