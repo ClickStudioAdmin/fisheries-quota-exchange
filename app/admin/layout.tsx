@@ -37,7 +37,6 @@ export default async function AdminLayout({
       href: "/admin/users",
       label: "Users",
       match: "prefix",
-      badge: counts.users,
     },
     {
       href: "/admin/holdings",

@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 
 export type AdminActionCounts = {
-  users: number;
   holdings: number;
   listings: number;
   orders: number;
@@ -24,10 +23,6 @@ const OPEN_ORDER_STATUSES = [
   "AWAITING_SETTLEMENT",
 ] as const;
 
-function asEmail(value: unknown) {
-  return String(value ?? "").trim().toLowerCase();
-}
-
 function addCount(counts: Record<number, number>, organisationId: unknown) {
   const id = Number(organisationId);
 
@@ -38,46 +33,15 @@ function addCount(counts: Record<number, number>, organisationId: unknown) {
   counts[id] = (counts[id] ?? 0) + 1;
 }
 
-async function countUnverifiedUsers() {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return 0;
-  }
-
-  const [{ data: members }, { data: admins }, { data: verified }] =
-    await Promise.all([
-      supabase.from("organisation_users").select("email"),
-      supabase.from("platform_admins").select("email"),
-      supabase.from("verified_users").select("email"),
-    ]);
-
-  const verifiedEmails = new Set(
-    (verified ?? []).map((row) => asEmail(row.email)).filter(Boolean),
-  );
-  const emails = new Set<string>();
-
-  for (const row of [...(members ?? []), ...(admins ?? [])]) {
-    const email = asEmail(row.email);
-
-    if (email && !verifiedEmails.has(email)) {
-      emails.add(email);
-    }
-  }
-
-  return emails.size;
-}
-
 export const getAdminActionCounts = cache(
   async (): Promise<AdminActionCounts> => {
     const supabase = await createClient();
 
     if (!supabase) {
-      return { users: 0, holdings: 0, listings: 0, orders: 0, total: 0 };
+      return { holdings: 0, listings: 0, orders: 0, total: 0 };
     }
 
-    const [users, holdings, listings, orders] = await Promise.all([
-      countUnverifiedUsers(),
+    const [holdings, listings, orders] = await Promise.all([
       supabase
         .from("quota_holdings")
         .select("id", { count: "exact", head: true })
@@ -97,11 +61,10 @@ export const getAdminActionCounts = cache(
     const ordersCount = orders.count ?? 0;
 
     return {
-      users,
       holdings: holdingsCount,
       listings: listingsCount,
       orders: ordersCount,
-      total: users + holdingsCount + listingsCount + ordersCount,
+      total: holdingsCount + listingsCount + ordersCount,
     };
   },
 );
