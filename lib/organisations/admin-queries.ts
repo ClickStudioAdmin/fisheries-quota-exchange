@@ -86,7 +86,10 @@ function addMembership(user: AdminUser, row: MembershipRow) {
     organisation && typeof organisation === "object"
       ? String(organisation.legal_name ?? "")
       : "";
-  const role = isOrganisationRole(String(row.role)) ? row.role : "MEMBER";
+  const rawRole = String(row.role);
+  const role: OrganisationRole = isOrganisationRole(rawRole)
+    ? rawRole
+    : "MEMBER";
   const joinedAt =
     typeof row.created_at === "string" && row.created_at ? row.created_at : null;
 
