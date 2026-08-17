@@ -30,13 +30,16 @@ export default async function AdminListingsPage() {
     redirect("/admin");
   }
 
-  const listings = await listAllListings();
+  const { listings, error } = await listAllListings();
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         Listings
       </h1>
+      {error ? (
+        <p className="text-sm text-ink-muted">Could not load listings. {error}</p>
+      ) : (
       <DataTable
         caption="Listings"
         empty="No listings yet."
@@ -176,6 +179,7 @@ export default async function AdminListingsPage() {
           />
         ))}
       </DataTable>
+      )}
     </div>
   );
 }

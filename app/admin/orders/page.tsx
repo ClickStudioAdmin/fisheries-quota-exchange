@@ -34,7 +34,7 @@ export default async function AdminOrdersPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Simulated transactions
+          Simulated orders
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           No live payment. Approve compliance, simulate transfer, then simulate
@@ -119,21 +119,11 @@ export default async function AdminOrdersPage() {
                 {order.status === "AWAITING_COMPLIANCE" ? (
                   <TableModal title="Review compliance" label="Review">
                     <div className="space-y-4">
-                      <form action={approveComplianceAction} className="space-y-3">
+                      <form
+                        id={`approve-compliance-${order.id}`}
+                        action={approveComplianceAction}
+                      >
                         <input type="hidden" name="order_id" value={order.id} />
-                        <div>
-                          <label
-                            htmlFor={`approve-note-${order.id}`}
-                            className="block text-sm text-ink"
-                          >
-                            Note (optional)
-                          </label>
-                          <input
-                            id={`approve-note-${order.id}`}
-                            name="review_note"
-                            className={fieldClassName}
-                          />
-                        </div>
                         <button type="submit" className={tableButtonClassName}>
                           Approve
                         </button>
@@ -160,6 +150,20 @@ export default async function AdminOrdersPage() {
                           Reject
                         </button>
                       </form>
+                      <div>
+                        <label
+                          htmlFor={`approve-note-${order.id}`}
+                          className="block text-sm text-ink"
+                        >
+                          Note (optional)
+                        </label>
+                        <input
+                          id={`approve-note-${order.id}`}
+                          name="review_note"
+                          form={`approve-compliance-${order.id}`}
+                          className={fieldClassName}
+                        />
+                      </div>
                     </div>
                   </TableModal>
                 ) : null}

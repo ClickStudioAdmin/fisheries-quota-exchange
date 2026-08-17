@@ -4,28 +4,49 @@ import type { Listing } from "@/lib/listings/types";
 const columns =
   "id, organisation_id, holding_id, listing_type, offering, quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note, starting_price_aud, reserve_price_aud, bid_increment_aud, starts_at";
 
+type ListingQuery = PromiseLike<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
+async function listingRows(query: ListingQuery): Promise<Listing[]> {
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("listings query failed", error.message);
+    return [];
+  }
+
+  return (data ?? []) as Listing[];
+}
+
 export async function listMarketplaceListings() {
   const supabase = await createClient();
   if (!supabase) return [];
 
-  const { data } = await supabase
-    .from("listings")
-    .select(columns)
-    .eq("status", "PUBLISHED")
-    .order("created_at", { ascending: false });
-
-  return (data ?? []) as Listing[];
+  return listingRows(
+    supabase
+      .from("listings")
+      .select(columns)
+      .eq("status", "PUBLISHED")
+      .order("created_at", { ascending: false }),
+  );
 }
 
 export async function getListing(id: number) {
   const supabase = await createClient();
   if (!supabase) return null;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("listings")
     .select(columns)
     .eq("id", id)
     .maybeSingle();
+
+  if (error) {
+    console.error("getListing failed", error.message);
+    return null;
+  }
 
   return (data as Listing | null) ?? null;
 }
@@ -34,49 +55,53 @@ export async function listOrganisationListings(organisationId: number) {
   const supabase = await createClient();
   if (!supabase) return [];
 
-  const { data } = await supabase
-    .from("listings")
-    .select(columns)
-    .eq("organisation_id", organisationId)
-    .order("created_at", { ascending: false });
-
-  return (data ?? []) as Listing[];
+  return listingRows(
+    supabase
+      .from("listings")
+      .select(columns)
+      .eq("organisation_id", organisationId)
+      .order("created_at", { ascending: false }),
+  );
 }
 
 export async function listAllListings() {
   const supabase = await createClient();
-  if (!supabase) return [];
+  if (!supabase) {
+    return { listings: [] as Listing[], error: "Database is not configured." };
+  }
 
-  const { data } = await supabase
-    .from("listings")
-    .select(columns)
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("admin_list_listings");
 
-  return (data ?? []) as Listing[];
+  if (error) {
+    console.error("listAllListings failed", error.message);
+    return { listings: [] as Listing[], error: error.message };
+  }
+
+  return { listings: (data ?? []) as Listing[] };
 }
 
 export async function listListingsByCreator(email: string) {
   const supabase = await createClient();
   if (!supabase) return [];
 
-  const { data } = await supabase
-    .from("listings")
-    .select(columns)
-    .eq("created_by_email", email.trim().toLowerCase())
-    .order("created_at", { ascending: false });
-
-  return (data ?? []) as Listing[];
+  return listingRows(
+    supabase
+      .from("listings")
+      .select(columns)
+      .eq("created_by_email", email.trim().toLowerCase())
+      .order("created_at", { ascending: false }),
+  );
 }
 
 export async function listListingsByHolding(holdingId: number) {
   const supabase = await createClient();
   if (!supabase) return [];
 
-  const { data } = await supabase
-    .from("listings")
-    .select(columns)
-    .eq("holding_id", holdingId)
-    .order("created_at", { ascending: false });
-
-  return (data ?? []) as Listing[];
+  return listingRows(
+    supabase
+      .from("listings")
+      .select(columns)
+      .eq("holding_id", holdingId)
+      .order("created_at", { ascending: false }),
+  );
 }
