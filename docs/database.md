@@ -32,6 +32,6 @@ Current tables:
 
 `quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`. Members change quantity through `adjust_quota_holding`, which writes an `ADJUSTMENT` ledger row.
 
-Creating or changing a holding sets `VERIFIED` if the actor is a platform admin or a verified user, otherwise `PENDING_VERIFICATION`. A listing or auction cannot be created from an unverified holding. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`.
+Creating or changing a holding sets `VERIFIED` only if the actor is in `verified_users`. Otherwise it is `PENDING_VERIFICATION`, including when a platform admin updates a holding for an unverified account. A listing or auction cannot be created from an unverified holding. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`.
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).
