@@ -33,7 +33,7 @@ Registration collects the user’s name plus legal name, trading name, and ABN. 
 | Remove an `OWNER` or `ADMIN` | Yes | No | No |
 | Leave the account | Yes, unless last owner | Yes | Yes |
 
-The last owner cannot be removed. Membership is keyed by email and matches the signed-in Auth user.
+The last owner cannot be removed. Membership is keyed by email and matches the signed-in Auth user. Each member has a `full_name`.
 
 `prevent_last_owner_removal` only blocks deleting or demoting the last owner. Admins and members can be removed. Fixed in `supabase/migrations/20260817110000_fix_member_delete_trigger.sql`.
 

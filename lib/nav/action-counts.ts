@@ -33,6 +33,69 @@ function addCount(counts: Record<number, number>, organisationId: unknown) {
   counts[id] = (counts[id] ?? 0) + 1;
 }
 
+function asCount(value: unknown) {
+  const count = Number(value);
+  return Number.isFinite(count) && count >= 0 ? count : null;
+}
+
+function parseAdminActionCounts(data: unknown): AdminActionCounts | null {
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row || typeof row !== "object") {
+    return null;
+  }
+
+  const record = row as Record<string, unknown>;
+  const holdingsCount = asCount(record.holdings);
+  const listingsCount = asCount(record.listings);
+  const ordersCount = asCount(record.orders);
+
+  if (
+    holdingsCount == null ||
+    listingsCount == null ||
+    ordersCount == null
+  ) {
+    return null;
+  }
+
+  return {
+    holdings: holdingsCount,
+    listings: listingsCount,
+    orders: ordersCount,
+    total: holdingsCount + listingsCount + ordersCount,
+  };
+}
+
+async function countAdminActionsFromTables(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+): Promise<AdminActionCounts> {
+  const [holdings, listings, orders] = await Promise.all([
+    supabase
+      .from("quota_holdings")
+      .select("id", { count: "exact", head: true })
+      .eq("verification_status", "PENDING_VERIFICATION"),
+    supabase
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "PENDING_APPROVAL"),
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .in("status", [...OPEN_ORDER_STATUSES]),
+  ]);
+
+  const holdingsCount = holdings.count ?? 0;
+  const listingsCount = listings.count ?? 0;
+  const ordersCount = orders.count ?? 0;
+
+  return {
+    holdings: holdingsCount,
+    listings: listingsCount,
+    orders: ordersCount,
+    total: holdingsCount + listingsCount + ordersCount,
+  };
+}
+
 export const getAdminActionCounts = cache(
   async (): Promise<AdminActionCounts> => {
     const empty = { holdings: 0, listings: 0, orders: 0, total: 0 };
@@ -43,23 +106,17 @@ export const getAdminActionCounts = cache(
     }
 
     const { data, error } = await supabase.rpc("admin_action_counts");
+    const parsed = error ? null : parseAdminActionCounts(data);
 
-    if (error) {
-      console.error("admin_action_counts failed", error.message);
-      return empty;
+    if (!parsed) {
+      if (error) {
+        console.error("admin_action_counts failed", error.message);
+      }
+
+      return countAdminActionsFromTables(supabase);
     }
 
-    const row = Array.isArray(data) ? data[0] : data;
-    const holdingsCount = Number(row?.holdings) || 0;
-    const listingsCount = Number(row?.listings) || 0;
-    const ordersCount = Number(row?.orders) || 0;
-
-    return {
-      holdings: holdingsCount,
-      listings: listingsCount,
-      orders: ordersCount,
-      total: holdingsCount + listingsCount + ordersCount,
-    };
+    return parsed;
   },
 );
 

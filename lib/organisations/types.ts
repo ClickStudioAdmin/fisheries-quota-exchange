@@ -15,6 +15,7 @@ export type OrganisationMember = {
   id: number;
   organisation_id: number;
   email: string;
+  full_name: string;
   role: OrganisationRole;
   created_at: string;
 };

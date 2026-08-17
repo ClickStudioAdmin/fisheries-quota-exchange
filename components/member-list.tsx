@@ -36,8 +36,9 @@ export function MemberList({
       caption="Account members"
       empty="No members yet."
       searchPlaceholder="Filter members…"
-      defaultSort={{ key: "email", direction: "asc" }}
+      defaultSort={{ key: "name", direction: "asc" }}
       columns={[
+        { key: "name", header: "Name", sortable: true },
         { key: "email", header: "Email", sortable: true },
         {
           key: "role",
@@ -55,6 +56,7 @@ export function MemberList({
       rows={members.map((member) => ({
         id: member.id,
         values: {
+          name: member.full_name,
           email: member.email,
           role: member.role,
           created: member.created_at,

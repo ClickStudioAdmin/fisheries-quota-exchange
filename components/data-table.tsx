@@ -72,6 +72,12 @@ type SortState = { key: string; direction: "asc" | "desc" } | null;
 const filterFieldClassName =
   "border border-line bg-paper-raised px-3 py-2 text-sm text-ink outline-none focus:border-sea";
 
+const actionFilterClassName =
+  "border border-amber-300 bg-amber-100 px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-200";
+
+const actionFilterActiveClassName =
+  "border border-amber-800 bg-amber-800 px-3 py-2 text-sm font-medium text-amber-50";
+
 function compareValues(a: string | number | undefined, b: string | number | undefined) {
   return String(a ?? "").localeCompare(String(b ?? ""), "en", {
     numeric: true,
@@ -370,19 +376,6 @@ export function DataTable({
           placeholder={searchPlaceholder}
           className={`${filterFieldClassName} w-full sm:max-w-xs`}
         />
-        {actionCount > 0 || actionOnly ? (
-          <button
-            type="button"
-            aria-pressed={actionOnly}
-            onClick={() => setActionOnly((current) => !current)}
-            className={
-              actionOnly ? tableButtonClassName : tableSecondaryButtonClassName
-            }
-          >
-            Needs action
-            {actionCount > 0 ? ` (${actionCount})` : ""}
-          </button>
-        ) : null}
         {selectFilters.map((column) => {
           const options =
             column.filterOptions ??
@@ -414,6 +407,19 @@ export function DataTable({
             </label>
           );
         })}
+        {actionCount > 0 || actionOnly ? (
+          <button
+            type="button"
+            aria-pressed={actionOnly}
+            onClick={() => setActionOnly((current) => !current)}
+            className={
+              actionOnly ? actionFilterActiveClassName : actionFilterClassName
+            }
+          >
+            Needs action
+            {actionCount > 0 ? ` (${actionCount})` : ""}
+          </button>
+        ) : null}
         {selectable && bulkAction ? (
           <form
             action={bulkAction.action}

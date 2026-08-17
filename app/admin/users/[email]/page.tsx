@@ -253,6 +253,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
 
           return {
             id: holding.id,
+            needsAction: !holdingIsVerified(holding),
             values: {
               id: holding.id,
               organisation:
@@ -351,6 +352,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         ]}
         rows={listings.map((listing) => ({
           id: listing.id,
+          needsAction: listing.status === "PENDING_APPROVAL",
           values: {
             seller: listing.seller_name,
             type: listing.listing_type,
@@ -426,6 +428,10 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         ]}
         rows={orders.map((order) => ({
           id: order.id,
+          needsAction:
+            order.status === "AWAITING_COMPLIANCE" ||
+            order.status === "AWAITING_TRANSFER" ||
+            order.status === "AWAITING_SETTLEMENT",
           values: {
             id: order.id,
             buyer: order.buyer_name,

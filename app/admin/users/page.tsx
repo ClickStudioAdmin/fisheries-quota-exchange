@@ -124,6 +124,7 @@ export default async function AdminUsersPage() {
 
           return {
             id: item.email,
+            needsAction: !item.verified,
             values: {
               name: item.fullName || item.email,
               email: item.email,

@@ -8,7 +8,7 @@ Current tables:
 | --- | --- | --- |
 | `system_health` | 0 | Pipeline proof. One row: `FQX`. |
 | `organisations` | 1 | Legal entity. |
-| `organisation_users` | 1 | Email membership and role. |
+| `organisation_users` | 1 | Email membership, role, and display name. |
 | `platform_admins` | 5 | Platform administrators. |
 | `jurisdictions` | 5 | Australian jurisdictions. |
 | `fisheries` | 5 | Managed fisheries under a jurisdiction. `quantity_type` is `KG` or `UNITS`. `logo_path` is an optional image in the `fishery-logos` storage bucket. |
@@ -25,7 +25,7 @@ Current tables:
 | `bids` | 8 | Auction bids. `created_at` is server time. |
 | `platform_settings` | 8 | Singleton: sale/lease fee %, registrations, auto-approve holdings/listings. |
 
-`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Platform admins read a person's name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
+`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. `organisation_users.full_name` is required. Auth metadata still overrides that name when present. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Changing Auth name updates `organisation_users.full_name`. Platform admins also read name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
 
 `fisheries.quantity_type` must be `KG` or `UNITS`. Holdings and listings show that unit beside quantity.
 

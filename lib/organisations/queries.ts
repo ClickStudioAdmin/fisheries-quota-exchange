@@ -105,7 +105,7 @@ export async function listMembers(
 
   const { data, error } = await supabase
     .from("organisation_users")
-    .select("id, organisation_id, email, role, created_at")
+    .select("id, organisation_id, email, full_name, role, created_at")
     .eq("organisation_id", organisationId)
     .order("created_at", { ascending: true });
 

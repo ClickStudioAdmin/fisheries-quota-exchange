@@ -32,6 +32,7 @@ type MembershipRow = {
   role?: string | null;
   created_at?: string | null;
   organisation_id?: number | null;
+  full_name?: string | null;
   organisations?: { legal_name?: string | null } | { legal_name?: string | null }[] | null;
 };
 
@@ -114,6 +115,13 @@ function addMembership(user: AdminUser, row: MembershipRow) {
   if (joinedAt && (!user.joinedAt || joinedAt < user.joinedAt)) {
     user.joinedAt = joinedAt;
   }
+
+  const fullName =
+    typeof row.full_name === "string" ? row.full_name.trim() : "";
+
+  if (fullName && !user.fullName) {
+    user.fullName = fullName;
+  }
 }
 
 function applyVerified(user: AdminUser, row: VerifiedRow) {
@@ -160,7 +168,7 @@ export async function listUsersForAdmin(): Promise<AdminUser[]> {
   ] = await Promise.all([
     supabase
       .from("organisation_users")
-      .select("email, role, created_at, organisation_id, organisations ( legal_name )")
+      .select("email, role, created_at, organisation_id, full_name, organisations ( legal_name )")
       .order("email"),
     supabase
       .from("verified_users")
@@ -251,8 +259,14 @@ function applyAuthPeople(users: Map<string, AdminUser>, data: unknown) {
     }
 
     const person = readAuthPerson(row);
-    existing.fullName = person.fullName;
-    existing.phone = person.phone;
+
+    if (person.fullName) {
+      existing.fullName = person.fullName;
+    }
+
+    if (person.phone) {
+      existing.phone = person.phone;
+    }
   }
 }
 
@@ -316,7 +330,7 @@ export const getAdminUserForAdmin = cache(async (
   ] = await Promise.all([
     supabase
       .from("organisation_users")
-      .select("email, role, created_at, organisation_id, organisations ( legal_name )")
+      .select("email, role, created_at, organisation_id, full_name, organisations ( legal_name )")
       .eq("email", normalised),
     supabase
       .from("verified_users")
@@ -334,12 +348,19 @@ export const getAdminUserForAdmin = cache(async (
   ]);
 
   const user = emptyUser(normalised);
-  const authPerson = readAuthPerson(person);
-  user.fullName = authPerson.fullName;
-  user.phone = authPerson.phone;
 
   for (const row of members ?? []) {
     addMembership(user, row);
+  }
+
+  const authPerson = readAuthPerson(person);
+
+  if (authPerson.fullName) {
+    user.fullName = authPerson.fullName;
+  }
+
+  if (authPerson.phone) {
+    user.phone = authPerson.phone;
   }
 
   if (verified) {
