@@ -12,8 +12,6 @@ Current tables:
 | `platform_admins` | 5 | Platform administrators. |
 | `jurisdictions` | 5 | Australian jurisdictions. |
 | `fisheries` | 5 | Managed fisheries under a jurisdiction. `quantity_type` is `KG` or `UNITS`. `logo_path` is an optional image in the `fishery-logos` storage bucket. |
-| `stocks` | 5 | Named stock or area within a fishery. |
-| `seasons` | 5 | Fishery seasons. |
 | `quota_types` | 5 | Measurement kind and unit label. |
 | `fishery_rules` | 5 | Configurable rules. |
 | `quota_holdings` | 5 | Organisation quota balance per fishery. `verification_status` is `PENDING_VERIFICATION` or `VERIFIED`. |
@@ -30,7 +28,7 @@ Current tables:
 
 `fisheries.quantity_type` must be `KG` or `UNITS`. Holdings and listings show that unit beside quantity.
 
-`quota_types.measurement_kind` must be `WEIGHT`, `UNITS`, `EFFORT`, or `OTHER`. Holdings are per organisation and fishery, not per stock, season, or quota type.
+`quota_types.measurement_kind` must be `WEIGHT`, `UNITS`, `EFFORT`, or `OTHER`. Holdings are per organisation and fishery, not per quota type.
 
 `quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`. Members change quantity through `adjust_quota_holding`, which writes an `ADJUSTMENT` ledger row. A holding cannot be reduced below the quantity on its open listings (`PENDING_APPROVAL` and `PUBLISHED`) plus active reservations. A listing cannot be created without a covering holding.
 

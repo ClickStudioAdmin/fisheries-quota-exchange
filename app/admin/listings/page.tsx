@@ -55,7 +55,6 @@ export default async function AdminListingsPage() {
             ],
           },
           { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
-          { key: "stock", header: "Stock", sortable: true },
           {
             key: "offering",
             header: "Type",
@@ -91,7 +90,6 @@ export default async function AdminListingsPage() {
             seller: listing.seller_name,
             type: listing.listing_type,
             fishery: listing.fishery_name,
-            stock: listing.stock_name,
             offering: listing.offering,
             quantity: listing.quantity,
             price: listing.unit_price_aud,

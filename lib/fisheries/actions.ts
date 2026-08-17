@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { MEASUREMENT_KINDS, isQuantityType } from "@/lib/fisheries/types";
+import { isQuantityType } from "@/lib/fisheries/types";
 import {
   FISHERY_LOGO_BUCKET,
   fisheryLogoExtension,
@@ -169,7 +169,7 @@ export async function createFisheryAction(
   redirect(`/admin/reference/fisheries/${data.id}`);
 }
 
-export async function createStockAction(
+export async function updateFisheryAction(
   _prev: AdminFormState,
   formData: FormData,
 ): Promise<AdminFormState> {
@@ -178,104 +178,57 @@ export async function createStockAction(
 
   const fisheryId = Number(formData.get("fishery_id"));
   const name = read(formData, "name");
-
-  if (!Number.isInteger(fisheryId) || !name) {
-    return { error: "Stock name is required." };
-  }
-
-  const { error } = await admin.supabase.from("stocks").insert({
-    fishery_id: fisheryId,
-    name,
-  });
-  if (error) return { error: error.message };
-  return { message: "Stock created." };
-}
-
-export async function createSeasonAction(
-  _prev: AdminFormState,
-  formData: FormData,
-): Promise<AdminFormState> {
-  const admin = await requireAdmin();
-  if (admin.error || !admin.supabase) return { error: admin.error };
-
-  const fisheryId = Number(formData.get("fishery_id"));
-  const name = read(formData, "name");
-  const startsOn = read(formData, "starts_on");
-  const endsOn = read(formData, "ends_on");
-
-  if (!Number.isInteger(fisheryId) || !name || !startsOn || !endsOn) {
-    return { error: "Name and dates are required." };
-  }
-
-  const { error } = await admin.supabase.from("seasons").insert({
-    fishery_id: fisheryId,
-    name,
-    starts_on: startsOn,
-    ends_on: endsOn,
-  });
-  if (error) return { error: error.message };
-  return { message: "Season created." };
-}
-
-export async function createQuotaTypeAction(
-  _prev: AdminFormState,
-  formData: FormData,
-): Promise<AdminFormState> {
-  const admin = await requireAdmin();
-  if (admin.error || !admin.supabase) return { error: admin.error };
-
-  const fisheryId = Number(formData.get("fishery_id"));
-  const name = read(formData, "name");
-  const unitLabel = read(formData, "unit_label");
-  const measurementKind = read(formData, "measurement_kind");
-
-  if (!Number.isInteger(fisheryId) || !name || !unitLabel) {
-    return { error: "Name, measurement kind and unit label are required." };
-  }
-
-  if (!MEASUREMENT_KINDS.includes(measurementKind as (typeof MEASUREMENT_KINDS)[number])) {
-    return { error: "Choose WEIGHT, UNITS, EFFORT or OTHER." };
-  }
-
-  const { error } = await admin.supabase.from("quota_types").insert({
-    fishery_id: fisheryId,
-    name,
-    unit_label: unitLabel,
-    measurement_kind: measurementKind,
-  });
-  if (error) return { error: error.message };
-  return { message: "Quota type created." };
-}
-
-export async function createFisheryRuleAction(
-  _prev: AdminFormState,
-  formData: FormData,
-): Promise<AdminFormState> {
-  const admin = await requireAdmin();
-  if (admin.error || !admin.supabase) return { error: admin.error };
-
-  const fisheryId = Number(formData.get("fishery_id"));
   const code = read(formData, "code");
-  const rawValue = read(formData, "value") || "true";
+  const jurisdictionId = Number(formData.get("jurisdiction_id"));
+  const quantityType = read(formData, "quantity_type");
 
-  if (!Number.isInteger(fisheryId) || !code) {
-    return { error: "Rule code is required." };
+  if (!Number.isInteger(fisheryId) || !name || !Number.isInteger(jurisdictionId)) {
+    return { error: "Title and jurisdiction are required." };
   }
 
-  let value: unknown;
-  try {
-    value = JSON.parse(rawValue);
-  } catch {
-    value = rawValue;
+  if (!isQuantityType(quantityType)) {
+    return { error: "Choose Kg or Units." };
   }
 
-  const { error } = await admin.supabase.from("fishery_rules").insert({
-    fishery_id: fisheryId,
-    code,
-    value,
-  });
+  const { error } = await admin.supabase
+    .from("fisheries")
+    .update({
+      name,
+      code: code || null,
+      jurisdiction_id: jurisdictionId,
+      quantity_type: quantityType,
+    })
+    .eq("id", fisheryId);
+
   if (error) return { error: error.message };
-  return { message: "Rule created." };
+
+  const logo = readLogoFile(formData);
+  if (logo) {
+    const invalid = validateFisheryLogo(logo);
+    if (invalid) {
+      return { error: invalid };
+    }
+
+    const { data: current } = await admin.supabase
+      .from("fisheries")
+      .select("logo_path")
+      .eq("id", fisheryId)
+      .maybeSingle();
+
+    const stored = await storeFisheryLogo(
+      admin.supabase,
+      fisheryId,
+      logo,
+      current?.logo_path ?? null,
+    );
+
+    if (stored.error) {
+      return { error: stored.error };
+    }
+  }
+
+  revalidateFishery(fisheryId);
+  return { message: "Fishery saved." };
 }
 
 export async function createHoldingAction(

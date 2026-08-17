@@ -24,6 +24,7 @@ type Field =
       label: string;
       type: "select";
       required?: boolean;
+      defaultValue?: string;
       options: { value: string; label: string }[];
     }
   | {
@@ -81,6 +82,7 @@ export function AdminCreateForm({
               id={field.name}
               name={field.name}
               required={field.required}
+              defaultValue={field.defaultValue ?? ""}
               className={fieldClassName}
             >
               <option value="">Select</option>

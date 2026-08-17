@@ -36,20 +36,6 @@ export type Fishery = {
   logo_path: string | null;
 };
 
-export type Stock = {
-  id: number;
-  fishery_id: number;
-  name: string;
-};
-
-export type Season = {
-  id: number;
-  fishery_id: number;
-  name: string;
-  starts_on: string;
-  ends_on: string;
-};
-
 export type QuotaType = {
   id: number;
   fishery_id: number;

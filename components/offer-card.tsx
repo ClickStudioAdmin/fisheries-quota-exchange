@@ -52,9 +52,6 @@ export function OfferCard({
   const logoFishery =
     fishery ??
     (hideFishery ? null : { name: listing.fishery_name, logo_path: null });
-  const subtitle = [listing.stock_name, listing.season_name]
-    .filter(Boolean)
-    .join(" · ");
 
   return (
     <article
@@ -66,9 +63,6 @@ export function OfferCard({
           <div className="flex items-baseline justify-between gap-3">
             <p className="min-w-0 truncate">
               <span className="font-medium text-ink">{title}</span>
-              {subtitle ? (
-                <span className="text-sm text-ink-muted"> · {subtitle}</span>
-              ) : null}
             </p>
             <p className="shrink-0 text-xs uppercase tracking-[0.12em] text-sea">
               {listingTypeLabel(listing.listing_type)}

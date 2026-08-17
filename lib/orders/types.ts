@@ -23,8 +23,6 @@ export type Order = {
   seller_name: string;
   buyer_name: string;
   fishery_name: string;
-  stock_name: string;
-  season_name: string;
   quota_type_name: string;
   measurement_kind: string;
   unit_label: string;

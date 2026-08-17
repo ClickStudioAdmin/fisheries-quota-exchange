@@ -22,6 +22,8 @@ There are no listings, auctions, or payments in this phase.
 | `quota_holdings` | Organisation holding of a fishery |
 | `quota_ledger` | Immutable quantity events |
 
+`stocks` and `seasons` were added in this phase and later removed. Holdings and listings are per fishery only.
+
 Australian jurisdictions are seeded. Development fixture migrations add real-world Australian fisheries (not official regulatory data), plus seed organisations, users, holdings, listings, auctions, and historical sale and lease trades so public pages and admin tables have data. Each fishery has enough completed sales to chart price history.
 
 ## Ledger
@@ -37,7 +39,7 @@ The first signed-in user may claim **platform admin** at `/admin` if the table i
 Admin can then:
 
 1. Create a fishery for a jurisdiction, including quantity type (Kg or Units)
-2. Add stock, season, quota type and optional rules
+2. Add a logo
 3. Create a test holding for an organisation (organisation, fishery, quantity, note)
 
 Members of that organisation can see the holding and ledger at `/dashboard/holdings`.

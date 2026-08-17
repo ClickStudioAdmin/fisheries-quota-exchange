@@ -1,13 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
   Fishery,
-  FisheryRule,
   Jurisdiction,
   QuotaHolding,
   QuotaLedgerEntry,
-  QuotaType,
-  Season,
-  Stock,
 } from "@/lib/fisheries/types";
 
 export async function listJurisdictions() {
@@ -39,50 +35,6 @@ export async function getFishery(id: number) {
     .eq("id", id)
     .maybeSingle();
   return (data as Fishery | null) ?? null;
-}
-
-export async function listStocks(fisheryId: number) {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("stocks")
-    .select("id, fishery_id, name")
-    .eq("fishery_id", fisheryId)
-    .order("name");
-  return (data ?? []) as Stock[];
-}
-
-export async function listSeasons(fisheryId: number) {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("seasons")
-    .select("id, fishery_id, name, starts_on, ends_on")
-    .eq("fishery_id", fisheryId)
-    .order("starts_on", { ascending: false });
-  return (data ?? []) as Season[];
-}
-
-export async function listQuotaTypes(fisheryId: number) {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("quota_types")
-    .select("id, fishery_id, measurement_kind, name, unit_label")
-    .eq("fishery_id", fisheryId)
-    .order("name");
-  return (data ?? []) as QuotaType[];
-}
-
-export async function listFisheryRules(fisheryId: number) {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("fishery_rules")
-    .select("id, fishery_id, code, value")
-    .eq("fishery_id", fisheryId)
-    .order("code");
-  return (data ?? []) as FisheryRule[];
 }
 
 export async function listHoldingsForOrganisation(organisationId: number) {

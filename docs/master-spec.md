@@ -190,7 +190,7 @@ Organisation creation, profile, membership, roles (`OWNER`, `ADMIN`, `MEMBER`), 
 
 ## 24. Phase 5 — Fisheries and quota data
 
-Jurisdictions, fisheries, stocks, seasons, quota types, fishery rules, holdings, and an immutable quota ledger. Do not assume quota is always measured in weight.
+Jurisdictions, fisheries, quota types, fishery rules, holdings, and an immutable quota ledger. Do not assume quota is always measured in weight.
 
 ## 25. Phase 6 — Listings
 

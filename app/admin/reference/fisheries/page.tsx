@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AdminCreateForm } from "@/components/admin-create-form";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { FisheryAdminForm } from "@/components/fishery-admin-form";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createFisheryAction } from "@/lib/fisheries/actions";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
@@ -69,12 +69,12 @@ export default async function FisheriesAdminPage() {
           <DataTableRowExtras
             key={fishery.id}
             id={fishery.id}
-            links={
+            actions={
               <Link
                 href={`/admin/reference/fisheries/${fishery.id}`}
                 className={tableLinkClassName}
               >
-                Open
+                Edit
               </Link>
             }
           />
@@ -86,39 +86,10 @@ export default async function FisheriesAdminPage() {
           Create a jurisdiction first if the list is empty.
         </p>
         <div className="mt-4">
-          <AdminCreateForm
+          <FisheryAdminForm
             action={createFisheryAction}
             submitLabel="Create fishery"
-            fields={[
-              {
-                name: "jurisdiction_id",
-                label: "Jurisdiction",
-                type: "select",
-                required: true,
-                options: jurisdictions.map((item) => ({
-                  value: String(item.id),
-                  label: item.name,
-                })),
-              },
-              { name: "name", label: "Name", required: true },
-              { name: "code", label: "Code" },
-              {
-                name: "quantity_type",
-                label: "Quantity type",
-                type: "select",
-                required: true,
-                options: [
-                  { value: "KG", label: "Kg" },
-                  { value: "UNITS", label: "Units" },
-                ],
-              },
-              {
-                name: "logo",
-                label: "Logo (optional)",
-                type: "file",
-                accept: "image/jpeg,image/png,image/webp,image/gif",
-              },
-            ]}
+            jurisdictions={jurisdictions}
           />
         </div>
       </div>
