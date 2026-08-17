@@ -65,7 +65,6 @@ export default async function AdminListingsPage() {
               { value: "AUCTION", label: "Auction" },
             ],
           },
-          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           {
             key: "offering",
             header: "Type",
@@ -76,6 +75,7 @@ export default async function AdminListingsPage() {
               { value: "LEASE", label: "Lease" },
             ],
           },
+          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "price", header: "Price", sortable: true, align: "right" },
           {

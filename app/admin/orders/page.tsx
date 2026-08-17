@@ -55,20 +55,23 @@ export default async function AdminOrdersPage() {
         defaultSort={{ key: "id", direction: "desc" }}
         selectable
         columns={[
-          { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
+          {
+            key: "id",
+            header: "Order / fee",
+            sortable: true,
+            details: true,
+            stacked: [
+              { key: "id", label: "Order" },
+              { key: "fee", label: "Fee" },
+            ],
+          },
           {
             key: "parties",
             header: "Buyer / seller",
             stacked: [
-              { key: "buyer", label: "Buyer" },
-              { key: "seller", label: "Seller" },
+              { key: "buyer", label: "Buyer", filter: "select" },
+              { key: "seller", label: "Seller", filter: "select" },
             ],
-          },
-          {
-            key: "fishery",
-            header: "Fishery",
-            sortable: true,
-            filter: "select",
           },
           {
             key: "offering",
@@ -80,9 +83,14 @@ export default async function AdminOrdersPage() {
               { value: "LEASE", label: "Lease" },
             ],
           },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
+          },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "amount", header: "Amount", sortable: true, align: "right" },
-          { key: "fee", header: "Fee", sortable: true, align: "right" },
           {
             key: "status",
             header: "Status",

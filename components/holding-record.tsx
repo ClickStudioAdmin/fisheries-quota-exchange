@@ -323,20 +323,23 @@ export async function HoldingRecord({
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
-          { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
+          {
+            key: "id",
+            header: "Order / fee",
+            sortable: true,
+            details: true,
+            stacked: [
+              { key: "id", label: "Order" },
+              { key: "fee", label: "Fee" },
+            ],
+          },
           {
             key: "parties",
             header: "Buyer / seller",
             stacked: [
-              { key: "buyer", label: "Buyer" },
-              { key: "seller", label: "Seller" },
+              { key: "buyer", label: "Buyer", filter: "select" },
+              { key: "seller", label: "Seller", filter: "select" },
             ],
-          },
-          {
-            key: "fishery",
-            header: "Fishery",
-            sortable: true,
-            filter: "select",
           },
           {
             key: "offering",
@@ -347,6 +350,12 @@ export async function HoldingRecord({
               { value: "SALE", label: "Sale" },
               { value: "LEASE", label: "Lease" },
             ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "amount", header: "Amount", sortable: true, align: "right" },
@@ -381,6 +390,7 @@ export async function HoldingRecord({
             offering: order.offering,
             quantity: order.quantity,
             amount: order.amount_aud,
+            fee: order.fee_amount_aud,
             status: order.status,
             created: order.created_at,
           },
@@ -388,6 +398,10 @@ export async function HoldingRecord({
             offering: listingOfferingLabel(order.offering),
             quantity: `${order.quantity} ${order.unit_label}`,
             amount: formatAud(order.amount_aud),
+            fee:
+              Number(order.fee_percent) > 0
+                ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                : formatAud(order.fee_amount_aud),
             status: orderStatusLabel(order.status),
           },
         }))}

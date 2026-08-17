@@ -327,7 +327,6 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               { value: "AUCTION", label: "Auction" },
             ],
           },
-          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           {
             key: "offering",
             header: "Type",
@@ -338,6 +337,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               { value: "LEASE", label: "Lease" },
             ],
           },
+          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "price", header: "Price", sortable: true, align: "right" },
           {
@@ -408,20 +408,23 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
-          { key: "id", header: "Order", sortable: true, details: true, nowrap: true },
+          {
+            key: "id",
+            header: "Order / fee",
+            sortable: true,
+            details: true,
+            stacked: [
+              { key: "id", label: "Order" },
+              { key: "fee", label: "Fee" },
+            ],
+          },
           {
             key: "parties",
             header: "Buyer / seller",
             stacked: [
-              { key: "buyer", label: "Buyer" },
-              { key: "seller", label: "Seller" },
+              { key: "buyer", label: "Buyer", filter: "select" },
+              { key: "seller", label: "Seller", filter: "select" },
             ],
-          },
-          {
-            key: "fishery",
-            header: "Fishery",
-            sortable: true,
-            filter: "select",
           },
           {
             key: "offering",
@@ -432,6 +435,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               { value: "SALE", label: "Sale" },
               { value: "LEASE", label: "Lease" },
             ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "amount", header: "Amount", sortable: true, align: "right" },
@@ -472,6 +481,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             offering: order.offering,
             quantity: order.quantity,
             amount: order.amount_aud,
+            fee: order.fee_amount_aud,
             status: order.status,
             created: order.created_at,
           },
@@ -479,6 +489,10 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             offering: listingOfferingLabel(order.offering),
             quantity: `${order.quantity} ${order.unit_label}`,
             amount: formatAud(order.amount_aud),
+            fee:
+              Number(order.fee_percent) > 0
+                ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                : formatAud(order.fee_amount_aud),
             status: orderStatusLabel(order.status),
           },
         }))}

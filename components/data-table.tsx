@@ -32,7 +32,7 @@ export type DataTableColumn = {
   align?: "left" | "right";
   details?: boolean;
   nowrap?: boolean;
-  stacked?: { key: string; label: string }[];
+  stacked?: { key: string; label: string; filter?: "select" }[];
 };
 
 export type DataTableDetail = {
@@ -118,11 +118,13 @@ function uniqueValues(rows: DataTableRow[], key: string) {
 function filterColumns(columns: DataTableColumn[]): DataTableColumn[] {
   return columns.flatMap((column) => {
     if (column.stacked && column.stacked.length > 0) {
-      return column.stacked.map((line) => ({
-        key: line.key,
-        header: line.label,
-        filter: "select" as const,
-      }));
+      return column.stacked
+        .filter((line) => line.filter === "select")
+        .map((line) => ({
+          key: line.key,
+          header: line.label,
+          filter: "select" as const,
+        }));
     }
 
     if (column.filter === "select") {
@@ -215,7 +217,17 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
               <div className="text-[10px] uppercase tracking-[0.12em] text-ink-muted">
                 {line.label}
               </div>
-              <div>{text}</div>
+              {column.details &&
+              line.key === "id" &&
+              row.details &&
+              row.details.length > 0 ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span>{text}</span>
+                  <DetailsTooltip details={row.details} />
+                </span>
+              ) : (
+                <div>{text}</div>
+              )}
             </div>
           );
         })}

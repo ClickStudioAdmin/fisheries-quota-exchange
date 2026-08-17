@@ -380,7 +380,6 @@ export async function AccountListingsSection({
               { value: "AUCTION", label: "Auction" },
             ],
           },
-          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           {
             key: "offering",
             header: "Type",
@@ -391,6 +390,7 @@ export async function AccountListingsSection({
               { value: "LEASE", label: "Lease" },
             ],
           },
+          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "price", header: "Price", sortable: true, align: "right" },
           {
@@ -518,12 +518,6 @@ export async function AccountOrdersSection({
             ],
           },
           {
-            key: "fishery",
-            header: "Fishery",
-            sortable: true,
-            filter: "select",
-          },
-          {
             key: "offering",
             header: "Offering",
             sortable: true,
@@ -532,6 +526,12 @@ export async function AccountOrdersSection({
               { value: "SALE", label: "Sale" },
               { value: "LEASE", label: "Lease" },
             ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           {
