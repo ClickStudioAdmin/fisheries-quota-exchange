@@ -2,43 +2,23 @@ import "server-only";
 
 import { Resend } from "resend";
 import { getEmailEnv } from "@/lib/email/env";
-import { MemberAddedEmail } from "@/lib/email/templates/member-added";
+import { emailSubject, renderEmailTemplate } from "@/lib/email/render";
 import type {
   EmailTemplate,
   EmailTemplates,
   SendEmailResult,
 } from "@/lib/email/types";
 
-function subjectFor<K extends EmailTemplate>(
-  template: K,
-  data: EmailTemplates[K],
-) {
-  switch (template) {
-    case "member_added": {
-      const member = data as EmailTemplates["member_added"];
-      return `You have been added to ${member.accountName} on FQX`;
-    }
-    default:
-      return "Fisheries Quota Exchange";
-  }
-}
-
-function renderTemplate<K extends EmailTemplate>(
-  template: K,
-  data: EmailTemplates[K],
-) {
-  switch (template) {
-    case "member_added":
-      return <MemberAddedEmail {...(data as EmailTemplates["member_added"])} />;
-    default:
-      return null;
-  }
-}
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+};
 
 export async function sendEmail<K extends EmailTemplate>(options: {
   to: string;
   template: K;
   data: EmailTemplates[K];
+  attachments?: EmailAttachment[];
 }): Promise<SendEmailResult> {
   const env = getEmailEnv();
 
@@ -52,7 +32,7 @@ export async function sendEmail<K extends EmailTemplate>(options: {
     return { sent: false, error: "Invalid recipient." };
   }
 
-  const react = renderTemplate(options.template, options.data);
+  const react = renderEmailTemplate(options.template, options.data);
 
   if (!react) {
     return { sent: false, error: "Unknown email template." };
@@ -63,8 +43,12 @@ export async function sendEmail<K extends EmailTemplate>(options: {
     const { error } = await resend.emails.send({
       from: env.from,
       to,
-      subject: subjectFor(options.template, options.data),
+      subject: emailSubject(options.template, options.data),
       react,
+      attachments: options.attachments?.map((file) => ({
+        filename: file.filename,
+        content: file.content.toString("base64"),
+      })),
     });
 
     if (error) {

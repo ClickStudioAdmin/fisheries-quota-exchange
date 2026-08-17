@@ -35,6 +35,11 @@ export default async function AdminLayout({
     { href: "/admin", label: "Overview" },
     { href: "/admin/settings", label: "Platform settings" },
     {
+      href: "/admin/templates",
+      label: "Templates",
+      match: "prefix",
+    },
+    {
       href: "/admin/users",
       label: "Users",
       match: "prefix",

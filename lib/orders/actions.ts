@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import type { OrderFormState } from "@/lib/orders/types";
+import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -126,6 +127,19 @@ export async function simulateSettlementAction(formData: FormData) {
     return;
   }
 
-  await supabase.rpc("simulate_settlement", { p_order_id: orderId });
+  const { error } = await supabase.rpc("simulate_settlement", {
+    p_order_id: orderId,
+  });
+
+  if (!error) {
+    try {
+      await sendSettledOrderInvoice(orderId);
+    } catch (mailError) {
+      const message =
+        mailError instanceof Error ? mailError.message : "Invoice email failed.";
+      console.error("sendSettledOrderInvoice failed", message);
+    }
+  }
+
   redirect("/admin/orders");
 }

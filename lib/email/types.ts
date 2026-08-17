@@ -5,6 +5,13 @@ export type EmailTemplates = {
     registerUrl: string;
     loginUrl: string;
   };
+  order_settled: {
+    orderId: number;
+    buyerName: string;
+    offeringLabel: string;
+    amount: string;
+    orderUrl: string;
+  };
 };
 
 export type EmailTemplate = keyof EmailTemplates;

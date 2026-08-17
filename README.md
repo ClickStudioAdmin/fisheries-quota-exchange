@@ -21,6 +21,7 @@ Work happens on `develop`. Merge to `main` for production. See [docs/environment
 - Vercel hosting
 - GitHub Actions for database migrations
 - Resend for transactional email (server only)
+- `@react-pdf/renderer` for dummy tax invoice PDFs
 
 ## Local development
 

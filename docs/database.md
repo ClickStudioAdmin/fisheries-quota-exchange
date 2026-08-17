@@ -43,4 +43,4 @@ Development fixtures may include extra fisheries, organisations, users, listings
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).
 
-Transactional email is sent from the app server with Resend. There is no email table. Auth confirmation and password reset stay on Supabase Auth.
+Transactional email is sent from the app server with Resend. There is no email table. Auth confirmation and password reset stay on Supabase Auth. Simulated settlement emails a dummy tax invoice PDF generated in the app; the PDF is not stored in the database.

@@ -37,6 +37,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/admin/holdings` | Verify holdings created or changed by unverified users |
 | `/admin/holdings/[id]` | Admin-only holding record, including the immutable quota ledger |
 | `/admin/settings` | Platform settings: fees, registrations, and auto-approval |
+| `/admin/templates` | Email and PDF templates: preview, sample content, and send triggers |
 | `/admin/reference/fisheries/[id]` | Same fields as create: jurisdiction, name, code, quantity type, and logo |
 
 Admin **Admin** and account **Dashboard** header links, plus matching sidebar items, show a count badge when action is required: holdings pending verification, listings pending approval, orders awaiting compliance/transfer/settlement, and (for members) ended auctions that still need closing. User verification is optional and is not counted. Admin holdings, listings, and orders tables have a **Needs action** filter for those same rows.
@@ -73,13 +74,15 @@ Open listings must be covered by the seller holding. `adjust_quota_holding` cann
 
 `stocks` and `seasons` are removed by `20260817260000_drop_stocks_and_seasons.sql`. Listings and orders no longer snapshot those names.
 
-Development fixture `20260817230000_seed_market_catalogue.sql` adds Australian fisheries by jurisdiction, seed organisations and users, holdings, live listings and auctions, and historical trades for fishery price charts. These are test records, not official market data. `20260817340000_seed_operator_account_orders.sql` adds buy and sell orders for the development operator account when that membership exists.
+Development fixture `20260817230000_seed_market_catalogue.sql` adds Australian fisheries by jurisdiction, seed organisations and users, holdings, live listings and auctions, and historical trades for fishery price charts. These are test records, not official market data. `20260817340000_seed_operator_account_orders.sql` adds buy and sell orders for the development operator account when that membership exists. `20260817360000_seed_admin_seller_test_order.sql` adds one `AWAITING_SETTLEMENT` sell order for `click.studio.admin@gmail.com` when that membership exists.
 
 `insert_simulated_order` is shared with Phase 7 `create_order` and is not granted to clients.
 
 `organisation_users_fill_name` is `security definer` so adding a member can read Auth display names. Migration: `20260817350000_organisation_users_fill_name_definer.sql`.
 
-Transactional email uses Resend from the server. `sendEmail({ to, template, data })` in `lib/email/` sends after the database write. Auth mail (confirm, reset password) stays on Supabase Auth. The first product template is `member_added`, sent when someone is added to an account. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; adding the member still succeeds. Do not put Resend keys in `NEXT_PUBLIC_` variables. Open/click tracking stays off for transactional mail.
+Transactional email uses Resend from the server. `sendEmail({ to, template, data })` in `lib/email/` sends after the database write. Auth mail (confirm, reset password) stays on Supabase Auth. Templates: `member_added` when someone is added to an account, and `order_settled` after `simulate_settlement` (dummy tax invoice PDF attached). Platform admins preview them on `/admin/templates`. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; adding the member or settling the order still succeeds. Do not put Resend keys in `NEXT_PUBLIC_` variables. Open/click tracking stays off for transactional mail.
+
+Dummy tax invoices are generated on the server with `@react-pdf/renderer` (`lib/invoices/`). They are not stored. They are not real tax invoices and do not calculate GST.
 
 ## Not in this phase
 

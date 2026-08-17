@@ -6,7 +6,11 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
-  serverExternalPackages: ["resend", "@react-email/components"],
+  serverExternalPackages: [
+    "resend",
+    "@react-email/components",
+    "@react-pdf/renderer",
+  ],
 };
 
 export default nextConfig;
