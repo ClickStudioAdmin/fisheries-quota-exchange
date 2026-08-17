@@ -605,7 +605,7 @@ export function DataTable({
               {showLinks ? (
                 <th
                   scope="col"
-                  className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
+                  className="w-px whitespace-nowrap px-3 py-2 font-medium"
                 >
                   Links
                 </th>
@@ -673,7 +673,7 @@ export function DataTable({
                         </td>
                       ))}
                       {showLinks ? (
-                        <td className="min-w-[8rem] px-3 py-3">
+                        <td className="w-px whitespace-nowrap px-3 py-3">
                           {hasNode(extraProps?.links) ? (
                             <TableActions>{extraProps?.links}</TableActions>
                           ) : (

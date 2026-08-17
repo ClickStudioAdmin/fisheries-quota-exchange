@@ -307,7 +307,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           caption="Listings"
         empty="No listings created by this person."
         searchPlaceholder="Filter listings…"
-        defaultSort={{ key: "created", direction: "desc" }}
+        defaultSort={{ key: "id", direction: "desc" }}
         columns={[
           { key: "id", header: "ID", sortable: true },
           { key: "seller", header: "Seller", sortable: true, filter: "select" },

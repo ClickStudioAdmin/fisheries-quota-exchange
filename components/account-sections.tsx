@@ -356,7 +356,7 @@ export async function AccountListingsSection({
         caption="Listings"
         empty="No listings yet. Owners and admins can list quota from a holding."
         searchPlaceholder="Filter listings…"
-        defaultSort={{ key: "created", direction: "desc" }}
+        defaultSort={{ key: "id", direction: "desc" }}
         columns={[
           { key: "id", header: "ID", sortable: true },
           {

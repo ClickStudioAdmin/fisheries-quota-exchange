@@ -44,7 +44,7 @@ export default async function AdminListingsPage() {
         caption="Listings"
         empty="No listings yet."
         searchPlaceholder="Filter listings…"
-        defaultSort={{ key: "created", direction: "desc" }}
+        defaultSort={{ key: "id", direction: "desc" }}
         columns={[
           { key: "id", header: "ID", sortable: true },
           { key: "seller", header: "Seller", sortable: true, filter: "select" },

@@ -231,7 +231,7 @@ export async function HoldingRecord({
         caption="Current listings"
         empty="No listings from this holding."
         searchPlaceholder="Filter listings…"
-        defaultSort={{ key: "created", direction: "desc" }}
+        defaultSort={{ key: "id", direction: "desc" }}
         columns={[
           { key: "id", header: "ID", sortable: true },
           {
