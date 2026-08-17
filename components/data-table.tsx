@@ -90,6 +90,8 @@ const actionFilterActiveClassName =
 function columnWidthClass(column: DataTableColumn) {
   return column.nowrap ? "min-w-[16rem] whitespace-nowrap" : "";
 }
+
+function compareValues(a: string | number | undefined, b: string | number | undefined) {
   return String(a ?? "").localeCompare(String(b ?? ""), "en", {
     numeric: true,
     sensitivity: "base",
