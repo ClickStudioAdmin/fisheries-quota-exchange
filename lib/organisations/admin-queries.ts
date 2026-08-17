@@ -156,6 +156,7 @@ export async function listUsersForAdmin(): Promise<AdminUser[]> {
     { data: admins },
     { data: listings },
     { data: orders },
+    { data: people },
   ] = await Promise.all([
     supabase
       .from("organisation_users")
@@ -167,6 +168,7 @@ export async function listUsersForAdmin(): Promise<AdminUser[]> {
     supabase.from("platform_admins").select("email"),
     supabase.from("listings").select("created_by_email"),
     supabase.from("orders").select("created_by_email"),
+    supabase.rpc("admin_auth_people"),
   ]);
 
   const users = new Map<string, AdminUser>();
@@ -209,6 +211,8 @@ export async function listUsersForAdmin(): Promise<AdminUser[]> {
     users.set(email, existing);
   }
 
+  applyAuthPeople(users, people);
+
   return [...users.values()]
     .map((user) => {
       user.listingCount = listingCounts.get(user.email) ?? 0;
@@ -228,6 +232,28 @@ export function adminUserRole(user: AdminUser) {
 
 export function adminUserDisplayName(user: Pick<AdminUser, "email" | "fullName">) {
   return user.fullName || user.email;
+}
+
+function applyAuthPeople(users: Map<string, AdminUser>, data: unknown) {
+  const rows = Array.isArray(data) ? data : [];
+
+  for (const row of rows) {
+    if (!row || typeof row !== "object") {
+      continue;
+    }
+
+    const record = row as { email?: unknown };
+    const email = asEmail(record.email);
+    const existing = users.get(email);
+
+    if (!existing) {
+      continue;
+    }
+
+    const person = readAuthPerson(row);
+    existing.fullName = person.fullName;
+    existing.phone = person.phone;
+  }
 }
 
 function readAuthPerson(data: unknown) {

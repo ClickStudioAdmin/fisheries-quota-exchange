@@ -50,6 +50,7 @@ Functions:
 - `place_bid`
 - `close_auction`
 - `admin_auth_person` (platform admin only; name and phone from Auth metadata)
+- `admin_auth_people` (platform admin only; names and phones for the users table)
 
 Public market data (no buyer or seller identity):
 

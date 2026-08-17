@@ -57,7 +57,7 @@ export default async function AdminUsersPage() {
         caption="Users"
         empty="No users yet."
         searchPlaceholder="Filter users…"
-        defaultSort={{ key: "email", direction: "asc" }}
+        defaultSort={{ key: "name", direction: "asc" }}
         selectable
         lockedIds={currentEmail ? [currentEmail] : []}
         bulkAction={{
@@ -68,6 +68,7 @@ export default async function AdminUsersPage() {
             "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
         }}
         columns={[
+          { key: "name", header: "Name", sortable: true },
           { key: "email", header: "Email", sortable: true },
           {
             key: "role",
@@ -124,6 +125,7 @@ export default async function AdminUsersPage() {
           return {
             id: item.email,
             values: {
+              name: item.fullName || item.email,
               email: item.email,
               role: role ?? "",
               accounts: accountNames.join(", "),
@@ -134,6 +136,7 @@ export default async function AdminUsersPage() {
               joined: item.joinedAt ?? "",
             },
             display: {
+              name: item.fullName ?? "—",
               email:
                 item.email === currentEmail ? `${item.email} (you)` : item.email,
               role: role ? organisationRoleLabel(role) : "—",
