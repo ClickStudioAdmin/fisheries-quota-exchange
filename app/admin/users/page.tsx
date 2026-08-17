@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { tableButtonClassName, tableSecondaryButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { setUserVerifiedAction } from "@/lib/admin/actions";
+import { deleteUsersAction, setUserVerifiedAction } from "@/lib/admin/actions";
 import { listUsersForAdmin } from "@/lib/organisations/admin-queries";
+import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Users",
@@ -14,7 +15,11 @@ export default async function AdminUsersPage() {
     redirect("/admin");
   }
 
-  const users = await listUsersForAdmin();
+  const [users, user] = await Promise.all([
+    listUsersForAdmin(),
+    getUser(),
+  ]);
+  const currentEmail = user?.email?.toLowerCase() ?? "";
 
   return (
     <div className="space-y-6">
@@ -25,7 +30,8 @@ export default async function AdminUsersPage() {
         <p className="mt-2 text-sm text-ink-muted">
           Verified users can create and change holdings without waiting for
           admin approval. Everyone else needs each holding verified before they
-          can list or auction quota.
+          can list or auction quota. Select users to remove them from all
+          accounts.
         </p>
       </div>
       <DataTable
@@ -33,6 +39,15 @@ export default async function AdminUsersPage() {
         empty="No users yet."
         searchPlaceholder="Filter users…"
         defaultSort={{ key: "email", direction: "asc" }}
+        selectable
+        lockedIds={currentEmail ? [currentEmail] : []}
+        bulkAction={{
+          label: "Delete selected",
+          action: deleteUsersAction,
+          fieldName: "emails",
+          confirm:
+            "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
+        }}
         columns={[
           { key: "email", header: "Email", sortable: true },
           { key: "accounts", header: "Accounts", sortable: true },
@@ -47,39 +62,39 @@ export default async function AdminUsersPage() {
             ],
           },
         ]}
-        rows={users.map((user) => ({
-          id: user.email,
+        rows={users.map((item) => ({
+          id: item.email,
           values: {
-            email: user.email,
-            accounts: user.accounts.join(", "),
-            status: user.verified ? "Verified" : "Unverified",
+            email: item.email,
+            accounts: item.accounts.join(", "),
+            status: item.verified ? "Verified" : "Unverified",
           },
           display: {
-            accounts: user.accounts.join(", ") || "—",
+            accounts: item.accounts.join(", ") || "—",
           },
         }))}
       >
-        {users.map((user) => (
+        {users.map((item) => (
           <DataTableRowExtras
-            key={user.email}
-            id={user.email}
+            key={item.email}
+            id={item.email}
             actions={
               <form action={setUserVerifiedAction}>
-                <input type="hidden" name="email" value={user.email} />
+                <input type="hidden" name="email" value={item.email} />
                 <input
                   type="hidden"
                   name="verified"
-                  value={user.verified ? "false" : "true"}
+                  value={item.verified ? "false" : "true"}
                 />
                 <button
                   type="submit"
                   className={
-                    user.verified
+                    item.verified
                       ? tableSecondaryButtonClassName
                       : tableButtonClassName
                   }
                 >
-                  {user.verified ? "Revoke verification" : "Mark as verified"}
+                  {item.verified ? "Revoke verification" : "Mark as verified"}
                 </button>
               </form>
             }

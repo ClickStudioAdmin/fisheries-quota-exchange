@@ -34,8 +34,10 @@ Current tables:
 
 `quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`. Members change quantity through `adjust_quota_holding`, which writes an `ADJUSTMENT` ledger row. A holding cannot be reduced below the quantity on its open listings (`PENDING_APPROVAL` and `PUBLISHED`) plus active reservations. A listing cannot be created without a covering holding.
 
-Creating or changing a holding sets `VERIFIED` only if the actor is in `verified_users`. Otherwise it is `PENDING_VERIFICATION`, including when a platform admin updates a holding for an unverified account. A listing or auction cannot be created from an unverified holding. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`.
+Creating or changing a holding sets `VERIFIED` only if the actor is in `verified_users`. Otherwise it is `PENDING_VERIFICATION`, including when a platform admin updates a holding for an unverified account. A listing or auction cannot be created from an unverified holding. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`. `admin_delete_users` removes selected users from `organisation_users`, `verified_users`, and `platform_admins`. Admins cannot delete themselves or the last platform admin. Organisations and quota ledgers stay in place.
 
 Anonymous visitors can read `fisheries` and `jurisdictions`. Sale and lease prices for `/fisheries/[id]` come from `list_market_sales` (quantity, unit price, and offering only). Holding valuation uses `latest_sale_prices` and SALE prices only. Fishery logos are public files in the `fishery-logos` bucket; only platform admins can upload, replace, or remove them.
+
+Development fixtures may include extra fisheries, organisations, users, listings, and completed trades for local and development display. They are not official regulatory or market data.
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md) and [phase-8.md](phase-8.md).

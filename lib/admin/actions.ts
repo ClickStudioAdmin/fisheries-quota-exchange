@@ -25,3 +25,36 @@ export async function setUserVerifiedAction(formData: FormData) {
 
   revalidatePath("/admin/users");
 }
+
+export async function deleteUsersAction(formData: FormData) {
+  const supabase = await createClient();
+
+  if (!supabase || !(await isPlatformAdmin())) {
+    return;
+  }
+
+  const emails = [
+    ...new Set(
+      formData
+        .getAll("emails")
+        .map((value) => String(value).trim().toLowerCase())
+        .filter((email) => email.includes("@")),
+    ),
+  ];
+
+  if (emails.length === 0) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("admin_delete_users", {
+    p_emails: emails,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/admin/users");
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+}

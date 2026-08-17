@@ -10,7 +10,10 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { tableSecondaryButtonClassName } from "@/components/auth-card";
+import {
+  tableButtonClassName,
+  tableSecondaryButtonClassName,
+} from "@/components/auth-card";
 
 export type DataTableColumn = {
   key: string;
@@ -36,6 +39,13 @@ type DataTableRowExtrasProps = {
   children?: ReactNode;
 };
 
+type DataTableBulkAction = {
+  label: string;
+  action: (formData: FormData) => void | Promise<void>;
+  confirm?: string;
+  fieldName?: string;
+};
+
 type DataTableProps = {
   columns: DataTableColumn[];
   rows: DataTableRow[];
@@ -43,6 +53,9 @@ type DataTableProps = {
   empty?: string;
   searchPlaceholder?: string;
   defaultSort?: { key: string; direction: "asc" | "desc" };
+  selectable?: boolean;
+  lockedIds?: Array<string | number>;
+  bulkAction?: DataTableBulkAction;
   children?: ReactNode;
 };
 
@@ -172,6 +185,9 @@ export function DataTable({
   empty = "No rows.",
   searchPlaceholder = "Filter…",
   defaultSort,
+  selectable = false,
+  lockedIds = [],
+  bulkAction,
   children,
 }: DataTableProps) {
   const searchId = useId();
@@ -179,7 +195,12 @@ export function DataTable({
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sort, setSort] = useState<SortState>(defaultSort ?? null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const extras = useMemo(() => collectExtras(children), [children]);
+  const locked = useMemo(
+    () => new Set(lockedIds.map((id) => String(id))),
+    [lockedIds],
+  );
   const { links: showLinks, actions: showActions } = useMemo(
     () => extrasColumns(extras),
     [extras],
@@ -229,6 +250,14 @@ export function DataTable({
     );
   }, [filtered, sort]);
 
+  const selectableVisible = useMemo(
+    () =>
+      selectable
+        ? visible.filter((row) => !locked.has(String(row.id)))
+        : [],
+    [locked, selectable, visible],
+  );
+
   function toggleSort(key: string) {
     setSort((current) => {
       if (current?.key !== key) {
@@ -248,12 +277,51 @@ export function DataTable({
     setOpenIds((current) => ({ ...current, [key]: !current[key] }));
   }
 
+  const selectedIds = [...selected];
+  const selectedVisibleCount = selectableVisible.filter((row) =>
+    selected.has(String(row.id)),
+  ).length;
+  const allVisibleSelected =
+    selectableVisible.length > 0 &&
+    selectedVisibleCount === selectableVisible.length;
+
+  function toggleSelected(id: string, checked: boolean) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleAllVisible(checked: boolean) {
+    setSelected((current) => {
+      const next = new Set(current);
+      for (const row of selectableVisible) {
+        const id = String(row.id);
+        if (checked) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+      }
+      return next;
+    });
+  }
+
   if (rows.length === 0) {
     return <p className="text-sm text-ink-muted">{empty}</p>;
   }
 
   const columnCount =
-    columns.length + (showLinks ? 1 : 0) + (showActions ? 1 : 0);
+    columns.length +
+    (selectable ? 1 : 0) +
+    (showLinks ? 1 : 0) +
+    (showActions ? 1 : 0);
+  const bulkFieldName = bulkAction?.fieldName ?? "ids";
 
   return (
     <div className="space-y-3">
@@ -299,6 +367,41 @@ export function DataTable({
             </label>
           );
         })}
+        {selectable && bulkAction ? (
+          <form
+            action={bulkAction.action}
+            onSubmit={(event) => {
+              if (selectedIds.length === 0) {
+                event.preventDefault();
+                return;
+              }
+              if (
+                bulkAction.confirm &&
+                !window.confirm(bulkAction.confirm)
+              ) {
+                event.preventDefault();
+              }
+            }}
+            className="flex items-center gap-2"
+          >
+            {selectedIds.map((id) => (
+              <input
+                key={id}
+                type="hidden"
+                name={bulkFieldName}
+                value={id}
+              />
+            ))}
+            <button
+              type="submit"
+              disabled={selectedIds.length === 0}
+              className={tableButtonClassName}
+            >
+              {bulkAction.label}
+              {selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+            </button>
+          </form>
+        ) : null}
       </div>
       <p className="text-xs text-ink-muted">
         {visible.length === rows.length
@@ -310,6 +413,19 @@ export function DataTable({
           <caption className="sr-only">{caption}</caption>
           <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-muted">
             <tr>
+              {selectable ? (
+                <th scope="col" className="w-10 px-3 py-2 font-medium">
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    disabled={selectableVisible.length === 0}
+                    onChange={(event) =>
+                      toggleAllVisible(event.target.checked)
+                    }
+                    aria-label={`Select all ${caption}`}
+                  />
+                </th>
+              ) : null}
               {columns.map((column) => {
                 const aligned = column.align === "right" ? "text-right" : "text-left";
                 const sorted = sort?.key === column.key ? sort.direction : undefined;
@@ -376,7 +492,9 @@ export function DataTable({
               visible.map((row, index) => {
                 const extra = extras.get(String(row.id));
                 const extraProps = extra?.props;
-                const expanded = Boolean(openIds[String(row.id)]);
+                const rowId = String(row.id);
+                const expanded = Boolean(openIds[rowId]);
+                const lockedRow = locked.has(rowId);
                 const striped =
                   index % 2 === 0 ? "bg-paper-raised" : "bg-paper-stripe";
 
@@ -385,6 +503,23 @@ export function DataTable({
                     <tr
                       className={`border-t border-line align-top ${striped} hover:bg-line/40`}
                     >
+                      {selectable ? (
+                        <td className="w-10 px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(rowId)}
+                            disabled={lockedRow}
+                            onChange={(event) =>
+                              toggleSelected(rowId, event.target.checked)
+                            }
+                            aria-label={
+                              lockedRow
+                                ? `Cannot select ${rowId}`
+                                : `Select ${rowId}`
+                            }
+                          />
+                        </td>
+                      ) : null}
                       {columns.map((column) => (
                         <td
                           key={column.key}

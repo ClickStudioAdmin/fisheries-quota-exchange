@@ -31,7 +31,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/dashboard/holdings` | Create an auction from a holding. Holding value uses the latest sale. |
 | `/organisations/[id]/auctions/new` | Create auction from a holding |
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
-| `/admin/users` | Verify users so their holdings skip approval |
+| `/admin/users` | Verify users so their holdings skip approval, or remove selected users from all accounts |
 | `/admin/holdings` | Verify holdings created or changed by unverified users |
 | `/admin/reference/fisheries/[id]` | Stocks, seasons, quota types, rules, and logo |
 
@@ -56,6 +56,8 @@ Public market data (no buyer or seller identity):
 Fisheries and jurisdictions are readable by anonymous visitors. Holding valuation is quantity × most recent `SALE` unit price for that fishery. `fisheries.logo_path` points at a public object in the `fishery-logos` bucket. Platform admins upload, replace, or remove logos.
 
 Open listings must be covered by the seller holding. `adjust_quota_holding` cannot reduce quantity below `holding_committed_quantity`. Uncovered listings from earlier data are cancelled by migration `20260817180000_listing_holding_cover.sql`.
+
+Development fixture `20260817230000_seed_market_catalogue.sql` adds Australian fisheries by jurisdiction, seed organisations and users, holdings, live listings and auctions, and historical trades for fishery price charts. These are test records, not official market data.
 
 `insert_simulated_order` is shared with Phase 7 `create_order` and is not granted to clients.
 
