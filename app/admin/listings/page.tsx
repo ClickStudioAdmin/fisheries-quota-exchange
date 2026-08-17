@@ -46,7 +46,7 @@ export default async function AdminListingsPage() {
           { key: "seller", header: "Seller", sortable: true, filter: "select" },
           {
             key: "type",
-            header: "Type",
+            header: "Listing type",
             sortable: true,
             filter: "select",
             filterOptions: [
@@ -58,7 +58,7 @@ export default async function AdminListingsPage() {
           { key: "stock", header: "Stock", sortable: true },
           {
             key: "offering",
-            header: "Offering",
+            header: "Type",
             sortable: true,
             filter: "select",
             filterOptions: [
@@ -68,6 +68,7 @@ export default async function AdminListingsPage() {
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "price", header: "Price", sortable: true, align: "right" },
+          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -83,7 +84,6 @@ export default async function AdminListingsPage() {
               { value: "REJECTED", label: "Rejected" },
             ],
           },
-          { key: "created", header: "Created", sortable: true },
         ]}
         rows={listings.map((listing) => ({
           id: listing.id,

@@ -84,6 +84,34 @@ function cellContent(row: DataTableRow, key: string) {
   return value;
 }
 
+function hasNode(node: ReactNode): boolean {
+  if (node == null || typeof node === "boolean") {
+    return false;
+  }
+
+  if (typeof node === "string") {
+    return node.trim() !== "";
+  }
+
+  if (typeof node === "number") {
+    return true;
+  }
+
+  if (Array.isArray(node)) {
+    return node.some(hasNode);
+  }
+
+  if (isValidElement(node)) {
+    if (node.type === Fragment) {
+      return hasNode((node.props as { children?: ReactNode }).children);
+    }
+
+    return true;
+  }
+
+  return true;
+}
+
 function collectExtras(children: ReactNode) {
   const extras = new Map<string, ReactElement<DataTableRowExtrasProps>>();
 
@@ -100,6 +128,27 @@ function collectExtras(children: ReactNode) {
   });
 
   return extras;
+}
+
+function extrasColumns(extras: Map<string, ReactElement<DataTableRowExtrasProps>>) {
+  let links = false;
+  let actions = false;
+
+  for (const extra of extras.values()) {
+    const props = extra.props;
+    if (hasNode(props.links)) {
+      links = true;
+    }
+    if (
+      hasNode(props.actions) ||
+      hasNode(props.children) ||
+      hasNode(props.expanded)
+    ) {
+      actions = true;
+    }
+  }
+
+  return { links, actions };
 }
 
 export function TableActions({ children }: { children: ReactNode }) {
@@ -131,6 +180,10 @@ export function DataTable({
   const [sort, setSort] = useState<SortState>(defaultSort ?? null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const extras = useMemo(() => collectExtras(children), [children]);
+  const { links: showLinks, actions: showActions } = useMemo(
+    () => extrasColumns(extras),
+    [extras],
+  );
 
   const selectFilters = columns.filter((column) => {
     if (column.filter !== "select") {
@@ -199,7 +252,8 @@ export function DataTable({
     return <p className="text-sm text-ink-muted">{empty}</p>;
   }
 
-  const columnCount = columns.length + 2;
+  const columnCount =
+    columns.length + (showLinks ? 1 : 0) + (showActions ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -290,18 +344,22 @@ export function DataTable({
                   </th>
                 );
               })}
-              <th
-                scope="col"
-                className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
-              >
-                Links
-              </th>
-              <th
-                scope="col"
-                className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
-              >
-                Actions
-              </th>
+              {showLinks ? (
+                <th
+                  scope="col"
+                  className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
+                >
+                  Links
+                </th>
+              ) : null}
+              {showActions ? (
+                <th
+                  scope="col"
+                  className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
+                >
+                  Actions
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -337,35 +395,39 @@ export function DataTable({
                           {cellContent(row, column.key)}
                         </td>
                       ))}
-                      <td className="min-w-[8rem] px-3 py-3">
-                        {extraProps?.links ? (
-                          <TableActions>{extraProps.links}</TableActions>
-                        ) : (
-                          <span className="text-ink-muted">—</span>
-                        )}
-                      </td>
-                      <td className="min-w-[8rem] px-3 py-3">
-                        <TableActions>
-                          {extraProps?.expanded ? (
-                            <button
-                              type="button"
-                              onClick={() => toggleExpanded(row.id)}
-                              aria-expanded={expanded}
-                              className={tableSecondaryButtonClassName}
-                            >
-                              {expanded
-                                ? "Hide"
-                                : extraProps.expandedLabel ?? "Details"}
-                            </button>
-                          ) : null}
-                          {extraProps?.actions ?? extraProps?.children}
-                          {!extraProps?.expanded &&
-                          !extraProps?.actions &&
-                          !extraProps?.children ? (
+                      {showLinks ? (
+                        <td className="min-w-[8rem] px-3 py-3">
+                          {hasNode(extraProps?.links) ? (
+                            <TableActions>{extraProps?.links}</TableActions>
+                          ) : (
                             <span className="text-ink-muted">—</span>
-                          ) : null}
-                        </TableActions>
-                      </td>
+                          )}
+                        </td>
+                      ) : null}
+                      {showActions ? (
+                        <td className="min-w-[8rem] px-3 py-3">
+                          <TableActions>
+                            {extraProps?.expanded ? (
+                              <button
+                                type="button"
+                                onClick={() => toggleExpanded(row.id)}
+                                aria-expanded={expanded}
+                                className={tableSecondaryButtonClassName}
+                              >
+                                {expanded
+                                  ? "Hide"
+                                  : extraProps.expandedLabel ?? "Details"}
+                              </button>
+                            ) : null}
+                            {extraProps?.actions ?? extraProps?.children}
+                            {!hasNode(extraProps?.expanded) &&
+                            !hasNode(extraProps?.actions) &&
+                            !hasNode(extraProps?.children) ? (
+                              <span className="text-ink-muted">—</span>
+                            ) : null}
+                          </TableActions>
+                        </td>
+                      ) : null}
                     </tr>
                     {extraProps?.expanded && expanded ? (
                       <tr className="border-t border-line">

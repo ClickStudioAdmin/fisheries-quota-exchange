@@ -6,6 +6,7 @@ import { adjustHoldingAction } from "@/lib/fisheries/actions";
 import type { AdminFormState } from "@/lib/fisheries/actions";
 import { QuantityField } from "@/components/quantity-field";
 import { tableButtonClassName } from "@/components/auth-card";
+import { TableModal } from "@/components/table-modal";
 
 const initialState: AdminFormState = {};
 
@@ -78,5 +79,16 @@ export function HoldingActions({
         </button>
       </form>
     </div>
+  );
+}
+
+export function EditHoldingButton({
+  title,
+  ...props
+}: HoldingActionsProps & { title: string }) {
+  return (
+    <TableModal title={title}>
+      {(close) => <HoldingActions {...props} onSaved={close} />}
+    </TableModal>
   );
 }

@@ -63,6 +63,7 @@ export default async function AdminOrdersPage() {
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "amount", header: "Amount", sortable: true, align: "right" },
+          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -77,7 +78,6 @@ export default async function AdminOrdersPage() {
               { value: "CANCELLED", label: "Cancelled" },
             ],
           },
-          { key: "created", header: "Created", sortable: true },
         ]}
         rows={orders.map((order) => ({
           id: order.id,

@@ -12,6 +12,10 @@ function asNumber(value: unknown) {
   return Number.isInteger(parsed) ? parsed : NaN;
 }
 
+function asRows(data: unknown): Record<string, unknown>[] {
+  return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+}
+
 export async function listOpenListingsForFishery(
   fisheryId: number,
 ): Promise<Listing[]> {
@@ -22,7 +26,7 @@ export async function listOpenListingsForFishery(
     p_fishery_id: fisheryId,
   });
 
-  return (data ?? []) as Listing[];
+  return (Array.isArray(data) ? data : []) as Listing[];
 }
 
 export async function listMarketSales(fisheryId: number): Promise<MarketSale[]> {
@@ -32,7 +36,7 @@ export async function listMarketSales(fisheryId: number): Promise<MarketSale[]> 
   const { data } = await supabase.rpc("list_market_sales", {
     p_fishery_id: fisheryId,
   });
-  const rows = (data ?? []) as Record<string, unknown>[];
+  const rows = asRows(data);
 
   return rows.map((row) => ({
     quantity: asText(row.quantity),
@@ -49,7 +53,7 @@ export async function listLatestSalePrices(): Promise<LatestSalePrice[]> {
   if (!supabase) return [];
 
   const { data } = await supabase.rpc("latest_sale_prices");
-  const rows = (data ?? []) as Record<string, unknown>[];
+  const rows = asRows(data);
 
   return rows
     .map((row): LatestSalePrice | null => {

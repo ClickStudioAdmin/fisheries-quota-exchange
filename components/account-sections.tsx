@@ -8,10 +8,9 @@ import {
 import { userFullName, userPhone } from "@/lib/auth/display-name";
 import type { User } from "@supabase/supabase-js";
 import { DataTable, DataTableRowExtras, TableActionRow, tableLinkClassName } from "@/components/data-table";
-import { TableModal } from "@/components/table-modal";
 import { LedgerTable } from "@/components/ledger-table";
 import { HoldingForm } from "@/components/holding-form";
-import { HoldingActions } from "@/components/holding-actions";
+import { EditHoldingButton } from "@/components/holding-actions";
 import {
   listFisheries,
   listHoldingCommitments,
@@ -311,17 +310,13 @@ export async function AccountHoldingsSection({
               }
               actions={
                 canManage ? (
-                  <TableModal title={`Edit ${fishery?.name ?? "holding"}`}>
-                    {(close) => (
-                      <HoldingActions
-                        holdingId={holding.id}
-                        quantity={holding.quantity}
-                        unitLabel={unit}
-                        minQuantity={String(listed)}
-                        onSaved={close}
-                      />
-                    )}
-                  </TableModal>
+                  <EditHoldingButton
+                    title={`Edit ${fishery?.name ?? "holding"}`}
+                    holdingId={holding.id}
+                    quantity={holding.quantity}
+                    unitLabel={unit}
+                    minQuantity={String(listed)}
+                  />
                 ) : null
               }
             />
@@ -370,7 +365,7 @@ export async function AccountListingsSection({
         columns={[
           {
             key: "type",
-            header: "Type",
+            header: "Listing type",
             sortable: true,
             filter: "select",
             filterOptions: [
@@ -381,7 +376,7 @@ export async function AccountListingsSection({
           { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           {
             key: "offering",
-            header: "Offering",
+            header: "Type",
             sortable: true,
             filter: "select",
             filterOptions: [
@@ -391,6 +386,7 @@ export async function AccountListingsSection({
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           { key: "price", header: "Price", sortable: true, align: "right" },
+          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -406,7 +402,6 @@ export async function AccountListingsSection({
               { value: "REJECTED", label: "Rejected" },
             ],
           },
-          { key: "created", header: "Created", sortable: true },
         ]}
         rows={listings.map((listing) => ({
           id: listing.id,
@@ -516,6 +511,7 @@ export async function AccountOrdersSection({
             ],
           },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
+          { key: "created", header: "Created", sortable: true },
           {
             key: "status",
             header: "Status",
@@ -530,7 +526,6 @@ export async function AccountOrdersSection({
               { value: "CANCELLED", label: "Cancelled" },
             ],
           },
-          { key: "created", header: "Created", sortable: true },
         ]}
         rows={orders.map((order) => {
           const side =
