@@ -56,7 +56,7 @@ export default async function AdminUsersPage() {
         }}
         columns={[
           { key: "name", header: "Name", sortable: true, details: true, nowrap: true },
-          { key: "email", header: "Email", sortable: true },
+          { key: "email", header: "Email", sortable: true, nowrap: true },
           {
             key: "listings",
             header: "Listings",

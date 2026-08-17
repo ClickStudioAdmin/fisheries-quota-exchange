@@ -88,7 +88,7 @@ const actionFilterActiveClassName =
   "border border-amber-800 bg-amber-800 px-3 py-2 text-sm font-medium text-amber-50";
 
 function columnWidthClass(column: DataTableColumn) {
-  return column.nowrap ? "min-w-[16rem] whitespace-nowrap" : "";
+  return column.nowrap ? "whitespace-nowrap" : "";
 }
 
 function compareValues(a: string | number | undefined, b: string | number | undefined) {
@@ -581,9 +581,7 @@ export function DataTable({
                           ? "descending"
                           : "none"
                     }
-                    className={`whitespace-nowrap px-3 py-2 font-medium ${aligned} ${
-                      column.nowrap ? "min-w-[16rem]" : ""
-                    }`.trim()}
+                    className={`whitespace-nowrap px-3 py-2 font-medium ${aligned} ${columnWidthClass(column)}`.trim()}
                   >
                     {column.sortable ? (
                       <button
@@ -613,7 +611,7 @@ export function DataTable({
               {showActions ? (
                 <th
                   scope="col"
-                  className="min-w-[8rem] whitespace-nowrap px-3 py-2 font-medium"
+                  className="min-w-[14rem] whitespace-nowrap px-3 py-2 font-medium"
                 >
                   Actions
                 </th>
@@ -682,7 +680,7 @@ export function DataTable({
                         </td>
                       ) : null}
                       {showActions ? (
-                        <td className="min-w-[8rem] px-3 py-3">
+                        <td className="min-w-[14rem] whitespace-nowrap px-3 py-3">
                           <TableActions>
                             {extraProps?.expanded ? (
                               <button
