@@ -105,7 +105,12 @@ export default async function AdminOrdersPage() {
             key={order.id}
             id={order.id}
             links={
-              <Link href={`/orders/${order.id}`} className={tableLinkClassName}>
+              <Link
+                href={`/orders/${order.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
                 View
               </Link>
             }

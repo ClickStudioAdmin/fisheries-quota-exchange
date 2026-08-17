@@ -15,6 +15,7 @@ import {
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
+import { StatusBadge, isStatusColumn } from "@/components/status-badge";
 import {
   ListPager,
   listRangeLabel,
@@ -89,18 +90,25 @@ function uniqueValues(rows: DataTableRow[], key: string) {
     .sort((a, b) => a.localeCompare(b, "en", { numeric: true, sensitivity: "base" }));
 }
 
-function cellContent(row: DataTableRow, key: string) {
-  const displayed = row.display?.[key];
-  if (displayed != null && displayed !== "") {
-    return displayed;
+function cellContent(row: DataTableRow, column: DataTableColumn) {
+  const displayed = row.display?.[column.key];
+  const value = row.values[column.key];
+  const label =
+    displayed != null && displayed !== ""
+      ? displayed
+      : value == null || value === ""
+        ? ""
+        : String(value);
+
+  if (isStatusColumn(column.key, column.header)) {
+    return <StatusBadge label={label || "—"} code={value} />;
   }
 
-  const value = row.values[key];
-  if (value == null || value === "") {
+  if (!label) {
     return "—";
   }
 
-  return value;
+  return label;
 }
 
 function hasNode(node: ReactNode): boolean {
@@ -541,7 +549,7 @@ export function DataTable({
                             column.align === "right" ? "text-right" : ""
                           }`}
                         >
-                          {cellContent(row, column.key)}
+                          {cellContent(row, column)}
                         </td>
                       ))}
                       {showLinks ? (

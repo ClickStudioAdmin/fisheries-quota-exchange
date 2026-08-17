@@ -38,6 +38,8 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 | `/admin/holdings/[id]` | Admin-only holding record, including the immutable quota ledger |
 | `/admin/reference/fisheries/[id]` | Same fields as create: jurisdiction, name, code, quantity type, and logo |
 
+Admin **Admin** and account **Dashboard** header links, plus matching sidebar items, show a count badge when action is required: unverified users, holdings pending verification, listings pending approval, orders awaiting compliance/transfer/settlement, and (for members) ended auctions that still need closing.
+
 ## Database
 
 `listings.listing_type` may be `FIXED_PRICE` or `AUCTION`. Auction rows add starting price, increment, optional reserve, and `starts_at`. End time reuses `expires_at`.

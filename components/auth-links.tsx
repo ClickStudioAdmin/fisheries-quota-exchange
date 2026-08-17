@@ -1,25 +1,61 @@
 import Link from "next/link";
 import { logoutAction } from "@/lib/auth/actions";
 import { MemberIcon } from "@/components/member-icon";
+import { NavBadge } from "@/components/nav-badge";
 
 type AuthLinksProps = {
   email: string | null;
   name?: string | null;
   showAdmin?: boolean;
+  adminBadge?: number;
+  dashboardBadge?: number;
 };
 
-export function AuthLinks({ email, name, showAdmin = false }: AuthLinksProps) {
+function NavTextLink({
+  href,
+  children,
+  badge,
+}: {
+  href: string;
+  children: string;
+  badge?: number;
+}) {
+  const count = badge ?? 0;
+
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1.5 text-paper/75 hover:text-paper"
+      aria-label={
+        count > 0
+          ? `${children}, ${count} ${count === 1 ? "action" : "actions"} required`
+          : undefined
+      }
+    >
+      {children}
+      <NavBadge count={count} tone="onDark" />
+    </Link>
+  );
+}
+
+export function AuthLinks({
+  email,
+  name,
+  showAdmin = false,
+  adminBadge = 0,
+  dashboardBadge = 0,
+}: AuthLinksProps) {
   if (email) {
     return (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         {showAdmin ? (
-          <Link href="/admin" className="text-paper/75 hover:text-paper">
+          <NavTextLink href="/admin" badge={adminBadge}>
             Admin
-          </Link>
+          </NavTextLink>
         ) : null}
-        <Link href="/dashboard" className="text-paper/75 hover:text-paper">
+        <NavTextLink href="/dashboard" badge={dashboardBadge}>
           Dashboard
-        </Link>
+        </NavTextLink>
         <span className="flex items-center gap-2 text-paper">
           <MemberIcon className="h-5 w-5 shrink-0" />
           <span className="max-w-40 truncate" title={email}>

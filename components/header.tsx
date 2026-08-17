@@ -2,13 +2,19 @@ import { AuthLinks } from "@/components/auth-links";
 import { Logo } from "@/components/logo";
 import { Nav } from "@/components/nav";
 import { pageWidthClassName } from "@/components/surface";
-import { canSeeAdmin } from "@/lib/admin/access";
+import { canSeeAdmin, isPlatformAdmin } from "@/lib/admin/access";
 import { displayName } from "@/lib/auth/display-name";
+import { getAdminActionCounts, getMemberActionCounts } from "@/lib/nav/action-counts";
 import { getUser } from "@/lib/supabase/server";
 
 export async function Header() {
   const user = await getUser();
   const showAdmin = user ? await canSeeAdmin() : false;
+  const admin = user ? await isPlatformAdmin() : false;
+  const [adminCounts, memberCounts] = await Promise.all([
+    admin ? getAdminActionCounts() : Promise.resolve(null),
+    user ? getMemberActionCounts() : Promise.resolve(null),
+  ]);
 
   return (
     <header className="shrink-0 bg-ink text-paper">
@@ -21,6 +27,8 @@ export async function Header() {
           email={user?.email ?? null}
           name={user ? displayName(user) : null}
           showAdmin={showAdmin}
+          adminBadge={adminCounts?.total ?? 0}
+          dashboardBadge={memberCounts?.total ?? 0}
         />
       </div>
     </header>

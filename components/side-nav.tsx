@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { NavBadge } from "@/components/nav-badge";
 
 export type SideNavLink = {
   href: string;
@@ -11,6 +12,7 @@ export type SideNavLink = {
   accountId?: number;
   isDefault?: boolean;
   alsoMatch?: string[];
+  badge?: number;
 };
 
 export type SideNavGroup = {
@@ -120,8 +122,8 @@ function itemHref(
 
 function navLinkClassName(active: boolean) {
   return active
-    ? "block bg-paper px-3 py-2 font-medium text-ink"
-    : "block px-3 py-2 text-ink-muted hover:bg-paper hover:text-ink";
+    ? "flex items-center justify-between gap-2 bg-paper px-3 py-2 font-medium text-ink"
+    : "flex items-center justify-between gap-2 px-3 py-2 text-ink-muted hover:bg-paper hover:text-ink";
 }
 
 function NavLink({
@@ -134,16 +136,27 @@ function NavLink({
   accountParam: string | null;
 }) {
   const active = isActive(pathname, accountParam, item);
+  const count = item.badge ?? 0;
 
   return (
     <Link
       href={itemHref(item, pathname, accountParam)}
       className={navLinkClassName(active)}
       aria-current={active ? "page" : undefined}
+      aria-label={
+        count > 0
+          ? `${item.label}, ${count} ${count === 1 ? "action" : "actions"} required`
+          : undefined
+      }
     >
-      {item.label}
+      <span>{item.label}</span>
+      <NavBadge count={count} />
     </Link>
   );
+}
+
+function groupBadge(item: SideNavGroup) {
+  return item.children.reduce((sum, child) => sum + (child.badge ?? 0), 0);
 }
 
 function NavGroup({
@@ -159,6 +172,7 @@ function NavGroup({
     isActive(pathname, accountParam, child),
   );
   const [open, setOpen] = useState(childActive);
+  const count = groupBadge(item);
 
   useEffect(() => {
     if (childActive) {
@@ -174,11 +188,14 @@ function NavGroup({
         onClick={() => setOpen((value) => !value)}
         className={
           childActive
-            ? "flex w-full items-center justify-between px-3 py-2 text-left font-medium text-ink"
-            : "flex w-full items-center justify-between px-3 py-2 text-left text-ink-muted hover:bg-paper hover:text-ink"
+            ? "flex w-full items-center justify-between gap-2 px-3 py-2 text-left font-medium text-ink"
+            : "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-ink-muted hover:bg-paper hover:text-ink"
         }
       >
-        <span>{item.label}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span>{item.label}</span>
+          <NavBadge count={count} />
+        </span>
         <span aria-hidden className="text-xs">
           {open ? "▾" : "▸"}
         </span>
