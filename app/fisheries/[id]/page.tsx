@@ -11,6 +11,7 @@ import {
   listMarketSales,
   listOpenListingsForFishery,
 } from "@/lib/market/queries";
+import type { MarketSale } from "@/lib/market/types";
 
 type FisheryPageProps = {
   params: Promise<{ id: string }>;
@@ -54,12 +55,17 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
   );
   const unit = quantityTypeLabel(fishery.quantity_type);
   const lastSale = sales[sales.length - 1];
-  const volume = sales.reduce((sum, sale) => sum + Number(sale.quantity), 0);
+  const volume = sales.reduce(
+    (sum: number, sale: MarketSale) => sum + Number(sale.quantity),
+    0,
+  );
   const average =
     sales.length === 0
       ? null
-      : sales.reduce((sum, sale) => sum + Number(sale.unit_price_aud), 0) /
-        sales.length;
+      : sales.reduce(
+          (sum: number, sale: MarketSale) => sum + Number(sale.unit_price_aud),
+          0,
+        ) / sales.length;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
