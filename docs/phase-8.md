@@ -59,7 +59,7 @@ Functions:
 - `update_platform_settings` (platform admin only)
 - `registrations_allowed` (anon and authenticated)
 
-`platform_settings` is a singleton. Sale and lease fees are percentages recorded on simulated orders (`orders.fee_percent`, `orders.fee_amount_aud`). There is no live payment. `allow_registrations` blocks `/register` and `signUp` when off. `auto_approve_holdings` and `auto_approve_listings` apply only to `verified_users`. Defaults: registrations on, auto-approve holdings on, auto-approve listings off, fees 0.
+`platform_settings` is a singleton. Sale and lease fees are percentages recorded on simulated orders (`orders.fee_percent`, `orders.fee_amount_aud`) at insert and do not change later. Orders that still had a zero fee are backfilled once from the current settings. There is no live payment. `allow_registrations` blocks `/register` and `signUp` when off. `auto_approve_holdings` and `auto_approve_listings` apply only to `verified_users`. Defaults: registrations on, auto-approve holdings on, auto-approve listings off, fees 0.
 
 Public market data (no buyer or seller identity):
 

@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 
 export const panelClassName = "border border-line bg-paper-raised p-5";
 
-export const pageWidthClassName = "mx-auto w-full max-w-[90rem] px-4 sm:px-6";
+export const pageWidthClassName =
+  "mx-auto w-full max-w-[min(100rem,96vw)] px-4 sm:px-6 lg:px-8";
 
 export const cardClassName =
   `${panelClassName} transition-colors hover:border-sea`;

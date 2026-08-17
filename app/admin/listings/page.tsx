@@ -135,21 +135,11 @@ export default async function AdminListingsPage() {
               listing.status === "PENDING_APPROVAL" ? (
                 <TableModal title="Review listing" label="Review">
                   <div className="space-y-4">
-                    <form action={approveListingAction} className="space-y-3">
+                    <form
+                      id={`approve-listing-${listing.id}`}
+                      action={approveListingAction}
+                    >
                       <input type="hidden" name="listing_id" value={listing.id} />
-                      <div>
-                        <label
-                          htmlFor={`approve-note-${listing.id}`}
-                          className="block text-sm text-ink"
-                        >
-                          Note (optional)
-                        </label>
-                        <input
-                          id={`approve-note-${listing.id}`}
-                          name="review_note"
-                          className={fieldClassName}
-                        />
-                      </div>
                       <button type="submit" className={tableButtonClassName}>
                         Approve
                       </button>
@@ -176,6 +166,20 @@ export default async function AdminListingsPage() {
                         Reject
                       </button>
                     </form>
+                    <div>
+                      <label
+                        htmlFor={`approve-note-${listing.id}`}
+                        className="block text-sm text-ink"
+                      >
+                        Note (optional)
+                      </label>
+                      <input
+                        id={`approve-note-${listing.id}`}
+                        name="review_note"
+                        form={`approve-listing-${listing.id}`}
+                        className={fieldClassName}
+                      />
+                    </div>
                   </div>
                 </TableModal>
               ) : null
