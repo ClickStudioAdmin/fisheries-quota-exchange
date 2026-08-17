@@ -305,10 +305,10 @@ export function DataTable({
           ? `${rows.length} ${rows.length === 1 ? "row" : "rows"}`
           : `${visible.length} of ${rows.length} rows`}
       </p>
-      <div className="overflow-x-auto border border-line">
+      <div className="overflow-x-auto border border-line bg-paper-raised">
         <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
           <caption className="sr-only">{caption}</caption>
-          <thead className="bg-paper-raised text-xs uppercase tracking-[0.12em] text-ink-muted">
+          <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-muted">
             <tr>
               {columns.map((column) => {
                 const aligned = column.align === "right" ? "text-right" : "text-left";
@@ -378,7 +378,7 @@ export function DataTable({
                 const extraProps = extra?.props;
                 const expanded = Boolean(openIds[String(row.id)]);
                 const striped =
-                  index % 2 === 0 ? "bg-paper" : "bg-paper-stripe";
+                  index % 2 === 0 ? "bg-paper-raised" : "bg-paper-stripe";
 
                 return (
                   <Fragment key={row.id}>

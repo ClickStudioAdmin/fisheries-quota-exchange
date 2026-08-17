@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/fisheries", label: "Fisheries" },
   { href: "/marketplace", label: "Marketplace" },
+  { href: "/fisheries", label: "Fisheries" },
 ];
 
 function isActive(pathname: string, href: string) {

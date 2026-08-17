@@ -189,7 +189,7 @@ export async function AccountHoldingsSection({
             : "Owners and admins can create and update holdings for this account."}
         </p>
         {holdings.length > 0 ? (
-          <div className="mt-4 border border-line p-4">
+          <div className="mt-4 border border-line bg-paper-raised p-4">
             <p className="text-sm text-ink-muted">Portfolio value</p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-ink">
               {formatAud(portfolioValue)}

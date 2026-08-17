@@ -1,58 +1,81 @@
 "use client";
 
-"use client";
-
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import { AuctionCard } from "@/components/auction-card";
+import { OfferCard } from "@/components/offer-card";
+import { formatTableDateTime } from "@/lib/format";
 import {
-  formatAud,
-  listingOfferingLabel,
   listingTypeLabel,
   type Listing,
   type ListingType,
 } from "@/lib/listings/types";
-import { AuctionCard } from "@/components/auction-card";
 
 type ListingCardProps = {
   listing: Listing;
+  hideFishery?: boolean;
+  hideOffering?: boolean;
+  fisheryId?: number | null;
 };
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({
+  listing,
+  hideFishery,
+  hideOffering,
+  fisheryId,
+}: ListingCardProps) {
   return (
-    <Link
+    <OfferCard
+      listing={listing}
       href={`/marketplace/${listing.id}`}
-      className="block border border-line p-4 hover:bg-paper-raised"
-    >
-      <p className="font-medium text-ink">
-        {listing.fishery_name} · {listing.stock_name}
-      </p>
-      <p className="mt-1 text-sm text-ink-muted">
-        {listingTypeLabel(listing.listing_type)} ·{" "}
-        {listingOfferingLabel(listing.offering)} · {listing.quantity}{" "}
-        {listing.unit_label} · {formatAud(listing.unit_price_aud)} /{" "}
-        {listing.unit_label}
-      </p>
-      <p className="mt-1 text-sm text-ink-muted">
-        {listing.seller_name} · {listing.season_name}
-      </p>
-    </Link>
+      hideFishery={hideFishery}
+      hideOffering={hideOffering}
+      fisheryId={fisheryId}
+      extraFields={[
+        { label: "Expires", value: formatTableDateTime(listing.expires_at) },
+      ]}
+    />
   );
 }
 
-export function MarketplaceListingCard({ listing }: ListingCardProps) {
+export function MarketplaceListingCard({
+  listing,
+  hideFishery,
+  hideOffering,
+  fisheryId,
+}: ListingCardProps) {
   if (listing.listing_type === "AUCTION") {
-    return <AuctionCard listing={listing} />;
+    return (
+      <AuctionCard
+        listing={listing}
+        hideFishery={hideFishery}
+        hideOffering={hideOffering}
+        fisheryId={fisheryId}
+      />
+    );
   }
 
-  return <ListingCard listing={listing} />;
+  return (
+    <ListingCard
+      listing={listing}
+      hideFishery={hideFishery}
+      hideOffering={hideOffering}
+      fisheryId={fisheryId}
+    />
+  );
 }
 
 export function ListingCards({
   listings,
   empty,
+  hideFishery,
+  hideOffering,
+  fisheryIds,
 }: {
   listings: Listing[];
   empty: string;
+  hideFishery?: boolean;
+  hideOffering?: boolean;
+  fisheryIds?: Map<string, number>;
 }) {
   if (listings.length === 0) {
     return <p className="text-sm text-ink-muted">{empty}</p>;
@@ -61,7 +84,13 @@ export function ListingCards({
   return (
     <div className="space-y-3">
       {listings.map((listing) => (
-        <MarketplaceListingCard key={listing.id} listing={listing} />
+        <MarketplaceListingCard
+          key={listing.id}
+          listing={listing}
+          hideFishery={hideFishery}
+          hideOffering={hideOffering}
+          fisheryId={fisheryIds?.get(listing.fishery_name) ?? null}
+        />
       ))}
     </div>
   );
@@ -115,7 +144,12 @@ export function FisheryOfferingSection({
         </label>
       </div>
       <div className="mt-4">
-        <ListingCards listings={visible} empty={empty} />
+        <ListingCards
+          listings={visible}
+          empty={empty}
+          hideFishery
+          hideOffering
+        />
       </div>
     </section>
   );

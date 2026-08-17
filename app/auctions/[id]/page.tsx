@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
+import { buttonClassName } from "@/components/auth-card";
+import { LabeledFields, panelClassName } from "@/components/surface";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
 import {
@@ -10,13 +12,13 @@ import {
   minimumBid,
 } from "@/lib/auctions/types";
 import { cancelListingAction } from "@/lib/listings/actions";
+import { listFisheries } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
-import { formatAud } from "@/lib/listings/types";
+import { formatAud, listingOfferingLabel, listingStatusLabel, listingTypeLabel } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
-import { buttonClassName } from "@/components/auth-card";
 
 export const metadata = {
   title: "Auction",
@@ -41,10 +43,12 @@ export default async function AuctionPage({
   }
 
   const listing = await ensureAuctionClosed(initial);
-  const [bids, order] = await Promise.all([
+  const [bids, order, fisheries] = await Promise.all([
     listBids(listing.id),
     getOrderForListing(listing.id),
+    listFisheries(),
   ]);
+  const fishery = fisheries.find((item) => item.name === listing.fishery_name);
   const user = await getUser();
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
@@ -74,69 +78,58 @@ export default async function AuctionPage({
         {listing.fishery_name}
       </h1>
       <p className="mt-2 text-ink-muted">
-        {listing.stock_name} · {listing.season_name} · {listing.quota_type_name}{" "}
-        ({listing.measurement_kind})
+        {listingTypeLabel(listing.listing_type)}
+        {fishery ? (
+          <>
+            {" "}
+            ·{" "}
+            <Link href={`/fisheries/${fishery.id}`} className="underline">
+              View fishery
+            </Link>
+          </>
+        ) : null}
       </p>
-      <dl className="mt-8 grid max-w-lg gap-3 text-sm">
-        <div>
-          <dt className="text-ink-muted">Seller</dt>
-          <dd className="text-ink">{listing.seller_name}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Offering</dt>
-          <dd className="text-ink">{listing.offering}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Quantity</dt>
-          <dd className="text-ink">
-            {listing.quantity} {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Current price</dt>
-          <dd className="text-ink">
-            {formatAud(listing.unit_price_aud)} per {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Starting price</dt>
-          <dd className="text-ink">
-            {formatAud(listing.starting_price_aud ?? listing.unit_price_aud)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Increment</dt>
-          <dd className="text-ink">
-            {formatAud(listing.bid_increment_aud ?? 0)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Reserve</dt>
-          <dd className="text-ink">
-            {listing.reserve_price_aud
-              ? formatAud(listing.reserve_price_aud)
-              : "None"}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Status</dt>
-          <dd className="text-ink">{listing.status}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Starts</dt>
-          <dd className="text-ink">
-            {listing.starts_at
-              ? new Date(listing.starts_at).toLocaleString("en-AU")
-              : "—"}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Ends</dt>
-          <dd className="text-ink">
-            {new Date(listing.expires_at).toLocaleString("en-AU")}
-          </dd>
-        </div>
-      </dl>
+      <div className={`mt-8 max-w-lg ${panelClassName}`}>
+        <LabeledFields
+          items={[
+            { label: "Seller", value: listing.seller_name },
+            { label: "Type", value: listingOfferingLabel(listing.offering) },
+            {
+              label: "Quantity",
+              value: `${listing.quantity} ${listing.unit_label}`,
+            },
+            {
+              label: "Current price",
+              value: `${formatAud(listing.unit_price_aud)} per ${listing.unit_label}`,
+            },
+            {
+              label: "Starting price",
+              value: formatAud(listing.starting_price_aud ?? listing.unit_price_aud),
+            },
+            {
+              label: "Increment",
+              value: formatAud(listing.bid_increment_aud ?? 0),
+            },
+            {
+              label: "Reserve",
+              value: listing.reserve_price_aud
+                ? formatAud(listing.reserve_price_aud)
+                : "None",
+            },
+            { label: "Status", value: listingStatusLabel(listing.status) },
+            {
+              label: "Starts",
+              value: listing.starts_at
+                ? new Date(listing.starts_at).toLocaleString("en-AU")
+                : "—",
+            },
+            {
+              label: "Ends",
+              value: new Date(listing.expires_at).toLocaleString("en-AU"),
+            },
+          ]}
+        />
+      </div>
       {listing.status === "PUBLISHED" && live ? (
         <div className="mt-8">
           {!user ? (
@@ -217,19 +210,27 @@ export default async function AuctionPage({
           </button>
         </form>
       ) : null}
-      <section className="mt-10">
+      <section className="mt-10 max-w-lg">
         <h2 className="text-xl font-semibold text-ink">Bids</h2>
         {bids.length === 0 ? (
           <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
         ) : (
-          <ul className="mt-3 space-y-2 text-sm text-ink-muted">
+          <div className={`mt-3 space-y-3 ${panelClassName}`}>
             {bids.map((bid) => (
-              <li key={bid.id}>
-                {formatAud(bid.amount_aud)} · {bid.bidder_name} ·{" "}
-                {new Date(bid.created_at).toLocaleString("en-AU")}
-              </li>
+              <div key={bid.id} className="border-b border-line pb-3 last:border-b-0 last:pb-0">
+                <LabeledFields
+                  items={[
+                    { label: "Bid", value: formatAud(bid.amount_aud) },
+                    { label: "Bidder", value: bid.bidder_name },
+                    {
+                      label: "Time",
+                      value: new Date(bid.created_at).toLocaleString("en-AU"),
+                    },
+                  ]}
+                />
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </section>
     </div>

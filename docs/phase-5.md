@@ -22,7 +22,7 @@ There are no listings, auctions, or payments in this phase.
 | `quota_holdings` | Organisation holding of a fishery |
 | `quota_ledger` | Immutable quantity events |
 
-Australian jurisdictions are seeded. A development fixture migration also adds `DEV-` fisheries, stocks, seasons and quota types. These are test records, not official regulatory data.
+Australian jurisdictions are seeded. A development fixture migration also adds fisheries, stocks, seasons and quota types with `DEV-` codes. These are test records, not official regulatory data. Migration `20260817210000_strip_dev_fishery_names.sql` removes the `DEV` prefix from fishery names.
 
 ## Ledger
 

@@ -60,7 +60,7 @@ export function TableModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="w-full max-w-md border border-line bg-paper p-6"
+            className="w-full max-w-md border border-line bg-paper-raised p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">

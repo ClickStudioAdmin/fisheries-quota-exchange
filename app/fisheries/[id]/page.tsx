@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { FisheryOfferings } from "@/components/listing-card";
 import { FisheryLogo } from "@/components/fishery-logo";
 import { PriceChart } from "@/components/price-chart";
+import { panelClassName, statClassName } from "@/components/surface";
 import { getFishery, listJurisdictions } from "@/lib/fisheries/queries";
 import { quantityTypeLabel } from "@/lib/fisheries/types";
 import { formatTableDate } from "@/lib/format";
@@ -12,7 +13,7 @@ import {
   listMarketSales,
   listOpenListingsForFishery,
 } from "@/lib/market/queries";
-import type { MarketSale } from "@/lib/market/types";
+import { averageRecentUnitPrice, type MarketSale } from "@/lib/market/types";
 
 type FisheryPageProps = {
   params: Promise<{ id: string }>;
@@ -59,17 +60,12 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
   const leases = trades.filter((trade) => trade.offering === "LEASE");
   const lastSale = sales[sales.length - 1];
   const lastLease = leases[leases.length - 1];
+  const averageSale = averageRecentUnitPrice(sales);
+  const averageLease = averageRecentUnitPrice(leases);
   const volume = sales.reduce(
     (sum: number, sale: MarketSale) => sum + Number(sale.quantity),
     0,
   );
-  const average =
-    sales.length === 0
-      ? null
-      : sales.reduce(
-          (sum: number, sale: MarketSale) => sum + Number(sale.unit_price_aud),
-          0,
-        ) / sales.length;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
@@ -93,9 +89,9 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </div>
 
-      <dl className="mt-8 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        <div className="border border-line p-4">
-          <dt className="text-ink-muted">Last sale</dt>
+      <dl className="mt-8 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+        <div className={statClassName}>
+          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Last sale</dt>
           <dd className="mt-1 text-ink">
             {lastSale
               ? `${formatAud(lastSale.unit_price_aud)} / ${unit}`
@@ -107,8 +103,8 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
             </dd>
           ) : null}
         </div>
-        <div className="border border-line p-4">
-          <dt className="text-ink-muted">Last lease</dt>
+        <div className={statClassName}>
+          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Last lease</dt>
           <dd className="mt-1 text-ink">
             {lastLease
               ? `${formatAud(lastLease.unit_price_aud)} / ${unit}`
@@ -120,14 +116,22 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
             </dd>
           ) : null}
         </div>
-        <div className="border border-line p-4">
-          <dt className="text-ink-muted">Average sale</dt>
+        <div className={statClassName}>
+          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Average sale</dt>
           <dd className="mt-1 text-ink">
-            {average != null ? `${formatAud(average)} / ${unit}` : "—"}
+            {averageSale != null ? `${formatAud(averageSale)} / ${unit}` : "—"}
           </dd>
+          <dd className="mt-1 text-ink-muted">Last 5</dd>
         </div>
-        <div className="border border-line p-4">
-          <dt className="text-ink-muted">Volume traded</dt>
+        <div className={statClassName}>
+          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Average lease</dt>
+          <dd className="mt-1 text-ink">
+            {averageLease != null ? `${formatAud(averageLease)} / ${unit}` : "—"}
+          </dd>
+          <dd className="mt-1 text-ink-muted">Last 5</dd>
+        </div>
+        <div className={statClassName}>
+          <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">Volume traded</dt>
           <dd className="mt-1 text-ink">
             {sales.length === 0
               ? "—"
@@ -138,12 +142,14 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </dl>
 
+      <FisheryOfferings listings={offers} />
+
       <section className="mt-12">
         <h2 className="text-xl font-semibold text-ink">Sale prices</h2>
         <p className="mt-2 text-sm text-ink-muted">
           Completed and in-progress sales. Leases are not included.
         </p>
-        <div className="mt-4">
+        <div className={`mt-4 ${panelClassName}`}>
           <PriceChart
             points={sales
               .map((sale) => ({
@@ -155,8 +161,6 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
           />
         </div>
       </section>
-
-      <FisheryOfferings listings={offers} />
     </div>
   );
 }

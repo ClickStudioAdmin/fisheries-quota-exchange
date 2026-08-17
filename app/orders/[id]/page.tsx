@@ -8,7 +8,8 @@ import {
   listOrderAuditEvents,
 } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
-import { formatAud } from "@/lib/listings/types";
+import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
+import { LabeledFields, panelClassName } from "@/components/surface";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getMyRole } from "@/lib/organisations/queries";
 import { getUser } from "@/lib/supabase/server";
@@ -58,46 +59,36 @@ export default async function OrderPage({
         Order {order.id}
       </h1>
       <p className="mt-2 text-ink-muted">{orderStatusLabel(order.status)}</p>
-      <dl className="mt-8 grid max-w-lg gap-3 text-sm">
-        <div>
-          <dt className="text-ink-muted">Listing</dt>
-          <dd className="text-ink">
-            <Link href={`/marketplace/${order.listing_id}`} className="underline">
-              {order.fishery_name}
-            </Link>
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Offering</dt>
-          <dd className="text-ink">{order.offering}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Seller</dt>
-          <dd className="text-ink">{order.seller_name}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Buyer</dt>
-          <dd className="text-ink">{order.buyer_name}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Quantity</dt>
-          <dd className="text-ink">
-            {order.quantity} {order.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Simulated amount</dt>
-          <dd className="text-ink">{formatAud(order.amount_aud)}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Quota reservation</dt>
-          <dd className="text-ink">{reservation?.status ?? "None"}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Settlement simulation</dt>
-          <dd className="text-ink">{transaction?.status ?? "None"}</dd>
-        </div>
-      </dl>
+      <div className={`mt-8 max-w-lg ${panelClassName}`}>
+        <LabeledFields
+          items={[
+            {
+              label: "Listing",
+              value: (
+                <Link href={`/marketplace/${order.listing_id}`} className="underline">
+                  {order.fishery_name}
+                </Link>
+              ),
+            },
+            { label: "Type", value: listingOfferingLabel(order.offering) },
+            { label: "Seller", value: order.seller_name },
+            { label: "Buyer", value: order.buyer_name },
+            {
+              label: "Quantity",
+              value: `${order.quantity} ${order.unit_label}`,
+            },
+            { label: "Simulated amount", value: formatAud(order.amount_aud) },
+            {
+              label: "Quota reservation",
+              value: reservation?.status ?? "None",
+            },
+            {
+              label: "Settlement simulation",
+              value: transaction?.status ?? "None",
+            },
+          ]}
+        />
+      </div>
       {order.review_note ? (
         <p className="mt-6 text-sm text-ink-muted">Note: {order.review_note}</p>
       ) : null}

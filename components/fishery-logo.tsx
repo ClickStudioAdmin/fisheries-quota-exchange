@@ -14,7 +14,7 @@ type FisheryLogoProps = {
 
 export function FisheryLogo({ fishery, size = "md" }: FisheryLogoProps) {
   const url = fisheryLogoUrl(fishery.logo_path);
-  const frame = `shrink-0 overflow-hidden border border-line bg-paper-raised ${sizeClassName[size]}`;
+  const frame = `shrink-0 overflow-hidden border border-line bg-paper ${sizeClassName[size]}`;
 
   if (!url) {
     return (

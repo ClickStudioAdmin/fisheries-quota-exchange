@@ -20,3 +20,19 @@ export function marketValue(
   const value = Number(quantity) * Number(unitPrice);
   return Number.isFinite(value) ? value : null;
 }
+
+export function averageRecentUnitPrice(
+  trades: { unit_price_aud: string }[],
+  limit = 5,
+) {
+  const recent = trades.slice(-limit);
+  const prices = recent
+    .map((trade) => Number(trade.unit_price_aud))
+    .filter((price) => Number.isFinite(price));
+
+  if (prices.length === 0) {
+    return null;
+  }
+
+  return prices.reduce((sum, price) => sum + price, 0) / prices.length;
+}

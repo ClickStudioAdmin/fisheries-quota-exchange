@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MarketplaceList } from "@/components/marketplace-list";
 import { PageIntro } from "@/components/page-intro";
+import { listFisheries } from "@/lib/fisheries/queries";
 import { listMarketplaceListings } from "@/lib/listings/queries";
 
 export const metadata: Metadata = {
@@ -8,7 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default async function MarketplacePage() {
-  const listings = await listMarketplaceListings();
+  const [listings, fisheries] = await Promise.all([
+    listMarketplaceListings(),
+    listFisheries(),
+  ]);
 
   return (
     <>
@@ -23,7 +27,7 @@ export default async function MarketplacePage() {
         {listings.length === 0 ? (
           <p className="text-ink-muted">No published listings at the moment.</p>
         ) : (
-          <MarketplaceList listings={listings} />
+          <MarketplaceList listings={listings} fisheries={fisheries} />
         )}
       </div>
     </>

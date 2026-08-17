@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
+import { LabeledFields, panelClassName } from "@/components/surface";
 import { cancelListingAction } from "@/lib/listings/actions";
+import { listFisheries } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
-import { formatAud } from "@/lib/listings/types";
+import {
+  formatAud,
+  listingOfferingLabel,
+  listingStatusLabel,
+  listingTypeLabel,
+} from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getUser } from "@/lib/supabase/server";
@@ -34,7 +41,11 @@ export default async function ListingPage({
     redirect(`/auctions/${listing.id}`);
   }
 
-  const user = await getUser();
+  const [user, fisheries] = await Promise.all([
+    getUser(),
+    listFisheries(),
+  ]);
+  const fishery = fisheries.find((item) => item.name === listing.fishery_name);
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
   const organisations = user ? await listMyOrganisations() : [];
@@ -61,44 +72,41 @@ export default async function ListingPage({
         {listing.fishery_name}
       </h1>
       <p className="mt-2 text-ink-muted">
-        {listing.stock_name} · {listing.season_name} · {listing.quota_type_name}{" "}
-        ({listing.measurement_kind})
+        {listingTypeLabel(listing.listing_type)}
+        {fishery ? (
+          <>
+            {" "}
+            ·{" "}
+            <Link href={`/fisheries/${fishery.id}`} className="underline">
+              View fishery
+            </Link>
+          </>
+        ) : null}
       </p>
-      <dl className="mt-8 grid max-w-lg gap-3 text-sm">
-        <div>
-          <dt className="text-ink-muted">Seller</dt>
-          <dd className="text-ink">{listing.seller_name}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Offering</dt>
-          <dd className="text-ink">{listing.offering}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Quantity</dt>
-          <dd className="text-ink">
-            {listing.quantity} {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Price</dt>
-          <dd className="text-ink">
-            {formatAud(listing.unit_price_aud)} per {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Status</dt>
-          <dd className="text-ink">
-            {listing.status}
-            {expired ? " · expired" : ""}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Expires</dt>
-          <dd className="text-ink">
-            {new Date(listing.expires_at).toLocaleString("en-AU")}
-          </dd>
-        </div>
-      </dl>
+      <div className={`mt-8 max-w-lg ${panelClassName}`}>
+        <LabeledFields
+          items={[
+            { label: "Seller", value: listing.seller_name },
+            { label: "Type", value: listingOfferingLabel(listing.offering) },
+            {
+              label: "Quantity",
+              value: `${listing.quantity} ${listing.unit_label}`,
+            },
+            {
+              label: "Price",
+              value: `${formatAud(listing.unit_price_aud)} per ${listing.unit_label}`,
+            },
+            {
+              label: "Status",
+              value: `${listingStatusLabel(listing.status)}${expired ? " · expired" : ""}`,
+            },
+            {
+              label: "Expires",
+              value: new Date(listing.expires_at).toLocaleString("en-AU"),
+            },
+          ]}
+        />
+      </div>
       {listing.status === "PUBLISHED" && !expired ? (
         <div className="mt-8">
           {!user ? (
