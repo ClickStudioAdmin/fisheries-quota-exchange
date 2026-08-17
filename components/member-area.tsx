@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { AreaShell } from "@/components/area-shell";
+import type { SideNavLink } from "@/components/side-nav";
 import { accountPath } from "@/lib/organisations/paths";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 
-const sectionItems = [
+const sectionItems: SideNavLink[] = [
   { href: "/dashboard", label: "Profile details" },
   { href: "/dashboard/members", label: "Account members" },
   {
