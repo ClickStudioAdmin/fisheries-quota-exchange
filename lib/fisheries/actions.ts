@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { MEASUREMENT_KINDS } from "@/lib/fisheries/types";
+import { MEASUREMENT_KINDS, isQuantityType } from "@/lib/fisheries/types";
 
 export type AdminFormState = {
   error?: string;
@@ -74,9 +74,14 @@ export async function createFisheryAction(
   const name = read(formData, "name");
   const code = read(formData, "code");
   const jurisdictionId = Number(formData.get("jurisdiction_id"));
+  const quantityType = read(formData, "quantity_type");
 
   if (!name || !Number.isInteger(jurisdictionId)) {
     return { error: "Jurisdiction and name are required." };
+  }
+
+  if (!isQuantityType(quantityType)) {
+    return { error: "Choose Kg or Units." };
   }
 
   const { data, error } = await admin.supabase
@@ -85,6 +90,7 @@ export async function createFisheryAction(
       name,
       code: code || null,
       jurisdiction_id: jurisdictionId,
+      quantity_type: quantityType,
     })
     .select("id")
     .single();
@@ -214,27 +220,21 @@ export async function createHoldingAction(
   }
 
   const organisationId = Number(formData.get("organisation_id"));
-  const stockId = Number(formData.get("stock_id"));
-  const seasonId = Number(formData.get("season_id"));
-  const quotaTypeId = Number(formData.get("quota_type_id"));
+  const fisheryId = Number(formData.get("fishery_id"));
   const quantity = Number(read(formData, "quantity"));
   const note = read(formData, "note");
 
   if (
     !Number.isInteger(organisationId) ||
-    !Number.isInteger(stockId) ||
-    !Number.isInteger(seasonId) ||
-    !Number.isInteger(quotaTypeId) ||
+    !Number.isInteger(fisheryId) ||
     !Number.isFinite(quantity)
   ) {
-    return { error: "Organisation, stock, season, quota type and quantity are required." };
+    return { error: "Organisation, fishery and quantity are required." };
   }
 
   const { error } = await supabase.rpc("create_quota_holding", {
     p_organisation_id: organisationId,
-    p_stock_id: stockId,
-    p_season_id: seasonId,
-    p_quota_type_id: quotaTypeId,
+    p_fishery_id: fisheryId,
     p_quantity: quantity,
     p_note: note || null,
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { QuantityField } from "@/components/quantity-field";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 import {
   createListingAction,
@@ -53,22 +54,18 @@ export function CreateListingForm({
       </div>
       <div>
         <label htmlFor="quantity" className="block text-sm text-ink">
-          Quantity ({unitLabel}), max {maxQuantity}
+          Quantity, max {maxQuantity}
         </label>
-        <input
+        <QuantityField
           id="quantity"
-          name="quantity"
-          type="number"
-          step="any"
-          min="0"
-          max={maxQuantity}
+          unitLabel={unitLabel}
           required
-          className={fieldClassName}
+          max={maxQuantity}
         />
       </div>
       <div>
         <label htmlFor="unit_price_aud" className="block text-sm text-ink">
-          Price per unit (AUD)
+          Price per {unitLabel} (AUD)
         </label>
         <input
           id="unit_price_aud"

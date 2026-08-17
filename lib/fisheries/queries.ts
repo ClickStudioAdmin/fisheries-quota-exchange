@@ -25,7 +25,7 @@ export async function listFisheries() {
   if (!supabase) return [];
   const { data } = await supabase
     .from("fisheries")
-    .select("id, jurisdiction_id, name, code")
+    .select("id, jurisdiction_id, name, code, quantity_type")
     .order("name");
   return (data ?? []) as Fishery[];
 }
@@ -35,7 +35,7 @@ export async function getFishery(id: number) {
   if (!supabase) return null;
   const { data } = await supabase
     .from("fisheries")
-    .select("id, jurisdiction_id, name, code")
+    .select("id, jurisdiction_id, name, code, quantity_type")
     .eq("id", id)
     .maybeSingle();
   return (data as Fishery | null) ?? null;
@@ -85,43 +85,13 @@ export async function listFisheryRules(fisheryId: number) {
   return (data ?? []) as FisheryRule[];
 }
 
-export async function listAllStocks() {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("stocks")
-    .select("id, fishery_id, name")
-    .order("name");
-  return (data ?? []) as Stock[];
-}
-
-export async function listAllSeasons() {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("seasons")
-    .select("id, fishery_id, name, starts_on, ends_on")
-    .order("starts_on", { ascending: false });
-  return (data ?? []) as Season[];
-}
-
-export async function listAllQuotaTypes() {
-  const supabase = await createClient();
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("quota_types")
-    .select("id, fishery_id, measurement_kind, name, unit_label")
-    .order("name");
-  return (data ?? []) as QuotaType[];
-}
-
 export async function listHoldingsForOrganisation(organisationId: number) {
   const supabase = await createClient();
   if (!supabase) return [];
   const { data } = await supabase
     .from("quota_holdings")
     .select(
-      "id, organisation_id, stock_id, season_id, quota_type_id, quantity, verification_status",
+      "id, organisation_id, fishery_id, quantity, verification_status",
     )
     .eq("organisation_id", organisationId)
     .order("id");
@@ -147,7 +117,7 @@ export async function listAllHoldings() {
   const { data } = await supabase
     .from("quota_holdings")
     .select(
-      "id, organisation_id, stock_id, season_id, quota_type_id, quantity, verification_status",
+      "id, organisation_id, fishery_id, quantity, verification_status",
     )
     .order("id", { ascending: false });
   return (data ?? []) as QuotaHolding[];

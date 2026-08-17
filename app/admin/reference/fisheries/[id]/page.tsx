@@ -73,8 +73,7 @@ export default async function FisheryAdminPage({
           {jurisdiction
             ? `${jurisdiction.code} — ${jurisdiction.name}`
             : "Jurisdiction not found"}
-          . Quota types choose WEIGHT, UNITS, EFFORT or OTHER — do not assume
-          kilograms.
+          . Quantity type: {fishery.quantity_type === "KG" ? "Kg" : "Units"}.
         </p>
       </div>
       <section className="space-y-6">

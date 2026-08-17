@@ -8,11 +8,24 @@ export type Jurisdiction = {
   name: string;
 };
 
+export const QUANTITY_TYPES = ["KG", "UNITS"] as const;
+
+export type QuantityType = (typeof QUANTITY_TYPES)[number];
+
+export function isQuantityType(value: string): value is QuantityType {
+  return QUANTITY_TYPES.includes(value as QuantityType);
+}
+
+export function quantityTypeLabel(type: QuantityType) {
+  return type === "KG" ? "kg" : "units";
+}
+
 export type Fishery = {
   id: number;
   jurisdiction_id: number;
   name: string;
   code: string | null;
+  quantity_type: QuantityType;
 };
 
 export type Stock = {
@@ -55,9 +68,7 @@ export type HoldingVerificationStatus =
 export type QuotaHolding = {
   id: number;
   organisation_id: number;
-  stock_id: number;
-  season_id: number;
-  quota_type_id: number;
+  fishery_id: number;
   quantity: string;
   verification_status: HoldingVerificationStatus;
 };

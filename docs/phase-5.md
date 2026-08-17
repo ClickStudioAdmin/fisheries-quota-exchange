@@ -14,12 +14,12 @@ There are no listings, auctions, or payments in this phase.
 | --- | --- |
 | `platform_admins` | Emails that may administer reference data |
 | `jurisdictions` | Commonwealth, states and territories |
-| `fisheries` | A managed fishery under a jurisdiction |
+| `fisheries` | A managed fishery under a jurisdiction, with quantity type `KG` or `UNITS` |
 | `stocks` | Named stock or area within a fishery |
 | `seasons` | Date-bounded seasons for a fishery |
 | `quota_types` | Per-fishery type with `WEIGHT`, `UNITS`, `EFFORT` or `OTHER` and a unit label |
 | `fishery_rules` | Configurable `code` + JSON `value` |
-| `quota_holdings` | Organisation holding of a stock/season/type |
+| `quota_holdings` | Organisation holding of a fishery |
 | `quota_ledger` | Immutable quantity events |
 
 Australian jurisdictions are seeded. A development fixture migration also adds `DEV-` fisheries, stocks, seasons and quota types. These are test records, not official regulatory data.
@@ -36,9 +36,9 @@ The first signed-in user may claim **platform admin** at `/admin` if the table i
 
 Admin can then:
 
-1. Create a fishery for a jurisdiction
+1. Create a fishery for a jurisdiction, including quantity type (Kg or Units)
 2. Add stock, season, quota type and optional rules
-3. Create a test holding for an organisation
+3. Create a test holding for an organisation (organisation, fishery, quantity, note)
 
 Members of that organisation can see the holding and ledger at `/dashboard/holdings`.
 

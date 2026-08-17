@@ -37,6 +37,12 @@ export default async function FisheriesAdminPage() {
             sortable: true,
             filter: "select",
           },
+          {
+            key: "quantityType",
+            header: "Quantity type",
+            sortable: true,
+            filter: "select",
+          },
         ]}
         rows={fisheries.map((fishery) => {
           const jurisdiction = jurisdictions.find(
@@ -52,6 +58,7 @@ export default async function FisheriesAdminPage() {
               name: fishery.name,
               code: fishery.code ?? "",
               jurisdiction: jurisdictionLabel,
+              quantityType: fishery.quantity_type === "KG" ? "Kg" : "Units",
             },
             display: {
               code: fishery.code ?? "—",
@@ -97,6 +104,16 @@ export default async function FisheriesAdminPage() {
               },
               { name: "name", label: "Name", required: true },
               { name: "code", label: "Code" },
+              {
+                name: "quantity_type",
+                label: "Quantity type",
+                type: "select",
+                required: true,
+                options: [
+                  { value: "KG", label: "Kg" },
+                  { value: "UNITS", label: "Units" },
+                ],
+              },
             ]}
           />
         </div>

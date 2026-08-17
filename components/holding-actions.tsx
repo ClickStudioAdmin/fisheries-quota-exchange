@@ -4,10 +4,8 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { adjustHoldingAction } from "@/lib/fisheries/actions";
 import type { AdminFormState } from "@/lib/fisheries/actions";
-import {
-  compactFieldClassName,
-  tableButtonClassName,
-} from "@/components/auth-card";
+import { QuantityField } from "@/components/quantity-field";
+import { tableButtonClassName } from "@/components/auth-card";
 import { TableActionRow } from "@/components/data-table";
 
 const initialState: AdminFormState = {};
@@ -53,17 +51,13 @@ export function HoldingActions({
           <label className="sr-only" htmlFor={`quantity-${holdingId}`}>
             Quantity
           </label>
-          <input
+          <QuantityField
             id={`quantity-${holdingId}`}
-            name="quantity"
-            type="number"
-            step="any"
-            min="0"
+            unitLabel={unitLabel}
             required
             defaultValue={quantity}
-            className={compactFieldClassName}
+            compact
           />
-          <span className="self-center text-sm text-ink-muted">{unitLabel}</span>
           <button
             type="submit"
             className={tableButtonClassName}

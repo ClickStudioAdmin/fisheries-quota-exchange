@@ -11,12 +11,12 @@ Current tables:
 | `organisation_users` | 1 | Email membership and role. |
 | `platform_admins` | 5 | Platform administrators. |
 | `jurisdictions` | 5 | Australian jurisdictions. |
-| `fisheries` | 5 | Managed fisheries under a jurisdiction. |
+| `fisheries` | 5 | Managed fisheries under a jurisdiction. `quantity_type` is `KG` or `UNITS`. |
 | `stocks` | 5 | Named stock or area within a fishery. |
 | `seasons` | 5 | Fishery seasons. |
 | `quota_types` | 5 | Measurement kind and unit label. |
 | `fishery_rules` | 5 | Configurable rules. |
-| `quota_holdings` | 5 | Organisation quota balances. `verification_status` is `PENDING_VERIFICATION` or `VERIFIED`. |
+| `quota_holdings` | 5 | Organisation quota balance per fishery. `verification_status` is `PENDING_VERIFICATION` or `VERIFIED`. |
 | `quota_ledger` | 5 | Immutable quota events. |
 | `verified_users` | 8 | Emails whose holdings skip admin verification. |
 | `listings` | 6–8 | Fixed-price or auction offers. |
@@ -28,7 +28,9 @@ Current tables:
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`.
 
-`quota_types.measurement_kind` must be `WEIGHT`, `UNITS`, `EFFORT`, or `OTHER`.
+`fisheries.quantity_type` must be `KG` or `UNITS`. Holdings and listings show that unit beside quantity.
+
+`quota_types.measurement_kind` must be `WEIGHT`, `UNITS`, `EFFORT`, or `OTHER`. Holdings are per organisation and fishery, not per stock, season, or quota type.
 
 `quota_ledger` is immutable. Corrections later require adjustment or reversal rows. Holding quantity is written only by `create_quota_holding` and `apply_quota_event`. Members change quantity through `adjust_quota_holding`, which writes an `ADJUSTMENT` ledger row.
 

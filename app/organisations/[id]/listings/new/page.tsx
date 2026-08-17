@@ -2,15 +2,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CreateListingForm } from "@/components/create-listing-form";
 import {
-  listAllQuotaTypes,
-  listAllSeasons,
-  listAllStocks,
+  listFisheries,
   listHoldingsForOrganisation,
 } from "@/lib/fisheries/queries";
 import { accountPath } from "@/lib/organisations/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
-import { holdingIsVerified } from "@/lib/fisheries/types";
+import { holdingIsVerified, quantityTypeLabel } from "@/lib/fisheries/types";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -45,11 +43,9 @@ export default async function NewListingPage({
     notFound();
   }
 
-  const [holdings, stocks, seasons, quotaTypes] = await Promise.all([
+  const [holdings, fisheries] = await Promise.all([
     listHoldingsForOrganisation(organisationId),
-    listAllStocks(),
-    listAllSeasons(),
-    listAllQuotaTypes(),
+    listFisheries(),
   ]);
   const holding = holdings.find((item) => item.id === holdingId);
 
@@ -61,9 +57,10 @@ export default async function NewListingPage({
     redirect(accountPath(organisationId, "/dashboard/holdings"));
   }
 
-  const stock = stocks.find((item) => item.id === holding.stock_id);
-  const season = seasons.find((item) => item.id === holding.season_id);
-  const quotaType = quotaTypes.find((item) => item.id === holding.quota_type_id);
+  const fishery = fisheries.find((item) => item.id === holding.fishery_id);
+  const unitLabel = fishery
+    ? quantityTypeLabel(fishery.quantity_type)
+    : "units";
 
   return (
     <div>
@@ -81,15 +78,14 @@ export default async function NewListingPage({
         not when you create the listing.
       </p>
       <p className="mt-4 text-sm text-ink">
-        {stock?.name} · {season?.name} · {holding.quantity}{" "}
-        {quotaType?.unit_label} available
+        {fishery?.name ?? "Fishery"} · {holding.quantity} {unitLabel} available
       </p>
       <div className="mt-6 max-w-md">
         <CreateListingForm
           organisationId={organisationId}
           holdingId={holding.id}
           maxQuantity={holding.quantity}
-          unitLabel={quotaType?.unit_label ?? "units"}
+          unitLabel={unitLabel}
         />
       </div>
     </div>

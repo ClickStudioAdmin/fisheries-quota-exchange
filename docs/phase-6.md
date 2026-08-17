@@ -30,7 +30,7 @@ Quantity cannot exceed the holding at create time. The holding quantity is not r
 
 ## Database
 
-`listings` stores the offer plus a snapshot of fishery/stock/season/quota type names so the marketplace can show published rows without exposing private holdings.
+`listings` stores the offer plus a snapshot of fishery name and unit label (`kg` or `units`, from the fishery’s quantity type) so the marketplace can show published rows without exposing private holdings.
 
 Functions:
 

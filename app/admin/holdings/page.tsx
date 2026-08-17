@@ -1,24 +1,15 @@
 import { redirect } from "next/navigation";
-import { AdminCreateForm } from "@/components/admin-create-form";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { LedgerTable } from "@/components/ledger-table";
+import { HoldingForm } from "@/components/holding-form";
 import { tableButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import {
-  createHoldingAction,
-  verifyHoldingAction,
-} from "@/lib/fisheries/actions";
-import {
-  listAllHoldings,
-  listAllQuotaTypes,
-  listAllSeasons,
-  listAllStocks,
-  listFisheries,
-  listLedger,
-} from "@/lib/fisheries/queries";
+import { verifyHoldingAction } from "@/lib/fisheries/actions";
+import { listAllHoldings, listFisheries, listLedger } from "@/lib/fisheries/queries";
 import {
   holdingIsVerified,
   holdingVerificationLabel,
+  quantityTypeLabel,
 } from "@/lib/fisheries/types";
 import { listOrganisationsForAdmin } from "@/lib/organisations/admin-queries";
 
@@ -31,15 +22,11 @@ export default async function HoldingsAdminPage() {
     redirect("/admin");
   }
 
-  const [organisations, fisheries, stocks, seasons, quotaTypes, holdings] =
-    await Promise.all([
-      listOrganisationsForAdmin(),
-      listFisheries(),
-      listAllStocks(),
-      listAllSeasons(),
-      listAllQuotaTypes(),
-      listAllHoldings(),
-    ]);
+  const [organisations, fisheries, holdings] = await Promise.all([
+    listOrganisationsForAdmin(),
+    listFisheries(),
+    listAllHoldings(),
+  ]);
 
   const ledgers = await Promise.all(
     holdings.map(async (holding) => ({
@@ -47,10 +34,6 @@ export default async function HoldingsAdminPage() {
       entries: await listLedger(holding.id),
     })),
   );
-
-  function fisheryName(fisheryId: number) {
-    return fisheries.find((item) => item.id === fisheryId)?.name ?? "Fishery";
-  }
 
   return (
     <div className="space-y-10">
@@ -77,9 +60,7 @@ export default async function HoldingsAdminPage() {
             sortable: true,
             filter: "select",
           },
-          { key: "stock", header: "Stock", sortable: true, filter: "select" },
-          { key: "season", header: "Season", sortable: true, filter: "select" },
-          { key: "quotaType", header: "Quota type", sortable: true },
+          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
           { key: "quantity", header: "Quantity", sortable: true, align: "right" },
           {
             key: "status",
@@ -96,27 +77,20 @@ export default async function HoldingsAdminPage() {
           const organisation = organisations.find(
             (item) => item.id === holding.organisation_id,
           );
-          const stock = stocks.find((item) => item.id === holding.stock_id);
-          const season = seasons.find((item) => item.id === holding.season_id);
-          const quotaType = quotaTypes.find(
-            (item) => item.id === holding.quota_type_id,
-          );
+          const fishery = fisheries.find((item) => item.id === holding.fishery_id);
+          const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "";
 
           return {
             id: holding.id,
             values: {
               id: holding.id,
               organisation: organisation?.legal_name ?? "Organisation",
-              stock: stock?.name ?? "Stock",
-              season: season?.name ?? "Season",
-              quotaType: quotaType
-                ? `${quotaType.name} (${quotaType.measurement_kind})`
-                : "Quota type",
+              fishery: fishery?.name ?? "Fishery",
               quantity: holding.quantity,
               status: holdingVerificationLabel(holding.verification_status),
             },
             display: {
-              quantity: `${holding.quantity} ${quotaType?.unit_label ?? ""}`.trim(),
+              quantity: `${holding.quantity} ${unit}`.trim(),
             },
           };
         })}
@@ -152,59 +126,7 @@ export default async function HoldingsAdminPage() {
       <div className="max-w-md">
         <h2 className="text-xl font-semibold text-ink">Create holding</h2>
         <div className="mt-4">
-          <AdminCreateForm
-            action={createHoldingAction}
-            submitLabel="Create holding"
-            fields={[
-              {
-                name: "organisation_id",
-                label: "Organisation",
-                type: "select",
-                required: true,
-                options: organisations.map((item) => ({
-                  value: String(item.id),
-                  label: item.legal_name,
-                })),
-              },
-              {
-                name: "stock_id",
-                label: "Stock",
-                type: "select",
-                required: true,
-                options: stocks.map((item) => ({
-                  value: String(item.id),
-                  label: `${fisheryName(item.fishery_id)} · ${item.name}`,
-                })),
-              },
-              {
-                name: "season_id",
-                label: "Season",
-                type: "select",
-                required: true,
-                options: seasons.map((item) => ({
-                  value: String(item.id),
-                  label: `${fisheryName(item.fishery_id)} · ${item.name}`,
-                })),
-              },
-              {
-                name: "quota_type_id",
-                label: "Quota type",
-                type: "select",
-                required: true,
-                options: quotaTypes.map((item) => ({
-                  value: String(item.id),
-                  label: `${fisheryName(item.fishery_id)} · ${item.name} (${item.unit_label})`,
-                })),
-              },
-              {
-                name: "quantity",
-                label: "Quantity",
-                type: "number",
-                required: true,
-              },
-              { name: "note", label: "Note" },
-            ]}
-          />
+          <HoldingForm organisations={organisations} fisheries={fisheries} />
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { QuantityField } from "@/components/quantity-field";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 import {
   createAuctionAction,
@@ -53,22 +54,18 @@ export function CreateAuctionForm({
       </div>
       <div>
         <label htmlFor="quantity" className="block text-sm text-ink">
-          Quantity ({unitLabel}), max {maxQuantity}
+          Quantity, max {maxQuantity}
         </label>
-        <input
+        <QuantityField
           id="quantity"
-          name="quantity"
-          type="number"
-          step="any"
-          min="0"
-          max={maxQuantity}
+          unitLabel={unitLabel}
           required
-          className={fieldClassName}
+          max={maxQuantity}
         />
       </div>
       <div>
         <label htmlFor="starting_price_aud" className="block text-sm text-ink">
-          Starting price per unit (AUD)
+          Starting price per {unitLabel} (AUD)
         </label>
         <input
           id="starting_price_aud"
@@ -96,7 +93,7 @@ export function CreateAuctionForm({
       </div>
       <div>
         <label htmlFor="reserve_price_aud" className="block text-sm text-ink">
-          Reserve price per unit (optional)
+          Reserve price per {unitLabel} (optional)
         </label>
         <input
           id="reserve_price_aud"
