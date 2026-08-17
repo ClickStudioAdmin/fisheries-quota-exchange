@@ -6,6 +6,7 @@ type QuantityFieldProps = {
   unitLabel: string;
   required?: boolean;
   defaultValue?: string;
+  min?: string;
   max?: string;
   compact?: boolean;
 };
@@ -16,6 +17,7 @@ export function QuantityField({
   unitLabel,
   required,
   defaultValue,
+  min = "0",
   max,
   compact,
 }: QuantityFieldProps) {
@@ -26,7 +28,7 @@ export function QuantityField({
         name={name}
         type="number"
         step="any"
-        min="0"
+        min={min}
         max={max}
         required={required}
         defaultValue={defaultValue}

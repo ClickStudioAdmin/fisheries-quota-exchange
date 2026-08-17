@@ -13,6 +13,7 @@ import { HoldingForm } from "@/components/holding-form";
 import { HoldingActions } from "@/components/holding-actions";
 import {
   listFisheries,
+  listHoldingCommitments,
   listHoldingsForOrganisation,
   listLedger,
 } from "@/lib/fisheries/queries";
@@ -152,6 +153,9 @@ export async function AccountHoldingsSection({
     listFisheries(),
     listLatestSalePrices(),
   ]);
+  const commitments = await listHoldingCommitments(
+    holdings.map((holding) => holding.id),
+  );
   const lastSale = latestSalePriceMap(prices);
   const holdingLedgers = await Promise.all(
     holdings.map(async (holding) => ({
@@ -261,6 +265,8 @@ export async function AccountHoldingsSection({
           const fishery = fisheries.find((item) => item.id === holding.fishery_id);
           const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "units";
           const verified = holdingIsVerified(holding);
+          const listed = commitments.get(holding.id) ?? 0;
+          const available = Number(holding.quantity) - listed;
 
           return (
             <DataTableRowExtras
@@ -289,8 +295,9 @@ export async function AccountHoldingsSection({
                         holdingId={holding.id}
                         quantity={holding.quantity}
                         unitLabel={unit}
+                        minQuantity={String(listed)}
                       />
-                      {verified ? (
+                      {verified && available > 0 ? (
                         <TableActionRow>
                           <Link
                             href={`/organisations/${organisationId}/listings/new?holding_id=${holding.id}`}
@@ -305,6 +312,11 @@ export async function AccountHoldingsSection({
                             Create auction
                           </Link>
                         </TableActionRow>
+                      ) : verified ? (
+                        <p className="text-sm text-ink-muted">
+                          All of this holding is listed. Cancel a listing to
+                          list more, or increase the holding quantity.
+                        </p>
                       ) : (
                         <p className="text-sm text-ink-muted">
                           Waiting for admin verification before listing.

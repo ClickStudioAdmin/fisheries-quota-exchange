@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { CreateAuctionForm } from "@/components/create-auction-form";
 import {
   listFisheries,
+  listHoldingCommitments,
   listHoldingsForOrganisation,
 } from "@/lib/fisheries/queries";
 import { accountPath } from "@/lib/organisations/paths";
@@ -57,10 +58,18 @@ export default async function NewAuctionPage({
     redirect(accountPath(organisationId, "/dashboard/holdings"));
   }
 
+  const commitments = await listHoldingCommitments([holding.id]);
+  const available = Number(holding.quantity) - (commitments.get(holding.id) ?? 0);
+
+  if (!(available > 0)) {
+    redirect(accountPath(organisationId, "/dashboard/holdings"));
+  }
+
   const fishery = fisheries.find((item) => item.id === holding.fishery_id);
   const unitLabel = fishery
     ? quantityTypeLabel(fishery.quantity_type)
     : "units";
+  const availableLabel = String(available);
 
   return (
     <div>
@@ -78,13 +87,13 @@ export default async function NewAuctionPage({
         close creates a simulated order.
       </p>
       <p className="mt-4 text-sm text-ink">
-        {fishery?.name ?? "Fishery"} · {holding.quantity} {unitLabel} available
+        {fishery?.name ?? "Fishery"} · {availableLabel} {unitLabel} available
       </p>
       <div className="mt-6 max-w-md">
         <CreateAuctionForm
           organisationId={organisationId}
           holdingId={holding.id}
-          maxQuantity={holding.quantity}
+          maxQuantity={availableLabel}
           unitLabel={unitLabel}
         />
       </div>

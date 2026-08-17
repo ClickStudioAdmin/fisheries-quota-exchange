@@ -54,6 +54,8 @@ Public market data (no buyer or seller identity):
 
 Fisheries and jurisdictions are readable by anonymous visitors. Holding valuation is quantity × most recent `SALE` unit price for that fishery.
 
+Open listings must be covered by the seller holding. `adjust_quota_holding` cannot reduce quantity below `holding_committed_quantity`. Uncovered listings from earlier data are cancelled by migration `20260817180000_listing_holding_cover.sql`.
+
 `insert_simulated_order` is shared with Phase 7 `create_order` and is not granted to clients.
 
 ## Not in this phase

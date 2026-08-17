@@ -98,6 +98,49 @@ export async function listHoldingsForOrganisation(organisationId: number) {
   return (data ?? []) as QuotaHolding[];
 }
 
+export async function listHoldingCommitments(holdingIds: number[]) {
+  const committed = new Map<number, number>();
+
+  for (const id of holdingIds) {
+    committed.set(id, 0);
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase || holdingIds.length === 0) {
+    return committed;
+  }
+
+  const [{ data: listings }, { data: reservations }] = await Promise.all([
+    supabase
+      .from("listings")
+      .select("holding_id, quantity")
+      .in("holding_id", holdingIds)
+      .in("status", ["PENDING_APPROVAL", "PUBLISHED"]),
+    supabase
+      .from("quota_reservations")
+      .select("holding_id, quantity")
+      .in("holding_id", holdingIds)
+      .eq("status", "ACTIVE"),
+  ]);
+
+  for (const row of listings ?? []) {
+    committed.set(
+      row.holding_id,
+      (committed.get(row.holding_id) ?? 0) + Number(row.quantity),
+    );
+  }
+
+  for (const row of reservations ?? []) {
+    committed.set(
+      row.holding_id,
+      (committed.get(row.holding_id) ?? 0) + Number(row.quantity),
+    );
+  }
+
+  return committed;
+}
+
 export async function listLedger(holdingId: number) {
   const supabase = await createClient();
   if (!supabase) return [];

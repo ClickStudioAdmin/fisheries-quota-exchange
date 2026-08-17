@@ -14,12 +14,14 @@ type HoldingActionsProps = {
   holdingId: number;
   quantity: string;
   unitLabel: string;
+  minQuantity?: string;
 };
 
 export function HoldingActions({
   holdingId,
   quantity,
   unitLabel,
+  minQuantity = "0",
 }: HoldingActionsProps) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
@@ -56,6 +58,7 @@ export function HoldingActions({
             unitLabel={unitLabel}
             required
             defaultValue={quantity}
+            min={minQuantity}
             compact
           />
           <button
@@ -66,6 +69,12 @@ export function HoldingActions({
             {pending ? "Saving…" : "Update quantity"}
           </button>
         </TableActionRow>
+        {Number(minQuantity) > 0 ? (
+          <p className="text-xs text-ink-muted">
+            Cannot go below {minQuantity} {unitLabel} while listings are open.
+            Cancel listings first to reduce further.
+          </p>
+        ) : null}
       </form>
     </div>
   );
