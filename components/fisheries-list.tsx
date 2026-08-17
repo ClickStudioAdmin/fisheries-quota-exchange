@@ -121,7 +121,7 @@ export function FisheriesList({
                           value: jurisdictionLabel(jurisdiction),
                         },
                         {
-                          label: "Unit",
+                          label: "Quantity type",
                           value: unit,
                         },
                         {
