@@ -6,7 +6,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import type { OrderFormState } from "@/lib/orders/types";
 import { isPaymentsConfigured } from "@/lib/payments/env";
 import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
-import { startOrderCheckoutAction, transferOrderSellerProceeds } from "@/lib/payments/actions";
+import { transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 import { userFacingError } from "@/lib/errors/user-message";
@@ -57,14 +57,6 @@ export async function createOrderAction(
 
   if (error) {
     return { error: userFacingError(error) };
-  }
-
-  if (isPaymentsConfigured()) {
-    const pay = await startOrderCheckoutAction(Number(data));
-
-    if (pay?.error) {
-      redirect(`/orders/${data}?pay=setup`);
-    }
   }
 
   redirect(`/orders/${data}`);

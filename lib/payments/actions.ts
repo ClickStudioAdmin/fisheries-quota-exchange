@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getMyRole, getOrganisation } from "@/lib/organisations/queries";
@@ -19,6 +18,7 @@ import { userFacingError } from "@/lib/errors/user-message";
 
 export type PaymentFormState = {
   error?: string;
+  clientSecret?: string;
 };
 
 export async function createAccountSessionAction(
@@ -135,30 +135,37 @@ export async function startOrderCheckoutAction(
     return { error: "Could not build the payment return URL." };
   }
 
-  const checkout = await provider.createCheckout({
-    orderId: order.id,
-    fisheryName: order.fishery_name,
-    offeringLabel: listingOfferingLabel(order.offering),
-    amountAud: order.amount_aud,
-    feeAmountAud: order.fee_amount_aud,
-    buyerEmail: user.email,
-    successUrl: `${siteUrl}/orders/${order.id}?paid=1`,
-    cancelUrl: `${siteUrl}/orders/${order.id}?pay=cancelled`,
-  });
+  const existing = await getPaymentForOrder(order.id);
+  try {
+    const checkout = await provider.createCheckout({
+      orderId: order.id,
+      fisheryName: order.fishery_name,
+      offeringLabel: listingOfferingLabel(order.offering),
+      amountAud: order.amount_aud,
+      feeAmountAud: order.fee_amount_aud,
+      buyerEmail: user.email,
+      returnUrl: `${siteUrl}/orders/${order.id}?paid=1&session_id={CHECKOUT_SESSION_ID}`,
+      existingCheckoutSessionId: existing?.checkout_session_id
+        ? String(existing.checkout_session_id)
+        : null,
+    });
 
-  const { error } = await supabase.rpc("upsert_order_payment", {
-    p_order_id: order.id,
-    p_checkout_session_id: checkout.checkoutSessionId,
-    p_payment_intent_id: checkout.paymentIntentId,
-    p_amount_aud: orderChargeAud(order.amount_aud, order.fee_amount_aud),
-    p_fee_amount_aud: Number(order.fee_amount_aud),
-  });
+    const { error } = await supabase.rpc("upsert_order_payment", {
+      p_order_id: order.id,
+      p_checkout_session_id: checkout.checkoutSessionId,
+      p_payment_intent_id: checkout.paymentIntentId,
+      p_amount_aud: orderChargeAud(order.amount_aud, order.fee_amount_aud),
+      p_fee_amount_aud: Number(order.fee_amount_aud),
+    });
 
-  if (error) {
-    return { error: userFacingError(error) };
+    if (error) {
+      return { error: userFacingError(error) };
+    }
+
+    return { clientSecret: checkout.clientSecret };
+  } catch (error) {
+    return { error: userFacingError(error, "Could not start checkout.") };
   }
-
-  redirect(checkout.url);
 }
 
 export async function transferOrderSellerProceeds(

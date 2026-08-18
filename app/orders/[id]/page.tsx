@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cancelOrderAction } from "@/lib/orders/actions";
-import { PayOrderButton } from "@/components/pay-order-button";
+import { OrderCheckout } from "@/components/order-checkout";
 import { buttonClassName } from "@/components/auth-card";
 import {
   getOrder,
@@ -15,6 +15,8 @@ import { LabeledFields, panelClassName } from "@/components/surface";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
+import { getStripePublishableKey } from "@/lib/payments/env";
+import { orderChargeAud } from "@/lib/payments/money";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -63,90 +65,121 @@ export default async function OrderPage({
       order.status === "AWAITING_PAYMENT") &&
     (admin || buyerRole !== null);
   const canPay = order.status === "AWAITING_PAYMENT" && buyerRole !== null;
+  const publishableKey = canPay ? getStripePublishableKey() : null;
+  const totalDue = formatAud(
+    orderChargeAud(order.amount_aud, order.fee_amount_aud),
+  );
 
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Order {order.id}
+        {canPay ? "Checkout" : `Order ${order.id}`}
       </h1>
-      <p className="mt-2 text-ink-muted">{orderStatusLabel(order.status)}</p>
+      <p className="mt-2 text-ink-muted">
+        {canPay
+          ? `Order ${order.id} · ${orderStatusLabel(order.status)}`
+          : orderStatusLabel(order.status)}
+      </p>
       {query.paid === "1" && order.status === "AWAITING_PAYMENT" ? (
         <p className="mt-3 text-sm text-ink-muted">
-          Stripe returned you here. Payment is confirmed only after the webhook
-          arrives — refresh in a moment if this still says awaiting payment.
+          If you paid by bank debit, confirmation can take a moment. Refresh
+          if this still says awaiting payment — the webhook is the source of
+          truth, not this page.
         </p>
       ) : null}
       {query.pay === "cancelled" ? (
         <p className="mt-3 text-sm text-ink-muted">
-          Checkout was cancelled. The quota is still reserved until you pay or
-          cancel the order.
+          Payment was not completed. The quota is still reserved until you pay
+          or cancel the order.
         </p>
       ) : null}
       {query.pay === "setup" ? (
         <p className="mt-3 text-sm text-ink-muted">
-          The order was reserved. Use Pay below if Checkout did not open.
+          The order was reserved. Complete payment below.
         </p>
       ) : null}
-      <div className={`mt-8 max-w-lg ${panelClassName}`}>
-        <LabeledFields
-          items={[
-            {
-              label: "Listing",
-              value: (
-                <Link href={`/marketplace/${order.listing_id}`} className="underline">
-                  {order.fishery_name}
-                </Link>
-              ),
-            },
-            { label: "Type", value: listingOfferingLabel(order.offering) },
-            { label: "Seller", value: order.seller_name },
-            { label: "Buyer", value: order.buyer_name },
-            {
-              label: "Quantity",
-              value: `${order.quantity} ${order.unit_label}`,
-            },
-            { label: "Amount", value: formatAud(order.amount_aud) },
-            {
-              label: "Platform fee",
-              value:
-                Number(order.fee_percent) > 0
-                  ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
-                  : "None",
-            },
-            {
-              label: "Quota reservation",
-              value: reservation?.status ?? "None",
-            },
-            {
-              label: "Payment",
-              value: payment?.status
-                ? payment.status === "PAID"
-                  ? "Paid (held by FQX until settlement)"
-                  : payment.status === "PENDING"
-                    ? "Pending"
-                    : payment.status === "EXPIRED"
-                      ? "Expired"
-                      : "Failed"
-                : "None",
-            },
-            {
-              label: "Seller transfer",
-              value: payment?.stripe_transfer_id ? "Sent at settlement" : "Not yet",
-            },
-            {
-              label: "Settlement simulation",
-              value: transaction?.status ?? "None",
-            },
-          ]}
-        />
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+        <div className={panelClassName}>
+          <h2 className="text-lg font-semibold text-ink">Order summary</h2>
+          <div className="mt-4">
+            <LabeledFields
+              items={[
+                {
+                  label: "Listing",
+                  value: (
+                    <Link href={`/marketplace/${order.listing_id}`} className="underline">
+                      {order.fishery_name}
+                    </Link>
+                  ),
+                },
+                { label: "Type", value: listingOfferingLabel(order.offering) },
+                { label: "Seller", value: order.seller_name },
+                { label: "Buyer", value: order.buyer_name },
+                {
+                  label: "Quantity",
+                  value: `${order.quantity} ${order.unit_label}`,
+                },
+                { label: "Quota amount", value: formatAud(order.amount_aud) },
+                {
+                  label: "Platform fee",
+                  value:
+                    Number(order.fee_percent) > 0
+                      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                      : "None",
+                },
+                { label: "Total due to FQX", value: totalDue },
+                {
+                  label: "Quota reservation",
+                  value: reservation?.status ?? "None",
+                },
+                {
+                  label: "Payment",
+                  value: payment?.status
+                    ? payment.status === "PAID"
+                      ? "Paid (held by FQX until settlement)"
+                      : payment.status === "PENDING"
+                        ? "Pending"
+                        : payment.status === "EXPIRED"
+                          ? "Expired"
+                          : "Failed"
+                    : "None",
+                },
+                {
+                  label: "Seller transfer",
+                  value: payment?.stripe_transfer_id
+                    ? "Sent at settlement"
+                    : "Not yet",
+                },
+                {
+                  label: "Settlement simulation",
+                  value: transaction?.status ?? "None",
+                },
+              ]}
+            />
+          </div>
+        </div>
+        {canPay && publishableKey ? (
+          <div className={panelClassName}>
+            <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              Pay by card or Australian bank debit (BECS) in Stripe test mode.
+              FQX holds the funds until settlement, then pays the seller.
+            </p>
+            <div className="mt-6">
+              <OrderCheckout
+                orderId={order.id}
+                publishableKey={publishableKey}
+              />
+            </div>
+          </div>
+        ) : canPay ? (
+          <p className="text-sm text-ink-muted">
+            Payments are not configured, so this order cannot be charged yet.
+          </p>
+        ) : null}
       </div>
       {order.review_note ? (
         <p className="mt-6 text-sm text-ink-muted">Note: {order.review_note}</p>
-      ) : null}
-      {canPay ? (
-        <div className="mt-6 max-w-md">
-          <PayOrderButton orderId={order.id} />
-        </div>
       ) : null}
       {canCancel ? (
         <form action={cancelOrderAction} className="mt-6">

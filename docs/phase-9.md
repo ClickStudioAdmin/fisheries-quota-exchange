@@ -6,14 +6,14 @@ Take payments in **Stripe test mode** through Stripe Connect using **separate ch
 
 Do not implement live (non-test) keys, seller bank payouts, funds segregation, or a financial ledger in this phase. Admin still simulates the authority transfer. Settlement both completes quota and creates the Stripe Transfer.
 
-Never trust the browser or the Checkout success URL for payment status. The webhook is the source of truth.
+Never trust the browser or the Checkout return URL for payment status. The webhook is the source of truth.
 
 ## Flow
 
 1. Organisation `OWNER` or `ADMIN` opens **Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
 2. Stripe sends `account.updated`. The app stores whether the account can accept charges. Opening **Payments** also refreshes that flag from Stripe. The browser is not trusted for it.
-3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and the buyer is sent to Stripe Checkout. The full amount (quota + fee) is charged to the **FQX** Stripe account. There is no destination charge.
-4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance. Refreshing the success URL does not charge again.
+3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The full amount (quota + fee) is charged to the **FQX** Stripe account. There is no destination charge.
+4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance. Refreshing the return URL does not charge again.
 5. Expired Checkout or failed async payment cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
 6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails the dummy tax invoice.
 
@@ -23,7 +23,7 @@ Auction wins use the same rule: if the seller can accept charges, the order wait
 
 When Stripe is configured, an organisation cannot create a listing or auction until `stripe_charges_enabled` is true.
 
-Checkout asks Stripe for `card` and `au_becs_debit`. If BECS is not enabled on the Stripe account, Checkout falls back to cards only. Enable BECS (and later PayTo) in the Stripe Dashboard to offer bank debit.
+Checkout asks Stripe for `card` and `au_becs_debit`. If that is rejected, it uses the payment methods enabled on the Stripe account, then cards only. Enable **AU BECS Direct Debit** for Checkout in the Stripe Dashboard (Settings → Payment methods) to offer bank debit. Test BECS: BSB `000-000`, account `000123456`.
 
 ## Pages
 
@@ -31,7 +31,7 @@ Checkout asks Stripe for `card` and `au_becs_debit`. If BECS is not enabled on t
 | --- | --- |
 | `/dashboard/payments` | Embedded Connect onboarding and account management |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |
-| `/orders/[id]` | Pay if `AWAITING_PAYMENT`; success URL is not authoritative |
+| `/orders/[id]` | Checkout (embedded) if `AWAITING_PAYMENT`; return URL is not authoritative |
 | `/api/stripe/webhook` | Signed Stripe events |
 | `/api/stripe/account-session` | Account Session client secret for embedded components |
 
@@ -77,7 +77,7 @@ Point the Stripe sandbox webhook at `/api/stripe/webhook`:
 
 Turn **off automatic payouts** on the FQX platform Stripe account so held seller funds are not paid out to FQX’s bank before settlement.
 
-Test card: `4242 4242 4242 4242`.
+Test card: `4242 4242 4242 4242`. Test BECS debit: BSB `000-000`, account `000123456`.
 
 ## Not in this phase
 
@@ -94,7 +94,7 @@ Test card: `4242 4242 4242 4242`.
 - Buyer pays a listing with a test card (and bank debit if BECS is enabled)
 - Webhook marks the order paid; funds remain on FQX until Simulate settlement
 - Simulate settlement Transfers the seller amount and keeps the fee
-- Refreshing the success URL does not double-charge or double-advance
+- Refreshing the return URL does not double-charge or double-advance
 - Unpaid Checkout expiry cancels the order and releases quota
 - Without Stripe keys, simulated purchase still works
 - Push to `develop` applies the migrations

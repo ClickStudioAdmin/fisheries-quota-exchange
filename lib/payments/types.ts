@@ -12,12 +12,12 @@ export type CreateCheckoutInput = {
   amountAud: string;
   feeAmountAud: string;
   buyerEmail: string;
-  successUrl: string;
-  cancelUrl: string;
+  returnUrl: string;
+  existingCheckoutSessionId?: string | null;
 };
 
 export type CreateCheckoutResult = {
-  url: string;
+  clientSecret: string;
   checkoutSessionId: string;
   paymentIntentId: string | null;
 };

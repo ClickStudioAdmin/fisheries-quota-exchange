@@ -15,6 +15,55 @@ function stripeClient() {
   return new Stripe(env.secretKey);
 }
 
+function checkoutResult(session: Stripe.Checkout.Session) {
+  const paymentIntent =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null;
+
+  if (!session.client_secret) {
+    throw new Error("Stripe did not return a Checkout client secret.");
+  }
+
+  return {
+    clientSecret: session.client_secret,
+    checkoutSessionId: session.id,
+    paymentIntentId: paymentIntent,
+  };
+}
+
+async function createEmbeddedCheckoutSession(
+  stripe: Stripe,
+  params: Stripe.Checkout.SessionCreateParams,
+) {
+  const attempts: Array<Pick<
+    Stripe.Checkout.SessionCreateParams,
+    "payment_method_types"
+  > | Record<string, never>> = [
+    { payment_method_types: ["card", "au_becs_debit"] },
+    {},
+    { payment_method_types: ["card"] },
+  ];
+
+  let lastError: unknown;
+
+  for (const extra of attempts) {
+    try {
+      return await stripe.checkout.sessions.create({
+        ...params,
+        ...extra,
+      });
+    } catch (error) {
+      lastError = error;
+      console.error("Stripe Checkout session attempt failed", extra, error);
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Could not create a Stripe Checkout session.");
+}
+
 export function createStripePaymentProvider(): PaymentProvider {
   return {
     async createConnectedAccount(input) {
@@ -95,12 +144,27 @@ export function createStripePaymentProvider(): PaymentProvider {
         throw new Error("Charge must be at least $0.50.");
       }
 
+      if (input.existingCheckoutSessionId) {
+        const existing = await stripe.checkout.sessions
+          .retrieve(input.existingCheckoutSessionId)
+          .catch(() => null);
+
+        if (
+          existing?.status === "open" &&
+          existing.ui_mode === "embedded" &&
+          existing.client_secret
+        ) {
+          return checkoutResult(existing);
+        }
+      }
+
       const transferGroup = `order_${input.orderId}`;
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
+        ui_mode: "embedded",
         mode: "payment",
         customer_email: input.buyerEmail,
-        success_url: input.successUrl,
-        cancel_url: input.cancelUrl,
+        return_url: input.returnUrl,
+        redirect_on_completion: "if_required",
         line_items: [
           {
             quantity: 1,
@@ -125,34 +189,13 @@ export function createStripePaymentProvider(): PaymentProvider {
         },
       };
 
-      let session: Stripe.Checkout.Session;
+      const session = await createEmbeddedCheckoutSession(stripe, sessionParams);
 
-      try {
-        session = await stripe.checkout.sessions.create({
-          ...sessionParams,
-          payment_method_types: ["card", "au_becs_debit"],
-        });
-      } catch {
-        session = await stripe.checkout.sessions.create({
-          ...sessionParams,
-          payment_method_types: ["card"],
-        });
+      if (!session.client_secret) {
+        throw new Error("Stripe did not return a Checkout client secret.");
       }
 
-      if (!session.url) {
-        throw new Error("Stripe did not return a Checkout URL.");
-      }
-
-      const paymentIntent =
-        typeof session.payment_intent === "string"
-          ? session.payment_intent
-          : session.payment_intent?.id ?? null;
-
-      return {
-        url: session.url,
-        checkoutSessionId: session.id,
-        paymentIntentId: paymentIntent,
-      };
+      return checkoutResult(session);
     },
 
     async transferSellerProceeds(input) {
