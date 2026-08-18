@@ -7,6 +7,7 @@ export type TaxInvoiceData = {
   quantityLabel: string;
   unitPrice: string;
   amount: string;
+  cardFee: string;
   feePercent: string;
   feeAmount: string;
   sellerProceeds: string;

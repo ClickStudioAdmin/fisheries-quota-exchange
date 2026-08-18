@@ -8,6 +8,7 @@ import {
 import { userFullName, userPhone } from "@/lib/auth/display-name";
 import type { User } from "@supabase/supabase-js";
 import { DataTable, DataTableRowExtras, TableActionRow, tableLinkClassName } from "@/components/data-table";
+import { OrderTableDownloads, OrderTableLinks } from "@/components/order-table-links";
 import { HoldingForm } from "@/components/holding-form";
 import { EditHoldingButton } from "@/components/holding-actions";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
@@ -686,15 +687,12 @@ export async function AccountOrdersSection({
           <DataTableRowExtras
             key={order.id}
             id={order.id}
-            links={
-              <Link
-                href={`/orders/${order.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={tableLinkClassName}
-              >
-                View
-              </Link>
+            links={<OrderTableLinks orderId={order.id} />}
+            downloads={
+              <OrderTableDownloads
+                orderId={order.id}
+                settled={order.status === "COMPLETED"}
+              />
             }
           />
         ))}

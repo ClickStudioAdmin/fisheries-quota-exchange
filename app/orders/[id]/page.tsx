@@ -22,7 +22,14 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
-import { orderChargeAud, orderSellerPayoutAud } from "@/lib/payments/money";
+import {
+  buyerCardFeeAud,
+  buyerPaidPlatformFeeOnTop,
+  orderChargeAud,
+  orderSellerPayoutAud,
+  stripeCardFeeAud,
+  stripeCardFeeRateLabel,
+} from "@/lib/payments/money";
 import { orderPayPanel } from "@/lib/payments/order-pay-panel";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { formatTableDateTime } from "@/lib/format";
@@ -103,11 +110,19 @@ export default async function OrderPage({
   const showCheckout = payPanel === "checkout";
   const showPending = payPanel === "pending";
   const publishableKey = showCheckout ? getStripePublishableKey() : null;
-  const totalDue = formatAud(
+  const chargeAud =
     payment?.status === "PAID"
-      ? payment.amount_aud
-      : orderChargeAud(order.amount_aud),
-  );
+      ? Number(payment.amount_aud)
+      : orderChargeAud(order.amount_aud);
+  const totalDue = formatAud(chargeAud);
+  const cardFeeAud =
+    payment?.status === "PAID"
+      ? buyerCardFeeAud(
+          order.amount_aud,
+          order.fee_amount_aud,
+          payment.amount_aud,
+        )
+      : stripeCardFeeAud(order.amount_aud);
   const sellerProceeds = formatAud(
     orderSellerPayoutAud(
       order.amount_aud,
@@ -117,7 +132,11 @@ export default async function OrderPage({
   );
   const buyerPaidFeeOnTop =
     payment?.status === "PAID" &&
-    Number(payment.amount_aud) > Number(order.amount_aud);
+    buyerPaidPlatformFeeOnTop(
+      order.amount_aud,
+      order.fee_amount_aud,
+      payment.amount_aud,
+    );
   const progressSteps = buildOrderSteps({
     orderStatus: order.status,
     reservationStatus: reservation?.status ?? null,
@@ -135,13 +154,22 @@ export default async function OrderPage({
     label: `Price per ${order.unit_label}`,
     value: formatAud(order.unit_price_aud),
   };
+  const cardFeeItem =
+    cardFeeAud > 0
+      ? {
+          label: "Card processing (Stripe)",
+          value: `${formatAud(cardFeeAud)} (${stripeCardFeeRateLabel()})`,
+        }
+      : null;
+  const quotaItem = {
+    label: isSeller ? "Listed amount" : "Quota amount",
+    value: formatAud(order.amount_aud),
+  };
   const totalItems = showCommission
     ? [
         unitPriceItem,
-        {
-          label: isSeller ? "Listed amount" : "Quota amount",
-          value: formatAud(order.amount_aud),
-        },
+        quotaItem,
+        ...(cardFeeItem && !isSeller ? [cardFeeItem] : []),
         { label: "Platform fee", value: feeLabel },
         {
           label: isSeller ? "You receive" : "Seller proceeds",
@@ -159,6 +187,11 @@ export default async function OrderPage({
       ]
     : [
         unitPriceItem,
+        {
+          label: "Quota amount",
+          value: formatAud(order.amount_aud),
+        },
+        ...(cardFeeItem ? [cardFeeItem] : []),
         {
           label: payment?.status === "PAID" ? "You paid" : "You pay",
           value: totalDue,
@@ -268,9 +301,13 @@ export default async function OrderPage({
             <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
             <p className="mt-2 text-sm text-ink-muted">
               Pay by card or Australian bank debit (BECS) in Stripe test mode.
-              Stripe only shows BECS when the charge is within your account’s
-              debit limit (A$10,000 by default). FQX holds the funds until
-              settlement, then pays the seller.
+              The total includes Stripe's card processing fee (
+              {stripeCardFeeRateLabel()}) so the listed quota amount reaches
+              FQX. The platform fee is deducted from the seller. Bank debit is
+              charged this same total in test mode. Stripe only shows BECS when
+              the charge is within your account’s debit limit (A$10,000 by
+              default). FQX holds the funds until settlement, then pays the
+              seller.
             </p>
             <div className="mt-6">
               <OrderCheckout
@@ -283,6 +320,20 @@ export default async function OrderPage({
           <p className="text-sm text-ink-muted">
             Payments are not configured, so this order cannot be charged yet.
           </p>
+        ) : order.status === "COMPLETED" ? (
+          <div className={panelClassName}>
+            <h2 className="text-lg font-semibold text-ink">Tax invoice</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              Dummy tax invoice from simulated settlement. GST is not
+              calculated. This is not a real tax invoice.
+            </p>
+            <a
+              href={`/orders/${order.id}/invoice`}
+              className={`${buttonClassName} mt-6 inline-block`}
+            >
+              Download tax invoice
+            </a>
+          </div>
         ) : null}
       </div>
       {order.review_note ? (

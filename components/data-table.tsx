@@ -51,6 +51,7 @@ export type DataTableRow = {
 type DataTableRowExtrasProps = {
   id: string | number;
   links?: ReactNode;
+  downloads?: ReactNode;
   actions?: ReactNode;
   expanded?: ReactNode;
   expandedLabel?: string;
@@ -335,12 +336,16 @@ function collectExtras(children: ReactNode) {
 
 function extrasColumns(extras: Map<string, ReactElement<DataTableRowExtrasProps>>) {
   let links = false;
+  let downloads = false;
   let actions = false;
 
   for (const extra of extras.values()) {
     const props = extra.props;
     if (hasNode(props.links)) {
       links = true;
+    }
+    if (hasNode(props.downloads)) {
+      downloads = true;
     }
     if (
       hasNode(props.actions) ||
@@ -351,7 +356,7 @@ function extrasColumns(extras: Map<string, ReactElement<DataTableRowExtrasProps>
     }
   }
 
-  return { links, actions };
+  return { links, downloads, actions };
 }
 
 export function TableActions({ children }: { children: ReactNode }) {
@@ -398,7 +403,7 @@ export function DataTable({
     () => new Set(lockedIds.map((id) => String(id))),
     [lockedIds],
   );
-  const { links: showLinks, actions: showActions } = useMemo(
+  const { links: showLinks, downloads: showDownloads, actions: showActions } = useMemo(
     () => extrasColumns(extras),
     [extras],
   );
@@ -527,6 +532,7 @@ export function DataTable({
     columns.length +
     (selectable ? 1 : 0) +
     (showLinks ? 1 : 0) +
+    (showDownloads ? 1 : 0) +
     (showActions ? 1 : 0);
   const resolvedBulkActions = bulkActions?.length
     ? bulkActions
@@ -701,6 +707,14 @@ export function DataTable({
                   Links
                 </th>
               ) : null}
+              {showDownloads ? (
+                <th
+                  scope="col"
+                  className="whitespace-nowrap px-4 py-2 font-medium"
+                >
+                  Downloads
+                </th>
+              ) : null}
               {showActions ? (
                 <th
                   scope="col"
@@ -769,6 +783,15 @@ export function DataTable({
                             <TableActions>
                               {openLinksInNewTab(extraProps?.links)}
                             </TableActions>
+                          ) : (
+                            <span className="text-ink-muted">—</span>
+                          )}
+                        </td>
+                      ) : null}
+                      {showDownloads ? (
+                        <td className="whitespace-nowrap px-4 py-3">
+                          {hasNode(extraProps?.downloads) ? (
+                            <TableActions>{extraProps?.downloads}</TableActions>
                           ) : (
                             <span className="text-ink-muted">—</span>
                           )}

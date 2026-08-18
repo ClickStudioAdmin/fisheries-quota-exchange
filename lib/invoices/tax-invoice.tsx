@@ -190,6 +190,10 @@ export function TaxInvoiceDocument({ data }: { data: TaxInvoiceData }) {
             <Text>{data.amount}</Text>
           </View>
           <View style={styles.totalRow}>
+            <Text>Card processing (Stripe)</Text>
+            <Text>{data.cardFee}</Text>
+          </View>
+          <View style={styles.totalRow}>
             <Text>Platform fee (seller, {data.feePercent})</Text>
             <Text>{data.feeAmount}</Text>
           </View>

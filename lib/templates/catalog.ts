@@ -69,13 +69,13 @@ const templates: MessageTemplate[] = [
     name: "Simulated tax invoice",
     description:
       "Dummy A4 tax invoice for a simulated quota sale or lease. Marked as not a real tax invoice. GST is not calculated. The PDF is generated in memory and is not stored.",
-    summary: "Attached to the order settled email",
+    summary: "Attached to the order settled email; downloadable after settlement",
     sentWhen:
-      "Generated when the order settled email is sent. It is not emailed on its own.",
+      "Generated when the order settled email is sent, and on download from /orders/[id] after COMPLETED. It is not emailed on its own.",
     trigger:
-      "sendSettledOrderInvoice after simulated settlement. generateTaxInvoicePdf renders lib/invoices/tax-invoice.tsx and Resend attaches FQX-SIM-{order id}.pdf.",
+      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice. generateTaxInvoicePdf renders lib/invoices/tax-invoice.tsx.",
     recipient:
-      "Attached to the order settled email (buyer created_by_email).",
+      "Email attachment to the buyer (created_by_email). Download for buyer, seller, or platform admin after settlement.",
     skipWhen:
       "The order settled email is skipped or fails before attach. Settlement still completes.",
     source: "lib/invoices/tax-invoice.tsx",
@@ -141,10 +141,11 @@ export function sampleTaxInvoiceData(): TaxInvoiceData {
     quantityLabel: "40 kg",
     unitPrice: "$18.75",
     amount: "$750.00",
+    cardFee: "$13.47",
     feePercent: "5%",
     feeAmount: "$37.50",
     sellerProceeds: "$712.50",
-    total: "$750.00",
+    total: "$763.47",
     sellerName: "Sample Quota Holdings Pty Ltd",
     sellerAbn: "81 000 000 001",
     buyerName: "Sample Fisheries Pty Ltd",
@@ -185,6 +186,7 @@ export function sampleContentFields(id: MessageTemplateId, siteUrl: string) {
     { label: "Quantity", value: invoice.quantityLabel },
     { label: "Unit price", value: invoice.unitPrice },
     { label: "Quota amount", value: invoice.amount },
+    { label: "Card processing (Stripe)", value: invoice.cardFee },
     {
       label: "Platform fee (seller)",
       value: `${invoice.feeAmount} (${invoice.feePercent})`,

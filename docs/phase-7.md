@@ -14,7 +14,7 @@ Do not implement auctions, Stripe, real payouts, or authority adapters in this p
 2. `create_order` locks the listing and holding, checks unreserved quantity, creates the order, an `ACTIVE` reservation, and a `PENDING` simulated transaction, and sets the listing to `RESERVED`.
 3. Platform admin approves compliance (`AWAITING_TRANSFER`) or rejects it (reservation released, listing returns to `PUBLISHED` if it has not expired).
 4. Admin simulates transfer (`AWAITING_SETTLEMENT`).
-5. Admin simulates settlement (`COMPLETED`): seller ledger `SALE` or `LEASE_OUT`, buyer ledger `PURCHASE` or `LEASE_IN`, reservation `CONSUMED`, listing `SOLD`, transaction `COMPLETED`. The app then emails a dummy tax invoice PDF to the buyer (`created_by_email`). Settlement still completes if mail is skipped or fails.
+5. Admin simulates settlement (`COMPLETED`): seller ledger `SALE` or `LEASE_OUT`, buyer ledger `PURCHASE` or `LEASE_IN`, reservation `CONSUMED`, listing `SOLD`, transaction `COMPLETED`. The app then emails a dummy tax invoice PDF to the buyer (`created_by_email`). Buyer and seller can download the same PDF from `/orders/[id]` after settlement. Settlement still completes if mail is skipped or fails.
 
 A second purchase of the same listing fails because it is no longer `PUBLISHED`. A purchase that would exceed remaining unreserved holding quantity fails with “Quota is no longer available”.
 

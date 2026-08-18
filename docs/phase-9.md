@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Take payments in **Stripe test mode** through Stripe Connect using **separate charges and transfers**. Buyers pay FQX the listed quota amount (card or AU BECS bank debit when enabled). FQX holds the funds. At settlement, FQX Transfers the seller’s share (`amount_aud` minus `fee_amount_aud`) to their connected account and keeps the platform fee. The buyer does not pay the fee on top. FQX is liable for refunds and chargebacks.
+Take payments in **Stripe test mode** through Stripe Connect using **separate charges and transfers**. Buyers pay FQX the listed quota amount **plus Stripe's domestic card processing fee** (`1.75% + A$0.30`, grossed up so the listed amount still reaches FQX). Card or AU BECS bank debit when enabled. Checkout uses one total for both methods in this phase. FQX holds the funds. At settlement, FQX Transfers the seller’s share (`amount_aud` minus `fee_amount_aud`) to their connected account and keeps the platform fee. The buyer does not pay the **platform** fee on top. FQX is liable for refunds and chargebacks.
 
 Do not implement live (non-test) keys, seller bank payouts, funds segregation, or a financial ledger in this phase. Admin still simulates the authority transfer. Settlement both completes quota and creates the Stripe Transfer.
 
@@ -12,10 +12,10 @@ Never trust the browser or the Checkout return URL for payment status. The webho
 
 1. Organisation `OWNER` or `ADMIN` opens **Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
 2. Stripe sends `account.updated`. The app stores whether the account can accept charges. Opening **Payments** also refreshes that flag from Stripe. The browser is not trusted for it.
-3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The listed quota amount is charged to the **FQX** Stripe account. The platform fee is not added to the buyer charge. There is no destination charge.
+3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The listed quota amount plus the Stripe card processing surcharge is charged to the **FQX** Stripe account (two Checkout line items: quota, then **Card processing (Stripe)**). The platform fee is not added to the buyer charge. There is no destination charge. The order page totals show the same split.
 4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` / `payment_intent.succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance (often **Incoming** until they clear). Refreshing the return URL does not charge again. Opening the order page also reconciles payment status from Stripe. Pay FQX on `/orders/[id]` has three display states while the order is still the buyer’s: **Checkout** (embedded Stripe, only if a session can still be started), **Pending** (spinner while a debit is processing or payment is recorded but the order has not yet moved to `AWAITING_COMPLIANCE`), and **Paid** (checkout hidden once the order is `AWAITING_COMPLIANCE` or later). Pending polls the server about every five seconds while the tab is visible. The browser is still not trusted for payment status.
 5. Expired Checkout or failed async payment cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
-6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` minus `fee_amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails the dummy tax invoice.
+6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` minus `fee_amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails the dummy tax invoice. Buyer and seller can download that PDF from the order page after settlement.
 
 If Stripe keys are missing, purchase stays on the Phase 7 path (`AWAITING_COMPLIANCE` immediately). No live payment.
 
@@ -31,7 +31,8 @@ Checkout asks Stripe for `card` and `au_becs_debit`. If that is rejected, it use
 | --- | --- |
 | `/dashboard/payments` | Embedded Connect onboarding and account management |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |
-| `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. Return URL is not authoritative |
+| `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the tax invoice. Return URL is not authoritative |
+| `/orders/[id]/invoice` | Tax invoice PDF download after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. |
 | `/api/stripe/webhook` | Signed Stripe events |
 | `/api/stripe/account-session` | Account Session client secret for embedded components |
 
@@ -94,7 +95,7 @@ Test card: `4242 4242 4242 4242`. Test BECS debit: BSB `000-000`, account `00012
 ## Acceptance criteria
 
 - Seller completes Connect onboarding in the sandbox
-- Buyer pays a listing with a test card (and bank debit if BECS is enabled)
+- Buyer pays a listing with a test card (and bank debit if BECS is enabled), including the Stripe card processing line
 - Webhook marks the order paid; funds remain on FQX until Simulate settlement
 - Simulate settlement Transfers the seller net (listed amount minus fee) and keeps the fee
 - Refreshing the return URL does not double-charge or double-advance

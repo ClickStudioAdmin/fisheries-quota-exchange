@@ -84,7 +84,7 @@ Development fixture `20260817230000_seed_market_catalogue.sql` adds Australian f
 
 Transactional email uses Resend from the server. `sendEmail({ to, template, data })` in `lib/email/` sends after the database write. Auth mail (confirm, reset password) stays on Supabase Auth. Templates: `member_added` when someone is added to an account, and `order_settled` after `simulate_settlement` (dummy tax invoice PDF attached). Platform admins preview them on `/admin/templates`. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; adding the member or settling the order still succeeds. Do not put Resend keys in `NEXT_PUBLIC_` variables. Open/click tracking stays off for transactional mail.
 
-Dummy tax invoices are generated on the server with `@react-pdf/renderer` (`lib/invoices/`). They are not stored. They are not real tax invoices and do not calculate GST.
+Dummy tax invoices are generated on the server with `@react-pdf/renderer` (`lib/invoices/`). They are not stored. They are not real tax invoices and do not calculate GST. After settlement, buyer and seller can download the PDF from `/orders/[id]`.
 
 ## Not in this phase
 

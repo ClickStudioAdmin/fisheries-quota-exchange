@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   approveComplianceAction,
@@ -13,7 +12,8 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import { fieldClassName, tableButtonClassName } from "@/components/auth-card";
-import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { OrderTableDownloads, OrderTableLinks } from "@/components/order-table-links";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TableModal } from "@/components/table-modal";
 import { formatTableDate } from "@/lib/format";
@@ -148,15 +148,12 @@ export default async function AdminOrdersPage() {
           <DataTableRowExtras
             key={order.id}
             id={order.id}
-            links={
-              <Link
-                href={`/orders/${order.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={tableLinkClassName}
-              >
-                View
-              </Link>
+            links={<OrderTableLinks orderId={order.id} />}
+            downloads={
+              <OrderTableDownloads
+                orderId={order.id}
+                settled={order.status === "COMPLETED"}
+              />
             }
             actions={
               <>

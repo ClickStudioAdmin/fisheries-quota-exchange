@@ -149,8 +149,9 @@ export default async function ListingPage({
               >
                 Sign in
               </Link>{" "}
-              to purchase. Quota is reserved when you buy. You pay FQX through
-              Stripe. FQX holds the funds until settlement.
+              to purchase. Quota is reserved when you buy. You pay FQX the
+              listed amount plus Stripe's card processing fee. FQX holds the
+              funds until settlement.
             </p>
           ) : organisations.length === 0 ? (
             <p className="text-sm text-ink-muted">

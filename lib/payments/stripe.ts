@@ -4,8 +4,9 @@ import Stripe from "stripe";
 import { getStripeEnv } from "@/lib/payments/env";
 import {
   audToCents,
-  orderChargeAud,
   orderSellerPayoutAud,
+  stripeCardFeeCents,
+  stripeCardFeeRateLabel,
 } from "@/lib/payments/money";
 import type { PaymentProvider } from "@/lib/payments/types";
 
@@ -140,7 +141,9 @@ export function createStripePaymentProvider(): PaymentProvider {
 
     async createCheckout(input) {
       const stripe = stripeClient();
-      const totalCents = audToCents(orderChargeAud(input.amountAud));
+      const listedCents = audToCents(input.amountAud);
+      const cardFeeCents = stripeCardFeeCents(listedCents);
+      const totalCents = listedCents + cardFeeCents;
       const sellerPayoutAud = orderSellerPayoutAud(
         input.amountAud,
         input.feeAmountAud,
@@ -206,13 +209,28 @@ export function createStripePaymentProvider(): PaymentProvider {
             quantity: 1,
             price_data: {
               currency: "aud",
-              unit_amount: totalCents,
+              unit_amount: listedCents,
               product_data: {
                 name: `FQX ${input.offeringLabel} — ${input.fisheryName}`,
                 description: `Order ${input.orderId}`,
               },
             },
           },
+          ...(cardFeeCents > 0
+            ? [
+                {
+                  quantity: 1,
+                  price_data: {
+                    currency: "aud" as const,
+                    unit_amount: cardFeeCents,
+                    product_data: {
+                      name: "Card processing (Stripe)",
+                      description: stripeCardFeeRateLabel(),
+                    },
+                  },
+                },
+              ]
+            : []),
         ],
         payment_intent_data: {
           transfer_group: transferGroup,
