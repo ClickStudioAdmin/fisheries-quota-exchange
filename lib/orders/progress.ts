@@ -33,7 +33,7 @@ type ProgressInput = {
   orderStatus: OrderStatus;
   reservationStatus?: string | null;
   paymentStatus?: string | null;
-  debitProcessing?: boolean;
+  paymentConfirming?: boolean;
   settlementCompleted?: boolean;
 };
 
@@ -168,8 +168,8 @@ function paymentDetail(input: ProgressInput, state: OrderStepState) {
     return "Cancelled";
   }
 
-  if (input.debitProcessing) {
-    return "Bank debit processing";
+  if (input.paymentConfirming) {
+    return "Confirming";
   }
 
   if (input.paymentStatus === "PAID") {

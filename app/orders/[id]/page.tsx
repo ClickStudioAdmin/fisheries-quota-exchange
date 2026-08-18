@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cancelOrderAction } from "@/lib/orders/actions";
 import { OrderCheckout } from "@/components/order-checkout";
+import { OrderCheckoutStatus } from "@/components/order-checkout-status";
+import { OrderPaymentPoll } from "@/components/order-payment-poll";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
@@ -21,6 +23,7 @@ import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
 import { orderChargeAud, orderSellerPayoutAud } from "@/lib/payments/money";
+import { orderPayPanel } from "@/lib/payments/order-pay-panel";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { formatTableDateTime } from "@/lib/format";
 import { loginPath } from "@/lib/auth/paths";
@@ -77,18 +80,29 @@ export default async function OrderPage({
   const isBuyer = buyerRole !== null;
   const isSeller = sellerRole !== null;
   const showCommission = isSeller || (Boolean(admin) && !isBuyer);
+  const hasPaymentReceivedEvent = events.some(
+    (event) => event.event_type === "PAYMENT_RECEIVED",
+  );
+  const paymentRecorded =
+    paymentLive === "paid" ||
+    payment?.status === "PAID" ||
+    hasPaymentReceivedEvent;
 
   const canCancel =
     (order.status === "AWAITING_COMPLIANCE" ||
       order.status === "AWAITING_PAYMENT") &&
     (admin || buyerRole !== null);
-  const debitProcessing =
-    order.status === "AWAITING_PAYMENT" && paymentLive === "processing";
-  const canPay =
-    order.status === "AWAITING_PAYMENT" &&
-    buyerRole !== null &&
-    !debitProcessing;
-  const publishableKey = canPay ? getStripePublishableKey() : null;
+  const payPanel = orderPayPanel({
+    orderStatus: order.status,
+    isBuyer,
+    paymentLive,
+    paymentStatus: payment?.status ? String(payment.status) : null,
+    hasPaymentReceivedEvent,
+    returnedFromCheckout: query.paid === "1",
+  });
+  const showCheckout = payPanel === "checkout";
+  const showPending = payPanel === "pending";
+  const publishableKey = showCheckout ? getStripePublishableKey() : null;
   const totalDue = formatAud(
     payment?.status === "PAID"
       ? payment.amount_aud
@@ -108,7 +122,7 @@ export default async function OrderPage({
     orderStatus: order.status,
     reservationStatus: reservation?.status ?? null,
     paymentStatus: payment?.status ? String(payment.status) : null,
-    debitProcessing,
+    paymentConfirming: showPending,
     settlementCompleted: transaction?.status === "COMPLETED",
   });
   const feeLabel =
@@ -153,23 +167,17 @@ export default async function OrderPage({
 
   return (
     <div>
+      {showPending ? <OrderPaymentPoll /> : null}
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        {canPay ? "Checkout" : `Order ${order.id}`}
+        {showCheckout ? "Checkout" : `Order ${order.id}`}
       </h1>
       <p className="mt-2 flex flex-wrap items-center gap-2 text-ink-muted">
-        {canPay ? `Order ${order.id}` : null}
+        {showCheckout ? `Order ${order.id}` : null}
         <StatusBadge
           label={orderStatusLabel(order.status)}
           code={order.status}
         />
       </p>
-      {query.paid === "1" && order.status === "AWAITING_PAYMENT" ? (
-        <p className="mt-3 text-sm text-ink-muted">
-          If you paid by bank debit, Stripe may show Incoming while the debit
-          clears. Refresh this page — FQX checks Stripe on the server, not
-          this URL.
-        </p>
-      ) : null}
       {query.pay === "cancelled" ? (
         <p className="mt-3 text-sm text-ink-muted">
           Payment was not completed. The quota is still reserved until you pay
@@ -238,16 +246,24 @@ export default async function OrderPage({
             </form>
           ) : null}
         </div>
-        {debitProcessing ? (
+        {showPending ? (
           <div className={panelClassName}>
             <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
-            <p className="mt-2 text-sm text-ink-muted">
-              The bank debit was submitted. Stripe may show the funds as
-              Incoming until they clear. FQX will mark this order paid when
-              Stripe confirms the debit — refresh this page.
-            </p>
+            <div className="mt-6">
+              <OrderCheckoutStatus
+                title={
+                  paymentRecorded
+                    ? "Confirming payment"
+                    : "Bank debit processing"
+                }
+              >
+                {paymentRecorded
+                  ? "Payment was recorded. This page will update when the order moves to compliance."
+                  : "Your bank debit was submitted. Stripe may show Incoming until it clears. This page will update when payment is confirmed."}
+              </OrderCheckoutStatus>
+            </div>
           </div>
-        ) : canPay && publishableKey ? (
+        ) : showCheckout && publishableKey ? (
           <div className={panelClassName}>
             <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
             <p className="mt-2 text-sm text-ink-muted">
@@ -263,7 +279,7 @@ export default async function OrderPage({
               />
             </div>
           </div>
-        ) : canPay ? (
+        ) : showCheckout ? (
           <p className="text-sm text-ink-muted">
             Payments are not configured, so this order cannot be charged yet.
           </p>

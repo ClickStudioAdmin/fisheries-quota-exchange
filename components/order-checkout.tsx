@@ -7,27 +7,9 @@ import {
   EmbeddedCheckout,
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js";
+import { OrderCheckoutStatus } from "@/components/order-checkout-status";
+import { OrderPaymentPoll } from "@/components/order-payment-poll";
 import { startOrderCheckoutAction } from "@/lib/payments/actions";
-
-function CheckoutLoading() {
-  return (
-    <div
-      className="flex min-h-64 flex-col items-center justify-center gap-3 px-4 py-10 text-center"
-      role="status"
-      aria-live="polite"
-    >
-      <span
-        className="h-8 w-8 animate-spin rounded-full border-2 border-sea border-t-transparent"
-        aria-hidden
-      />
-      <p className="text-base font-medium text-ink">Preparing checkout</p>
-      <p className="max-w-sm text-sm text-ink-muted">
-        Loading card and bank debit from Stripe. Stay on this page — this
-        usually takes a few seconds.
-      </p>
-    </div>
-  );
-}
 
 export function OrderCheckout({
   orderId,
@@ -44,6 +26,7 @@ export function OrderCheckout({
   const checkoutRef = useRef<HTMLDivElement>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [checkoutReady, setCheckoutReady] = useState(false);
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,6 +34,11 @@ export function OrderCheckout({
 
     startOrderCheckoutAction(orderId).then((result) => {
       if (cancelled) {
+        return;
+      }
+
+      if (result?.pending) {
+        setPending(true);
         return;
       }
 
@@ -104,6 +92,18 @@ export function OrderCheckout({
     router.refresh();
   }, [router]);
 
+  if (pending) {
+    return (
+      <>
+        <OrderPaymentPoll />
+        <OrderCheckoutStatus title="Confirming payment">
+          Your payment was submitted. This page will update when Stripe
+          confirms it.
+        </OrderCheckoutStatus>
+      </>
+    );
+  }
+
   if (error) {
     return (
       <p className="text-sm text-red-800" role="alert">
@@ -113,14 +113,22 @@ export function OrderCheckout({
   }
 
   if (!clientSecret) {
-    return <CheckoutLoading />;
+    return (
+      <OrderCheckoutStatus title="Preparing checkout">
+        Loading card and bank debit from Stripe. Stay on this page — this
+        usually takes a few seconds.
+      </OrderCheckoutStatus>
+    );
   }
 
   return (
     <div className="relative min-h-64">
       {checkoutReady ? null : (
         <div className="absolute inset-0 z-10 bg-paper-raised">
-          <CheckoutLoading />
+          <OrderCheckoutStatus title="Preparing checkout">
+            Loading card and bank debit from Stripe. Stay on this page — this
+            usually takes a few seconds.
+          </OrderCheckoutStatus>
         </div>
       )}
       <div ref={checkoutRef}>

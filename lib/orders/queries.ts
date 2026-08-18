@@ -146,7 +146,8 @@ export async function listOrderAuditEvents(orderId: number) {
     .select("id, event_type, entity_type, entity_id, actor_email, payload, created_at")
     .eq("entity_type", "order")
     .eq("entity_id", orderId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
 
   return (data ?? []) as AuditEvent[];
 }

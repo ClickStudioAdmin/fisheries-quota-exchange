@@ -19,6 +19,7 @@ import { userFacingError } from "@/lib/errors/user-message";
 export type PaymentFormState = {
   error?: string;
   clientSecret?: string;
+  pending?: boolean;
 };
 
 export async function createAccountSessionAction(
@@ -120,7 +121,7 @@ export async function startOrderCheckoutAction(
   }
 
   if (order.status !== "AWAITING_PAYMENT") {
-    return { error: "This order is not waiting for payment." };
+    return { pending: true };
   }
 
   const seller = await getOrderSellerPaymentAccount(order.id);
@@ -164,7 +165,16 @@ export async function startOrderCheckoutAction(
 
     return { clientSecret: checkout.clientSecret };
   } catch (error) {
-    return { error: userFacingError(error, "Could not start checkout.") };
+    const message = userFacingError(error, "Could not start checkout.");
+
+    if (
+      message === "This order is already paid." ||
+      message.startsWith("Bank debit is still processing")
+    ) {
+      return { pending: true };
+    }
+
+    return { error: message };
   }
 }
 
