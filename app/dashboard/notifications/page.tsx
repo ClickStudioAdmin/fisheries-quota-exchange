@@ -1,6 +1,8 @@
 import { NotificationSettingsForm } from "@/components/notification-settings-form";
-import { isPlatformAdmin } from "@/lib/admin/access";
-import { getMyDisabledEmails } from "@/lib/alerts/queries";
+import {
+  getMyDisabledEmails,
+  myPersonalNotificationEmailIds,
+} from "@/lib/alerts/queries";
 import { requireDashboardUser } from "@/lib/organisations/dashboard-account";
 
 export const metadata = {
@@ -9,9 +11,9 @@ export const metadata = {
 
 export default async function DashboardNotificationsPage() {
   await requireDashboardUser("/dashboard/notifications");
-  const [disabledEmails, showOperatorEmails] = await Promise.all([
+  const [disabledEmails, emailIds] = await Promise.all([
     getMyDisabledEmails(),
-    isPlatformAdmin(),
+    myPersonalNotificationEmailIds(),
   ]);
 
   return (
@@ -22,12 +24,12 @@ export default async function DashboardNotificationsPage() {
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">
           These settings apply to your email, not the whole organisation.
-          Platform admins can still disable a message for everyone.
+          Platform-wide switches stay on Admin settings.
         </p>
       </div>
       <NotificationSettingsForm
         disabledEmails={disabledEmails}
-        showOperatorEmails={showOperatorEmails}
+        emailIds={emailIds}
       />
     </div>
   );

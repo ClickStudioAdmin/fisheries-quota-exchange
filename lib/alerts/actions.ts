@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isPlatformAdmin } from "@/lib/admin/access";
-import { getMyDisabledEmails } from "@/lib/alerts/queries";
+import {
+  getMyDisabledEmails,
+  myPersonalNotificationEmailIds,
+} from "@/lib/alerts/queries";
 import { parseFisheryIds } from "@/lib/alerts/types";
 import {
-  MEMBER_EMAIL_IDS,
-  PRODUCT_EMAIL_IDS,
   disabledProductEmails,
+  isOperatorEmailId,
   isProductEmailId,
 } from "@/lib/email/product-emails";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -29,16 +30,15 @@ export async function updateNotificationPreferencesAction(
     return { error: "You must be signed in." };
   }
 
-  const visibleIds = (await isPlatformAdmin())
-    ? [...PRODUCT_EMAIL_IDS]
-    : [...MEMBER_EMAIL_IDS];
+  const visibleIds = await myPersonalNotificationEmailIds();
   const visible = new Set(visibleIds);
   const formDisabled = disabledProductEmails(
     formData.getAll("email_enabled").map((value) => String(value)),
     visibleIds,
   );
   const preserved = (await getMyDisabledEmails()).filter(
-    (id) => isProductEmailId(id) && !visible.has(id),
+    (id) =>
+      isProductEmailId(id) && !visible.has(id) && !isOperatorEmailId(id),
   );
 
   const { error } = await supabase.rpc("update_user_email_preferences", {

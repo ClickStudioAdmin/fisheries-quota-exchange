@@ -3,6 +3,15 @@
 import { useActionState } from "react";
 import { buttonClassName } from "@/components/auth-card";
 import {
+  tableBodyCellClassName,
+  tableClassName,
+  tableHeadClassName,
+  tableHeaderCellClassName,
+  tableRowClassName,
+  tableWrapClassName,
+} from "@/components/data-table";
+import { SettingsSwitch } from "@/components/settings-switch";
+import {
   updateListingAlertsAction,
   type PreferenceFormState,
 } from "@/lib/alerts/actions";
@@ -45,52 +54,42 @@ export function ListingAlertsForm({
         </p>
       ) : null}
       <p className="text-sm text-ink-muted">
-        Tick sale and/or lease for each fishery. You get an email when a
+        Turn on sale and/or lease for each fishery. You get an email when a
         matching listing or auction is published. You can turn the email off
-        on Notifications without clearing these ticks.
+        on Notifications without clearing these switches.
       </p>
-      <div className="overflow-x-auto border border-line">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-paper-raised text-xs uppercase tracking-[0.12em] text-ink-muted">
+      <div className={tableWrapClassName}>
+        <table className={tableClassName}>
+          <thead className={tableHeadClassName}>
             <tr>
-              <th className="px-3 py-2 font-medium">Fishery</th>
-              <th className="px-3 py-2 font-medium">Sale</th>
-              <th className="px-3 py-2 font-medium">Lease</th>
+              <th className={tableHeaderCellClassName}>Fishery</th>
+              <th className={`w-24 ${tableHeaderCellClassName}`}>Sale</th>
+              <th className={`w-24 ${tableHeaderCellClassName}`}>Lease</th>
             </tr>
           </thead>
           <tbody>
-            {fisheries.map((fishery) => {
+            {fisheries.map((fishery, index) => {
               const alert = selected.get(fishery.id);
               return (
-                <tr key={fishery.id} className="border-t border-line">
-                  <td className="px-3 py-2 text-ink">
+                <tr key={fishery.id} className={tableRowClassName(index)}>
+                  <td className={tableBodyCellClassName}>
                     {fisherySelectLabel(fishery, jurisdictions)}
                   </td>
-                  <td className="px-3 py-2">
-                    <label className="inline-flex items-center gap-2 text-ink">
-                      <input
-                        type="checkbox"
-                        name="sale"
-                        value={String(fishery.id)}
-                        defaultChecked={Boolean(alert?.sales)}
-                      />
-                      <span className="sr-only">
-                        Sale alerts for {fishery.name}
-                      </span>
-                    </label>
+                  <td className={tableBodyCellClassName}>
+                    <SettingsSwitch
+                      name="sale"
+                      value={String(fishery.id)}
+                      defaultChecked={Boolean(alert?.sales)}
+                      label={`Sale alerts for ${fishery.name}`}
+                    />
                   </td>
-                  <td className="px-3 py-2">
-                    <label className="inline-flex items-center gap-2 text-ink">
-                      <input
-                        type="checkbox"
-                        name="lease"
-                        value={String(fishery.id)}
-                        defaultChecked={Boolean(alert?.leases)}
-                      />
-                      <span className="sr-only">
-                        Lease alerts for {fishery.name}
-                      </span>
-                    </label>
+                  <td className={tableBodyCellClassName}>
+                    <SettingsSwitch
+                      name="lease"
+                      value={String(fishery.id)}
+                      defaultChecked={Boolean(alert?.leases)}
+                      label={`Lease alerts for ${fishery.name}`}
+                    />
                   </td>
                 </tr>
               );

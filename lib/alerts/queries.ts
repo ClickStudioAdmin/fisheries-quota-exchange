@@ -6,6 +6,9 @@ import type { ListingAlert } from "@/lib/alerts/types";
 import { listingAlertMatches } from "@/lib/alerts/types";
 import type { ListingOffering } from "@/lib/listings/types";
 import { uniqueEmails } from "@/lib/email/recipients";
+import { personalNotificationEmailIds } from "@/lib/email/product-emails";
+import { canEditOrganisation } from "@/lib/organisations/permissions";
+import { listMyOrganisations } from "@/lib/organisations/queries";
 
 async function db() {
   return createServiceClient() ?? (await createClient());
@@ -109,4 +112,15 @@ export async function listingAlertEmails(
       )
       .map((row) => String(row.email ?? "")),
   );
+}
+
+export async function myPersonalNotificationEmailIds() {
+  const organisations = await listMyOrganisations();
+
+  return personalNotificationEmailIds({
+    isOrgMember: organisations.length > 0,
+    isOrgManager: organisations.some((organisation) =>
+      canEditOrganisation(organisation.role),
+    ),
+  });
 }

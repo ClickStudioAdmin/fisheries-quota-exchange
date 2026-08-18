@@ -32,9 +32,9 @@ export function listRangeLabel(
   return `Showing ${from}–${to} of ${total} ${noun}`;
 }
 
-export function useListPagination() {
+export function useListPagination(initialPageSize = LIST_PAGE_SIZE) {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSizeState] = useState(LIST_PAGE_SIZE);
+  const [pageSize, setPageSizeState] = useState(initialPageSize);
 
   function setPageSize(next: number) {
     setPageSizeState(next);

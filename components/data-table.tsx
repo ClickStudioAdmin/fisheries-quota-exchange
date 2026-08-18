@@ -75,6 +75,7 @@ type DataTableProps = {
   empty?: string;
   searchPlaceholder?: string;
   defaultSort?: { key: string; direction: "asc" | "desc" };
+  defaultPageSize?: number;
   selectable?: boolean;
   lockedIds?: Array<string | number>;
   bulkAction?: DataTableBulkAction;
@@ -393,6 +394,20 @@ export function TableActionRow({ children }: { children: ReactNode }) {
 
 export const tableLinkClassName = "whitespace-nowrap text-sm underline";
 
+export const tableWrapClassName =
+  "overflow-x-auto border border-line bg-paper-raised";
+export const tableClassName = "w-full border-collapse text-left text-sm";
+export const tableHeadClassName =
+  "bg-paper text-xs uppercase tracking-[0.12em] text-ink-muted";
+export const tableHeaderCellClassName =
+  "whitespace-nowrap px-3 py-2 font-medium";
+export const tableBodyCellClassName = "px-3 py-3 text-ink";
+
+export function tableRowClassName(index: number) {
+  const striped = index % 2 === 0 ? "bg-paper-raised" : "bg-paper-stripe";
+  return `border-t border-line align-top ${striped} hover:bg-line/40`;
+}
+
 export function DataTableRowExtras(_props: DataTableRowExtrasProps) {
   return null;
 }
@@ -404,6 +419,7 @@ export function DataTable({
   empty = "No rows.",
   searchPlaceholder = "Filter…",
   defaultSort,
+  defaultPageSize,
   selectable = false,
   lockedIds = [],
   bulkAction,
@@ -417,7 +433,8 @@ export function DataTable({
   const [sort, setSort] = useState<SortState>(defaultSort ?? null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const { page, setPage, pageSize, setPageSize } = useListPagination();
+  const { page, setPage, pageSize, setPageSize } =
+    useListPagination(defaultPageSize);
   const extras = useMemo(() => collectExtras(children), [children]);
   const actionCount = useMemo(
     () => rows.filter((row) => row.needsAction).length,
@@ -674,10 +691,10 @@ export function DataTable({
           {listRangeLabel(from, to, visible.length, visible.length === 1 ? "row" : "rows")}
         </p>
       </div>
-      <div className="overflow-x-auto border border-line bg-paper-raised">
-        <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+      <div className={tableWrapClassName}>
+        <table className={`${tableClassName} min-w-[40rem]`}>
           <caption className="sr-only">{caption}</caption>
-          <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-muted">
+          <thead className={tableHeadClassName}>
             <tr>
               {selectable ? (
                 <th scope="col" className="w-10 px-3 py-2 font-medium">
@@ -707,7 +724,7 @@ export function DataTable({
                           ? "descending"
                           : "none"
                     }
-                    className={`whitespace-nowrap px-3 py-2 font-medium ${aligned} ${columnWidthClass(column)}`.trim()}
+                    className={`${tableHeaderCellClassName} ${aligned} ${columnWidthClass(column)}`.trim()}
                   >
                     {column.sortable ? (
                       <button
@@ -769,14 +786,9 @@ export function DataTable({
                 const rowId = String(row.id);
                 const expanded = Boolean(openIds[rowId]);
                 const lockedRow = locked.has(rowId);
-                const striped =
-                  index % 2 === 0 ? "bg-paper-raised" : "bg-paper-stripe";
-
                 return (
                   <Fragment key={row.id}>
-                    <tr
-                      className={`border-t border-line align-top ${striped} hover:bg-line/40`}
-                    >
+                    <tr className={tableRowClassName(index)}>
                       {selectable ? (
                         <td className="w-10 px-3 py-3">
                           <input
@@ -797,7 +809,7 @@ export function DataTable({
                       {columns.map((column) => (
                         <td
                           key={column.key}
-                          className={`px-3 py-3 text-ink ${
+                          className={`${tableBodyCellClassName} ${
                             column.align === "right" ? "text-right" : ""
                           } ${columnWidthClass(column)}`.trim()}
                         >

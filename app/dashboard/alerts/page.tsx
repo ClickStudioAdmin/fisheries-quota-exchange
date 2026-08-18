@@ -23,7 +23,7 @@ export default async function DashboardAlertsPage() {
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">
           Choose which fisheries to watch. A published sale or lease listing
-          (including auctions) emails you when that box is ticked.
+          (including auctions) emails you when that switch is on.
         </p>
       </div>
       <ListingAlertsForm

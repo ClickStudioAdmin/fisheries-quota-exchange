@@ -6,6 +6,7 @@ const SUCCESS = new Set([
   "consumed",
   "paid",
   "sent at settlement",
+  "enabled",
 ]);
 
 const WARNING = new Set([
@@ -31,6 +32,7 @@ const DANGER = new Set([
   "released",
   "expired",
   "failed",
+  "disabled",
 ]);
 
 const INFO = new Set(["platform admin"]);
@@ -66,9 +68,11 @@ export function isStatusColumn(key: string, header?: string) {
     key === "status" ||
     key === "verified" ||
     key === "access" ||
+    key === "admin" ||
     header === "Status" ||
     header === "Verified" ||
-    header === "Access"
+    header === "Access" ||
+    header === "Admin"
   );
 }
 

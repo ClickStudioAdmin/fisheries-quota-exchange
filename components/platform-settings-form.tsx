@@ -6,6 +6,15 @@ import {
   fieldClassName,
 } from "@/components/auth-card";
 import {
+  tableBodyCellClassName,
+  tableClassName,
+  tableHeadClassName,
+  tableHeaderCellClassName,
+  tableRowClassName,
+  tableWrapClassName,
+} from "@/components/data-table";
+import { SettingsSwitch, SettingsSwitchRow } from "@/components/settings-switch";
+import {
   updatePlatformSettingsAction,
   type SettingsFormState,
 } from "@/lib/settings/actions";
@@ -28,7 +37,7 @@ export function PlatformSettingsForm({
   );
 
   return (
-    <form action={formAction} className="max-w-2xl space-y-6">
+    <form action={formAction} className="max-w-3xl space-y-6">
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
@@ -80,20 +89,15 @@ export function PlatformSettingsForm({
       </fieldset>
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-ink">Access</legend>
-        <label className="flex items-start gap-2 text-sm text-ink">
-          <input
-            type="checkbox"
+        <div className="divide-y divide-line border border-line bg-paper-raised">
+          <SettingsSwitchRow
             name="allow_registrations"
             defaultChecked={settings.allow_registrations}
-            className="mt-0.5"
+            title="Allow new registrations"
+            description="Existing accounts can still log in when this is off."
+            className="bg-paper-raised hover:bg-line/40"
           />
-          <span>
-            Allow new registrations
-            <span className="mt-0.5 block text-ink-muted">
-              Existing accounts can still log in when this is off.
-            </span>
-          </span>
-        </label>
+        </div>
       </fieldset>
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-ink">
@@ -103,63 +107,63 @@ export function PlatformSettingsForm({
           Applies to people marked verified on Users. Unverified accounts still
           need admin approval.
         </p>
-        <label className="flex items-start gap-2 text-sm text-ink">
-          <input
-            type="checkbox"
+        <div className="divide-y divide-line border border-line bg-paper-raised">
+          <SettingsSwitchRow
             name="auto_approve_holdings"
             defaultChecked={settings.auto_approve_holdings}
-            className="mt-0.5"
+            title="Auto-approve holdings for verified holders"
+            description="When off, even verified holders wait for holding verification."
+            className="bg-paper-raised hover:bg-line/40"
           />
-          <span>
-            Auto-approve holdings for verified holders
-            <span className="mt-0.5 block text-ink-muted">
-              When off, even verified holders wait for holding verification.
-            </span>
-          </span>
-        </label>
-        <label className="flex items-start gap-2 text-sm text-ink">
-          <input
-            type="checkbox"
+          <SettingsSwitchRow
             name="auto_approve_listings"
             defaultChecked={settings.auto_approve_listings}
-            className="mt-0.5"
+            title="Auto-approve listings for verified holders"
+            description="Fixed-price listings and auctions go straight to the marketplace."
+            className="bg-paper-stripe hover:bg-line/40"
           />
-          <span>
-            Auto-approve listings for verified holders
-            <span className="mt-0.5 block text-ink-muted">
-              Fixed-price listings and auctions go straight to the marketplace.
-            </span>
-          </span>
-        </label>
+        </div>
       </fieldset>
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-ink">
           Transactional email
         </legend>
         <p className="text-sm text-ink-muted">
-          Uncheck a message to stop sending it. Members can also turn off
-          their own copies on Notifications. Auth confirm and password reset
-          stay on Supabase and are not listed here. Actions still complete if
-          mail is skipped.
+          Turn off a message to stop sending it for everyone. Members can turn
+          off their own copies of mail that goes to them on Notifications.
+          Operator mail is only listed here. Auth confirm and password reset
+          stay on Supabase and are not listed. Actions still complete if mail
+          is skipped.
         </p>
-        <div className="max-h-80 space-y-2 overflow-y-auto border border-line bg-paper-raised p-3">
-          {PRODUCT_EMAIL_IDS.map((id) => (
-            <label key={id} className="flex items-start gap-2 text-sm text-ink">
-              <input
-                type="checkbox"
-                name="email_enabled"
-                value={id}
-                defaultChecked={!settings.disabled_emails.includes(id)}
-                className="mt-0.5"
-              />
-              <span>
-                {PRODUCT_EMAIL_LABELS[id]}
-                <span className="mt-0.5 block font-mono text-xs text-ink-muted">
-                  {id}
-                </span>
-              </span>
-            </label>
-          ))}
+        <div className={tableWrapClassName}>
+          <table className={tableClassName}>
+            <thead className={tableHeadClassName}>
+              <tr>
+                <th className={tableHeaderCellClassName}>Message</th>
+                <th className={`w-24 ${tableHeaderCellClassName}`}>Send</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PRODUCT_EMAIL_IDS.map((id, index) => (
+                <tr key={id} className={tableRowClassName(index)}>
+                  <td className={tableBodyCellClassName}>
+                    {PRODUCT_EMAIL_LABELS[id]}
+                    <span className="mt-0.5 block font-mono text-xs text-ink-muted">
+                      {id}
+                    </span>
+                  </td>
+                  <td className={tableBodyCellClassName}>
+                    <SettingsSwitch
+                      name="email_enabled"
+                      value={id}
+                      defaultChecked={!settings.disabled_emails.includes(id)}
+                      label={`Send ${PRODUCT_EMAIL_LABELS[id]}`}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </fieldset>
       <button type="submit" className={buttonClassName} disabled={pending}>

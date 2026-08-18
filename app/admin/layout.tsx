@@ -34,7 +34,6 @@ export default async function AdminLayout({
   const counts = await getAdminActionCounts();
   const links: SideNavItem[] = [
     { href: "/admin", label: "Overview" },
-    { href: "/admin/settings", label: "Platform settings" },
     {
       href: "/admin/users",
       label: "Users",
@@ -69,6 +68,7 @@ export default async function AdminLayout({
         },
       ],
     },
+    { href: "/admin/settings", label: "Platform settings" },
     {
       href: "/admin/templates",
       label: "Templates",

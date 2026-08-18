@@ -41,8 +41,8 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/privacy` | Privacy policy for this development site |
 | `/terms` | Terms of service for this development site |
 | `/admin` | Overview: queues, platform fees, Stripe test mode |
-| `/dashboard/notifications` | Signed-in user turns off individual transactional emails for their address |
-| `/dashboard/alerts` | Signed-in user ticks sale and/or lease alerts per fishery |
+| `/dashboard/notifications` | Signed-in user turns off transactional emails that can go to their address |
+| `/dashboard/alerts` | Signed-in user switches sale and/or lease alerts per fishery |
 | `/dashboard/payments` | Embedded Connect onboarding and account management |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |
 | `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the quota and fee tax invoices. Return URL is not authoritative |
@@ -104,11 +104,11 @@ Test card (AU Visa): `4000 0003 6000 0006`. Test BECS debit: BSB `000-000`, acco
 
 ## Transactional email
 
-Mail is sent from the server after the database write. Auth confirm and password reset stay on Supabase Auth. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; the action still succeeds. Platform admins can disable each product email on `/admin/settings`. Each signed-in user can also turn off messages for their own email on `/dashboard/notifications`. Previews are on `/admin/templates`.
+Mail is sent from the server after the database write. Auth confirm and password reset stay on Supabase Auth. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; the action still succeeds. Platform admins can disable each product email on `/admin/settings`. Each signed-in user can turn off messages that can go to their address on `/dashboard/notifications` (operator mail is not listed there). Previews are on `/admin/templates`.
 
 Buyer and seller managers both receive `order_settled` with both dummy tax invoice PDFs.
 
-Users tick sale and/or lease per fishery on `/dashboard/alerts`. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert. The same message can be turned off on Notifications without clearing the ticks.
+Users switch sale and/or lease per fishery on `/dashboard/alerts`. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert. The same message can be turned off on Notifications without clearing the switches.
 
 One-shot mail uses `email_dispatches` via `claim_email_dispatch` so payment, checkout, listing expiry, auction ending soon, payment reminder, and payments-setup messages are not resent.
 

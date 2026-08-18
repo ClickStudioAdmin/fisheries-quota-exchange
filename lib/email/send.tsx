@@ -3,7 +3,11 @@ import "server-only";
 import { Resend } from "resend";
 import { getEmailEnv } from "@/lib/email/env";
 import { emailSubject, renderEmailTemplate } from "@/lib/email/render";
-import { emailIsDisabled, type ProductEmailId } from "@/lib/email/product-emails";
+import {
+  emailIsDisabled,
+  isOperatorEmailId,
+  type ProductEmailId,
+} from "@/lib/email/product-emails";
 import { getUserDisabledEmails } from "@/lib/alerts/queries";
 import { getPlatformSettings } from "@/lib/settings/queries";
 import type { EmailTemplates, SendEmailResult } from "@/lib/email/types";
@@ -31,10 +35,12 @@ export async function sendEmail<K extends ProductEmailId>(options: {
     return { sent: false, error: "Invalid recipient." };
   }
 
-  const userDisabled = await getUserDisabledEmails(to);
+  if (!isOperatorEmailId(options.template)) {
+    const userDisabled = await getUserDisabledEmails(to);
 
-  if (emailIsDisabled(userDisabled, options.template)) {
-    return { sent: false, skipped: true };
+    if (emailIsDisabled(userDisabled, options.template)) {
+      return { sent: false, skipped: true };
+    }
   }
 
   const env = getEmailEnv();

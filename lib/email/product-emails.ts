@@ -69,6 +69,74 @@ export const MEMBER_EMAIL_IDS = PRODUCT_EMAIL_IDS.filter(
 
 export const OPERATOR_EMAIL_IDS = PRODUCT_EMAIL_IDS.filter(isOperatorEmailId);
 
+const ACCOUNT_EMAIL_IDS: ProductEmailId[] = [
+  "member_added",
+  "member_role_changed",
+  "member_removed",
+  "ownership_transferred",
+  "listing_alert",
+];
+
+const BUYER_EMAIL_IDS: ProductEmailId[] = [
+  "purchase_received",
+  "bid_placed",
+  "bid_outbid",
+  "auction_won",
+  "auction_not_won",
+  "auction_ending_soon",
+  "bank_debit_submitted",
+  "checkout_expired",
+  "payment_reminder",
+  "payment_received",
+  "settlement_failed",
+  "transfer_in_progress",
+  "transfer_complete",
+  "order_settled",
+];
+
+const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
+  "payments_setup_complete",
+  "holding_verified",
+  "holding_needs_changes",
+  "listing_submitted",
+  "listing_published",
+  "listing_rejected",
+  "listing_expired",
+  "listing_cancelled",
+  "listing_purchased",
+  "auction_published",
+  "auction_new_bid",
+  "auction_unsold",
+  "auction_cancelled",
+  "auction_ending_soon",
+  "payment_received",
+  "settlement_failed",
+  "transfer_in_progress",
+  "transfer_complete",
+  "order_settled",
+];
+
+export function personalNotificationEmailIds(input: {
+  isOrgMember: boolean;
+  isOrgManager: boolean;
+}): ProductEmailId[] {
+  const allowed = new Set<ProductEmailId>(ACCOUNT_EMAIL_IDS);
+
+  if (input.isOrgMember) {
+    for (const id of BUYER_EMAIL_IDS) {
+      allowed.add(id);
+    }
+  }
+
+  if (input.isOrgManager) {
+    for (const id of SELLER_MANAGER_EMAIL_IDS) {
+      allowed.add(id);
+    }
+  }
+
+  return PRODUCT_EMAIL_IDS.filter((id) => allowed.has(id));
+}
+
 export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   member_added: "Member added",
   member_role_changed: "Member role changed",

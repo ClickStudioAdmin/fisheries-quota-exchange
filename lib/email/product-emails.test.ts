@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  MEMBER_EMAIL_IDS,
   PRODUCT_EMAIL_IDS,
   disabledProductEmails,
   emailIsDisabled,
   isProductEmailId,
+  personalNotificationEmailIds,
 } from "./product-emails.ts";
 import { emailCopy } from "./copy.ts";
 
@@ -22,11 +24,36 @@ test("disabledProductEmails is the unchecked remainder", () => {
   assert.equal(disabled.length, PRODUCT_EMAIL_IDS.length - 2);
 });
 
-test("known ids are product emails", () => {
-  for (const id of PRODUCT_EMAIL_IDS) {
-    assert.equal(isProductEmailId(id), true);
-  }
-  assert.equal(isProductEmailId("tax_invoice_quota"), false);
+test("personalNotificationEmailIds omits mail the person would not receive", () => {
+  const none = personalNotificationEmailIds({
+    isOrgMember: false,
+    isOrgManager: false,
+  });
+  assert.equal(none.includes("member_added"), true);
+  assert.equal(none.includes("listing_alert"), true);
+  assert.equal(none.includes("listing_purchased"), false);
+  assert.equal(none.includes("purchase_received"), false);
+  assert.equal(none.includes("operator_holding_pending"), false);
+
+  const member = personalNotificationEmailIds({
+    isOrgMember: true,
+    isOrgManager: false,
+  });
+  assert.equal(member.includes("purchase_received"), true);
+  assert.equal(member.includes("bid_placed"), true);
+  assert.equal(member.includes("listing_purchased"), false);
+  assert.equal(member.includes("holding_verified"), false);
+  assert.equal(member.includes("operator_order_pending"), false);
+
+  const manager = personalNotificationEmailIds({
+    isOrgMember: true,
+    isOrgManager: true,
+  });
+  assert.equal(manager.includes("listing_purchased"), true);
+  assert.equal(manager.includes("holding_verified"), true);
+  assert.equal(manager.includes("purchase_received"), true);
+  assert.equal(manager.includes("operator_listing_pending"), false);
+  assert.equal(manager.length, MEMBER_EMAIL_IDS.length);
 });
 
 test("settlement copy differs for buyer and seller", () => {
