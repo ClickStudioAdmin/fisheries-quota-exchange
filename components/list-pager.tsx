@@ -65,23 +65,32 @@ export function ListPager({
     return null;
   }
 
+  const showPageSize = itemCount >= LIST_PAGE_SIZE;
+  const showPages = pageCount > 1;
+
+  if (!showPageSize && !showPages) {
+    return null;
+  }
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <label className="flex items-center gap-2 text-sm text-ink-muted">
-        <span className="whitespace-nowrap">Per page</span>
-        <select
-          value={pageSize}
-          onChange={(event) => onPageSizeChange(Number(event.target.value))}
-          className={pageSizeFieldClassName}
-        >
-          {LIST_PAGE_SIZES.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-      </label>
-      {pageCount > 1 ? (
+      {showPageSize ? (
+        <label className="flex items-center gap-2 text-sm text-ink-muted">
+          <span className="whitespace-nowrap">Per page</span>
+          <select
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            className={pageSizeFieldClassName}
+          >
+            {LIST_PAGE_SIZES.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      {showPages ? (
         <nav aria-label={label} className="flex flex-wrap items-center gap-2">
           <button
             type="button"
