@@ -1,7 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
-import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { useActionState, useEffect, useId, useState } from "react";
+import {
+  buttonClassName,
+  fieldClassName,
+  tableSecondaryButtonClassName,
+} from "@/components/auth-card";
 import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { createOrderAction } from "@/lib/orders/actions";
 import type { OrderFormState } from "@/lib/orders/types";
@@ -20,11 +24,43 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
     createOrderAction,
     initialState,
   );
+  const [confirming, setConfirming] = useState(false);
+  const titleId = useId();
+
+  useEffect(() => {
+    if (!confirming) {
+      return;
+    }
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape" && !pending) {
+        setConfirming(false);
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirming, pending]);
+
+  function openConfirm() {
+    if (organisations.length > 1) {
+      const select = document.getElementById(
+        "buyer_organisation_id",
+      ) as HTMLSelectElement | null;
+
+      if (!select?.value) {
+        select?.reportValidity();
+        return;
+      }
+    }
+
+    setConfirming(true);
+  }
 
   return (
     <form action={formAction} className="mt-6 max-w-md space-y-4">
       <input type="hidden" name="listing_id" value={listingId} />
-      {state.error ? (
+      {!confirming && state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
         </p>
@@ -58,13 +94,64 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
           </select>
         </div>
       )}
-      <TermsAcknowledgements
-        title="Buyer acknowledgements"
-        items={BUYER_PURCHASE_ACKNOWLEDGEMENTS}
-      />
-      <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Purchasing…" : "Purchase Now"}
+      <button
+        type="button"
+        className={buttonClassName}
+        disabled={pending}
+        onClick={openConfirm}
+      >
+        Purchase Now
       </button>
+      {confirming ? (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 pt-16"
+          onClick={() => {
+            if (!pending) {
+              setConfirming(false);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="w-full max-w-lg border border-line bg-paper-raised p-6"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id={titleId} className="text-xl font-semibold text-ink">
+              Confirm purchase
+            </h2>
+            {state.error ? (
+              <p className="mt-3 text-sm text-red-800" role="alert">
+                {state.error}
+              </p>
+            ) : null}
+            <div className="mt-4">
+              <TermsAcknowledgements
+                title="Buyer acknowledgements"
+                items={BUYER_PURCHASE_ACKNOWLEDGEMENTS}
+              />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="submit"
+                className={buttonClassName}
+                disabled={pending}
+              >
+                {pending ? "Purchasing…" : "Confirm purchase"}
+              </button>
+              <button
+                type="button"
+                className={tableSecondaryButtonClassName}
+                disabled={pending}
+                onClick={() => setConfirming(false)}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }
