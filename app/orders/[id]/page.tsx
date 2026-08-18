@@ -180,7 +180,7 @@ export default async function OrderPage({
           <OrderProgress steps={progressSteps} />
         </div>
       </section>
-      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,32rem)_minmax(0,26rem)]">
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-2">
         <div className={panelClassName}>
           <h2 className="text-lg font-semibold text-ink">Order summary</h2>
           <section className="mt-5">
