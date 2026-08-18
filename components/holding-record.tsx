@@ -48,6 +48,7 @@ import { getOrganisation, getOrganisationLegalName } from "@/lib/organisations/q
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 
 export async function HoldingRecord({
   holding,
@@ -191,15 +192,9 @@ export async function HoldingRecord({
         {canManage && verified && available > 0 ? (
           <div className="mt-4 space-y-3">
             {sellError ? (
-              <p className="text-sm text-ink-muted">
-                {sellError}{" "}
-                <Link
-                  href={accountPath(holding.organisation_id, "/dashboard/payments")}
-                  className="underline"
-                >
-                  Go to Payments
-                </Link>
-              </p>
+              <PaymentsSetupNotice
+                href={accountPath(holding.organisation_id, "/dashboard/payments")}
+              />
             ) : null}
             <TableActionRow>
               {sellError ? (

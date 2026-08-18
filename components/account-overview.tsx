@@ -11,6 +11,7 @@ import { getOrganisation } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
+import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { StatusBadge } from "@/components/status-badge";
 import { LabeledFields, panelClassName, statClassName } from "@/components/surface";
 import type { User } from "@supabase/supabase-js";
@@ -93,17 +94,19 @@ export async function AccountOverviewSection({
         {acceptedTerms ? null : <AcceptTermsForm />}
         {hasAccount ? (
           acceptedTerms && sellError ? (
-            <p className="mt-4 text-sm text-ink-muted">
-              You have agreed to the{" "}
-              <Link href="/terms" className="underline">
-                terms of service
-              </Link>
-              . Before you can be eligible to list quota for sale, you must
-              provide us with your payment details first.{" "}
-              <Link href={href("/dashboard/payments")} className="underline">
-                Go to Payments
-              </Link>
-            </p>
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-ink-muted">
+                You have agreed to the{" "}
+                <Link href="/terms" className="underline">
+                  terms of service
+                </Link>
+                .
+              </p>
+              <PaymentsSetupNotice href={href("/dashboard/payments")}>
+                Before you can be eligible to list quota for sale, you must
+                provide us with your payment details first.
+              </PaymentsSetupNotice>
+            </div>
           ) : acceptedTerms ? (
             <p className="mt-4 text-sm text-ink-muted">
               You have agreed to the{" "}

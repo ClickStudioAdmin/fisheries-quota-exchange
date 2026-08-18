@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ActionNotice } from "@/components/surface";
 
 export function TermsRequiredNotice({
   action,
@@ -6,22 +6,15 @@ export function TermsRequiredNotice({
   action: "buy" | "bid" | "list";
 }) {
   const label =
-    action === "list"
-      ? "list quota"
-      : action === "bid"
-        ? "bid"
-        : "buy";
+    action === "list" ? "list quota" : action === "bid" ? "bid" : "buy";
 
   return (
-    <p className="text-sm text-ink-muted">
-      Agree to the{" "}
-      <Link href="/terms" className="underline">
-        terms of service
-      </Link>{" "}
-      on Overview before you can {label}.{" "}
-      <Link href="/dashboard" className="underline">
-        Go to Overview
-      </Link>
-    </p>
+    <ActionNotice
+      title="Agree to the terms"
+      href="/dashboard"
+      actionLabel="Go to Overview"
+    >
+      Agree to the terms of service on Overview before you can {label}.
+    </ActionNotice>
   );
 }

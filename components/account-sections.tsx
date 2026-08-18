@@ -52,6 +52,7 @@ import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { SuccessNotice } from "@/components/surface";
 
 type AccountSectionProps = {
@@ -229,15 +230,11 @@ export async function AccountHoldingsSection({
           </SuccessNotice>
         ) : null}
         {canManage && sellError ? (
-          <p className="mt-3 text-sm text-ink-muted">
-            {sellError}{" "}
-            <Link
+          <div className="mt-4">
+            <PaymentsSetupNotice
               href={accountPath(organisationId, "/dashboard/payments")}
-              className="underline"
-            >
-              Go to Payments
-            </Link>
-          </p>
+            />
+          </div>
         ) : null}
         {holdings.length > 0 ? (
           <div className="mt-4 border border-line bg-paper-raised p-4">
@@ -449,15 +446,9 @@ export async function AccountListingsSection({
         Listings
       </h1>
       {canList && sellError ? (
-        <p className="text-sm text-ink-muted">
-          {sellError}{" "}
-          <Link
-            href={accountPath(organisationId, "/dashboard/payments")}
-            className="underline"
-          >
-            Go to Payments
-          </Link>
-        </p>
+        <PaymentsSetupNotice
+          href={accountPath(organisationId, "/dashboard/payments")}
+        />
       ) : null}
       <DataTable
         caption="Listings"

@@ -14,6 +14,7 @@ import { getOrganisation } from "@/lib/organisations/queries";
 import { holdingIsVerified, quantityTypeLabel } from "@/lib/fisheries/types";
 import { getUser } from "@/lib/supabase/server";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { getPlatformSettings, isVerifiedUser } from "@/lib/settings/queries";
 import { platformFeeDisclosure } from "@/lib/settings/types";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
@@ -107,19 +108,13 @@ export default async function NewListingPage({
       <p className="mt-4 text-sm text-ink">
         {fishery?.name ?? "Fishery"} · {availableLabel} {unitLabel} available
       </p>
-      <div className="mt-6 max-w-md">
+      <div className={`mt-6 ${!acceptedTerms || sellError ? "max-w-2xl" : "max-w-md"}`}>
         {!acceptedTerms ? (
           <TermsRequiredNotice action="list" />
         ) : sellError ? (
-          <p className="text-sm text-ink-muted">
-            {sellError}{" "}
-            <Link
-              href={accountPath(organisationId, "/dashboard/payments")}
-              className="underline"
-            >
-              Go to Payments
-            </Link>
-          </p>
+          <PaymentsSetupNotice
+            href={accountPath(organisationId, "/dashboard/payments")}
+          />
         ) : (
           <CreateListingForm
             organisationId={organisationId}

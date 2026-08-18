@@ -1,0 +1,21 @@
+import { StripeLogo } from "@/components/stripe-logo";
+import { ActionNotice } from "@/components/surface";
+
+export function PaymentsSetupNotice({
+  href,
+  children = "Connect your Stripe account before you can list quota for sale or lease.",
+}: {
+  href: string;
+  children?: string;
+}) {
+  return (
+    <ActionNotice
+      title="Set up payments"
+      href={href}
+      actionLabel="Go to Payments"
+      icon={<StripeLogo className="h-6 w-auto" linked={false} />}
+    >
+      {children}
+    </ActionNotice>
+  );
+}
