@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { isPlatformAdmin } from "@/lib/admin/access";
+import { postLoginPath } from "@/lib/auth/paths";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
+  const next = searchParams.get("next");
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
@@ -30,5 +31,7 @@ export async function GET(request: Request) {
     await ensureOwnedAccount(supabase, user);
   }
 
-  return NextResponse.redirect(`${origin}${safeNext}`);
+  const destination = postLoginPath(next, user ? await isPlatformAdmin() : false);
+
+  return NextResponse.redirect(`${origin}${destination}`);
 }

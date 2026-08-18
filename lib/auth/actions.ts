@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { safeNextPath } from "@/lib/auth/paths";
+import { isPlatformAdmin } from "@/lib/admin/access";
+import { postLoginPath } from "@/lib/auth/paths";
 import { userFacingError } from "@/lib/errors/user-message";
 import { getSiteUrl } from "@/lib/site-url";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
@@ -172,7 +173,9 @@ export async function loginAction(
     await ensureOwnedAccount(supabase, user);
   }
 
-  redirect(safeNextPath(String(formData.get("next") ?? "")));
+  redirect(
+    postLoginPath(String(formData.get("next") ?? ""), await isPlatformAdmin()),
+  );
 }
 
 export async function forgotPasswordAction(

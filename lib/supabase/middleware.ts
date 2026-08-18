@@ -15,7 +15,10 @@ export async function updateSession(request: NextRequest) {
   if (!env) {
     if (isProtected) {
       const url = request.nextUrl.clone();
+      const next = `${pathname}${request.nextUrl.search}`;
       url.pathname = "/login";
+      url.search = "";
+      url.searchParams.set("next", next);
       return NextResponse.redirect(url);
     }
 
@@ -47,8 +50,10 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();
+    const next = `${pathname}${request.nextUrl.search}`;
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.search = "";
+    url.searchParams.set("next", next);
     return NextResponse.redirect(url);
   }
 

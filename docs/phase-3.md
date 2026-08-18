@@ -17,7 +17,7 @@ There is no organisation UI in this phase.
 | `/dashboard` | Signed-in only |
 | `/auth/callback` | Auth email link handler |
 
-Unauthenticated requests to `/dashboard` redirect to `/login`.
+Unauthenticated requests to `/dashboard` redirect to `/login?next=…` so the user returns to that page after sign-in. A platform admin who logs in with no return URL goes to `/admin`.
 
 ## How it works
 

@@ -17,6 +17,7 @@ import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
 import { orderChargeAud } from "@/lib/payments/money";
+import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -33,7 +34,7 @@ export default async function OrderPage({
   const user = await getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect(loginPath(`/orders/${id}`));
   }
 
   const { id } = await params;

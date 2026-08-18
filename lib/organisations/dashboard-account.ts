@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 import { accountPath } from "@/lib/organisations/paths";
+import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 import type { OrganisationSummary } from "@/lib/organisations/types";
 import type { User } from "@supabase/supabase-js";
@@ -26,7 +27,7 @@ export async function resolveDashboardAccount(
   const user = await getUser();
 
   if (!user?.email) {
-    redirect("/login");
+    redirect(loginPath(currentPath));
   }
 
   const organisations = await listMyOrganisations();

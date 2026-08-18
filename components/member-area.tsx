@@ -26,7 +26,8 @@ export async function MemberArea({ children }: { children: ReactNode }) {
       : [];
 
   const sectionItems: SideNavLink[] = [
-    { href: "/dashboard", label: "Profile details" },
+    { href: "/dashboard", label: "Overview" },
+    { href: "/dashboard/profile", label: "Profile details" },
     { href: "/dashboard/members", label: "Account members" },
     {
       href: "/dashboard/holdings",

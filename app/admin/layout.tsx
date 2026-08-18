@@ -5,6 +5,7 @@ import type { SideNavItem } from "@/components/side-nav";
 import { pageWidthClassName } from "@/components/surface";
 import { canSeeAdmin, isPlatformAdmin } from "@/lib/admin/access";
 import { getAdminActionCounts } from "@/lib/nav/action-counts";
+import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 
 export default async function AdminLayout({
@@ -15,7 +16,7 @@ export default async function AdminLayout({
   const user = await getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect(loginPath("/admin"));
   }
 
   if (!(await canSeeAdmin())) {

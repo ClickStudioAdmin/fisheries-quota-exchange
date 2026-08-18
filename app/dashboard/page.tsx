@@ -1,9 +1,9 @@
 import { BusinessDetailsForm } from "@/components/business-details-form";
-import { AccountProfileSection } from "@/components/account-sections";
+import { AccountOverviewSection } from "@/components/account-overview";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 
 export const metadata = {
-  title: "Profile details",
+  title: "Overview",
 };
 
 export default async function DashboardPage({
@@ -18,7 +18,7 @@ export default async function DashboardPage({
     return (
       <div className="max-w-md space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Profile details
+          Finish account setup
         </h1>
         <p className="text-ink-muted">
           Add your business details to finish setting up this account. You
@@ -30,7 +30,7 @@ export default async function DashboardPage({
   }
 
   return (
-    <AccountProfileSection
+    <AccountOverviewSection
       organisationId={account.selected.id}
       user={account.user}
     />

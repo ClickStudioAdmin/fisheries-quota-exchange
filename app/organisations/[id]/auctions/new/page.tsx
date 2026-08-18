@@ -7,6 +7,7 @@ import {
   listHoldingsForOrganisation,
 } from "@/lib/fisheries/queries";
 import { accountPath } from "@/lib/organisations/paths";
+import { loginPath } from "@/lib/auth/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
 import { holdingIsVerified, quantityTypeLabel } from "@/lib/fisheries/types";
@@ -26,15 +27,18 @@ export default async function NewAuctionPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ holding_id?: string }>;
 }) {
+  const { id } = await params;
+  const query = await searchParams;
   const user = await getUser();
 
   if (!user) {
-    redirect("/login");
+    const holding = query.holding_id
+      ? `?holding_id=${encodeURIComponent(query.holding_id)}`
+      : "";
+    redirect(loginPath(`/organisations/${id}/auctions/new${holding}`));
   }
 
-  const { id } = await params;
   const organisationId = Number(id);
-  const query = await searchParams;
   const holdingId = Number(query.holding_id);
 
   if (!Number.isInteger(organisationId) || !Number.isInteger(holdingId)) {
