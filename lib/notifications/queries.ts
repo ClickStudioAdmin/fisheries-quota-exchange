@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getUserNotificationPreferences } from "@/lib/alerts/queries";
@@ -71,7 +72,7 @@ export async function listMyInAppNotifications() {
   return (data ?? []) as InAppNotification[];
 }
 
-export async function getMyUnreadNotificationCount() {
+export const getMyUnreadNotificationCount = cache(async () => {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -89,4 +90,4 @@ export async function getMyUnreadNotificationCount() {
   }
 
   return count ?? 0;
-}
+});

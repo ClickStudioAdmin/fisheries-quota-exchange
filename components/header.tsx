@@ -5,6 +5,7 @@ import { pageWidthClassName } from "@/components/surface";
 import { canSeeAdmin, isPlatformAdmin } from "@/lib/admin/access";
 import { displayName } from "@/lib/auth/display-name";
 import { getAdminActionCounts, getMemberActionCounts } from "@/lib/nav/action-counts";
+import { getMyUnreadNotificationCount } from "@/lib/notifications/queries";
 import { registrationsAllowed } from "@/lib/settings/queries";
 import { getUser } from "@/lib/supabase/server";
 
@@ -12,11 +13,13 @@ export async function Header() {
   const user = await getUser();
   const showAdmin = user ? await canSeeAdmin() : false;
   const admin = user ? await isPlatformAdmin() : false;
-  const [adminCounts, memberCounts, allowRegister] = await Promise.all([
-    admin ? getAdminActionCounts() : Promise.resolve(null),
-    user ? getMemberActionCounts() : Promise.resolve(null),
-    user ? Promise.resolve(false) : registrationsAllowed(),
-  ]);
+  const [adminCounts, memberCounts, unreadNotifications, allowRegister] =
+    await Promise.all([
+      admin ? getAdminActionCounts() : Promise.resolve(null),
+      user ? getMemberActionCounts() : Promise.resolve(null),
+      user ? getMyUnreadNotificationCount() : Promise.resolve(0),
+      user ? Promise.resolve(false) : registrationsAllowed(),
+    ]);
 
   return (
     <header className="shrink-0 bg-ink text-paper">
@@ -30,7 +33,7 @@ export async function Header() {
           name={user ? displayName(user) : null}
           showAdmin={showAdmin}
           adminBadge={adminCounts?.total ?? 0}
-          dashboardBadge={memberCounts?.total ?? 0}
+          dashboardBadge={(memberCounts?.total ?? 0) + unreadNotifications}
           showRegister={allowRegister}
         />
       </div>
