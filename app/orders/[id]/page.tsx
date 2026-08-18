@@ -11,9 +11,11 @@ import {
   listOrderAuditEvents,
 } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
+import { buildOrderSteps } from "@/lib/orders/progress";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { LabeledFields, panelClassName } from "@/components/surface";
 import { StatusBadge } from "@/components/status-badge";
+import { OrderProgress } from "@/components/order-progress";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
@@ -101,37 +103,13 @@ export default async function OrderPage({
   const buyerPaidFeeOnTop =
     payment?.status === "PAID" &&
     Number(payment.amount_aud) > Number(order.amount_aud);
-  const reservationLabel =
-    reservation?.status === "ACTIVE"
-      ? "Active"
-      : reservation?.status === "RELEASED"
-        ? "Released"
-        : reservation?.status === "CONSUMED"
-          ? "Consumed"
-          : "None";
-  const paymentBadge =
-    payment?.status === "PAID"
-      ? order.status === "COMPLETED"
-        ? { label: "Paid", code: "PAID" }
-        : { label: "Held until settlement", code: "held until settlement" }
-      : payment?.status === "PENDING" && debitProcessing
-        ? { label: "Bank debit processing", code: "bank debit processing" }
-        : payment?.status === "PENDING"
-          ? { label: "Pending", code: "PENDING" }
-          : payment?.status === "EXPIRED"
-            ? { label: "Expired", code: "EXPIRED" }
-            : payment?.status === "FAILED"
-              ? { label: "Failed", code: "FAILED" }
-              : { label: "None", code: "none" };
-  const transferBadge = payment?.stripe_transfer_id
-    ? { label: "Sent at settlement", code: "sent at settlement" }
-    : { label: "Not yet", code: "not yet" };
-  const settlementBadge =
-    transaction?.status === "COMPLETED"
-      ? { label: "Completed", code: "COMPLETED" }
-      : transaction?.status === "PENDING"
-        ? { label: "Pending", code: "PENDING" }
-        : { label: "None", code: "none" };
+  const progressSteps = buildOrderSteps({
+    orderStatus: order.status,
+    reservationStatus: reservation?.status ?? null,
+    paymentStatus: payment?.status ? String(payment.status) : null,
+    debitProcessing,
+    settlementCompleted: transaction?.status === "COMPLETED",
+  });
   const feeLabel =
     Number(order.fee_percent) > 0
       ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%, ${
@@ -165,45 +143,6 @@ export default async function OrderPage({
           value: totalDue,
         },
       ];
-  const statusItems = [
-    {
-      label: "Quota reservation",
-      value: (
-        <StatusBadge
-          label={reservationLabel}
-          code={reservation?.status ?? "none"}
-        />
-      ),
-    },
-    {
-      label: "Payment",
-      value: (
-        <StatusBadge label={paymentBadge.label} code={paymentBadge.code} />
-      ),
-    },
-    ...(showCommission
-      ? [
-          {
-            label: "Seller transfer",
-            value: (
-              <StatusBadge
-                label={transferBadge.label}
-                code={transferBadge.code}
-              />
-            ),
-          },
-        ]
-      : []),
-    {
-      label: "Settlement",
-      value: (
-        <StatusBadge
-          label={settlementBadge.label}
-          code={settlementBadge.code}
-        />
-      ),
-    },
-  ];
 
   return (
     <div>
@@ -273,8 +212,8 @@ export default async function OrderPage({
           </section>
           <section className="mt-6 border-t border-line pt-5">
             <h3 className="text-sm font-semibold text-ink">Status</h3>
-            <div className="mt-3">
-              <LabeledFields items={statusItems} />
+            <div className="mt-4">
+              <OrderProgress steps={progressSteps} />
             </div>
           </section>
           {canCancel ? (
