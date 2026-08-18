@@ -31,14 +31,13 @@ export default async function OrderPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ paid?: string; pay?: string }>;
 }) {
+  const { id } = await params;
+  const query = await searchParams;
   const user = await getUser();
 
   if (!user) {
     redirect(loginPath(`/orders/${id}`));
   }
-
-  const { id } = await params;
-  const query = await searchParams;
   const orderId = Number(id);
 
   if (!Number.isInteger(orderId)) {
