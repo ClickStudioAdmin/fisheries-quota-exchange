@@ -58,9 +58,10 @@ export default async function DashboardPaymentsPage({
         </div>
         <p className="mt-2 max-w-lg text-sm text-ink-muted">
           FQX uses Stripe to process payments. Buyers pay into FQX’s Stripe
-          account and we hold the funds until settlement, then pay the seller.
-          You must complete Stripe account setup here before you can list quota
-          for sale or lease. This is Stripe test mode only.
+          account and we hold the funds until settlement, where funds are then
+          transferred into the seller’s nominated bank account. You must
+          complete Stripe account setup here before you can list quota for sale
+          or lease. This is Stripe test mode only.
         </p>
       </div>
       {!configured || !publishableKey ? (
