@@ -35,7 +35,7 @@ export type MessageTemplate = {
 };
 
 const skipWhen =
-  "The template is disabled on /admin/settings, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. The triggering action still succeeds.";
+  "The template is disabled on /admin/settings or the recipient turned it off on /dashboard/notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. The triggering action still succeeds.";
 
 const EMAIL_CATALOG: Record<
   ProductEmailId,
@@ -106,6 +106,14 @@ const EMAIL_CATALOG: Record<
     sentWhen: "On create when auto-published, or when admin approves a fixed-price listing.",
     trigger: "notifyListingCreated or notifyListingPublished for FIXED_PRICE.",
     recipient: "Account owners/admins and the creator.",
+  },
+  listing_alert: {
+    summary: "When a subscribed fishery gets a new listing",
+    description:
+      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Alerts.",
+    sentWhen: "When a listing or auction is published, matching sale or lease alerts for that fishery.",
+    trigger: "notifyListingCreated or notifyListingPublished then notifyNewListingAlert.",
+    recipient: "Users with a matching fishery alert, excluding the seller’s organisation.",
   },
   listing_rejected: {
     summary: "When a listing is rejected",

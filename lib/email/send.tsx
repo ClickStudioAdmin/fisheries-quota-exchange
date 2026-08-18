@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import { getEmailEnv } from "@/lib/email/env";
 import { emailSubject, renderEmailTemplate } from "@/lib/email/render";
 import { emailIsDisabled, type ProductEmailId } from "@/lib/email/product-emails";
+import { getUserDisabledEmails } from "@/lib/alerts/queries";
 import { getPlatformSettings } from "@/lib/settings/queries";
 import type { EmailTemplates, SendEmailResult } from "@/lib/email/types";
 
@@ -24,16 +25,22 @@ export async function sendEmail<K extends ProductEmailId>(options: {
     return { sent: false, skipped: true };
   }
 
-  const env = getEmailEnv();
-
-  if (!env) {
-    return { sent: false, skipped: true };
-  }
-
   const to = options.to.trim().toLowerCase();
 
   if (!to.includes("@")) {
     return { sent: false, error: "Invalid recipient." };
+  }
+
+  const userDisabled = await getUserDisabledEmails(to);
+
+  if (emailIsDisabled(userDisabled, options.template)) {
+    return { sent: false, skipped: true };
+  }
+
+  const env = getEmailEnv();
+
+  if (!env) {
+    return { sent: false, skipped: true };
   }
 
   const react = renderEmailTemplate(options.template, options.data);

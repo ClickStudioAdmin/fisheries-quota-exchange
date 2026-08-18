@@ -137,7 +137,8 @@ export function PlatformSettingsForm({
           Transactional email
         </legend>
         <p className="text-sm text-ink-muted">
-          Uncheck a message to stop sending it. Auth confirm and password reset
+          Uncheck a message to stop sending it. Members can also turn off
+          their own copies on Notifications. Auth confirm and password reset
           stay on Supabase and are not listed here. Actions still complete if
           mail is skipped.
         </p>

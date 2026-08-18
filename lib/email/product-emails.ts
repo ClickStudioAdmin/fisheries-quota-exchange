@@ -8,6 +8,7 @@ export const PRODUCT_EMAIL_IDS = [
   "holding_needs_changes",
   "listing_submitted",
   "listing_published",
+  "listing_alert",
   "listing_rejected",
   "listing_expired",
   "listing_cancelled",
@@ -50,10 +51,23 @@ export function emailIsDisabled(
   return disabledEmails.includes(template);
 }
 
-export function disabledProductEmails(enabled: Iterable<string>): ProductEmailId[] {
+export function disabledProductEmails(
+  enabled: Iterable<string>,
+  catalog: readonly ProductEmailId[] = PRODUCT_EMAIL_IDS,
+): ProductEmailId[] {
   const set = new Set(enabled);
-  return PRODUCT_EMAIL_IDS.filter((id) => !set.has(id));
+  return catalog.filter((id) => !set.has(id));
 }
+
+export function isOperatorEmailId(id: ProductEmailId) {
+  return id.startsWith("operator_");
+}
+
+export const MEMBER_EMAIL_IDS = PRODUCT_EMAIL_IDS.filter(
+  (id) => !isOperatorEmailId(id),
+);
+
+export const OPERATOR_EMAIL_IDS = PRODUCT_EMAIL_IDS.filter(isOperatorEmailId);
 
 export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   member_added: "Member added",
@@ -65,6 +79,7 @@ export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   holding_needs_changes: "Holding needs changes",
   listing_submitted: "Listing submitted",
   listing_published: "Listing published",
+  listing_alert: "New listing alert",
   listing_rejected: "Listing rejected",
   listing_expired: "Listing expired",
   listing_cancelled: "Listing cancelled",

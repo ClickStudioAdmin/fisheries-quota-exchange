@@ -66,6 +66,13 @@ export function sampleEmailData(
         fisheryName: "Northern Prawn Fishery",
         listingUrl,
       });
+    case "listing_alert":
+      return emailCopy.listing_alert({
+        fisheryName: "Northern Prawn Fishery",
+        offeringLabel: "Sale",
+        listingTypeLabel: "Fixed price",
+        listingUrl,
+      });
     case "listing_rejected":
       return emailCopy.listing_rejected({
         fisheryName: "Northern Prawn Fishery",

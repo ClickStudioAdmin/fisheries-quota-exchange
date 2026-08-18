@@ -20,6 +20,16 @@ export type DashboardAccount =
       selected: OrganisationSummary;
     };
 
+export async function requireDashboardUser(currentPath: string) {
+  const user = await getUser();
+
+  if (!user?.email) {
+    redirect(loginPath(currentPath));
+  }
+
+  return user;
+}
+
 export async function resolveDashboardAccount(
   accountParam: string | undefined,
   currentPath: string,

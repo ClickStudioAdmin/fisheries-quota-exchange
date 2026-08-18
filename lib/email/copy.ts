@@ -107,6 +107,20 @@ export const emailCopy = {
       ["Your listing is on the marketplace."],
       { label: "View listing", url: input.listingUrl },
     ),
+  listing_alert: (input: {
+    fisheryName: string;
+    offeringLabel: string;
+    listingTypeLabel: string;
+    listingUrl: string;
+  }) =>
+    notice(
+      `New ${input.offeringLabel.toLowerCase()} listing: ${input.fisheryName}`,
+      [
+        `A new ${input.listingTypeLabel.toLowerCase()} ${input.offeringLabel.toLowerCase()} listing for ${input.fisheryName} is on the marketplace.`,
+        "You asked for this alert on Alerts in your dashboard. You can change those fisheries there.",
+      ],
+      { label: "View listing", url: input.listingUrl },
+    ),
   listing_rejected: (input: {
     fisheryName: string;
     note: string;

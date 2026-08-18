@@ -1,17 +1,26 @@
 import "server-only";
 
+import { listingAlertEmails } from "@/lib/alerts/queries";
 import { emailCopy } from "@/lib/email/copy";
 import { claimEmailDispatch, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import {
   organisationManagerEmails,
+  organisationMemberEmails,
   platformAdminEmails,
   uniqueEmails,
 } from "@/lib/email/recipients";
-import { listingHref, type Listing } from "@/lib/listings/types";
-import { formatAud } from "@/lib/listings/types";
+import {
+  formatAud,
+  listingHref,
+  listingOfferingLabel,
+  listingTypeLabel,
+  type Listing,
+} from "@/lib/listings/types";
 import type { Order } from "@/lib/orders/types";
 import { orderStatusLabel } from "@/lib/orders/types";
 import type { Bid } from "@/lib/auctions/types";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 function listingUrl(siteUrl: string, listing: Pick<Listing, "id" | "listing_type">) {
   return `${siteUrl}${listingHref(listing)}`;
@@ -56,6 +65,7 @@ export async function notifyListingCreated(listing: Listing) {
         auctionUrl: href,
       }),
     );
+    await notifyNewListingAlert(listing);
     return;
   }
 
@@ -67,6 +77,7 @@ export async function notifyListingCreated(listing: Listing) {
       listingUrl: href,
     }),
   );
+  await notifyNewListingAlert(listing);
 }
 
 export async function notifyListingPublished(listing: Listing) {
@@ -86,6 +97,7 @@ export async function notifyListingPublished(listing: Listing) {
         auctionUrl: href,
       }),
     );
+    await notifyNewListingAlert(listing);
     return;
   }
 
@@ -94,6 +106,45 @@ export async function notifyListingPublished(listing: Listing) {
     to,
     emailCopy.listing_published({
       fisheryName: listing.fishery_name,
+      listingUrl: href,
+    }),
+  );
+  await notifyNewListingAlert(listing);
+}
+
+async function notifyNewListingAlert(listing: Listing) {
+  const supabase = createServiceClient() ?? (await createClient());
+
+  if (!supabase) {
+    return;
+  }
+
+  const { data: holding } = await supabase
+    .from("quota_holdings")
+    .select("fishery_id, organisation_id")
+    .eq("id", listing.holding_id)
+    .maybeSingle();
+
+  if (!holding) {
+    return;
+  }
+
+  const siteUrl = await siteUrlOrEmpty();
+  const href = listingUrl(siteUrl, listing);
+  const sellers = await organisationMemberEmails(listing.organisation_id);
+  const exclude = new Set(uniqueEmails([...sellers, listing.created_by_email]));
+  const subscribers = (await listingAlertEmails(
+    Number(holding.fishery_id),
+    listing.offering,
+  )).filter((email) => !exclude.has(email));
+
+  await notifyEmail(
+    "listing_alert",
+    subscribers,
+    emailCopy.listing_alert({
+      fisheryName: listing.fishery_name,
+      offeringLabel: listingOfferingLabel(listing.offering),
+      listingTypeLabel: listingTypeLabel(listing.listing_type),
       listingUrl: href,
     }),
   );

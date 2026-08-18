@@ -25,6 +25,23 @@ export async function organisationManagerEmails(organisationId: number) {
   );
 }
 
+export async function organisationMemberEmails(organisationId: number) {
+  const supabase = await db();
+
+  if (!supabase || !Number.isInteger(organisationId)) {
+    return [];
+  }
+
+  const { data } = await supabase
+    .from("organisation_users")
+    .select("email")
+    .eq("organisation_id", organisationId);
+
+  return uniqueEmails(
+    (data ?? []).map((row) => String(row.email ?? "")),
+  );
+}
+
 export async function platformAdminEmails() {
   const supabase = await db();
 
