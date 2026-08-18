@@ -12,6 +12,10 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/orders") ||
     pathname.startsWith("/admin");
 
+  if (pathname.startsWith("/api/admin/impersonate")) {
+    return NextResponse.next({ request });
+  }
+
   if (!env) {
     if (isProtected) {
       const url = request.nextUrl.clone();

@@ -3,7 +3,6 @@ import { Logo } from "@/components/logo";
 import { Nav } from "@/components/nav";
 import { pageWidthClassName } from "@/components/surface";
 import { canSeeAdmin, isPlatformAdmin } from "@/lib/admin/access";
-import { stopImpersonationAction } from "@/lib/admin/impersonate-actions";
 import { getActiveImpersonationEmail } from "@/lib/admin/impersonate";
 import { displayName } from "@/lib/auth/display-name";
 import { getAdminActionCounts, getMemberActionCounts } from "@/lib/nav/action-counts";
@@ -48,12 +47,12 @@ export async function Header() {
             className={`${pageWidthClassName} flex flex-wrap items-center justify-between gap-3 py-2 text-sm`}
           >
             <p>
-              Viewing as {viewedAs}.{" "}
+              Logged in as {viewedAs}.{" "}
               <span className="text-ink/80">
-                You are signed in as this user.
+                Use the app as they would.
               </span>
             </p>
-            <form action={stopImpersonationAction}>
+            <form action="/api/admin/impersonate/stop" method="post">
               <button type="submit" className="font-medium underline">
                 Switch back to admin
               </button>

@@ -13,7 +13,6 @@ import {
   setUserVerifiedAction,
   setUsersVerifiedAction,
 } from "@/lib/admin/actions";
-import { switchToUserAction } from "@/lib/admin/impersonate-actions";
 import { formatTableDate } from "@/lib/format";
 import {
   listUsersForAdmin,
@@ -57,8 +56,8 @@ export default async function AdminUsersPage({
       </div>
       {error === "switch" ? (
         <p className="text-sm text-red-800" role="alert">
-          Could not switch to that user. They need an existing login account,
-          and you cannot switch while already viewing as someone else.
+          Could not sign in as that user. They need an existing login account,
+          and you cannot switch while already logged in as someone else.
         </p>
       ) : null}
       <DataTable
@@ -179,7 +178,7 @@ export default async function AdminUsersPage({
             actions={
               <TableActionRow>
                 {item.email !== currentEmail ? (
-                  <form action={switchToUserAction}>
+                  <form action="/api/admin/impersonate" method="post">
                     <input type="hidden" name="email" value={item.email} />
                     <button type="submit" className={tableButtonClassName}>
                       Switch to User

@@ -6,7 +6,6 @@ import { tableButtonClassName } from "@/components/auth-card";
 import { LabeledFields } from "@/components/surface";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { setUserVerifiedAction } from "@/lib/admin/actions";
-import { switchToUserAction } from "@/lib/admin/impersonate-actions";
 import { verifyHoldingAction } from "@/lib/fisheries/actions";
 import {
   listFisheries,
@@ -117,7 +116,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {profile.email !== viewer?.email?.toLowerCase() ? (
-              <form action={switchToUserAction}>
+              <form action="/api/admin/impersonate" method="post">
                 <input type="hidden" name="email" value={profile.email} />
                 <button type="submit" className={tableButtonClassName}>
                   Switch to User

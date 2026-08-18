@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { stopImpersonationAction } from "@/lib/admin/impersonate-actions";
 import { logoutAction } from "@/lib/auth/actions";
 import { MemberIcon } from "@/components/member-icon";
 import { NavBadge } from "@/components/nav-badge";
@@ -66,11 +65,11 @@ export function AuthLinks({
         <span className="flex items-center gap-2 text-paper">
           <MemberIcon className="h-5 w-5 shrink-0" />
           <span className="max-w-52 truncate" title={email}>
-            {impersonating ? `Viewing as ${label}` : label}
+            {impersonating ? `Logged in as ${label}` : label}
           </span>
         </span>
         {impersonating ? (
-          <form action={stopImpersonationAction}>
+          <form action="/api/admin/impersonate/stop" method="post">
             <button type="submit" className="text-paper/75 hover:text-paper">
               Switch back to admin
             </button>
