@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FisheryLogo } from "@/components/fishery-logo";
-import { LabeledFields, panelClassName } from "@/components/surface";
+import { LabeledFields } from "@/components/surface";
 import type { Fishery } from "@/lib/fisheries/types";
 import {
   formatAud,
@@ -21,6 +21,26 @@ type OfferCardProps = {
   fishery?: Pick<Fishery, "name" | "logo_path"> | null;
 };
 
+function KindBadge({
+  children,
+  tone,
+}: {
+  children: string;
+  tone: "filled" | "outline";
+}) {
+  return (
+    <span
+      className={
+        tone === "filled"
+          ? "bg-sea px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-paper"
+          : "border border-line bg-paper px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink"
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
 export function OfferCard({
   listing,
   href,
@@ -34,16 +54,9 @@ export function OfferCard({
 }: OfferCardProps) {
   const title = hideFishery ? listing.seller_name : listing.fishery_name;
   const fields = [
-    ...(hideOffering
-      ? []
-      : [{ label: "Type", value: listingOfferingLabel(listing.offering) }]),
     {
       label: "Quantity",
       value: `${listing.quantity} ${listing.unit_label}`,
-    },
-    {
-      label: priceLabel,
-      value: `${formatAud(listing.unit_price_aud)} / ${listing.unit_label}`,
     },
     ...(hideFishery ? [] : [{ label: "Seller", value: listing.seller_name }]),
     ...extraFields,
@@ -55,31 +68,46 @@ export function OfferCard({
 
   return (
     <article
-      className={`${panelClassName} flex items-stretch p-0 transition-colors hover:border-sea`}
+      className="flex h-full min-w-0 flex-col border border-line bg-paper-raised transition-colors hover:border-sea"
     >
-      <Link href={href} className="flex min-w-0 flex-1 items-center gap-4 p-4">
-        {logoFishery ? <FisheryLogo fishery={logoFishery} size="sm" /> : null}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="min-w-0 truncate">
-              <span className="font-medium text-ink">{title}</span>
-            </p>
-            <p className="shrink-0 text-xs uppercase tracking-[0.12em] text-sea">
-              {listingTypeLabel(listing.listing_type)}
+      <Link href={href} className="flex min-w-0 flex-1 flex-col gap-4 p-5">
+        <div className="flex min-w-0 items-start gap-4">
+          {logoFishery ? <FisheryLogo fishery={logoFishery} size="md" /> : null}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              {hideOffering ? null : (
+                <KindBadge tone="filled">
+                  {listingOfferingLabel(listing.offering)}
+                </KindBadge>
+              )}
+              <KindBadge tone="outline">
+                {listingTypeLabel(listing.listing_type)}
+              </KindBadge>
               {badge ? (
-                <span className="ml-2 normal-case tracking-normal text-ink-muted">
-                  {badge}
-                </span>
+                <span className="text-xs text-ink-muted">{badge}</span>
               ) : null}
-            </p>
-          </div>
-          <div className="mt-2">
-            <LabeledFields items={fields} columns={5} />
+            </div>
+            <p className="mt-3 truncate font-semibold text-ink">{title}</p>
           </div>
         </div>
+        <div>
+          <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+            {priceLabel}
+          </p>
+          <p className="mt-1 text-2xl font-semibold tracking-tight text-ink">
+            {formatAud(listing.unit_price_aud)}
+            <span className="text-sm font-normal text-ink-muted">
+              {" "}
+              / {listing.unit_label}
+            </span>
+          </p>
+        </div>
+        {fields.length > 0 ? (
+          <LabeledFields items={fields} columns={2} />
+        ) : null}
       </Link>
       {showFisheryLink ? (
-        <p className="flex shrink-0 items-center border-l border-line px-4">
+        <p className="border-t border-line px-5 py-3">
           <Link href={`/fisheries/${fisheryId}`} className="text-sm underline">
             View fishery
           </Link>

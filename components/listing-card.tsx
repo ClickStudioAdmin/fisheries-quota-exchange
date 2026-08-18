@@ -83,19 +83,27 @@ export function ListingCards({
   hideFishery,
   hideOffering,
   fisheriesByName,
+  columns = 2,
 }: {
   listings: Listing[];
   empty: string;
   hideFishery?: boolean;
   hideOffering?: boolean;
   fisheriesByName?: Map<string, Pick<Fishery, "id" | "name" | "logo_path">>;
+  columns?: 1 | 2;
 }) {
   if (listings.length === 0) {
     return <p className="text-sm text-ink-muted">{empty}</p>;
   }
 
   return (
-    <div className="space-y-3">
+    <div
+      className={
+        columns === 1
+          ? "grid grid-cols-1 gap-3"
+          : "grid grid-cols-1 gap-3 md:grid-cols-2"
+      }
+    >
       {listings.map((listing) => {
         const fishery = fisheriesByName?.get(listing.fishery_name) ?? null;
 
@@ -184,6 +192,7 @@ export function FisheryOfferingSection({
           empty={empty}
           hideFishery
           hideOffering
+          columns={1}
         />
         <ListPager
           page={currentPage}
