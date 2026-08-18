@@ -4,8 +4,12 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { LISTING_OFFERINGS } from "@/lib/listings/types";
-import { getListing } from "@/lib/listings/queries";
+import {
+  LISTING_OFFERINGS,
+  listingReviewPath,
+  parseListingReviewIds,
+} from "@/lib/listings/types";
+import { getListing, listAllListings } from "@/lib/listings/queries";
 import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -154,6 +158,37 @@ export async function cancelListingAction(formData: FormData) {
   redirect(safeNextPath(next));
 }
 
+function redirectAfterListingReview(formData: FormData) {
+  redirect(
+    listingReviewPath(formData.getAll("review_queue").map(String)),
+  );
+}
+
+export async function startListingReviewAction(formData: FormData) {
+  if (!(await isPlatformAdmin())) {
+    redirect("/admin");
+  }
+
+  const selected = parseListingReviewIds(
+    formData.getAll("ids").map(String).join(","),
+  );
+
+  if (selected.length === 0) {
+    redirect("/admin/listings");
+  }
+
+  const { listings } = await listAllListings();
+  const pending = new Set(
+    listings
+      .filter((listing) => listing.status === "PENDING_APPROVAL")
+      .map((listing) => listing.id),
+  );
+
+  redirect(
+    listingReviewPath(selected.filter((id) => pending.has(id))),
+  );
+}
+
 export async function approveListingAction(formData: FormData) {
   const supabase = await createClient();
 
@@ -177,7 +212,7 @@ export async function approveListingAction(formData: FormData) {
     return;
   }
 
-  redirect("/admin/listings");
+  redirectAfterListingReview(formData);
 }
 
 export async function rejectListingAction(formData: FormData) {
@@ -203,5 +238,5 @@ export async function rejectListingAction(formData: FormData) {
     return;
   }
 
-  redirect("/admin/listings");
+  redirectAfterListingReview(formData);
 }

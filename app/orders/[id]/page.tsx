@@ -13,6 +13,7 @@ import {
 import { orderStatusLabel } from "@/lib/orders/types";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { LabeledFields, panelClassName } from "@/components/surface";
+import { StatusBadge } from "@/components/status-badge";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
@@ -95,16 +96,49 @@ export default async function OrderPage({
   const buyerPaidFeeOnTop =
     payment?.status === "PAID" &&
     Number(payment.amount_aud) > Number(order.amount_aud);
+  const reservationLabel =
+    reservation?.status === "ACTIVE"
+      ? "Active"
+      : reservation?.status === "RELEASED"
+        ? "Released"
+        : reservation?.status === "CONSUMED"
+          ? "Consumed"
+          : "None";
+  const paymentBadge =
+    payment?.status === "PAID"
+      ? order.status === "COMPLETED"
+        ? { label: "Paid", code: "PAID" }
+        : { label: "Held until settlement", code: "held until settlement" }
+      : payment?.status === "PENDING" && debitProcessing
+        ? { label: "Bank debit processing", code: "bank debit processing" }
+        : payment?.status === "PENDING"
+          ? { label: "Pending", code: "PENDING" }
+          : payment?.status === "EXPIRED"
+            ? { label: "Expired", code: "EXPIRED" }
+            : payment?.status === "FAILED"
+              ? { label: "Failed", code: "FAILED" }
+              : { label: "None", code: "none" };
+  const transferBadge = payment?.stripe_transfer_id
+    ? { label: "Sent at settlement", code: "sent at settlement" }
+    : { label: "Not yet", code: "not yet" };
+  const settlementBadge =
+    transaction?.status === "COMPLETED"
+      ? { label: "Completed", code: "COMPLETED" }
+      : transaction?.status === "PENDING"
+        ? { label: "Pending", code: "PENDING" }
+        : { label: "None", code: "none" };
 
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         {canPay ? "Checkout" : `Order ${order.id}`}
       </h1>
-      <p className="mt-2 text-ink-muted">
-        {canPay
-          ? `Order ${order.id} · ${orderStatusLabel(order.status)}`
-          : orderStatusLabel(order.status)}
+      <p className="mt-2 flex flex-wrap items-center gap-2 text-ink-muted">
+        {canPay ? `Order ${order.id}` : null}
+        <StatusBadge
+          label={orderStatusLabel(order.status)}
+          code={order.status}
+        />
       </p>
       {query.paid === "1" && order.status === "AWAITING_PAYMENT" ? (
         <p className="mt-3 text-sm text-ink-muted">
@@ -124,74 +158,104 @@ export default async function OrderPage({
           The order was reserved. Complete payment below.
         </p>
       ) : null}
-      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,38rem)_minmax(0,26rem)]">
         <div className={panelClassName}>
           <h2 className="text-lg font-semibold text-ink">Order summary</h2>
-          <div className="mt-4">
-            <LabeledFields
-              items={[
-                {
-                  label: "Listing",
-                  value: (
-                    <Link href={`/marketplace/${order.listing_id}`} className="underline">
-                      {order.fishery_name}
-                    </Link>
-                  ),
-                },
-                { label: "Type", value: listingOfferingLabel(order.offering) },
-                { label: "Seller", value: order.seller_name },
-                { label: "Buyer", value: order.buyer_name },
-                {
-                  label: "Quantity",
-                  value: `${order.quantity} ${order.unit_label}`,
-                },
-                { label: "Quota amount", value: formatAud(order.amount_aud) },
-                {
-                  label: "Platform fee",
-                  value:
-                    Number(order.fee_percent) > 0
-                      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%, ${
-                          buyerPaidFeeOnTop
-                            ? "added to buyer payment"
-                            : "deducted from seller"
-                        })`
-                      : "None",
-                },
-                { label: "Seller proceeds", value: sellerProceeds },
-                { label: "Total due to FQX", value: totalDue },
-                {
-                  label: "Quota reservation",
-                  value: reservation?.status ?? "None",
-                },
-                {
-                  label: "Payment",
-                  value: payment?.status
-                    ? payment.status === "PAID"
-                      ? order.status === "COMPLETED"
-                        ? "Paid"
-                        : "Paid (held by FQX until settlement)"
-                      : payment.status === "PENDING" && debitProcessing
-                        ? "Bank debit processing"
-                        : payment.status === "PENDING"
-                          ? "Pending"
-                          : payment.status === "EXPIRED"
-                            ? "Expired"
-                            : "Failed"
-                    : "None",
-                },
-                {
-                  label: "Seller transfer",
-                  value: payment?.stripe_transfer_id
-                    ? "Sent at settlement"
-                    : "Not yet",
-                },
-                {
-                  label: "Settlement simulation",
-                  value: transaction?.status ?? "None",
-                },
-              ]}
-            />
-          </div>
+          <section className="mt-5">
+            <h3 className="text-sm font-semibold text-ink">Listing details</h3>
+            <div className="mt-3">
+              <LabeledFields
+                items={[
+                  {
+                    label: "Listing",
+                    value: (
+                      <Link
+                        href={`/marketplace/${order.listing_id}`}
+                        className="underline"
+                      >
+                        {order.fishery_name}
+                      </Link>
+                    ),
+                  },
+                  { label: "Type", value: listingOfferingLabel(order.offering) },
+                  { label: "Seller", value: order.seller_name },
+                  { label: "Buyer", value: order.buyer_name },
+                  {
+                    label: "Quantity",
+                    value: `${order.quantity} ${order.unit_label}`,
+                  },
+                ]}
+              />
+            </div>
+          </section>
+          <section className="mt-6 border-t border-line pt-5">
+            <h3 className="text-sm font-semibold text-ink">Totals</h3>
+            <div className="mt-3">
+              <LabeledFields
+                items={[
+                  { label: "Quota amount", value: formatAud(order.amount_aud) },
+                  {
+                    label: "Platform fee",
+                    value:
+                      Number(order.fee_percent) > 0
+                        ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%, ${
+                            buyerPaidFeeOnTop
+                              ? "added to buyer payment"
+                              : "deducted from seller"
+                          })`
+                        : "None",
+                  },
+                  { label: "Seller proceeds", value: sellerProceeds },
+                  { label: "Total due to FQX", value: totalDue },
+                ]}
+              />
+            </div>
+          </section>
+          <section className="mt-6 border-t border-line pt-5">
+            <h3 className="text-sm font-semibold text-ink">Status</h3>
+            <div className="mt-3">
+              <LabeledFields
+                items={[
+                  {
+                    label: "Quota reservation",
+                    value: (
+                      <StatusBadge
+                        label={reservationLabel}
+                        code={reservation?.status ?? "none"}
+                      />
+                    ),
+                  },
+                  {
+                    label: "Payment",
+                    value: (
+                      <StatusBadge
+                        label={paymentBadge.label}
+                        code={paymentBadge.code}
+                      />
+                    ),
+                  },
+                  {
+                    label: "Seller transfer",
+                    value: (
+                      <StatusBadge
+                        label={transferBadge.label}
+                        code={transferBadge.code}
+                      />
+                    ),
+                  },
+                  {
+                    label: "Settlement simulation",
+                    value: (
+                      <StatusBadge
+                        label={settlementBadge.label}
+                        code={settlementBadge.code}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </div>
+          </section>
           {canCancel ? (
             <form action={cancelOrderAction} className="mt-6">
               <input type="hidden" name="order_id" value={order.id} />

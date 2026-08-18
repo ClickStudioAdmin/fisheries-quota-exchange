@@ -149,3 +149,28 @@ export function listingStatusLabel(status: ListingStatus) {
       return status;
   }
 }
+
+export function parseListingReviewIds(value?: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      value
+        .split(/[,\s]+/)
+        .map(Number)
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+}
+
+export function listingReviewPath(ids: Array<string | number>) {
+  const unique = parseListingReviewIds(ids.join(","));
+
+  if (unique.length === 0) {
+    return "/admin/listings";
+  }
+
+  return `/admin/listings?review=${unique.join(",")}`;
+}

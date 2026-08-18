@@ -1,42 +1,58 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  approveListingAction,
-  rejectListingAction,
-} from "@/lib/listings/actions";
+import { startListingReviewAction } from "@/lib/listings/actions";
 import { listAllListings } from "@/lib/listings/queries";
 import {
   formatAud,
   listingOfferingLabel,
+  listingReviewPath,
   listingStatusLabel,
   listingTypeLabel,
+  parseListingReviewIds,
+  type Listing,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { fisherySelectLabelForName } from "@/lib/fisheries/types";
-import {
-  fieldClassName,
-  tableButtonClassName,
-} from "@/components/auth-card";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TableModal } from "@/components/table-modal";
+import { ReviewListingForms } from "@/components/review-listing-forms";
+import { BulkReviewListingsModal } from "@/components/bulk-review-listings-modal";
 import { formatTableDate } from "@/lib/format";
 
 export const metadata = {
   title: "Listings",
 };
 
-export default async function AdminListingsPage() {
+export default async function AdminListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ review?: string }>;
+}) {
   if (!(await isPlatformAdmin())) {
     redirect("/admin");
   }
 
+  const query = await searchParams;
   const [{ listings, error }, fisheries, jurisdictions] = await Promise.all([
     listAllListings(),
     listFisheries(),
     listJurisdictions(),
   ]);
+  const queued = parseListingReviewIds(query.review);
+  const byId = new Map(listings.map((listing) => [listing.id, listing]));
+  const reviewListings = queued
+    .map((id) => byId.get(id))
+    .filter(
+      (listing): listing is Listing =>
+        listing != null && listing.status === "PENDING_APPROVAL",
+    );
+  const remainingPath = listingReviewPath(reviewListings.map((listing) => listing.id));
+  const requestedPath = listingReviewPath(queued);
+
+  if (queued.length > 0 && remainingPath !== requestedPath) {
+    redirect(remainingPath);
+  }
 
   return (
     <div className="space-y-6">
@@ -52,6 +68,12 @@ export default async function AdminListingsPage() {
         searchPlaceholder="Filter listings…"
         defaultSort={{ key: "id", direction: "desc" }}
         selectable
+        bulkActions={[
+          {
+            label: "Review",
+            action: startListingReviewAction,
+          },
+        ]}
         columns={[
           { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
           { key: "seller", header: "Seller", sortable: true, filter: "select" },
@@ -145,56 +167,7 @@ export default async function AdminListingsPage() {
             actions={
               listing.status === "PENDING_APPROVAL" ? (
                 <TableModal title="Review listing" label="Review">
-                  <div className="space-y-4">
-                    <form
-                      id={`approve-listing-${listing.id}`}
-                      action={approveListingAction}
-                    >
-                      <input type="hidden" name="listing_id" value={listing.id} />
-                      <PendingSubmitButton
-                        className={tableButtonClassName}
-                        pendingLabel="Approving…"
-                      >
-                        Approve
-                      </PendingSubmitButton>
-                    </form>
-                    <form action={rejectListingAction} className="space-y-3">
-                      <input type="hidden" name="listing_id" value={listing.id} />
-                      <div>
-                        <label
-                          htmlFor={`reject-note-${listing.id}`}
-                          className="block text-sm text-ink"
-                        >
-                          Reason (optional)
-                        </label>
-                        <input
-                          id={`reject-note-${listing.id}`}
-                          name="review_note"
-                          className={fieldClassName}
-                        />
-                      </div>
-                      <PendingSubmitButton
-                        className={tableButtonClassName}
-                        pendingLabel="Rejecting…"
-                      >
-                        Reject
-                      </PendingSubmitButton>
-                    </form>
-                    <div>
-                      <label
-                        htmlFor={`approve-note-${listing.id}`}
-                        className="block text-sm text-ink"
-                      >
-                        Note (optional)
-                      </label>
-                      <input
-                        id={`approve-note-${listing.id}`}
-                        name="review_note"
-                        form={`approve-listing-${listing.id}`}
-                        className={fieldClassName}
-                      />
-                    </div>
-                  </div>
+                  <ReviewListingForms listingId={listing.id} />
                 </TableModal>
               ) : null
             }
@@ -202,6 +175,40 @@ export default async function AdminListingsPage() {
         ))}
       </DataTable>
       )}
+      {reviewListings.length > 0 ? (
+        <BulkReviewListingsModal count={reviewListings.length}>
+          {reviewListings.map((listing, index) => (
+            <section key={listing.id} className="space-y-4 py-6 first:pt-0 last:pb-0">
+              <div>
+                <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+                  {index + 1} of {reviewListings.length}
+                </p>
+                <h3 className="mt-1 text-lg font-semibold text-ink">
+                  Listing {listing.id} · {listing.seller_name}
+                </h3>
+                <p className="mt-1 text-sm text-ink-muted">
+                  {listingTypeLabel(listing.listing_type)} ·{" "}
+                  {listingOfferingLabel(listing.offering)} ·{" "}
+                  {fisherySelectLabelForName(
+                    listing.fishery_name,
+                    fisheries,
+                    jurisdictions,
+                  )}{" "}
+                  · {listing.quantity} {listing.unit_label} ·{" "}
+                  {formatAud(listing.unit_price_aud)}
+                </p>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Expires {formatTableDate(listing.expires_at)}
+                </p>
+              </div>
+              <ReviewListingForms
+                listingId={listing.id}
+                reviewQueue={reviewListings.map((item) => item.id)}
+              />
+            </section>
+          ))}
+        </BulkReviewListingsModal>
+      ) : null}
     </div>
   );
 }

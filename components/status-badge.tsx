@@ -3,6 +3,9 @@ const SUCCESS = new Set([
   "verified",
   "completed",
   "sold",
+  "consumed",
+  "paid",
+  "sent at settlement",
 ]);
 
 const WARNING = new Set([
@@ -14,12 +17,20 @@ const WARNING = new Set([
   "awaiting transfer",
   "awaiting settlement",
   "reserved",
+  "active",
+  "pending",
+  "bank debit processing",
+  "held until settlement",
+  "not yet",
 ]);
 
 const DANGER = new Set([
   "cancelled",
   "rejected",
   "unsold",
+  "released",
+  "expired",
+  "failed",
 ]);
 
 const INFO = new Set(["platform admin"]);
