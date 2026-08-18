@@ -51,6 +51,7 @@ import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { SuccessNotice } from "@/components/surface";
 
 type AccountSectionProps = {
   organisationId: number;
@@ -197,14 +198,12 @@ export async function AccountHoldingsSection({
             : "Owners and admins can create and update holdings for this account."}
         </p>
         {created === "pending" ? (
-          <p className="mt-3 text-sm text-sea" role="status">
-            Listing created. A platform admin must approve it before it appears
-            on the marketplace.
-          </p>
+          <SuccessNotice title="Listing created">
+            A platform admin must approve it before it appears on the
+            marketplace.
+          </SuccessNotice>
         ) : created === "listing" ? (
-          <p className="mt-3 text-sm text-sea" role="status">
-            Listing created.
-          </p>
+          <SuccessNotice title="Listing created" />
         ) : null}
         {canManage && sellError ? (
           <p className="mt-3 text-sm text-ink-muted">

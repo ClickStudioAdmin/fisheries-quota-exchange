@@ -10,6 +10,32 @@ export const cardClassName =
 
 export const statClassName = "border border-line bg-paper-raised p-4";
 
+export function SuccessNotice({
+  title,
+  children,
+}: {
+  title: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div
+      className="mt-4 flex gap-3 border border-sea bg-sea/10 px-4 py-3"
+      role="status"
+    >
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sea text-xs font-semibold text-paper"
+        aria-hidden
+      >
+        ✓
+      </span>
+      <div>
+        <p className="text-sm font-semibold text-sea">{title}</p>
+        {children ? <p className="mt-1 text-sm text-ink">{children}</p> : null}
+      </div>
+    </div>
+  );
+}
+
 export function LabeledFields({
   items,
   columns = 2,
