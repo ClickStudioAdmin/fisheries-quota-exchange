@@ -2,13 +2,15 @@ import type { ReactNode } from "react";
 import { AreaShell } from "@/components/area-shell";
 import type { SideNavLink } from "@/components/side-nav";
 import { getMemberActionCounts } from "@/lib/nav/action-counts";
+import { getMyUnreadNotificationCount } from "@/lib/notifications/queries";
 import { accountPath } from "@/lib/organisations/paths";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 
 export async function MemberArea({ children }: { children: ReactNode }) {
-  const [organisations, counts] = await Promise.all([
+  const [organisations, counts, unreadNotifications] = await Promise.all([
     listMyOrganisations(),
     getMemberActionCounts(),
+    getMyUnreadNotificationCount(),
   ]);
   const defaultAccount =
     organisations.find((organisation) => organisation.role === "OWNER") ??
@@ -49,7 +51,11 @@ export async function MemberArea({ children }: { children: ReactNode }) {
       badge: counts.orders,
     },
     { href: "/dashboard/payments", label: "Payments" },
-    { href: "/dashboard/notifications", label: "Notifications" },
+    {
+      href: "/dashboard/notifications",
+      label: "Notifications",
+      badge: unreadNotifications,
+    },
     { href: "/dashboard/alerts", label: "Alerts" },
   ];
 

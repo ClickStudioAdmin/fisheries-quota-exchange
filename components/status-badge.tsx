@@ -7,6 +7,7 @@ const SUCCESS = new Set([
   "paid",
   "sent at settlement",
   "enabled",
+  "read",
 ]);
 
 const WARNING = new Set([
@@ -23,6 +24,7 @@ const WARNING = new Set([
   "bank debit processing",
   "held until settlement",
   "not yet",
+  "unread",
 ]);
 
 const DANGER = new Set([

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  getMyDisabledEmails,
+  getMyNotificationPreferences,
   myPersonalNotificationEmailIds,
 } from "@/lib/alerts/queries";
 import { parseFisheryIds } from "@/lib/alerts/types";
@@ -32,17 +32,27 @@ export async function updateNotificationPreferencesAction(
 
   const visibleIds = await myPersonalNotificationEmailIds();
   const visible = new Set(visibleIds);
-  const formDisabled = disabledProductEmails(
+  const prefs = await getMyNotificationPreferences();
+  const formDisabledEmails = disabledProductEmails(
     formData.getAll("email_enabled").map((value) => String(value)),
     visibleIds,
   );
-  const preserved = (await getMyDisabledEmails()).filter(
+  const formDisabledInApp = disabledProductEmails(
+    formData.getAll("in_app_enabled").map((value) => String(value)),
+    visibleIds,
+  );
+  const preservedEmails = prefs.disabledEmails.filter(
+    (id) =>
+      isProductEmailId(id) && !visible.has(id) && !isOperatorEmailId(id),
+  );
+  const preservedInApp = prefs.disabledInApp.filter(
     (id) =>
       isProductEmailId(id) && !visible.has(id) && !isOperatorEmailId(id),
   );
 
   const { error } = await supabase.rpc("update_user_email_preferences", {
-    p_disabled_emails: [...new Set([...formDisabled, ...preserved])],
+    p_disabled_emails: [...new Set([...formDisabledEmails, ...preservedEmails])],
+    p_disabled_in_app: [...new Set([...formDisabledInApp, ...preservedInApp])],
   });
 
   if (error) {

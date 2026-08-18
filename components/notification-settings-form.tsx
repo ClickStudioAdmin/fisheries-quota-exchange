@@ -24,9 +24,11 @@ const initialState: PreferenceFormState = {};
 
 export function NotificationSettingsForm({
   disabledEmails,
+  disabledInApp,
   emailIds,
 }: {
   disabledEmails: string[];
+  disabledInApp: string[];
   emailIds: ProductEmailId[];
 }) {
   const [state, formAction, pending] = useActionState(
@@ -47,10 +49,10 @@ export function NotificationSettingsForm({
         </p>
       ) : null}
       <p className="text-sm text-ink-muted">
-        Turn off a message to stop sending it to you. Only messages that can
-        go to this email are listed. Auth confirm and password reset stay on
-        Supabase. Actions still complete if mail is skipped. Listing alerts
-        also need a fishery switched on Alerts.
+        Choose email, in-app, or both for each message. Only messages that can
+        go to you are listed. Auth confirm and password reset stay on Supabase.
+        Actions still complete if a channel is off. Listing alerts also need a
+        fishery switched on Alerts.
       </p>
       <div className={tableWrapClassName}>
         <table className={tableClassName}>
@@ -58,6 +60,7 @@ export function NotificationSettingsForm({
             <tr>
               <th className={tableHeaderCellClassName}>Message</th>
               <th className={`w-24 ${tableHeaderCellClassName}`}>Email</th>
+              <th className={`w-24 ${tableHeaderCellClassName}`}>In-app</th>
             </tr>
           </thead>
           <tbody>
@@ -77,6 +80,14 @@ export function NotificationSettingsForm({
                     label={`Email ${PRODUCT_EMAIL_LABELS[id]}`}
                   />
                 </td>
+                <td className={tableBodyCellClassName}>
+                  <SettingsSwitch
+                    name="in_app_enabled"
+                    value={id}
+                    defaultChecked={!disabledInApp.includes(id)}
+                    label={`In-app ${PRODUCT_EMAIL_LABELS[id]}`}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -84,7 +95,7 @@ export function NotificationSettingsForm({
       </div>
       {emailIds.length === 0 ? (
         <p className="text-sm text-ink-muted">
-          No emails are available for this account yet.
+          No notifications are available for this account yet.
         </p>
       ) : null}
       <button type="submit" className={buttonClassName} disabled={pending}>

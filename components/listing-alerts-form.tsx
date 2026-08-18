@@ -54,9 +54,9 @@ export function ListingAlertsForm({
         </p>
       ) : null}
       <p className="text-sm text-ink-muted">
-        Turn on sale and/or lease for each fishery. You get an email when a
-        matching listing or auction is published. You can turn the email off
-        on Notifications without clearing these switches.
+        Turn on sale and/or lease for each fishery. You are notified when a
+        matching listing or auction is published. You can turn email or in-app
+        off on Notifications without clearing these switches.
       </p>
       <div className={tableWrapClassName}>
         <table className={tableClassName}>

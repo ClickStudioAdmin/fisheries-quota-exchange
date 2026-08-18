@@ -35,7 +35,7 @@ export type MessageTemplate = {
 };
 
 const skipWhen =
-  "The template is disabled on /admin/settings or the recipient turned it off on /dashboard/notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. The triggering action still succeeds.";
+  "The email is disabled on /admin/settings or the recipient turned that channel off on /dashboard/notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write unless the recipient turned that channel off. The triggering action still succeeds.";
 
 const EMAIL_CATALOG: Record<
   ProductEmailId,

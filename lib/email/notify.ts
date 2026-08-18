@@ -5,20 +5,27 @@ import type { ProductEmailId } from "@/lib/email/product-emails";
 import { getSiteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import type { NoticeEmailData } from "@/lib/email/types";
+import type { NoticeEmailData, SendEmailResult } from "@/lib/email/types";
 import { uniqueEmails } from "@/lib/email/recipients";
+import { insertInAppNotification } from "@/lib/notifications/queries";
 
 export async function notifyEmail(
   template: ProductEmailId,
   to: string | string[] | null | undefined,
   data: NoticeEmailData,
   attachments?: EmailAttachment[],
-) {
+): Promise<SendEmailResult> {
   const recipients = uniqueEmails(Array.isArray(to) ? to : [to]);
+
+  if (recipients.length === 0) {
+    return { sent: false, skipped: true };
+  }
+
+  let result: SendEmailResult = { sent: false, skipped: true };
 
   for (const email of recipients) {
     try {
-      await sendEmail({
+      result = await sendEmail({
         to: email,
         template,
         data,
@@ -27,8 +34,22 @@ export async function notifyEmail(
     } catch (error) {
       const message = error instanceof Error ? error.message : "Email failed.";
       console.error("notifyEmail failed", template, message);
+      result = { sent: false, error: message };
+    }
+
+    try {
+      await insertInAppNotification({
+        email,
+        template,
+        data,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "In-app failed.";
+      console.error("notifyEmail in-app failed", template, message);
     }
   }
+
+  return result;
 }
 
 export async function siteUrlOrEmpty() {

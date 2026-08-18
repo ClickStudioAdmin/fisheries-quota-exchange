@@ -130,7 +130,7 @@ export function PlatformSettingsForm({
         </legend>
         <p className="text-sm text-ink-muted">
           Turn off a message to stop sending it for everyone. Members can turn
-          off their own copies of mail that goes to them on Notifications.
+          off email or in-app for mail that goes to them on Notifications.
           Operator mail is only listed here. Auth confirm and password reset
           stay on Supabase and are not listed. Actions still complete if mail
           is skipped.

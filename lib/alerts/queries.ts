@@ -7,6 +7,7 @@ import { listingAlertMatches } from "@/lib/alerts/types";
 import type { ListingOffering } from "@/lib/listings/types";
 import { uniqueEmails } from "@/lib/email/recipients";
 import { personalNotificationEmailIds } from "@/lib/email/product-emails";
+import type { NotificationPreferences } from "@/lib/notifications/types";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 
@@ -14,50 +15,64 @@ async function db() {
   return createServiceClient() ?? (await createClient());
 }
 
-export async function getUserDisabledEmails(email: string) {
+function asStringList(value: unknown) {
+  return Array.isArray(value) ? value.map(String) : [];
+}
+
+function asPreferences(row: {
+  disabled_emails?: unknown;
+  disabled_in_app?: unknown;
+} | null): NotificationPreferences {
+  return {
+    disabledEmails: asStringList(row?.disabled_emails),
+    disabledInApp: asStringList(row?.disabled_in_app),
+  };
+}
+
+export async function getUserNotificationPreferences(email: string) {
   const supabase = await db();
   const key = email.trim().toLowerCase();
 
   if (!supabase || !key.includes("@")) {
-    return [] as string[];
+    return asPreferences(null);
   }
 
   const { data, error } = await supabase
     .from("user_email_preferences")
-    .select("disabled_emails")
+    .select("disabled_emails, disabled_in_app")
     .eq("email", key)
     .maybeSingle();
 
   if (error) {
-    console.error("getUserDisabledEmails failed", error.message);
-    return [];
+    console.error("getUserNotificationPreferences failed", error.message);
+    return asPreferences(null);
   }
 
-  return Array.isArray(data?.disabled_emails)
-    ? data.disabled_emails.map(String)
-    : [];
+  return asPreferences(data);
 }
 
-export async function getMyDisabledEmails() {
+export async function getUserDisabledEmails(email: string) {
+  return (await getUserNotificationPreferences(email)).disabledEmails;
+}
+
+export async function getMyNotificationPreferences() {
   const supabase = await createClient();
 
   if (!supabase) {
-    return [] as string[];
+    return asPreferences(null);
   }
 
   const { data, error } = await supabase
     .from("user_email_preferences")
-    .select("disabled_emails")
+    .select("disabled_emails, disabled_in_app")
     .maybeSingle();
 
   if (error) {
-    console.error("getMyDisabledEmails failed", error.message);
-    return [];
+    console.error("getMyNotificationPreferences failed", error.message);
+    return asPreferences(null);
   }
 
-  return Array.isArray(data?.disabled_emails)
-    ? data.disabled_emails.map(String)
-    : [];
+  return asPreferences(data);
 }
 
 export async function listMyListingAlerts() {

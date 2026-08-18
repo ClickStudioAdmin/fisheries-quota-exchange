@@ -16,7 +16,6 @@ import {
   isOrganisationRole,
   organisationRoleLabel,
 } from "@/lib/organisations/types";
-import { sendEmail } from "@/lib/email/send";
 import { emailCopy } from "@/lib/email/copy";
 import { notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import { getSiteUrl } from "@/lib/site-url";
@@ -127,18 +126,16 @@ export async function addMemberAction(
   const siteUrl = await getSiteUrl();
   const accountName =
     (await getOrganisationLegalName(organisationId)) ?? "an FQX account";
-  const mail = siteUrl
-    ? await sendEmail({
-        to: email,
-        template: "member_added",
-        data: emailCopy.member_added({
-          accountName,
-          role: organisationRoleLabel(memberRole),
-          registerUrl: `${siteUrl}/register`,
-          loginUrl: `${siteUrl}/login`,
-        }),
-      })
-    : { sent: false as const, skipped: true as const };
+  const mail = await notifyEmail(
+    "member_added",
+    email,
+    emailCopy.member_added({
+      accountName,
+      role: organisationRoleLabel(memberRole),
+      registerUrl: siteUrl ? `${siteUrl}/register` : "/register",
+      loginUrl: siteUrl ? `${siteUrl}/login` : "/login",
+    }),
+  );
 
   if (mail.sent) {
     return { message: "Member added. An invitation email was sent." };
