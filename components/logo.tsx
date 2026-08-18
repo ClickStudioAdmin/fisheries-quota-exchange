@@ -17,7 +17,7 @@ export function Logo({ className }: LogoProps) {
           className="h-9 w-9 shrink-0"
           aria-hidden="true"
         >
-          <rect width="40" height="40" rx="8" fill="#1a6fb5" />
+          <rect width="40" height="40" rx="8" fill="#0d5ea8" />
           <path
             d="M8 24c4-1.5 7-1.5 11 0s7 1.5 13 0"
             fill="none"

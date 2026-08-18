@@ -1,10 +1,10 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { TaxInvoiceData } from "@/lib/invoices/types";
 
-const sea = "#1a6fb5";
-const ink = "#1a2433";
-const muted = "#5b6573";
-const line = "#d4dbe4";
+const sea = "#0d5ea8";
+const ink = "#121820";
+const muted = "#44505c";
+const line = "#b8c3d0";
 const warn = "#7a3b11";
 const warnBg = "#f3e4d4";
 
