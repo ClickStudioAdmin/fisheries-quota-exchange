@@ -29,6 +29,13 @@ export type CreateSellerTransferInput = {
   paymentIntentId: string | null;
 };
 
+export type CheckoutPaymentStatus = {
+  status: string | null;
+  paymentStatus: string | null;
+  paymentIntentId: string | null;
+  paymentIntentStatus: string | null;
+};
+
 export type PaymentProvider = {
   createConnectedAccount(input: {
     organisationId: number;
@@ -42,6 +49,9 @@ export type PaymentProvider = {
     detailsSubmitted: boolean;
   }>;
   createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult>;
+  getCheckoutPaymentStatus(
+    checkoutSessionId: string,
+  ): Promise<CheckoutPaymentStatus>;
   transferSellerProceeds(input: CreateSellerTransferInput): Promise<string | null>;
   parseWebhook(
     payload: string,

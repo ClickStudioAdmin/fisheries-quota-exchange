@@ -146,7 +146,9 @@ export function createStripePaymentProvider(): PaymentProvider {
 
       if (input.existingCheckoutSessionId) {
         const existing = await stripe.checkout.sessions
-          .retrieve(input.existingCheckoutSessionId)
+          .retrieve(input.existingCheckoutSessionId, {
+            expand: ["payment_intent"],
+          })
           .catch(() => null);
 
         if (
@@ -155,6 +157,29 @@ export function createStripePaymentProvider(): PaymentProvider {
           existing.client_secret
         ) {
           return checkoutResult(existing);
+        }
+
+        if (existing && existing.status !== "open") {
+          const intent =
+            typeof existing.payment_intent === "object"
+              ? existing.payment_intent
+              : null;
+
+          if (
+            existing.payment_status === "paid" ||
+            intent?.status === "succeeded"
+          ) {
+            throw new Error("This order is already paid.");
+          }
+
+          if (
+            existing.status === "complete" ||
+            intent?.status === "processing"
+          ) {
+            throw new Error(
+              "Bank debit is still processing. Refresh this page in a moment.",
+            );
+          }
         }
       }
 
@@ -196,6 +221,28 @@ export function createStripePaymentProvider(): PaymentProvider {
       }
 
       return checkoutResult(session);
+    },
+
+    async getCheckoutPaymentStatus(checkoutSessionId) {
+      const session = await stripeClient().checkout.sessions.retrieve(
+        checkoutSessionId,
+        { expand: ["payment_intent"] },
+      );
+      const intent =
+        typeof session.payment_intent === "object"
+          ? session.payment_intent
+          : null;
+
+      return {
+        status: session.status ?? null,
+        paymentStatus: session.payment_status ?? null,
+        paymentIntentId:
+          intent?.id ??
+          (typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : null),
+        paymentIntentStatus: intent?.status ?? null,
+      };
     },
 
     async transferSellerProceeds(input) {

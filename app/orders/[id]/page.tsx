@@ -17,6 +17,7 @@ import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
 import { orderChargeAud } from "@/lib/payments/money";
+import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 
@@ -44,10 +45,17 @@ export default async function OrderPage({
     notFound();
   }
 
-  const order = await getOrder(orderId);
+  let order = await getOrder(orderId);
 
   if (!order) {
     notFound();
+  }
+
+  let paymentLive: Awaited<ReturnType<typeof reconcileOrderPayment>> = "unpaid";
+
+  if (order.status === "AWAITING_PAYMENT") {
+    paymentLive = await reconcileOrderPayment(order.id);
+    order = (await getOrder(orderId)) ?? order;
   }
 
   const [reservation, transaction, events, buyerRole, admin, payment] =
@@ -64,7 +72,12 @@ export default async function OrderPage({
     (order.status === "AWAITING_COMPLIANCE" ||
       order.status === "AWAITING_PAYMENT") &&
     (admin || buyerRole !== null);
-  const canPay = order.status === "AWAITING_PAYMENT" && buyerRole !== null;
+  const debitProcessing =
+    order.status === "AWAITING_PAYMENT" && paymentLive === "processing";
+  const canPay =
+    order.status === "AWAITING_PAYMENT" &&
+    buyerRole !== null &&
+    !debitProcessing;
   const publishableKey = canPay ? getStripePublishableKey() : null;
   const totalDue = formatAud(
     orderChargeAud(order.amount_aud, order.fee_amount_aud),
@@ -82,9 +95,9 @@ export default async function OrderPage({
       </p>
       {query.paid === "1" && order.status === "AWAITING_PAYMENT" ? (
         <p className="mt-3 text-sm text-ink-muted">
-          If you paid by bank debit, confirmation can take a moment. Refresh
-          if this still says awaiting payment — the webhook is the source of
-          truth, not this page.
+          If you paid by bank debit, Stripe may show Incoming while the debit
+          clears. Refresh this page — FQX checks Stripe on the server, not
+          this URL.
         </p>
       ) : null}
       {query.pay === "cancelled" ? (
@@ -137,11 +150,13 @@ export default async function OrderPage({
                   value: payment?.status
                     ? payment.status === "PAID"
                       ? "Paid (held by FQX until settlement)"
-                      : payment.status === "PENDING"
-                        ? "Pending"
-                        : payment.status === "EXPIRED"
-                          ? "Expired"
-                          : "Failed"
+                      : payment.status === "PENDING" && debitProcessing
+                        ? "Bank debit processing"
+                        : payment.status === "PENDING"
+                          ? "Pending"
+                          : payment.status === "EXPIRED"
+                            ? "Expired"
+                            : "Failed"
                     : "None",
                 },
                 {
@@ -167,7 +182,16 @@ export default async function OrderPage({
             </form>
           ) : null}
         </div>
-        {canPay && publishableKey ? (
+        {debitProcessing ? (
+          <div className={panelClassName}>
+            <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              The bank debit was submitted. Stripe may show the funds as
+              Incoming until they clear. FQX will mark this order paid when
+              Stripe confirms the debit — refresh this page.
+            </p>
+          </div>
+        ) : canPay && publishableKey ? (
           <div className={panelClassName}>
             <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
             <p className="mt-2 text-sm text-ink-muted">

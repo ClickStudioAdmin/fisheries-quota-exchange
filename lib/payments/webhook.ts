@@ -20,6 +20,29 @@ function orderIdFrom(data: Record<string, unknown>) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+function paymentIntentIdFrom(data: Record<string, unknown>) {
+  return asString(data.payment_intent) ?? asString(asRecord(data.payment_intent)?.id);
+}
+
+async function markPaid(
+  supabase: NonNullable<ReturnType<typeof createServiceClient>>,
+  input: {
+    orderId: number;
+    checkoutSessionId?: string | null;
+    paymentIntentId?: string | null;
+  },
+) {
+  const { error } = await supabase.rpc("mark_order_paid", {
+    p_order_id: input.orderId,
+    p_checkout_session_id: input.checkoutSessionId ?? null,
+    p_payment_intent_id: input.paymentIntentId ?? null,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function handleStripeWebhook(payload: string, signature: string) {
   const provider = getPaymentProvider();
   const supabase = createServiceClient();
@@ -51,32 +74,26 @@ export async function handleStripeWebhook(payload: string, signature: string) {
 
     if (orderId && event.type === "checkout.session.completed") {
       if (asString(data.payment_status) !== "unpaid") {
-        const paymentIntent =
-          asString(data.payment_intent) ??
-          asString(asRecord(data.payment_intent)?.id);
-        const { error } = await supabase.rpc("mark_order_paid", {
-          p_order_id: orderId,
-          p_checkout_session_id: asString(data.id),
-          p_payment_intent_id: paymentIntent,
+        await markPaid(supabase, {
+          orderId,
+          checkoutSessionId: asString(data.id),
+          paymentIntentId: paymentIntentIdFrom(data),
         });
-
-        if (error) {
-          throw new Error(error.message);
-        }
       }
-    } else if (orderId && event.type === "checkout.session.async_payment_succeeded") {
-      const paymentIntent =
-        asString(data.payment_intent) ??
-        asString(asRecord(data.payment_intent)?.id);
-      const { error } = await supabase.rpc("mark_order_paid", {
-        p_order_id: orderId,
-        p_checkout_session_id: asString(data.id),
-        p_payment_intent_id: paymentIntent,
+    } else if (
+      orderId &&
+      (event.type === "checkout.session.async_payment_succeeded" ||
+        event.type === "payment_intent.succeeded")
+    ) {
+      await markPaid(supabase, {
+        orderId,
+        checkoutSessionId:
+          event.type === "payment_intent.succeeded" ? null : asString(data.id),
+        paymentIntentId:
+          event.type === "payment_intent.succeeded"
+            ? asString(data.id)
+            : paymentIntentIdFrom(data),
       });
-
-      if (error) {
-        throw new Error(error.message);
-      }
     } else if (orderId && event.type === "checkout.session.async_payment_failed") {
       const { error } = await supabase.rpc("fail_unpaid_order", {
         p_order_id: orderId,

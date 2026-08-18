@@ -13,7 +13,7 @@ Never trust the browser or the Checkout return URL for payment status. The webho
 1. Organisation `OWNER` or `ADMIN` opens **Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
 2. Stripe sends `account.updated`. The app stores whether the account can accept charges. Opening **Payments** also refreshes that flag from Stripe. The browser is not trusted for it.
 3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The full amount (quota + fee) is charged to the **FQX** Stripe account. There is no destination charge.
-4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance. Refreshing the return URL does not charge again.
+4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` / `payment_intent.succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance (often **Incoming** until they clear). Refreshing the return URL does not charge again. Opening the order page also reconciles payment status from Stripe.
 5. Expired Checkout or failed async payment cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
 6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails the dummy tax invoice.
 
@@ -73,7 +73,10 @@ Point the Stripe sandbox webhook at `/api/stripe/webhook`:
 - `checkout.session.async_payment_succeeded`
 - `checkout.session.async_payment_failed`
 - `checkout.session.expired`
+- `payment_intent.succeeded`
 - `account.updated`
+
+Opening an unpaid order also checks the Checkout Session with Stripe. If the debit has already succeeded (including when the Dashboard shows Incoming), FQX marks the order paid even if a webhook was missed.
 
 Turn **off automatic payouts** on the FQX platform Stripe account so held seller funds are not paid out to FQX’s bank before settlement.
 
