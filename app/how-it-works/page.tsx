@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonClassName } from "@/components/auth-card";
-import { pageWidthClassName, panelClassName } from "@/components/surface";
+import { InfoPage } from "@/components/page-intro";
 import { registrationsAllowed } from "@/lib/settings/queries";
 import { getUser } from "@/lib/supabase/server";
 
@@ -67,16 +67,16 @@ function Steps({
 }) {
   return (
     <section>
-      <h2 className="text-2xl font-semibold tracking-tight text-ink">
+      <h2 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">
         {heading}
       </h2>
-      <ol className="mt-6 grid gap-3">
+      <ol className="mt-6 divide-y divide-line">
         {steps.map((step, index) => (
-          <li key={step.title} className={panelClassName}>
+          <li key={step.title} className="py-5 first:pt-0 last:pb-0">
             <p className="text-xs uppercase tracking-[0.12em] text-sea">
               {String(index + 1).padStart(2, "0")}
             </p>
-            <h3 className="mt-3 text-lg font-semibold text-ink">{step.title}</h3>
+            <h3 className="mt-2 text-lg font-semibold text-ink">{step.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-ink-muted">
               {step.body}
             </p>
@@ -94,40 +94,45 @@ export default async function HowItWorksPage() {
   ]);
 
   return (
-    <div className={`${pageWidthClassName} py-12 sm:py-16`}>
-      <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-        How does it work
-      </h1>
-      <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">
-        Fisheries Quota Exchange is a marketplace for Australian Commonwealth,
-        state and territory quota. Buyers and sellers each follow a short path
-        from account through payment to settlement. This is a development site,
-        not a live market.
-      </p>
-
-      <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-16">
-        <Steps heading="For buyers" steps={BUYER_STEPS} />
-        <Steps heading="For sellers" steps={SELLER_STEPS} />
+    <InfoPage
+      title="How does it work"
+      lead={
+        <p>
+          Fisheries Quota Exchange is a marketplace for Australian Commonwealth,
+          state and territory quota. Buyers and sellers each follow a short path
+          from account through payment to settlement. This is a development
+          site, not a live market.
+        </p>
+      }
+      actions={
+        <>
+          <Link href="/marketplace" className={buttonClassName}>
+            Browse marketplace
+          </Link>
+          {user ? (
+            <Link href="/dashboard" className={outlineButtonClassName}>
+              Dashboard
+            </Link>
+          ) : allowRegister ? (
+            <Link href="/register" className={outlineButtonClassName}>
+              Register
+            </Link>
+          ) : (
+            <Link href="/login" className={outlineButtonClassName}>
+              Log in
+            </Link>
+          )}
+        </>
+      }
+    >
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-line">
+        <div className="lg:pr-12">
+          <Steps heading="For buyers" steps={BUYER_STEPS} />
+        </div>
+        <div className="lg:pl-12">
+          <Steps heading="For sellers" steps={SELLER_STEPS} />
+        </div>
       </div>
-
-      <div className="mt-12 flex flex-wrap items-center gap-3">
-        <Link href="/marketplace" className={buttonClassName}>
-          Browse marketplace
-        </Link>
-        {user ? (
-          <Link href="/dashboard" className={outlineButtonClassName}>
-            Dashboard
-          </Link>
-        ) : allowRegister ? (
-          <Link href="/register" className={outlineButtonClassName}>
-            Register
-          </Link>
-        ) : (
-          <Link href="/login" className={outlineButtonClassName}>
-            Log in
-          </Link>
-        )}
-      </div>
-    </div>
+    </InfoPage>
   );
 }
