@@ -116,25 +116,32 @@ export function OrderCheckout({
   }, [router]);
 
   const methodPicker = (
-    <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Payment method">
-      {becsAvailable ? (
+    <div className="mb-4">
+      <h3 className="text-sm font-semibold text-ink">Choose Payment Method</h3>
+      <div
+        className="mt-3 flex flex-wrap gap-2"
+        role="group"
+        aria-label="Payment method"
+      >
+        {becsAvailable ? (
+          <button
+            type="button"
+            aria-pressed={method === "becs"}
+            className={methodButtonClass[method === "becs" ? "on" : "off"]}
+            onClick={() => setMethod("becs")}
+          >
+            Bank debit {formatAud(listedAud)}
+          </button>
+        ) : null}
         <button
           type="button"
-          aria-pressed={method === "becs"}
-          className={methodButtonClass[method === "becs" ? "on" : "off"]}
-          onClick={() => setMethod("becs")}
+          aria-pressed={method === "card"}
+          className={methodButtonClass[method === "card" ? "on" : "off"]}
+          onClick={() => setMethod("card")}
         >
-          Bank debit {formatAud(listedAud)}
+          Card {formatAud(cardAud)}
         </button>
-      ) : null}
-      <button
-        type="button"
-        aria-pressed={method === "card"}
-        className={methodButtonClass[method === "card" ? "on" : "off"]}
-        onClick={() => setMethod("card")}
-      >
-        Card {formatAud(cardAud)}
-      </button>
+      </div>
     </div>
   );
 
