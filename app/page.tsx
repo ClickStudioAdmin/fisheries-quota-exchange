@@ -168,7 +168,7 @@ export default async function Home() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-ink">
-              Current listings
+              Recent listings
             </h2>
             <p className="mt-2 text-sm text-ink-muted">
               Fixed-price offers and auctions that are open now.
@@ -191,7 +191,7 @@ export default async function Home() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-ink">
-              Fisheries
+              Active fisheries
             </h2>
             <p className="mt-2 text-sm text-ink-muted">
               Open a fishery for prices, current offers, and recent trades.
