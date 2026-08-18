@@ -41,7 +41,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/privacy` | Privacy policy for this development site |
 | `/terms` | Terms of service for this development site |
 | `/admin` | Overview: queues, platform fees, Stripe test mode |
-| `/dashboard/notifications` | Signed-in user inbox for in-app notices, plus per-event email and in-app switches |
+| `/dashboard/notifications` | Signed-in user inbox (default) and Channels tab for per-event email and in-app switches |
 | `/dashboard/alerts` | Signed-in user switches sale and/or lease alerts per fishery |
 | `/dashboard/payments` | Embedded Connect onboarding and account management |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |

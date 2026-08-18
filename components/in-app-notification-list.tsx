@@ -21,12 +21,9 @@ export function InAppNotificationList({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">Inbox</h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            In-app notices for events you still have switched on.
-          </p>
-        </div>
+        <p className="text-sm text-ink-muted">
+          In-app notices for events you still have switched on.
+        </p>
         {unread > 0 ? (
           <form action={markNotificationsReadAction}>
             <button type="submit" className={tableButtonClassName}>
