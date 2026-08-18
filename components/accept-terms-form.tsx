@@ -40,8 +40,8 @@ export function AcceptTermsForm() {
             terms of service
           </Link>{" "}
           and I agree. I understand that buying or listing quota is a binding
-          agreement to complete the trade, and that if I do not proceed I must
-          still pay the platform commission.
+          agreement to complete the trade, and that if I do not proceed I may
+          be liable to pay the platform commission.
         </span>
       </label>
       <button type="submit" className={buttonClassName} disabled={pending}>

@@ -8,10 +8,10 @@ import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { accountPath } from "@/lib/organisations/paths";
 import { getOrganisation } from "@/lib/organisations/queries";
-import { organisationRoleLabel } from "@/lib/organisations/types";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
+import { StatusBadge } from "@/components/status-badge";
 import { LabeledFields, panelClassName, statClassName } from "@/components/surface";
 import type { User } from "@supabase/supabase-js";
 
@@ -84,20 +84,12 @@ export async function AccountOverviewSection({
           <LabeledFields
             items={[
               {
-                label: "Account",
-                value: result?.organisation.legal_name ?? "Not added",
-              },
-              {
-                label: "Your role",
-                value: result ? organisationRoleLabel(result.role) : "—",
-              },
-              {
                 label: "Eligible to buy",
-                value: canBuy ? "Yes" : "Not yet",
+                value: <StatusBadge label={canBuy ? "Yes" : "Not yet"} />,
               },
               {
                 label: "Eligible to sell",
-                value: canSell ? "Yes" : "Not yet",
+                value: <StatusBadge label={canSell ? "Yes" : "Not yet"} />,
               },
             ]}
           />

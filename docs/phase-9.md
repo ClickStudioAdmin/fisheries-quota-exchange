@@ -63,7 +63,7 @@ Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts
 - `stripe_webhook_events` (event id primary key)
 - `terms_acceptances` (email + version; required before buy, bid, or list)
 
-Every signed-in user must agree to the current terms on Overview and add business details on Profile before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase and bid require ticking the buyer acknowledgements. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms require them to pay the platform commission. This phase does not auto-invoice that abort commission.
+Every signed-in user must agree to the current terms on Overview and add business details on Profile before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase and bid require ticking the buyer acknowledgements. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms may make them liable to pay the platform commission. This phase does not auto-invoice that abort commission.
 
 Functions:
 

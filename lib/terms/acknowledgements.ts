@@ -25,7 +25,7 @@ export const SELLER_ACKNOWLEDGEMENTS = [
   {
     name: "ack_seller_commission_abort",
     label:
-      "If I do not proceed after a buyer has committed, I must still pay FQX that platform commission.",
+      "If I do not proceed after a buyer has committed, I may be liable to pay FQX that platform commission.",
   },
   {
     name: "ack_seller_terms",
@@ -52,7 +52,7 @@ export const BUYER_PURCHASE_ACKNOWLEDGEMENTS = [
   {
     name: "ack_buyer_commission_abort",
     label:
-      "If I do not proceed, I must still pay FQX the platform commission that would have applied to this trade.",
+      "If I do not proceed, I may be liable to pay FQX the platform commission that would have applied to this trade.",
   },
   {
     name: "ack_buyer_terms",
@@ -73,7 +73,7 @@ export const BUYER_BID_ACKNOWLEDGEMENTS = [
   {
     name: "ack_bid_commission_abort",
     label:
-      "If I do not proceed after winning, I must still pay FQX the platform commission that would have applied to this trade.",
+      "If I do not proceed after winning, I may be liable to pay FQX the platform commission that would have applied to this trade.",
   },
   {
     name: "ack_bid_terms",

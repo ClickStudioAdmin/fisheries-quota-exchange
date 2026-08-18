@@ -8,6 +8,7 @@ const SUCCESS = new Set([
   "sent at settlement",
   "enabled",
   "read",
+  "yes",
 ]);
 
 const WARNING = new Set([

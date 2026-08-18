@@ -50,7 +50,7 @@ export default function TermsPage() {
         <p>
           You cannot walk away after you buy or win. If you do not proceed —
           including if you do not pay, or you otherwise refuse to complete the
-          purchase — you are still required to pay FQX the platform commission
+          purchase — you may be liable to pay FQX the platform commission
           that would have applied to that trade. Changing your mind does not
           cancel that commission.
         </p>
@@ -87,8 +87,8 @@ export default function TermsPage() {
         <p>
           You cannot withdraw after a buyer has committed (a purchase or a
           winning bid) in order to avoid the trade. If you do not proceed, you
-          are still required to pay FQX the platform commission that would
-          have applied to that trade. Changing your mind does not cancel that
+          may be liable to pay FQX the platform commission that would have
+          applied to that trade. Changing your mind does not cancel that
           commission.
         </p>
         <p>
@@ -111,9 +111,9 @@ export default function TermsPage() {
         <p>
           If either side does not complete a trade they have already entered —
           the buyer after purchase or a winning bid, or the seller after a
-          buyer has committed — the side that does not proceed must pay FQX
-          the same commission. FQX may invoice that party for it. That
-          obligation is part of these terms, not an optional extra.
+          buyer has committed — the side that does not proceed may be liable
+          to pay FQX the same commission. FQX may invoice that party for it.
+          That obligation is part of these terms, not an optional extra.
         </p>
       </LegalSection>
 
