@@ -10,7 +10,7 @@ import {
   getTransactionForOrder,
   listOrderAuditEvents,
 } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
+import { auditEventLabel, orderStatusLabel } from "@/lib/orders/types";
 import { buildOrderSteps } from "@/lib/orders/progress";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { LabeledFields, panelClassName } from "@/components/surface";
@@ -22,7 +22,7 @@ import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
 import { orderChargeAud, orderSellerPayoutAud } from "@/lib/payments/money";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
-import { loginPath } from "@/lib/auth/paths";
+import { formatTableDateTime } from "@/lib/format";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -116,8 +116,13 @@ export default async function OrderPage({
           buyerPaidFeeOnTop ? "added to buyer payment" : "deducted from seller"
         })`
       : "None";
+  const unitPriceItem = {
+    label: `Price per ${order.unit_label}`,
+    value: formatAud(order.unit_price_aud),
+  };
   const totalItems = showCommission
     ? [
+        unitPriceItem,
         {
           label: isSeller ? "Listed amount" : "Quota amount",
           value: formatAud(order.amount_aud),
@@ -138,6 +143,7 @@ export default async function OrderPage({
             ]),
       ]
     : [
+        unitPriceItem,
         {
           label: payment?.status === "PAID" ? "You paid" : "You pay",
           value: totalDue,
@@ -194,6 +200,8 @@ export default async function OrderPage({
                       <Link
                         href={`/marketplace/${order.listing_id}`}
                         className="underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
                         {order.fishery_name}
                       </Link>
@@ -263,20 +271,29 @@ export default async function OrderPage({
       {order.review_note ? (
         <p className="mt-6 text-sm text-ink-muted">Note: {order.review_note}</p>
       ) : null}
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold text-ink">Audit</h2>
+      <section className={`mt-8 ${panelClassName}`}>
+        <h2 className="text-sm font-semibold text-ink">Activity</h2>
         {events.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No audit events yet.</p>
+          <p className="mt-2 text-sm text-ink-muted">No events yet.</p>
         ) : (
-          <ul className="mt-3 space-y-2 text-sm text-ink-muted">
+          <ol className="mt-4 divide-y divide-line">
             {events.map((event) => (
-              <li key={event.id}>
-                {event.event_type} ·{" "}
-                {new Date(event.created_at).toLocaleString("en-AU")}
-                {event.actor_email ? ` · ${event.actor_email}` : ""}
+              <li
+                key={event.id}
+                className="flex items-baseline justify-between gap-4 py-3 first:pt-0 last:pb-0"
+              >
+                <span className="text-sm text-ink">
+                  {auditEventLabel(event.event_type)}
+                </span>
+                <time
+                  className="shrink-0 text-xs text-ink-muted"
+                  dateTime={event.created_at}
+                >
+                  {formatTableDateTime(event.created_at)}
+                </time>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
       </section>
     </div>

@@ -18,7 +18,7 @@ export type OrderStep = {
 const LABELS: Record<OrderStepId, string> = {
   quota_reserved: "Quota reserved",
   payment: "Payment",
-  compliance: "Compliance",
+  compliance: "Compliance & Transfers",
   settlement: "Settlement",
 };
 

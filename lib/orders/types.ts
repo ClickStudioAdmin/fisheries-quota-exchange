@@ -87,3 +87,38 @@ export function orderStatusLabel(status: OrderStatus) {
       return "Cancelled";
   }
 }
+
+export function auditEventLabel(eventType: string) {
+  switch (eventType) {
+    case "ORDER_CREATED":
+      return "Order created";
+    case "QUOTA_RESERVED":
+      return "Quota reserved";
+    case "ORDER_CANCELLED":
+      return "Order cancelled";
+    case "PAYMENT_RECEIVED":
+      return "Payment received";
+    case "PAYMENT_FAILED":
+      return "Payment failed";
+    case "COMPLIANCE_APPROVED":
+      return "Compliance approved";
+    case "COMPLIANCE_REJECTED":
+      return "Compliance rejected";
+    case "TRANSFER_SIMULATED":
+      return "Transfer recorded";
+    case "SETTLEMENT_SIMULATED":
+      return "Settlement completed";
+    case "BID_PLACED":
+      return "Bid placed";
+    case "AUCTION_CLOSED":
+      return "Auction closed";
+    case "AUCTION_UNSOLD":
+      return "Auction unsold";
+    default:
+      return eventType
+        .toLowerCase()
+        .split("_")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+  }
+}
