@@ -23,6 +23,7 @@ import { getStripePublishableKey } from "@/lib/payments/env";
 import { orderChargeAud, orderSellerPayoutAud } from "@/lib/payments/money";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { formatTableDateTime } from "@/lib/format";
+import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
