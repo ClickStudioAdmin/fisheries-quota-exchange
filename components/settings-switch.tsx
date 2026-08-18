@@ -2,18 +2,30 @@ function SwitchTrack({
   name,
   value,
   defaultChecked,
+  checked,
+  onCheckedChange,
 }: {
-  name: string;
+  name?: string;
   value?: string;
   defaultChecked?: boolean;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }) {
+  const controlled = checked !== undefined;
+
   return (
     <>
       <input
         type="checkbox"
         name={name}
         value={value}
-        defaultChecked={defaultChecked}
+        checked={controlled ? checked : undefined}
+        defaultChecked={controlled ? undefined : defaultChecked}
+        onChange={
+          onCheckedChange
+            ? (event) => onCheckedChange(event.target.checked)
+            : undefined
+        }
         className="peer sr-only"
       />
       <span
@@ -28,11 +40,15 @@ export function SettingsSwitch({
   name,
   value,
   defaultChecked,
+  checked,
+  onCheckedChange,
   label,
 }: {
-  name: string;
+  name?: string;
   value?: string;
   defaultChecked?: boolean;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
   label: string;
 }) {
   return (
@@ -41,6 +57,8 @@ export function SettingsSwitch({
         name={name}
         value={value}
         defaultChecked={defaultChecked}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
       />
       <span className="sr-only">{label}</span>
     </label>
