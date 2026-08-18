@@ -2,7 +2,11 @@ import "server-only";
 
 import Stripe from "stripe";
 import { getStripeEnv } from "@/lib/payments/env";
-import { audToCents, orderChargeAud } from "@/lib/payments/money";
+import {
+  audToCents,
+  orderChargeAud,
+  orderSellerPayoutAud,
+} from "@/lib/payments/money";
 import type { PaymentProvider } from "@/lib/payments/types";
 
 function stripeClient() {
@@ -136,8 +140,10 @@ export function createStripePaymentProvider(): PaymentProvider {
 
     async createCheckout(input) {
       const stripe = stripeClient();
-      const totalCents = audToCents(
-        orderChargeAud(input.amountAud, input.feeAmountAud),
+      const totalCents = audToCents(orderChargeAud(input.amountAud));
+      const sellerPayoutAud = orderSellerPayoutAud(
+        input.amountAud,
+        input.feeAmountAud,
       );
 
       if (totalCents < 50) {
@@ -154,9 +160,14 @@ export function createStripePaymentProvider(): PaymentProvider {
         if (
           existing?.status === "open" &&
           existing.ui_mode === "embedded_page" &&
-          existing.client_secret
+          existing.client_secret &&
+          existing.amount_total === totalCents
         ) {
           return checkoutResult(existing);
+        }
+
+        if (existing?.status === "open") {
+          await stripe.checkout.sessions.expire(existing.id).catch(() => null);
         }
 
         if (existing && existing.status !== "open") {
@@ -207,6 +218,8 @@ export function createStripePaymentProvider(): PaymentProvider {
           transfer_group: transferGroup,
           metadata: {
             order_id: String(input.orderId),
+            fee_amount_aud: String(input.feeAmountAud),
+            seller_payout_aud: String(sellerPayoutAud),
           },
         },
         metadata: {

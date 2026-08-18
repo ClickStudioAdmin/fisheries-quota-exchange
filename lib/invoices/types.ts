@@ -9,6 +9,7 @@ export type TaxInvoiceData = {
   amount: string;
   feePercent: string;
   feeAmount: string;
+  sellerProceeds: string;
   total: string;
   sellerName: string;
   sellerAbn: string;

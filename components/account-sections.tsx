@@ -146,8 +146,10 @@ export async function AccountMembersSection({
 
 export async function AccountHoldingsSection({
   organisationId,
+  created,
 }: {
   organisationId: number;
+  created?: string;
 }) {
   const result = await getOrganisation(organisationId);
 
@@ -193,6 +195,16 @@ export async function AccountHoldingsSection({
             ? "Create or update a holding here. Unverified holdings must be approved by a platform admin before you can list or auction them. Changing quantity records an ADJUSTMENT on the ledger."
             : "Owners and admins can create and update holdings for this account."}
         </p>
+        {created === "pending" ? (
+          <p className="mt-3 text-sm text-sea" role="status">
+            Listing created. A platform admin must approve it before it appears
+            on the marketplace.
+          </p>
+        ) : created === "listing" ? (
+          <p className="mt-3 text-sm text-sea" role="status">
+            Listing created.
+          </p>
+        ) : null}
         {canManage && sellError ? (
           <p className="mt-3 text-sm text-ink-muted">
             {sellError}{" "}

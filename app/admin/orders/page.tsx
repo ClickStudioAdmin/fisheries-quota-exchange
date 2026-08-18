@@ -41,9 +41,10 @@ export default async function AdminOrdersPage() {
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           No live payment. Approve compliance, simulate transfer, then simulate
-          settlement. Settlement writes SALE/PURCHASE or LEASE_OUT/LEASE_IN
-          ledger rows, consumes the reservation, and emails a dummy tax invoice
-          to the buyer.
+          settlement. The buyer pays the listed amount. Settlement Transfers
+          the seller’s share after the platform fee, writes SALE/PURCHASE or
+          LEASE_OUT/LEASE_IN ledger rows, consumes the reservation, and emails
+          a dummy tax invoice to the buyer.
         </p>
       </div>
       <DataTable

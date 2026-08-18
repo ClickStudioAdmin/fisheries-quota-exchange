@@ -17,7 +17,7 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { getMyRole } from "@/lib/organisations/queries";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
-import { orderChargeAud } from "@/lib/payments/money";
+import { orderChargeAud, orderSellerPayoutAud } from "@/lib/payments/money";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
@@ -81,8 +81,20 @@ export default async function OrderPage({
     !debitProcessing;
   const publishableKey = canPay ? getStripePublishableKey() : null;
   const totalDue = formatAud(
-    orderChargeAud(order.amount_aud, order.fee_amount_aud),
+    payment?.status === "PAID"
+      ? payment.amount_aud
+      : orderChargeAud(order.amount_aud),
   );
+  const sellerProceeds = formatAud(
+    orderSellerPayoutAud(
+      order.amount_aud,
+      order.fee_amount_aud,
+      payment?.status === "PAID" ? payment.amount_aud : order.amount_aud,
+    ),
+  );
+  const buyerPaidFeeOnTop =
+    payment?.status === "PAID" &&
+    Number(payment.amount_aud) > Number(order.amount_aud);
 
   return (
     <div>
@@ -138,9 +150,14 @@ export default async function OrderPage({
                   label: "Platform fee",
                   value:
                     Number(order.fee_percent) > 0
-                      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%, ${
+                          buyerPaidFeeOnTop
+                            ? "added to buyer payment"
+                            : "deducted from seller"
+                        })`
                       : "None",
                 },
+                { label: "Seller proceeds", value: sellerProceeds },
                 { label: "Total due to FQX", value: totalDue },
                 {
                   label: "Quota reservation",
@@ -150,7 +167,9 @@ export default async function OrderPage({
                   label: "Payment",
                   value: payment?.status
                     ? payment.status === "PAID"
-                      ? "Paid (held by FQX until settlement)"
+                      ? order.status === "COMPLETED"
+                        ? "Paid"
+                        : "Paid (held by FQX until settlement)"
                       : payment.status === "PENDING" && debitProcessing
                         ? "Bank debit processing"
                         : payment.status === "PENDING"

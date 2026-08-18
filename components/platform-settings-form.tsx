@@ -38,8 +38,8 @@ export function PlatformSettingsForm({
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-ink">Fees</legend>
         <p className="text-sm text-ink-muted">
-          Charged on successful simulated sales and leases. No live payment.
-          The fee is recorded on the order.
+          Deducted from the seller on successful sales and leases. The buyer
+          pays the listed amount. The fee is recorded on the order.
         </p>
         <div>
           <label htmlFor="sale_fee_percent" className="block text-sm text-ink">

@@ -183,12 +183,6 @@ export function TaxInvoiceDocument({ data }: { data: TaxInvoiceData }) {
           price={data.unitPrice}
           amount={data.amount}
         />
-        <Line
-          description={`FQX platform fee (${data.feePercent})`}
-          quantity="—"
-          price="—"
-          amount={data.feeAmount}
-        />
 
         <View style={styles.totals}>
           <View style={styles.totalRow}>
@@ -196,11 +190,15 @@ export function TaxInvoiceDocument({ data }: { data: TaxInvoiceData }) {
             <Text>{data.amount}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text>Platform fee</Text>
+            <Text>Platform fee (seller, {data.feePercent})</Text>
             <Text>{data.feeAmount}</Text>
           </View>
+          <View style={styles.totalRow}>
+            <Text>Seller proceeds</Text>
+            <Text>{data.sellerProceeds}</Text>
+          </View>
           <View style={[styles.totalRow, styles.totalStrong]}>
-            <Text>Total AUD</Text>
+            <Text>Total paid by buyer</Text>
             <Text>{data.total}</Text>
           </View>
           <Text style={{ color: muted, marginTop: 8 }}>

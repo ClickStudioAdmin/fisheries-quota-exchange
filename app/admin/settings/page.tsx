@@ -21,8 +21,8 @@ export default async function AdminSettingsPage() {
           Platform settings
         </h1>
         <p className="mt-2 max-w-lg text-sm text-ink-muted">
-          These rules apply immediately. Fees are recorded on simulated orders.
-          There is no live payment.
+          These rules apply immediately. Fees are deducted from the seller.
+          The buyer pays the listed amount.
         </p>
       </div>
       <PlatformSettingsForm settings={settings} />

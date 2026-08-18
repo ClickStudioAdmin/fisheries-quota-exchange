@@ -43,7 +43,7 @@ export function platformFeeLabel(
     return null;
   }
 
-  return `${formatFeePercent(amount)} platform fee`;
+  return `${formatFeePercent(amount)} platform fee, paid by the seller`;
 }
 
 export function platformFeeDisclosure(settings: PlatformSettings) {
@@ -63,5 +63,5 @@ export function platformFeeDisclosure(settings: PlatformSettings) {
     return null;
   }
 
-  return `Platform fee: ${parts.join(", ")}. Recorded on the simulated order. No live payment.`;
+  return `Platform fee: ${parts.join(", ")}. Deducted from the seller at settlement.`;
 }

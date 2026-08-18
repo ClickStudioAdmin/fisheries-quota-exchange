@@ -126,7 +126,7 @@ export function sampleEmailData(id: EmailTemplate, siteUrl: string) {
     orderId: 1001,
     buyerName: "Sample Fisheries Pty Ltd",
     offeringLabel: "Sale",
-    amount: "$787.50",
+    amount: "$750.00",
     orderUrl: `${siteUrl}/orders/1001`,
   } satisfies EmailTemplates["order_settled"];
 }
@@ -143,7 +143,8 @@ export function sampleTaxInvoiceData(): TaxInvoiceData {
     amount: "$750.00",
     feePercent: "5%",
     feeAmount: "$37.50",
-    total: "$787.50",
+    sellerProceeds: "$712.50",
+    total: "$750.00",
     sellerName: "Sample Quota Holdings Pty Ltd",
     sellerAbn: "81 000 000 001",
     buyerName: "Sample Fisheries Pty Ltd",
@@ -184,7 +185,11 @@ export function sampleContentFields(id: MessageTemplateId, siteUrl: string) {
     { label: "Quantity", value: invoice.quantityLabel },
     { label: "Unit price", value: invoice.unitPrice },
     { label: "Quota amount", value: invoice.amount },
-    { label: "Platform fee", value: `${invoice.feeAmount} (${invoice.feePercent})` },
-    { label: "Total AUD", value: invoice.total },
+    {
+      label: "Platform fee (seller)",
+      value: `${invoice.feeAmount} (${invoice.feePercent})`,
+    },
+    { label: "Seller proceeds", value: invoice.sellerProceeds },
+    { label: "Total paid by buyer", value: invoice.total },
   ];
 }

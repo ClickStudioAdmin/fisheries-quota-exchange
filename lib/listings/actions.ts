@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
+import { getListing } from "@/lib/listings/queries";
 import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -76,12 +77,17 @@ export async function createListingAction(
   }
 
   const listingId = Number(data);
+  const created =
+    Number.isInteger(listingId) &&
+    (await getListing(listingId))?.status === "PENDING_APPROVAL"
+      ? "pending"
+      : "listing";
 
-  if (!Number.isInteger(listingId)) {
-    redirect(accountPath(organisationId, "/dashboard/listings"));
-  }
-
-  redirect(`/marketplace/${listingId}`);
+  revalidatePath("/dashboard/holdings");
+  revalidatePath("/dashboard/listings");
+  redirect(
+    accountPath(organisationId, "/dashboard/holdings", { created }),
+  );
 }
 
 export async function updateListingAction(

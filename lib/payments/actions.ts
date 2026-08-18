@@ -13,7 +13,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getOrder } from "@/lib/orders/queries";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getSiteUrl } from "@/lib/site-url";
-import { orderChargeAud } from "@/lib/payments/money";
+import { orderChargeAud, orderSellerPayoutAud } from "@/lib/payments/money";
 import { userFacingError } from "@/lib/errors/user-message";
 
 export type PaymentFormState = {
@@ -154,7 +154,7 @@ export async function startOrderCheckoutAction(
       p_order_id: order.id,
       p_checkout_session_id: checkout.checkoutSessionId,
       p_payment_intent_id: checkout.paymentIntentId,
-      p_amount_aud: orderChargeAud(order.amount_aud, order.fee_amount_aud),
+      p_amount_aud: orderChargeAud(order.amount_aud),
       p_fee_amount_aud: Number(order.fee_amount_aud),
     });
 
@@ -211,7 +211,13 @@ export async function transferOrderSellerProceeds(
   try {
     const transferId = await provider.transferSellerProceeds({
       orderId: order.id,
-      amountAud: order.amount_aud,
+      amountAud: String(
+        orderSellerPayoutAud(
+          order.amount_aud,
+          order.fee_amount_aud,
+          payment.amount_aud,
+        ),
+      ),
       sellerAccountId: seller.accountId,
       paymentIntentId: payment.payment_intent_id
         ? String(payment.payment_intent_id)

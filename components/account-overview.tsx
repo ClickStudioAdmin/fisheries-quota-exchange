@@ -3,6 +3,7 @@ import { displayName } from "@/lib/auth/display-name";
 import { listHoldingsForOrganisation } from "@/lib/fisheries/queries";
 import { holdingIsVerified } from "@/lib/fisheries/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
+import { listingIsOpen } from "@/lib/listings/types";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { accountPath } from "@/lib/organisations/paths";
@@ -41,9 +42,13 @@ export async function AccountOverviewSection({
   const pendingHoldings = holdings.filter(
     (holding) => !holdingIsVerified(holding),
   ).length;
+  const pendingListings = listings.filter(
+    (listing) => listing.status === "PENDING_APPROVAL",
+  ).length;
   const liveListings = listings.filter(
     (listing) => listing.status === "PUBLISHED",
   ).length;
+  const activeListings = listings.filter(listingIsOpen).length;
   const openOrders = orders.filter((order) =>
     OPEN_ORDER_STATUSES.has(order.status),
   );
@@ -102,9 +107,11 @@ export async function AccountOverviewSection({
           <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
             Listings
           </p>
-          <p className="mt-2 text-2xl font-semibold text-ink">{listings.length}</p>
+          <p className="mt-2 text-2xl font-semibold text-ink">{activeListings}</p>
           <p className="mt-1 text-sm text-ink-muted">
-            {liveListings} live on the marketplace
+            {pendingListings > 0
+              ? `${pendingListings} waiting for approval`
+              : `${liveListings} live on the marketplace`}
           </p>
         </Link>
         <Link href={href("/dashboard/orders")} className={statClassName}>

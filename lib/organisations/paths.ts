@@ -1,5 +1,17 @@
-export function accountPath(organisationId: number, path = "/dashboard") {
-  return `${path}?account=${organisationId}`;
+export function accountPath(
+  organisationId: number,
+  path = "/dashboard",
+  query?: Record<string, string>,
+) {
+  const params = new URLSearchParams({ account: String(organisationId) });
+
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      params.set(key, value);
+    }
+  }
+
+  return `${path}?${params.toString()}`;
 }
 
 export function adminUserPath(email: string) {
