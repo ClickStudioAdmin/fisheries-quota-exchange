@@ -23,7 +23,15 @@ Auction wins use the same rule: if the seller can accept charges, the order wait
 
 When Stripe is configured, an organisation cannot create a listing or auction until `stripe_charges_enabled` is true.
 
-Checkout asks Stripe for `au_becs_debit` or `card` depending on the method the buyer selected. Enable **AU BECS Direct Debit** for Checkout in the Stripe Dashboard (Settings → Payment methods) to offer bank debit. Bank debit is only offered when the listed amount is A$10,000 or less. Test BECS: BSB `000-000`, account `000123456`. Test card: `4242 4242 4242 4242`.
+Checkout asks Stripe for `au_becs_debit` or `card` depending on the method the buyer selected. Enable **AU BECS Direct Debit** for Checkout in the Stripe Dashboard (Settings → Payment methods) to offer bank debit. Bank debit is only offered when the listed amount is A$10,000 or less.
+
+Card payments are **Australian-issued cards only**, so the domestic processing surcharge (`1.75% + A$0.30`) matches what Stripe actually takes. Checkout cannot hide foreign cards in the iframe; Stripe declines them after submit. Add this Radar rule in the **test-mode** Stripe Dashboard (Radar → Rules). Test and live rules are separate. Custom block rules need Radar for Fraud Teams if that add-on is required on the account:
+
+```
+Block if :card_country: != 'AU'
+```
+
+Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6000 0006`. The generic `4242 4242 4242 4242` card is US-issued and must be declined.
 
 ## Pages
 
@@ -81,7 +89,9 @@ Opening an unpaid order also checks the Checkout Session with Stripe. If the deb
 
 Turn **off automatic payouts** on the FQX platform Stripe account so held seller funds are not paid out to FQX’s bank before settlement.
 
-Test card: `4242 4242 4242 4242`. Test BECS debit: BSB `000-000`, account `000123456`.
+In the test-mode Dashboard, add Radar rule `Block if :card_country: != 'AU'` so international cards cannot underfund the listed amount after Stripe’s 3.5% fee. Repeat the rule in live mode in a later phase.
+
+Test card (AU Visa): `4000 0003 6000 0006`. Test BECS debit: BSB `000-000`, account `000123456`. Do not use `4242 4242 4242 4242` once the Radar rule is on.
 
 ## Not in this phase
 
@@ -95,7 +105,7 @@ Test card: `4242 4242 4242 4242`. Test BECS debit: BSB `000-000`, account `00012
 ## Acceptance criteria
 
 - Seller completes Connect onboarding in the sandbox
-- Buyer pays a listing with a test card (and bank debit if BECS is enabled), including the Stripe card processing line
+- Buyer pays a listing with an Australian-issued test card (and bank debit if BECS is enabled), including the Stripe card processing line; a non-AU card is declined
 - Webhook marks the order paid; funds remain on FQX until Simulate settlement
 - Simulate settlement Transfers the seller net (listed amount minus fee) and keeps the fee
 - Refreshing the return URL does not double-charge or double-advance

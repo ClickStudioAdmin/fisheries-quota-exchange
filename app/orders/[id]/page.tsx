@@ -295,12 +295,13 @@ export default async function OrderPage({
           <div className={panelClassName}>
             <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
             <p className="mt-2 text-sm text-ink-muted">
-              Choose bank debit or card, then pay in Stripe test mode. Bank
-              debit charges the listed amount. Card adds Stripe's processing
-              fee ({stripeCardFeeRateLabel()}) so FQX receives the quota price.
-              The platform fee is deducted from the seller. Bank debit is only
-              offered up to A$10,000. FQX holds the funds until settlement,
-              then pays the seller.
+              Choose bank debit or an Australian-issued card, then pay in
+              Stripe test mode. Bank debit charges the listed amount. Card adds
+              Stripe's processing fee ({stripeCardFeeRateLabel()}) so FQX
+              receives the quota price. Cards issued outside Australia are
+              declined. The platform fee is deducted from the seller. Bank
+              debit is only offered up to A$10,000. FQX holds the funds until
+              settlement, then pays the seller.
             </p>
             <div className="mt-6">
               <OrderCheckout

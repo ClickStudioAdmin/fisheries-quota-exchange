@@ -72,7 +72,7 @@ When the app starts using Supabase from the browser, set Vercel environment vari
 | `STRIPE_WEBHOOK_SECRET` | Sandbox webhook secret | Sandbox or later live webhook secret |
 | `SUPABASE_SERVICE_ROLE_KEY` | Development service role | Production service role |
 
-Supabase variables are required from Phase 3. Resend variables are needed to send product email. Stripe test keys and the service-role key are needed from Phase 9 to take payments. After adding them, redeploy. Do not add service-role keys, Resend keys, or Stripe secrets to the frontend except `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. If Stripe is unset, purchases stay simulated.
+Supabase variables are required from Phase 3. Resend variables are needed to send product email. Stripe test keys and the service-role key are needed from Phase 9 to take payments. After adding them, redeploy. Do not add service-role keys, Resend keys, or Stripe secrets to the frontend except `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. If Stripe is unset, purchases stay simulated. In the Stripe test Dashboard, add Radar rule `Block if :card_country: != 'AU'` so only Australian-issued cards are accepted (see [phase-9.md](phase-9.md)).
 
 Auth redirect URLs must be set on each Supabase project. See [phase-3.md](phase-3.md).
 

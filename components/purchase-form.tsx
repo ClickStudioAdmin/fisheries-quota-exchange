@@ -59,9 +59,9 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
       <p className="text-sm text-ink-muted">
         By clicking Purchase Now, you agree to buy this quota and complete the
         purchase. The quota is reserved immediately. You then pay FQX the
-        listed amount plus Stripe's card processing fee, by card or Australian
-        bank debit in test mode. FQX holds the funds until a platform admin
-        completes settlement, then the seller is paid.
+        listed amount plus Stripe's card processing fee, by Australian-issued
+        card or Australian bank debit in test mode. FQX holds the funds until a
+        platform admin completes settlement, then the seller is paid.
       </p>
       <button type="submit" className={buttonClassName} disabled={pending}>
         {pending ? "Purchasing…" : "Purchase Now"}
