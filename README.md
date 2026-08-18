@@ -34,7 +34,7 @@ Copy `.env.example` to `.env.local` and add the development Supabase URL and pub
 
 To send member invitation emails locally, also set `RESEND_API_KEY` and `EMAIL_FROM`. Leave them blank to skip sending.
 
-To run the hourly email job on Vercel, set `CRON_SECRET`. Locally you can `GET /api/cron/emails` with `Authorization: Bearer $CRON_SECRET`.
+To run the scheduled email job on Vercel, set `CRON_SECRET`. Locally you can `GET /api/cron/emails` with `Authorization: Bearer $CRON_SECRET`.
 
 To take test Stripe payments, set the Stripe test keys, webhook secret, and `SUPABASE_SERVICE_ROLE_KEY`. Leave them blank to keep simulated purchase.
 

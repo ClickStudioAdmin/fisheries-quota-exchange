@@ -50,7 +50,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/orders/[id]/invoice/fee` | Platform fee tax invoice PDF (FQX to seller) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored |
 | `/api/stripe/webhook` | Signed Stripe events |
 | `/api/stripe/account-session` | Account Session client secret for embedded components |
-| `/api/cron/emails` | Hourly scheduled mail (listing expired, auction ending soon, payment reminder). Requires `CRON_SECRET` |
+| `/api/cron/emails` | Scheduled mail (listing expired, auction ending soon, payment reminder). Requires `CRON_SECRET`. Hobby plans only allow once per day (`0 0 * * *` UTC). Hourly cron skips Git deploys on Hobby |
 
 ## Database
 
@@ -112,11 +112,13 @@ Users tick sale and/or lease per fishery on `/dashboard/alerts`. When a listing 
 
 One-shot mail uses `email_dispatches` via `claim_email_dispatch` so payment, checkout, listing expiry, auction ending soon, payment reminder, and payments-setup messages are not resent.
 
-Hourly cron (`vercel.json` → `/api/cron/emails`) sends:
+Scheduled cron (`vercel.json` → `/api/cron/emails`, once a day at 00:00 UTC) sends:
 
 - `listing_expired` for published fixed-price listings past `expires_at`
 - `auction_ending_soon` for published auctions ending within 24 hours
 - `payment_reminder` for orders still `AWAITING_PAYMENT` after 24 hours
+
+Hobby accounts cannot use hourly Vercel Cron. An hourly expression (`0 * * * *`) is rejected and **Git pushes do not create a deployment** (no failed build appears). Keep the daily schedule unless the Vercel project is on Pro.
 
 Holding “request changes” emails the seller and leaves the holding `PENDING_VERIFICATION` (there is no rejected holding status).
 
