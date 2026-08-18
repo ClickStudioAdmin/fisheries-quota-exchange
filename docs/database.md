@@ -17,7 +17,7 @@ Current tables:
 | `quota_holdings` | 5 | Organisation quota balance per fishery. `verification_status` is `PENDING_VERIFICATION` or `VERIFIED`. |
 | `quota_ledger` | 5 | Immutable quota events. |
 | `verified_users` | 8 | Emails whose holdings skip admin verification. |
-| `listings` | 6–8 | Fixed-price or auction offers. |
+| `listings` | 6–8 | Fixed-price or auction offers. Sellers can change the unit price on an open fixed-price listing. An auction with bids cannot be cancelled. |
 | `orders` | 7 | Simulated purchase of a listing or winning auction. |
 | `quota_reservations` | 7 | Active reserved quantity against a holding. |
 | `transactions` | 7 | Simulated settlement record. No live payment. |

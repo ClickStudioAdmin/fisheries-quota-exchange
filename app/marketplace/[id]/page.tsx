@@ -7,7 +7,10 @@ import { cancelListingAction } from "@/lib/listings/actions";
 import { listFisheries } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
 import {
+  canCancelOpenListing,
+  canEditListingPrice,
   formatAud,
+  listingEditPath,
   listingOfferingLabel,
   listingStatusLabel,
   listingTypeLabel,
@@ -58,10 +61,9 @@ export default async function ListingPage({
   const buyerOrganisations = organisations.filter(
     (organisation) => organisation.id !== listing.organisation_id,
   );
-  const canCancel =
-    listing.status === "PENDING_APPROVAL" || listing.status === "PUBLISHED";
-  const showCancel =
-    canCancel && (admin || role === "OWNER" || role === "ADMIN");
+  const canManage = admin || role === "OWNER" || role === "ADMIN";
+  const showEdit = canManage && canEditListingPrice(listing);
+  const showCancel = canManage && canCancelOpenListing(listing);
   const expired = new Date(listing.expires_at) <= new Date();
   const paymentsOn = isPaymentsConfigured();
   const sellerAcceptsCards = paymentsOn
@@ -163,17 +165,27 @@ export default async function ListingPage({
           This listing is not available to purchase.
         </p>
       )}
-      {showCancel ? (
-        <form action={cancelListingAction} className="mt-6">
-          <input type="hidden" name="listing_id" value={listing.id} />
-          <input type="hidden" name="next" value={`/marketplace/${listing.id}`} />
-          <button
-            type="submit"
-            className={buttonClassName}
-          >
-            Cancel listing
-          </button>
-        </form>
+      {showEdit || showCancel ? (
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          {showEdit ? (
+            <Link href={listingEditPath(listing)} className={buttonClassName}>
+              Edit price
+            </Link>
+          ) : null}
+          {showCancel ? (
+            <form action={cancelListingAction}>
+              <input type="hidden" name="listing_id" value={listing.id} />
+              <input
+                type="hidden"
+                name="next"
+                value={`/marketplace/${listing.id}`}
+              />
+              <button type="submit" className={buttonClassName}>
+                Cancel listing
+              </button>
+            </form>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

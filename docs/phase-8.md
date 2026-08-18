@@ -18,6 +18,8 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 6. If the highest bid meets the reserve (or there is no reserve), `close_auction` creates an order, reserves quota, and sets the listing to `RESERVED`. Admin then runs the Phase 7 compliance / transfer / settlement steps.
 7. If there is no qualifying bid, status becomes `UNSOLD` and the quantity is available again.
 
+Seller or admin can cancel an auction only when it has no bids. An auction with a bid cannot be edited or cancelled.
+
 ## Pages
 
 | Path | Purpose |

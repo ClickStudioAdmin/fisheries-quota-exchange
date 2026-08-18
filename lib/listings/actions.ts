@@ -7,6 +7,7 @@ import { LISTING_OFFERINGS } from "@/lib/listings/types";
 import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { safeNextPath } from "@/lib/auth/paths";
 
 export type ListingFormState = {
   error?: string;
@@ -82,6 +83,41 @@ export async function createListingAction(
   redirect(`/marketplace/${listingId}`);
 }
 
+export async function updateListingPriceAction(
+  _prev: ListingFormState,
+  formData: FormData,
+): Promise<ListingFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const listingId = Number(formData.get("listing_id"));
+  const unitPrice = Number(read(formData, "unit_price_aud"));
+  const next = read(formData, "next") || `/marketplace/${listingId}`;
+
+  if (!Number.isInteger(listingId)) {
+    return { error: "Listing not found." };
+  }
+
+  if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+    return { error: "Price must be greater than zero." };
+  }
+
+  const { error } = await supabase.rpc("update_listing_price", {
+    p_listing_id: listingId,
+    p_unit_price_aud: unitPrice,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  redirect(safeNextPath(next));
+}
+
 export async function cancelListingAction(formData: FormData) {
   const supabase = await createClient();
   const listingId = Number(formData.get("listing_id"));
@@ -91,8 +127,15 @@ export async function cancelListingAction(formData: FormData) {
     return;
   }
 
-  await supabase.rpc("cancel_listing", { p_listing_id: listingId });
-  redirect(next);
+  const { error } = await supabase.rpc("cancel_listing", {
+    p_listing_id: listingId,
+  });
+
+  if (error) {
+    return;
+  }
+
+  redirect(safeNextPath(next));
 }
 
 export async function approveListingAction(formData: FormData) {

@@ -17,6 +17,29 @@ export async function listBids(listingId: number) {
   return (data ?? []) as Bid[];
 }
 
+export async function listingIdsWithBids(listingIds: number[]) {
+  const ids = [...new Set(listingIds.filter((id) => Number.isInteger(id)))];
+  if (ids.length === 0) {
+    return new Set<number>();
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    return new Set<number>();
+  }
+
+  const { data } = await supabase
+    .from("bids")
+    .select("listing_id")
+    .in("listing_id", ids);
+
+  return new Set(
+    (data ?? [])
+      .map((row) => Number((row as { listing_id: number }).listing_id))
+      .filter((id) => Number.isInteger(id)),
+  );
+}
+
 export async function ensureAuctionClosed(listing: Listing) {
   if (
     listing.listing_type !== "AUCTION" ||

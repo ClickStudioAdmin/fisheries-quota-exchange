@@ -24,12 +24,16 @@ import {
   quantityTypeLabel,
 } from "@/lib/fisheries/types";
 import {
+  canCancelOpenListing,
+  canEditListingPrice,
   formatAud,
+  listingEditPath,
   listingOfferingLabel,
   listingStatusLabel,
   listingTypeLabel,
 } from "@/lib/listings/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
+import { listingIdsWithBids } from "@/lib/auctions/queries";
 import {
   latestSalePriceMap,
   listLatestSalePrices,
@@ -387,10 +391,15 @@ export async function AccountListingsSection({
   }
 
   const listings = await listOrganisationListings(organisationId);
-  const [fisheries, jurisdictions, sellError] = await Promise.all([
+  const [fisheries, jurisdictions, sellError, auctionBidIds] = await Promise.all([
     listFisheries(),
     listJurisdictions(),
     organisationCanSellError(organisationId),
+    listingIdsWithBids(
+      listings
+        .filter((listing) => listing.listing_type === "AUCTION")
+        .map((listing) => listing.id),
+    ),
   ]);
   const canList = canEditOrganisation(result.role);
 
@@ -484,28 +493,42 @@ export async function AccountListingsSection({
           },
         }))}
       >
-        {listings.map((listing) => (
+        {listings.map((listing) => {
+          const bidCount = auctionBidIds.has(listing.id) ? 1 : 0;
+          const showEdit = canList && canEditListingPrice(listing);
+          const showCancel =
+            canList && canCancelOpenListing(listing, bidCount);
+
+          return (
           <DataTableRowExtras
             key={listing.id}
             id={listing.id}
             links={
-              <Link
-                href={
-                  listing.listing_type === "AUCTION"
-                    ? `/auctions/${listing.id}`
-                    : `/marketplace/${listing.id}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className={tableLinkClassName}
-              >
-                View
-              </Link>
+              <>
+                <Link
+                  href={
+                    listing.listing_type === "AUCTION"
+                      ? `/auctions/${listing.id}`
+                      : `/marketplace/${listing.id}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={tableLinkClassName}
+                >
+                  View
+                </Link>
+                {showEdit ? (
+                  <Link
+                    href={listingEditPath(listing)}
+                    className={tableLinkClassName}
+                  >
+                    Edit
+                  </Link>
+                ) : null}
+              </>
             }
             actions={
-              canList &&
-              (listing.status === "PENDING_APPROVAL" ||
-                listing.status === "PUBLISHED") ? (
+              showCancel ? (
                 <form action={cancelListingAction}>
                   <input type="hidden" name="listing_id" value={listing.id} />
                   <input
@@ -513,17 +536,15 @@ export async function AccountListingsSection({
                     name="next"
                     value={accountPath(organisationId, "/dashboard/listings")}
                   />
-                  <button
-                    type="submit"
-                    className={tableButtonClassName}
-                  >
+                  <button type="submit" className={tableButtonClassName}>
                     Cancel
                   </button>
                 </form>
               ) : null
             }
           />
-        ))}
+          );
+        })}
       </DataTable>
     </div>
   );

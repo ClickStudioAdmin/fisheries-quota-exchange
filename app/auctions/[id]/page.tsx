@@ -14,7 +14,13 @@ import {
 import { cancelListingAction } from "@/lib/listings/actions";
 import { listFisheries } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
-import { formatAud, listingOfferingLabel, listingStatusLabel, listingTypeLabel } from "@/lib/listings/types";
+import {
+  canCancelOpenListing,
+  formatAud,
+  listingOfferingLabel,
+  listingStatusLabel,
+  listingTypeLabel,
+} from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getOrderForListing } from "@/lib/orders/queries";
@@ -62,9 +68,8 @@ export default async function AuctionPage({
   const ended = auctionHasEnded(listing);
   const started = auctionHasStarted(listing);
   const live = auctionIsLive(listing);
-  const canCancel =
-    (listing.status === "PENDING_APPROVAL" || listing.status === "PUBLISHED") &&
-    (admin || ((role === "OWNER" || role === "ADMIN") && bids.length === 0));
+  const canManage = admin || role === "OWNER" || role === "ADMIN";
+  const canCancel = canManage && canCancelOpenListing(listing, bids.length);
   const canClose =
     listing.status === "PUBLISHED" && ended && Boolean(user);
   const minBid = minimumBid(listing, bids.length);
@@ -212,13 +217,18 @@ export default async function AuctionPage({
         <form action={cancelListingAction} className="mt-6">
           <input type="hidden" name="listing_id" value={listing.id} />
           <input type="hidden" name="next" value={`/auctions/${listing.id}`} />
-          <button
-            type="submit"
-            className={buttonClassName}
-          >
+          <button type="submit" className={buttonClassName}>
             Cancel auction
           </button>
         </form>
+      ) : canManage &&
+        (listing.status === "PENDING_APPROVAL" ||
+          listing.status === "PUBLISHED") &&
+        bids.length > 0 ? (
+        <p className="mt-6 text-sm text-ink-muted">
+          This auction cannot be edited or cancelled because a bid has been
+          placed.
+        </p>
       ) : null}
       <section className="mt-10 max-w-lg">
         <h2 className="text-xl font-semibold text-ink">Bids</h2>
