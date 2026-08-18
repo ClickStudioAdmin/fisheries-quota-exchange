@@ -7,6 +7,7 @@ import {
   ListPager,
   listRangeLabel,
   paginateItems,
+  useListPagination,
 } from "@/components/list-pager";
 import { cardClassName, LabeledFields } from "@/components/surface";
 import {
@@ -34,7 +35,7 @@ export function FisheriesList({
 }) {
   const [jurisdictionId, setJurisdictionId] = useState("ALL");
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const { page, setPage, pageSize, setPageSize } = useListPagination();
   const searchId = useId();
   const lastSale = useMemo(
     () => new Map(prices.map((price) => [price.fishery_id, price])),
@@ -56,6 +57,7 @@ export function FisheriesList({
   const { pageCount, currentPage, from, to, paged } = paginateItems(
     visible,
     page,
+    pageSize,
   );
 
   useEffect(() => {
@@ -149,7 +151,10 @@ export function FisheriesList({
             page={currentPage}
             pageCount={pageCount}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
             label="Fisheries pages"
+            itemCount={visible.length}
           />
         </>
       )}

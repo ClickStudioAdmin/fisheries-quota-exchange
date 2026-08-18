@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  clearImpersonationCookies,
+  getImpersonationEmail,
+  readStashedAdminSession,
+} from "@/lib/admin/impersonate";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/paths";
 import { getSiteUrl } from "@/lib/site-url";
@@ -389,10 +394,36 @@ export async function updateProfilePasswordAction(
 
 export async function logoutAction() {
   const supabase = await createClient();
+  const impersonating = await getImpersonationEmail();
+  const {
+    data: { user },
+  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const currentEmail = user?.email?.trim().toLowerCase() ?? "";
+  const restoreAdmin = Boolean(
+    impersonating && currentEmail && currentEmail === impersonating,
+  );
+
+  if (restoreAdmin && supabase) {
+    const stashed = await readStashedAdminSession();
+
+    if (stashed) {
+      const { error } = await supabase.auth.setSession({
+        access_token: stashed.accessToken,
+        refresh_token: stashed.refreshToken,
+      });
+
+      await clearImpersonationCookies();
+
+      if (!error) {
+        redirect("/admin/users");
+      }
+    }
+  }
 
   if (supabase) {
     await supabase.auth.signOut();
   }
 
+  await clearImpersonationCookies();
   redirect("/");
 }

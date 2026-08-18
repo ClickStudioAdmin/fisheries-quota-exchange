@@ -6,6 +6,7 @@ import {
   ListPager,
   listRangeLabel,
   paginateItems,
+  useListPagination,
 } from "@/components/list-pager";
 import { jurisdictionLabel, type Fishery, type Jurisdiction } from "@/lib/fisheries/types";
 import {
@@ -48,7 +49,7 @@ export function MarketplaceList({
   const [jurisdictionId, setJurisdictionId] = useState("ALL");
   const [fishery, setFishery] = useState("ALL");
   const [sort, setSort] = useState<SortOption>("PRICE_ASC");
-  const [page, setPage] = useState(1);
+  const { page, setPage, pageSize, setPageSize } = useListPagination();
   const fisheriesByName = useMemo(
     () => new Map(fisheries.map((item) => [item.name, item])),
     [fisheries],
@@ -114,6 +115,7 @@ export function MarketplaceList({
   const { pageCount, currentPage, from, to, paged } = paginateItems(
     visible,
     page,
+    pageSize,
   );
 
   useEffect(() => {
@@ -220,7 +222,10 @@ export function MarketplaceList({
         page={currentPage}
         pageCount={pageCount}
         onPageChange={setPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
         label="Marketplace pages"
+        itemCount={visible.length}
       />
     </div>
   );

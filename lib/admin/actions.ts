@@ -5,13 +5,41 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { adminUserPath } from "@/lib/organisations/paths";
 import { createClient } from "@/lib/supabase/server";
 
-export async function setUserVerifiedAction(formData: FormData) {
+function readEmails(formData: FormData, fieldName = "emails") {
+  return [
+    ...new Set(
+      formData
+        .getAll(fieldName)
+        .map((value) => String(value).trim().toLowerCase())
+        .filter((email) => email.includes("@")),
+    ),
+  ];
+}
+
+async function applyUserVerified(emails: string[], verified: boolean) {
   const supabase = await createClient();
 
-  if (!supabase || !(await isPlatformAdmin())) {
+  if (!supabase || !(await isPlatformAdmin()) || emails.length === 0) {
     return;
   }
 
+  for (const email of emails) {
+    const { error } = await supabase.rpc("set_user_verified", {
+      p_email: email,
+      p_verified: verified,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    revalidatePath(adminUserPath(email));
+  }
+
+  revalidatePath("/admin/users");
+}
+
+export async function setUserVerifiedAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const verified = String(formData.get("verified") ?? "") === "true";
 
@@ -19,13 +47,13 @@ export async function setUserVerifiedAction(formData: FormData) {
     return;
   }
 
-  await supabase.rpc("set_user_verified", {
-    p_email: email,
-    p_verified: verified,
-  });
+  await applyUserVerified([email], verified);
+}
 
-  revalidatePath("/admin/users");
-  revalidatePath(adminUserPath(email));
+export async function setUsersVerifiedAction(formData: FormData) {
+  const verified = String(formData.get("verified") ?? "") === "true";
+
+  await applyUserVerified(readEmails(formData), verified);
 }
 
 export async function deleteUsersAction(formData: FormData) {
@@ -35,14 +63,7 @@ export async function deleteUsersAction(formData: FormData) {
     return;
   }
 
-  const emails = [
-    ...new Set(
-      formData
-        .getAll("emails")
-        .map((value) => String(value).trim().toLowerCase())
-        .filter((email) => email.includes("@")),
-    ),
-  ];
+  const emails = readEmails(formData);
 
   if (emails.length === 0) {
     return;

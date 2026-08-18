@@ -19,6 +19,7 @@ import {
   ListPager,
   listRangeLabel,
   paginateItems,
+  useListPagination,
 } from "@/components/list-pager";
 
 export type DataTableColumn = {
@@ -60,6 +61,7 @@ type DataTableBulkAction = {
   action: (formData: FormData) => void | Promise<void>;
   confirm?: string;
   fieldName?: string;
+  hiddenFields?: Record<string, string>;
 };
 
 type DataTableProps = {
@@ -72,6 +74,7 @@ type DataTableProps = {
   selectable?: boolean;
   lockedIds?: Array<string | number>;
   bulkAction?: DataTableBulkAction;
+  bulkActions?: DataTableBulkAction[];
   children?: ReactNode;
 };
 
@@ -374,6 +377,7 @@ export function DataTable({
   selectable = false,
   lockedIds = [],
   bulkAction,
+  bulkActions,
   children,
 }: DataTableProps) {
   const searchId = useId();
@@ -383,7 +387,7 @@ export function DataTable({
   const [sort, setSort] = useState<SortState>(defaultSort ?? null);
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [page, setPage] = useState(1);
+  const { page, setPage, pageSize, setPageSize } = useListPagination();
   const extras = useMemo(() => collectExtras(children), [children]);
   const actionCount = useMemo(
     () => rows.filter((row) => row.needsAction).length,
@@ -445,6 +449,7 @@ export function DataTable({
   const { pageCount, currentPage, from, to, paged } = paginateItems(
     visible,
     page,
+    pageSize,
   );
 
   useEffect(() => {
@@ -522,7 +527,11 @@ export function DataTable({
     (selectable ? 1 : 0) +
     (showLinks ? 1 : 0) +
     (showActions ? 1 : 0);
-  const bulkFieldName = bulkAction?.fieldName ?? "ids";
+  const resolvedBulkActions = bulkActions?.length
+    ? bulkActions
+    : bulkAction
+      ? [bulkAction]
+      : [];
 
   return (
     <div className="space-y-3">
@@ -583,40 +592,49 @@ export function DataTable({
         ) : null}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        {selectable && bulkAction ? (
-          <form
-            action={bulkAction.action}
-            onSubmit={(event) => {
-              if (selectedIds.length === 0) {
-                event.preventDefault();
-                return;
-              }
-              if (
-                bulkAction.confirm &&
-                !window.confirm(bulkAction.confirm)
-              ) {
-                event.preventDefault();
-              }
-            }}
-            className="flex items-center gap-2"
-          >
-            {selectedIds.map((id) => (
-              <input
-                key={id}
-                type="hidden"
-                name={bulkFieldName}
-                value={id}
-              />
-            ))}
-            <button
-              type="submit"
-              disabled={selectedIds.length === 0}
-              className={tableButtonClassName}
-            >
-              {bulkAction.label}
-              {selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
-            </button>
-          </form>
+        {selectable && resolvedBulkActions.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {resolvedBulkActions.map((item) => {
+              const fieldName = item.fieldName ?? "ids";
+
+              return (
+                <form
+                  key={item.label}
+                  action={item.action}
+                  onSubmit={(event) => {
+                    if (selectedIds.length === 0) {
+                      event.preventDefault();
+                      return;
+                    }
+                    if (item.confirm && !window.confirm(item.confirm)) {
+                      event.preventDefault();
+                    }
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  {selectedIds.map((id) => (
+                    <input
+                      key={id}
+                      type="hidden"
+                      name={fieldName}
+                      value={id}
+                    />
+                  ))}
+                  {Object.entries(item.hiddenFields ?? {}).map(([name, value]) => (
+                    <input key={name} type="hidden" name={name} value={value} />
+                  ))}
+                  <button
+                    type="submit"
+                    disabled={selectedIds.length === 0}
+                    className={tableButtonClassName}
+                  >
+                    {item.label}
+                    {selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+                  </button>
+                </form>
+              );
+            })}
+          </div>
         ) : null}
         <p className="text-xs text-ink-muted">
           {listRangeLabel(from, to, visible.length, visible.length === 1 ? "row" : "rows")}
@@ -801,7 +819,10 @@ export function DataTable({
         page={currentPage}
         pageCount={pageCount}
         onPageChange={setPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
         label={`${caption} pages`}
+        itemCount={visible.length}
       />
     </div>
   );

@@ -1,9 +1,19 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableRowExtras,
+  TableActionRow,
+  tableLinkClassName,
+} from "@/components/data-table";
 import { tableButtonClassName } from "@/components/auth-card";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { deleteUsersAction, setUserVerifiedAction } from "@/lib/admin/actions";
+import {
+  deleteUsersAction,
+  setUserVerifiedAction,
+  setUsersVerifiedAction,
+} from "@/lib/admin/actions";
+import { switchToUserAction } from "@/lib/admin/impersonate-actions";
 import { formatTableDate } from "@/lib/format";
 import {
   listUsersForAdmin,
@@ -16,12 +26,17 @@ export const metadata = {
   title: "Users",
 };
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   if (!(await isPlatformAdmin())) {
     redirect("/admin");
   }
 
-  const [users, user] = await Promise.all([
+  const [{ error }, users, user] = await Promise.all([
+    searchParams,
     listUsersForAdmin(),
     getUser(),
   ]);
@@ -36,10 +51,16 @@ export default async function AdminUsersPage() {
         <p className="mt-2 text-sm text-ink-muted">
           Verified users can skip holding and listing approval when those
           platform settings are on. Everyone else needs each holding verified
-          before they can list or auction quota. Select users to remove them
-          from all accounts.
+          before they can list or auction quota. Select users to mark as
+          verified, revoke verification, or remove them from all accounts.
         </p>
       </div>
+      {error === "switch" ? (
+        <p className="text-sm text-red-800" role="alert">
+          Could not switch to that user. They need an existing login account,
+          and you cannot switch while already viewing as someone else.
+        </p>
+      ) : null}
       <DataTable
         caption="Users"
         empty="No users yet."
@@ -47,13 +68,29 @@ export default async function AdminUsersPage() {
         defaultSort={{ key: "name", direction: "asc" }}
         selectable
         lockedIds={currentEmail ? [currentEmail] : []}
-        bulkAction={{
-          label: "Delete selected",
-          action: deleteUsersAction,
-          fieldName: "emails",
-          confirm:
-            "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
-        }}
+        bulkActions={[
+          {
+            label: "Mark as verified",
+            action: setUsersVerifiedAction,
+            fieldName: "emails",
+            hiddenFields: { verified: "true" },
+            confirm: "Mark the selected users as verified?",
+          },
+          {
+            label: "Revoke verification",
+            action: setUsersVerifiedAction,
+            fieldName: "emails",
+            hiddenFields: { verified: "false" },
+            confirm: "Revoke verification from the selected users?",
+          },
+          {
+            label: "Delete selected",
+            action: deleteUsersAction,
+            fieldName: "emails",
+            confirm:
+              "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
+          },
+        ]}
         columns={[
           { key: "id", header: "ID", sortable: true },
           { key: "name", header: "Name", sortable: true, details: true, nowrap: true },
@@ -140,17 +177,27 @@ export default async function AdminUsersPage() {
               </Link>
             }
             actions={
-              <form action={setUserVerifiedAction}>
-                <input type="hidden" name="email" value={item.email} />
-                <input
-                  type="hidden"
-                  name="verified"
-                  value={item.verified ? "false" : "true"}
-                />
-                <button type="submit" className={tableButtonClassName}>
-                  {item.verified ? "Revoke verification" : "Mark as verified"}
-                </button>
-              </form>
+              <TableActionRow>
+                {item.email !== currentEmail ? (
+                  <form action={switchToUserAction}>
+                    <input type="hidden" name="email" value={item.email} />
+                    <button type="submit" className={tableButtonClassName}>
+                      Switch to User
+                    </button>
+                  </form>
+                ) : null}
+                <form action={setUserVerifiedAction}>
+                  <input type="hidden" name="email" value={item.email} />
+                  <input
+                    type="hidden"
+                    name="verified"
+                    value={item.verified ? "false" : "true"}
+                  />
+                  <button type="submit" className={tableButtonClassName}>
+                    {item.verified ? "Revoke verification" : "Mark as verified"}
+                  </button>
+                </form>
+              </TableActionRow>
             }
           />
         ))}

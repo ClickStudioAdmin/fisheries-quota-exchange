@@ -6,6 +6,7 @@ import { tableButtonClassName } from "@/components/auth-card";
 import { LabeledFields } from "@/components/surface";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { setUserVerifiedAction } from "@/lib/admin/actions";
+import { switchToUserAction } from "@/lib/admin/impersonate-actions";
 import { verifyHoldingAction } from "@/lib/fisheries/actions";
 import {
   listFisheries,
@@ -37,6 +38,7 @@ import {
 } from "@/lib/organisations/admin-queries";
 import { parseAdminUserEmailParam, adminHoldingPath } from "@/lib/organisations/paths";
 import { organisationRoleLabel } from "@/lib/organisations/types";
+import { getUser } from "@/lib/supabase/server";
 
 type AdminUserPageProps = {
   params: Promise<{ email: string }>;
@@ -68,7 +70,10 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     notFound();
   }
 
-  const profile = await getAdminUserForAdmin(email);
+  const [profile, viewer] = await Promise.all([
+    getAdminUserForAdmin(email),
+    getUser(),
+  ]);
 
   if (!profile) {
     notFound();
@@ -110,17 +115,27 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               <p className="mt-1 text-sm text-ink-muted">{profile.email}</p>
             ) : null}
           </div>
-          <form action={setUserVerifiedAction}>
-            <input type="hidden" name="email" value={profile.email} />
-            <input
-              type="hidden"
-              name="verified"
-              value={profile.verified ? "false" : "true"}
-            />
-            <button type="submit" className={tableButtonClassName}>
-              {profile.verified ? "Revoke verification" : "Mark as verified"}
-            </button>
-          </form>
+          <div className="flex flex-wrap items-center gap-2">
+            {profile.email !== viewer?.email?.toLowerCase() ? (
+              <form action={switchToUserAction}>
+                <input type="hidden" name="email" value={profile.email} />
+                <button type="submit" className={tableButtonClassName}>
+                  Switch to User
+                </button>
+              </form>
+            ) : null}
+            <form action={setUserVerifiedAction}>
+              <input type="hidden" name="email" value={profile.email} />
+              <input
+                type="hidden"
+                name="verified"
+                value={profile.verified ? "false" : "true"}
+              />
+              <button type="submit" className={tableButtonClassName}>
+                {profile.verified ? "Revoke verification" : "Mark as verified"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 

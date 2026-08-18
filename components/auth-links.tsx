@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { stopImpersonationAction } from "@/lib/admin/impersonate-actions";
 import { logoutAction } from "@/lib/auth/actions";
 import { MemberIcon } from "@/components/member-icon";
 import { NavBadge } from "@/components/nav-badge";
@@ -10,6 +11,7 @@ type AuthLinksProps = {
   adminBadge?: number;
   dashboardBadge?: number;
   showRegister?: boolean;
+  impersonating?: boolean;
 };
 
 function NavTextLink({
@@ -46,8 +48,11 @@ export function AuthLinks({
   adminBadge = 0,
   dashboardBadge = 0,
   showRegister = true,
+  impersonating = false,
 }: AuthLinksProps) {
   if (email) {
+    const label = name || email;
+
     return (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         {showAdmin ? (
@@ -60,10 +65,17 @@ export function AuthLinks({
         </NavTextLink>
         <span className="flex items-center gap-2 text-paper">
           <MemberIcon className="h-5 w-5 shrink-0" />
-          <span className="max-w-40 truncate" title={email}>
-            {name || email}
+          <span className="max-w-52 truncate" title={email}>
+            {impersonating ? `Viewing as ${label}` : label}
           </span>
         </span>
+        {impersonating ? (
+          <form action={stopImpersonationAction}>
+            <button type="submit" className="text-paper/75 hover:text-paper">
+              Switch back to admin
+            </button>
+          </form>
+        ) : null}
         <form action={logoutAction}>
           <button type="submit" className="text-paper/75 hover:text-paper">
             Log out

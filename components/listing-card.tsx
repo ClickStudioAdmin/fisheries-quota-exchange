@@ -6,6 +6,7 @@ import {
   ListPager,
   listRangeLabel,
   paginateItems,
+  useListPagination,
 } from "@/components/list-pager";
 import { OfferCard } from "@/components/offer-card";
 import type { Fishery } from "@/lib/fisheries/types";
@@ -123,7 +124,7 @@ export function FisheryOfferingSection({
   listings: Listing[];
 }) {
   const [listingType, setListingType] = useState<"ALL" | ListingType>("ALL");
-  const [page, setPage] = useState(1);
+  const { page, setPage, pageSize, setPageSize } = useListPagination();
   const rangeLabel = kind === "sale" ? "sales" : "leases";
   const visible = useMemo(
     () =>
@@ -138,6 +139,7 @@ export function FisheryOfferingSection({
   const { pageCount, currentPage, from, to, paged } = paginateItems(
     visible,
     page,
+    pageSize,
   );
 
   useEffect(() => {
@@ -187,7 +189,10 @@ export function FisheryOfferingSection({
           page={currentPage}
           pageCount={pageCount}
           onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
           label={`${title} pages`}
+          itemCount={visible.length}
         />
       </div>
     </section>
