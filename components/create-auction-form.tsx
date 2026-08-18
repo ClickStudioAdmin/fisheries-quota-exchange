@@ -2,11 +2,13 @@
 
 import { useActionState } from "react";
 import { QuantityField } from "@/components/quantity-field";
+import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 import {
   createAuctionAction,
 } from "@/lib/auctions/actions";
 import type { AuctionFormState } from "@/lib/auctions/types";
+import { SELLER_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: AuctionFormState = {};
 
@@ -132,6 +134,10 @@ export function CreateAuctionForm({
         />
       </div>
       {feeNote ? <p className="text-sm text-ink-muted">{feeNote}</p> : null}
+      <TermsAcknowledgements
+        title="Seller acknowledgements"
+        items={SELLER_ACKNOWLEDGEMENTS}
+      />
       <button type="submit" className={buttonClassName} disabled={pending}>
         {pending
           ? "Submitting…"

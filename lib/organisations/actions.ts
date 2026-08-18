@@ -76,6 +76,8 @@ export async function createOrganisationAction(
     return { error: userFacingError(error) };
   }
 
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/profile");
   redirect(accountPath(Number(data)));
 }
 

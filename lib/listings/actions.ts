@@ -13,6 +13,12 @@ import { getListing, listAllListings } from "@/lib/listings/queries";
 import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import {
+  SELLER_ACKNOWLEDGEMENTS,
+  requireAcknowledgements,
+} from "@/lib/terms/acknowledgements";
+import { requireTermsError } from "@/lib/terms/queries";
 import { safeNextPath } from "@/lib/auth/paths";
 import { notifyListingCancelled, notifyListingCreated, notifyListingPublished, notifyListingRejected } from "@/lib/email/events";
 
@@ -61,6 +67,24 @@ export async function createListingAction(
 
   if (!expiresAt) {
     return { error: "Expiry is required." };
+  }
+
+  const termsError = await requireTermsError();
+
+  if (termsError) {
+    return { error: termsError };
+  }
+
+  const accountError = await requireBusinessAccountError();
+
+  if (accountError) {
+    return { error: accountError };
+  }
+
+  const ackError = requireAcknowledgements(formData, SELLER_ACKNOWLEDGEMENTS);
+
+  if (ackError) {
+    return { error: ackError };
   }
 
   const sellError = await organisationCanSellError(organisationId);

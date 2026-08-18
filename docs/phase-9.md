@@ -39,7 +39,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | --- | --- |
 | `/how-it-works` | Buyer and seller steps from account through payment and settlement |
 | `/privacy` | Privacy policy for this development site |
-| `/terms` | Terms of service for this development site |
+| `/terms` | Terms of service: buyers, sellers, and platform commission if a committed trade does not complete |
 | `/admin` | Overview: queues, platform fees, Stripe test mode |
 | `/dashboard/notifications` | Signed-in user inbox (default) and Channels tab for per-event email and in-app switches |
 | `/dashboard/alerts` | Signed-in user switches sale and/or lease alerts per fishery |
@@ -54,13 +54,16 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 
 ## Database
 
-Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`
+Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`
 
 Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts eight in-app notices for `click.studio.admin@gmail.com` when that membership exists (mix of read and unread). Links use real holdings, listings, and orders when they are present.
 
 - `organisations.stripe_account_id` and charge/payout flags
 - `payments` (Checkout / PaymentIntent ids; `stripe_transfer_id` after settlement)
 - `stripe_webhook_events` (event id primary key)
+- `terms_acceptances` (email + version; required before buy, bid, or list)
+
+Every signed-in user must agree to the current terms on Overview and add business details on Profile before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase and bid require ticking the buyer acknowledgements. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms require them to pay the platform commission. This phase does not auto-invoice that abort commission.
 
 Functions:
 
@@ -72,6 +75,7 @@ Functions:
 - `mark_order_paid` (service role)
 - `fail_unpaid_order` (service role)
 - `attach_order_seller_transfer` (service role)
+- `accept_terms`
 
 `insert_simulated_order` writes `AWAITING_PAYMENT` when the seller has `stripe_charges_enabled`. `cancel_order` also allows `AWAITING_PAYMENT`.
 
@@ -132,6 +136,7 @@ Do not put Resend keys or `CRON_SECRET` in `NEXT_PUBLIC_` variables.
 - Funds segregation (Stripe private preview)
 - Seller bank payouts or available/pending balance UI
 - Refund or chargeback workflows
+- Automated invoicing when a party does not complete a committed trade (the obligation is in the terms)
 - Authority transfer adapters
 - Replacing simulated quota settlement
 

@@ -10,6 +10,8 @@ import { accountPath } from "@/lib/organisations/paths";
 import { getOrganisation } from "@/lib/organisations/queries";
 import { organisationRoleLabel } from "@/lib/organisations/types";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
+import { AcceptTermsForm } from "@/components/accept-terms-form";
 import { LabeledFields, panelClassName, statClassName } from "@/components/surface";
 import type { User } from "@supabase/supabase-js";
 
@@ -24,21 +26,29 @@ export async function AccountOverviewSection({
   organisationId,
   user,
 }: {
-  organisationId: number;
+  organisationId: number | null;
   user: User;
 }) {
-  const result = await getOrganisation(organisationId);
-
-  if (!result) {
-    return <p>Account not found.</p>;
-  }
-
-  const [holdings, listings, orders, sellError] = await Promise.all([
-    listHoldingsForOrganisation(organisationId),
-    listOrganisationListings(organisationId),
-    listOrganisationOrders(organisationId),
-    organisationCanSellError(organisationId),
-  ]);
+  const result = organisationId ? await getOrganisation(organisationId) : null;
+  const acceptedTerms = await hasAcceptedCurrentTerms();
+  const [holdings, listings, orders, sellError] = organisationId
+    ? await Promise.all([
+        listHoldingsForOrganisation(organisationId),
+        listOrganisationListings(organisationId),
+        listOrganisationOrders(organisationId),
+        organisationCanSellError(organisationId),
+      ])
+    : [
+        [] as Awaited<ReturnType<typeof listHoldingsForOrganisation>>,
+        [] as Awaited<ReturnType<typeof listOrganisationListings>>,
+        [] as Awaited<ReturnType<typeof listOrganisationOrders>>,
+        null,
+      ];
+  const hasAccount = Boolean(result);
+  const canBuy = acceptedTerms && hasAccount;
+  const canSell = canBuy && !sellError;
+  const href = (path: string) =>
+    organisationId ? accountPath(organisationId, path) : path;
   const pendingHoldings = holdings.filter(
     (holding) => !holdingIsVerified(holding),
   ).length;
@@ -53,7 +63,6 @@ export async function AccountOverviewSection({
     OPEN_ORDER_STATUSES.has(order.status),
   );
   const payOrders = orders.filter((order) => order.status === "AWAITING_PAYMENT");
-  const href = (path: string) => accountPath(organisationId, path);
 
   return (
     <div className="space-y-8">
@@ -66,30 +75,64 @@ export async function AccountOverviewSection({
         </p>
       </div>
       <div className={panelClassName}>
-        <LabeledFields
-          items={[
-            {
-              label: "Account",
-              value: result.organisation.legal_name,
-            },
-            {
-              label: "Your role",
-              value: organisationRoleLabel(result.role),
-            },
-            {
-              label: "Selling",
-              value: sellError ? "Stripe setup needed" : "Ready to list",
-            },
-          ]}
-        />
-        {sellError ? (
+        <h2 className="text-lg font-semibold text-ink">Onboarding</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          Agree to the terms and add business details on Profile before you
+          can buy or list. Sellers must also finish payments setup.
+        </p>
+        <div className="mt-4">
+          <LabeledFields
+            items={[
+              {
+                label: "Account",
+                value: result?.organisation.legal_name ?? "Not added",
+              },
+              {
+                label: "Your role",
+                value: result ? organisationRoleLabel(result.role) : "—",
+              },
+              {
+                label: "Eligible to buy",
+                value: canBuy ? "Yes" : "Not yet",
+              },
+              {
+                label: "Eligible to sell",
+                value: canSell ? "Yes" : "Not yet",
+              },
+            ]}
+          />
+        </div>
+        {acceptedTerms ? null : <AcceptTermsForm />}
+        {hasAccount ? (
+          acceptedTerms && sellError ? (
+            <p className="mt-4 text-sm text-ink-muted">
+              You have agreed to the{" "}
+              <Link href="/terms" className="underline">
+                terms of service
+              </Link>
+              . {sellError}{" "}
+              <Link href={href("/dashboard/payments")} className="underline">
+                Go to Payments
+              </Link>
+            </p>
+          ) : acceptedTerms ? (
+            <p className="mt-4 text-sm text-ink-muted">
+              You have agreed to the{" "}
+              <Link href="/terms" className="underline">
+                terms of service
+              </Link>
+              .
+            </p>
+          ) : null
+        ) : (
           <p className="mt-4 text-sm text-ink-muted">
-            {sellError}{" "}
-            <Link href={href("/dashboard/payments")} className="underline">
-              Go to Payments
-            </Link>
+            Add your business details on{" "}
+            <Link href="/dashboard/profile" className="underline">
+              Profile
+            </Link>{" "}
+            before you can buy or list quota.
           </p>
-        ) : null}
+        )}
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <Link href={href("/dashboard/holdings")} className={statClassName}>

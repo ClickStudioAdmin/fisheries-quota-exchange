@@ -78,43 +78,13 @@ export function RegisterForm() {
           className={authFieldClassName}
         />
       </div>
-      <p className="pt-2 text-sm font-medium text-ink">Business details</p>
-      <div>
-        <label htmlFor="legal_name" className="block text-sm text-ink">
-          Legal name
-        </label>
-        <input
-          id="legal_name"
-          name="legal_name"
-          required
-          className={authFieldClassName}
-        />
-      </div>
-      <div>
-        <label htmlFor="trading_name" className="block text-sm text-ink">
-          Trading name
-        </label>
-        <input
-          id="trading_name"
-          name="trading_name"
-          className={authFieldClassName}
-        />
-      </div>
-      <div>
-        <label htmlFor="abn" className="block text-sm text-ink">
-          ABN
-        </label>
-        <input
-          id="abn"
-          name="abn"
-          inputMode="numeric"
-          autoComplete="off"
-          className={authFieldClassName}
-        />
-      </div>
       <button type="submit" className={authButtonClassName} disabled={pending}>
         {pending ? "Creating account…" : "Create account"}
       </button>
+      <p className="text-sm text-ink-muted">
+        You can add business details on Profile after you confirm your email.
+        You need those details before you can buy or list quota.
+      </p>
     </form>
   );
 }

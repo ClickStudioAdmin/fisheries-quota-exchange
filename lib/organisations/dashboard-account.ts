@@ -47,7 +47,10 @@ export async function resolveDashboardAccount(
     organisations[0];
 
   if (!defaultAccount) {
-    if (currentPath !== "/dashboard") {
+    if (
+      currentPath !== "/dashboard" &&
+      currentPath !== "/dashboard/profile"
+    ) {
       redirect("/dashboard");
     }
 

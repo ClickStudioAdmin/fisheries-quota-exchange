@@ -69,9 +69,6 @@ export async function registerAction(
 
   const fullName = String(formData.get("full_name") ?? "").trim();
   const phoneResult = readPhone(String(formData.get("phone") ?? ""));
-  const legalName = String(formData.get("legal_name") ?? "").trim();
-  const tradingName = String(formData.get("trading_name") ?? "").trim();
-  const abnResult = readAbn(String(formData.get("abn") ?? "").trim());
 
   if (!fullName) {
     return { error: "Enter your name." };
@@ -79,14 +76,6 @@ export async function registerAction(
 
   if ("error" in phoneResult) {
     return { error: phoneResult.error };
-  }
-
-  if (!legalName) {
-    return { error: "Legal name is required." };
-  }
-
-  if ("error" in abnResult) {
-    return { error: abnResult.error };
   }
 
   const supabase = await createClient();
@@ -116,9 +105,6 @@ export async function registerAction(
       data: {
         full_name: fullName,
         phone: phoneResult.phone,
-        pending_legal_name: legalName,
-        pending_trading_name: tradingName,
-        pending_abn: abnResult.abn,
       },
     },
   });

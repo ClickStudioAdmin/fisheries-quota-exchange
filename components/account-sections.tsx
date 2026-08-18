@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AddMemberForm } from "@/components/add-member-form";
 import { MemberList } from "@/components/member-list";
+import { BusinessDetailsForm } from "@/components/business-details-form";
 import {
   PersonProfileForm,
   ProfilePasswordForm,
@@ -62,16 +63,11 @@ export async function AccountProfileSection({
   organisationId,
   user,
 }: {
-  organisationId: number;
+  organisationId: number | null;
   user: User;
 }) {
-  const result = await getOrganisation(organisationId);
-
-  if (!result) {
-    return <p>Account not found.</p>;
-  }
-
-  const canEdit = canEditOrganisation(result.role);
+  const result = organisationId ? await getOrganisation(organisationId) : null;
+  const canEdit = result ? canEditOrganisation(result.role) : false;
 
   return (
     <div className="space-y-10">
@@ -80,7 +76,9 @@ export async function AccountProfileSection({
           Profile details
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
-          {result.organisation.legal_name} · Your role: {result.role}
+          {result
+            ? `${result.organisation.legal_name} · Your role: ${result.role}`
+            : "Add your business details before you can buy or list quota."}
         </p>
       </div>
       <section className="max-w-md space-y-4">
@@ -89,10 +87,20 @@ export async function AccountProfileSection({
           fullName={userFullName(user)}
           email={user.email ?? ""}
           phone={userPhone(user)}
-          organisation={result.organisation}
+          organisation={result?.organisation ?? null}
           canEditOrganisation={canEdit}
         />
       </section>
+      {result ? null : (
+        <section className="max-w-md space-y-4">
+          <h2 className="text-xl font-semibold text-ink">Business details</h2>
+          <p className="text-sm text-ink-muted">
+            Legal name is required. Trading name and ABN are optional. This
+            creates your organisation. You can own one account.
+          </p>
+          <BusinessDetailsForm />
+        </section>
+      )}
       <section className="max-w-md space-y-4">
         <h2 className="text-xl font-semibold text-ink">Password</h2>
         <ProfilePasswordForm />

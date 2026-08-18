@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
+import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { ListingKindBadges } from "@/components/offer-card";
@@ -29,6 +30,7 @@ import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
 import { getPlatformSettings } from "@/lib/settings/queries";
 import { platformFeeLabel } from "@/lib/settings/types";
+import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 
 export const metadata = {
   title: "Auction",
@@ -64,6 +66,7 @@ export default async function AuctionPage({
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
   const organisations = user ? await listMyOrganisations() : [];
+  const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
   const bidderOrganisations = organisations.filter(
     (organisation) => organisation.id !== listing.organisation_id,
   );
@@ -159,13 +162,19 @@ export default async function AuctionPage({
             </p>
           ) : organisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
-              Create an organisation from the dashboard before bidding.
+              Add your business details on{" "}
+              <Link href="/dashboard/profile" className="underline">
+                Profile
+              </Link>{" "}
+              before you can bid.
             </p>
           ) : isSeller && bidderOrganisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
               You cannot bid on your organisation&apos;s auction. Use a
               different organisation to test a bid.
             </p>
+          ) : !acceptedTerms ? (
+            <TermsRequiredNotice action="bid" />
           ) : bidderOrganisations.length > 0 ? (
             <BidForm
               listingId={listing.id}

@@ -24,6 +24,12 @@ import {
   type OrderStatus,
 } from "@/lib/orders/types";
 import { userFacingError } from "@/lib/errors/user-message";
+import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import {
+  BUYER_PURCHASE_ACKNOWLEDGEMENTS,
+  requireAcknowledgements,
+} from "@/lib/terms/acknowledgements";
+import { requireTermsError } from "@/lib/terms/queries";
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -71,6 +77,27 @@ export async function createOrderAction(
 
   if (!listing) {
     return { error: "Listing not found." };
+  }
+
+  const termsError = await requireTermsError();
+
+  if (termsError) {
+    return { error: termsError };
+  }
+
+  const accountError = await requireBusinessAccountError();
+
+  if (accountError) {
+    return { error: accountError };
+  }
+
+  const ackError = requireAcknowledgements(
+    formData,
+    BUYER_PURCHASE_ACKNOWLEDGEMENTS,
+  );
+
+  if (ackError) {
+    return { error: ackError };
   }
 
   if (isPaymentsConfigured()) {

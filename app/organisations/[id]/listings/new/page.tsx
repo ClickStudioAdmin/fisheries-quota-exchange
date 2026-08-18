@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CreateListingForm } from "@/components/create-listing-form";
+import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import {
   listFisheries,
   listHoldingCommitments,
@@ -15,6 +16,7 @@ import { getUser } from "@/lib/supabase/server";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { getPlatformSettings, isVerifiedUser } from "@/lib/settings/queries";
 import { platformFeeDisclosure } from "@/lib/settings/types";
+import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 
 export const metadata = {
   title: "Create listing",
@@ -51,13 +53,15 @@ export default async function NewListingPage({
     notFound();
   }
 
-  const [holdings, fisheries, settings, verified, sellError] = await Promise.all([
-    listHoldingsForOrganisation(organisationId),
-    listFisheries(),
-    getPlatformSettings(),
-    isVerifiedUser(),
-    organisationCanSellError(organisationId),
-  ]);
+  const [holdings, fisheries, settings, verified, sellError, acceptedTerms] =
+    await Promise.all([
+      listHoldingsForOrganisation(organisationId),
+      listFisheries(),
+      getPlatformSettings(),
+      isVerifiedUser(),
+      organisationCanSellError(organisationId),
+      hasAcceptedCurrentTerms(),
+    ]);
   const holding = holdings.find((item) => item.id === holdingId);
 
   if (!holding) {
@@ -104,7 +108,9 @@ export default async function NewListingPage({
         {fishery?.name ?? "Fishery"} · {availableLabel} {unitLabel} available
       </p>
       <div className="mt-6 max-w-md">
-        {sellError ? (
+        {!acceptedTerms ? (
+          <TermsRequiredNotice action="list" />
+        ) : sellError ? (
           <p className="text-sm text-ink-muted">
             {sellError}{" "}
             <Link

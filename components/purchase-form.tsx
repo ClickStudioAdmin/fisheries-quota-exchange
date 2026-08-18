@@ -2,9 +2,11 @@
 
 import { useActionState } from "react";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { createOrderAction } from "@/lib/orders/actions";
 import type { OrderFormState } from "@/lib/orders/types";
 import type { OrganisationSummary } from "@/lib/organisations/types";
+import { BUYER_PURCHASE_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: OrderFormState = {};
 
@@ -56,13 +58,10 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
           </select>
         </div>
       )}
-      <p className="text-sm text-ink-muted">
-        By clicking Purchase Now, you agree to buy this quota. The quota is
-        reserved immediately. You then pay FQX in Stripe test mode: the listed
-        amount by Australian bank debit, or the listed amount plus Stripe’s
-        card processing if you pay by Australian-issued card. FQX holds the
-        funds until settlement. The platform fee is deducted from the seller.
-      </p>
+      <TermsAcknowledgements
+        title="Buyer acknowledgements"
+        items={BUYER_PURCHASE_ACKNOWLEDGEMENTS}
+      />
       <button type="submit" className={buttonClassName} disabled={pending}>
         {pending ? "Purchasing…" : "Purchase Now"}
       </button>

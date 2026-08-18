@@ -2,10 +2,12 @@
 
 import { useActionState } from "react";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { placeBidAction } from "@/lib/auctions/actions";
 import type { BidFormState } from "@/lib/auctions/types";
 import { formatAud } from "@/lib/listings/types";
 import type { OrganisationSummary } from "@/lib/organisations/types";
+import { BUYER_BID_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: BidFormState = {};
 
@@ -72,10 +74,10 @@ export function BidForm({ listingId, minimumBid, organisations }: BidFormProps) 
           className={fieldClassName}
         />
       </div>
-      <p className="text-sm text-ink-muted">
-        The bid time is recorded by the server. This is a development site. If
-        you win, quota is reserved and you pay FQX in Stripe test mode.
-      </p>
+      <TermsAcknowledgements
+        title="Buyer acknowledgements"
+        items={BUYER_BID_ACKNOWLEDGEMENTS}
+      />
       <button type="submit" className={buttonClassName} disabled={pending}>
         {pending ? "Bidding…" : "Place bid"}
       </button>

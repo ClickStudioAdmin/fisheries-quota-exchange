@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
+import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -28,6 +29,7 @@ import { isPaymentsConfigured } from "@/lib/payments/env";
 import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
 import { getPlatformSettings } from "@/lib/settings/queries";
 import { platformFeeLabel } from "@/lib/settings/types";
+import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 
 export const metadata = {
   title: "Listing",
@@ -82,6 +84,7 @@ export default async function ListingPage({
   const sellerAcceptsCards = paymentsOn
     ? await organisationAcceptsCardPayments(listing.organisation_id)
     : true;
+  const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
   const canPurchase =
     listing.status === "PUBLISHED" &&
     !expired &&
@@ -156,13 +159,19 @@ export default async function ListingPage({
             </p>
           ) : organisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
-              Create an organisation from the dashboard before purchasing.
+              Add your business details on{" "}
+              <Link href="/dashboard/profile" className="underline">
+                Profile
+              </Link>{" "}
+              before you can buy.
             </p>
           ) : isSeller && buyerOrganisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
               You cannot purchase your organisation&apos;s listing. Use a
               different organisation to test a buy.
             </p>
+          ) : !acceptedTerms ? (
+            <TermsRequiredNotice action="buy" />
           ) : !sellerAcceptsCards ? (
             <p className="text-sm text-ink-muted">
               This seller has not completed payment setup, so the listing

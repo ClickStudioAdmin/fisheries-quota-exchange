@@ -16,13 +16,9 @@ export default async function DashboardProfilePage({
     "/dashboard/profile",
   );
 
-  if (account.needsSetup) {
-    return null;
-  }
-
   return (
     <AccountProfileSection
-      organisationId={account.selected.id}
+      organisationId={account.selected?.id ?? null}
       user={account.user}
     />
   );

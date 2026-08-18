@@ -56,7 +56,7 @@ export function BusinessDetailsForm() {
         />
       </div>
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Saving…" : "Save account"}
+        {pending ? "Saving…" : "Save business details"}
       </button>
     </form>
   );

@@ -2,11 +2,13 @@
 
 import { useActionState } from "react";
 import { QuantityField } from "@/components/quantity-field";
+import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 import {
   createListingAction,
   type ListingFormState,
 } from "@/lib/listings/actions";
+import { SELLER_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: ListingFormState = {};
 
@@ -94,6 +96,10 @@ export function CreateListingForm({
         />
       </div>
       {feeNote ? <p className="text-sm text-ink-muted">{feeNote}</p> : null}
+      <TermsAcknowledgements
+        title="Seller acknowledgements"
+        items={SELLER_ACKNOWLEDGEMENTS}
+      />
       <button type="submit" className={buttonClassName} disabled={pending}>
         {pending
           ? "Submitting…"

@@ -5,6 +5,13 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import {
+  BUYER_BID_ACKNOWLEDGEMENTS,
+  SELLER_ACKNOWLEDGEMENTS,
+  requireAcknowledgements,
+} from "@/lib/terms/acknowledgements";
+import { requireTermsError } from "@/lib/terms/queries";
 import { userFacingError } from "@/lib/errors/user-message";
 import type { AuctionFormState, BidFormState } from "@/lib/auctions/types";
 import { getListing } from "@/lib/listings/queries";
@@ -71,6 +78,24 @@ export async function createAuctionAction(
     return { error: "End time is required." };
   }
 
+  const termsError = await requireTermsError();
+
+  if (termsError) {
+    return { error: termsError };
+  }
+
+  const accountError = await requireBusinessAccountError();
+
+  if (accountError) {
+    return { error: accountError };
+  }
+
+  const ackError = requireAcknowledgements(formData, SELLER_ACKNOWLEDGEMENTS);
+
+  if (ackError) {
+    return { error: ackError };
+  }
+
   const sellError = await organisationCanSellError(organisationId);
 
   if (sellError) {
@@ -127,6 +152,24 @@ export async function placeBidAction(
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Bid must be greater than zero." };
+  }
+
+  const termsError = await requireTermsError();
+
+  if (termsError) {
+    return { error: termsError };
+  }
+
+  const accountError = await requireBusinessAccountError();
+
+  if (accountError) {
+    return { error: accountError };
+  }
+
+  const ackError = requireAcknowledgements(formData, BUYER_BID_ACKNOWLEDGEMENTS);
+
+  if (ackError) {
+    return { error: ackError };
   }
 
   const listing = await getListing(listingId);

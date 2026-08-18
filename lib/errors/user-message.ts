@@ -70,6 +70,9 @@ const AUTH_MESSAGES: Record<string, string> = {
 const EXCEPTION_MESSAGES: Record<string, string> = {
   "not authenticated": "You must be signed in.",
   "not a platform admin": "You do not have permission to do that.",
+  "terms version is required": "Refresh the page and agree to the current terms.",
+  "you already have an account": "You already have a business account.",
+  "legal name is required": "Legal name is required.",
 };
 
 type ErrorLike = {

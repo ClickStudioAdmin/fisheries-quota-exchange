@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PaymentsConnect } from "@/components/payments-connect";
 import { panelClassName } from "@/components/surface";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
@@ -27,7 +28,11 @@ export default async function DashboardPaymentsPage({
           Payments
         </h1>
         <p className="text-ink-muted">
-          Add your business details before connecting Stripe payments.
+          Add your business details on{" "}
+          <Link href="/dashboard/profile" className="underline">
+            Profile
+          </Link>{" "}
+          before connecting Stripe payments.
         </p>
       </div>
     );

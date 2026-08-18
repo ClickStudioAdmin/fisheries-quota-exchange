@@ -10,7 +10,7 @@ There is no quota, marketplace, or listing functionality in this phase.
 
 | Path | Access |
 | --- | --- |
-| `/register` | Creates the Auth user and their business account |
+| `/register` | Creates the Auth user (name, email, phone). Business details are added later on Profile |
 | `/dashboard` | Overview |
 | `/dashboard/profile` | Profile details (person, password, business) |
 | `/dashboard/members` | Account members |
@@ -19,7 +19,7 @@ There is no quota, marketplace, or listing functionality in this phase.
 
 Signed-out users are redirected to `/login`.
 
-Registration collects the user’s name plus legal name, trading name, and ABN. That creates the organisation and makes the user `OWNER`. A user may own only one account. They can still be added to someone else’s account.
+Registration collects the user’s name, email, phone, and password. After email confirm they add legal name, trading name, and ABN on `/dashboard/profile`. That creates the organisation and makes the user `OWNER`. They must complete those business details, and agree to the terms, before they can buy or list. A user may own only one account. They can still be added to someone else’s account.
 
 ## Roles
 
