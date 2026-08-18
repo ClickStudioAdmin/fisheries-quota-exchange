@@ -174,7 +174,13 @@ export default async function OrderPage({
           The order was reserved. Complete payment below.
         </p>
       ) : null}
-      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,38rem)_minmax(0,26rem)]">
+      <section className={`mt-6 ${panelClassName}`}>
+        <h2 className="text-sm font-semibold text-ink">Status</h2>
+        <div className="mt-4">
+          <OrderProgress steps={progressSteps} />
+        </div>
+      </section>
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,32rem)_minmax(0,26rem)]">
         <div className={panelClassName}>
           <h2 className="text-lg font-semibold text-ink">Order summary</h2>
           <section className="mt-5">
@@ -208,12 +214,6 @@ export default async function OrderPage({
             <h3 className="text-sm font-semibold text-ink">Totals</h3>
             <div className="mt-3">
               <LabeledFields items={totalItems} />
-            </div>
-          </section>
-          <section className="mt-6 border-t border-line pt-5">
-            <h3 className="text-sm font-semibold text-ink">Status</h3>
-            <div className="mt-4">
-              <OrderProgress steps={progressSteps} />
             </div>
           </section>
           {canCancel ? (

@@ -7,6 +7,13 @@ const circleClass: Record<OrderStep["state"], string> = {
   upcoming: "border-line bg-paper-raised text-ink-muted",
 };
 
+const lineClass: Record<OrderStep["state"], string> = {
+  done: "bg-sea",
+  current: "bg-line",
+  failed: "bg-red-200",
+  upcoming: "bg-line",
+};
+
 const labelClass: Record<OrderStep["state"], string> = {
   done: "text-ink",
   current: "text-ink",
@@ -32,34 +39,43 @@ function StepMark({ step, index }: { step: OrderStep; index: number }) {
 
 export function OrderProgress({ steps }: { steps: OrderStep[] }) {
   return (
-    <ol className="space-y-0">
+    <ol className="flex">
       {steps.map((step, index) => {
+        const first = index === 0;
         const last = index === steps.length - 1;
+        const previous = steps[index - 1];
 
         return (
-          <li key={step.id} className="flex gap-3">
-            <div className="flex w-7 shrink-0 flex-col items-center">
+          <li key={step.id} className="min-w-0 flex-1">
+            <div className="flex items-center">
               <span
-                className={`flex h-7 w-7 items-center justify-center rounded-full border ${circleClass[step.state]}`}
+                className={`h-px min-w-2 flex-1 ${
+                  first
+                    ? "bg-transparent"
+                    : lineClass[previous?.state === "done" ? "done" : "upcoming"]
+                }`}
+                aria-hidden
+              />
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${circleClass[step.state]}`}
               >
                 <StepMark step={step} index={index} />
               </span>
-              {last ? null : (
-                <span
-                  className="flex flex-1 flex-col items-center py-1 text-ink-muted"
-                  aria-hidden
-                >
-                  <span className="h-4 w-px bg-line" />
-                  <span className="text-[10px] leading-none">↓</span>
-                </span>
-              )}
+              <span
+                className={`flex h-px min-w-2 flex-1 items-center ${
+                  last ? "bg-transparent" : lineClass[step.state]
+                }`}
+                aria-hidden
+              />
             </div>
-            <div className={last ? "pb-0" : "pb-4"}>
-              <p className={`text-sm font-medium ${labelClass[step.state]}`}>
-                {step.label}
-              </p>
-              <p className="mt-0.5 text-sm text-ink-muted">{step.detail}</p>
-            </div>
+            <p
+              className={`mt-2 text-center text-sm font-medium ${labelClass[step.state]}`}
+            >
+              {step.label}
+            </p>
+            <p className="mt-0.5 text-center text-xs text-ink-muted">
+              {step.detail}
+            </p>
           </li>
         );
       })}
