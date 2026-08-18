@@ -57,9 +57,9 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
         </div>
       )}
       <p className="text-sm text-ink-muted">
-        This creates an order and reserves the quota. If the seller accepts
-        cards, you will pay FQX in Stripe test mode. A platform admin then
-        runs compliance, transfer, and settlement.
+        This creates an order and reserves the quota. You pay FQX through
+        Stripe (card or bank debit in test mode). FQX holds the funds until
+        a platform admin completes settlement, then the seller is paid.
       </p>
       <button type="submit" className={buttonClassName} disabled={pending}>
                 {pending ? "Continuing…" : "Purchase"}

@@ -34,13 +34,13 @@ Copy `.env.example` to `.env.local` and add the development Supabase URL and pub
 
 To send member invitation emails locally, also set `RESEND_API_KEY` and `EMAIL_FROM`. Leave them blank to skip sending.
 
-To take test card payments, set the Stripe test keys, webhook secret, and `SUPABASE_SERVICE_ROLE_KEY`. Leave them blank to keep simulated purchase.
+To take test Stripe payments, set the Stripe test keys, webhook secret, and `SUPABASE_SERVICE_ROLE_KEY`. Leave them blank to keep simulated purchase.
 
 Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 9 acceptance is that a seller can onboard in the Stripe sandbox, a buyer can pay a listing with a test card, and the webhook marks the order paid without trusting the browser.
+Phase 9 acceptance is that a seller can onboard in the Stripe sandbox, a buyer can pay a listing through Stripe Checkout, funds stay on FQX until Simulate settlement Transfers the seller’s share, and the webhook marks the order paid without trusting the browser.
 
 Later phases will add Vitest and Playwright where the business logic requires it.
 

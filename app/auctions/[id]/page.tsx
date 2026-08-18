@@ -181,8 +181,9 @@ export default async function AuctionPage({
         </p>
       ) : listing.status === "RESERVED" || listing.status === "SOLD" ? (
         <p className="mt-8 text-sm text-ink-muted">
-          Closed with a winning bid. Quota is reserved. If the seller accepts
-          cards, the winner pays FQX before compliance.
+          Closed with a winning bid. Quota is reserved. If the seller is set
+          up for payments, the winner pays FQX before compliance. FQX holds
+          the funds until settlement.
           {order ? (
             <>
               {" "}

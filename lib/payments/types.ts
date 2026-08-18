@@ -11,7 +11,6 @@ export type CreateCheckoutInput = {
   offeringLabel: string;
   amountAud: string;
   feeAmountAud: string;
-  sellerAccountId: string;
   buyerEmail: string;
   successUrl: string;
   cancelUrl: string;
@@ -20,6 +19,13 @@ export type CreateCheckoutInput = {
 export type CreateCheckoutResult = {
   url: string;
   checkoutSessionId: string;
+  paymentIntentId: string | null;
+};
+
+export type CreateSellerTransferInput = {
+  orderId: number;
+  amountAud: string;
+  sellerAccountId: string;
   paymentIntentId: string | null;
 };
 
@@ -36,6 +42,7 @@ export type PaymentProvider = {
     detailsSubmitted: boolean;
   }>;
   createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult>;
+  transferSellerProceeds(input: CreateSellerTransferInput): Promise<string | null>;
   parseWebhook(
     payload: string,
     signature: string,

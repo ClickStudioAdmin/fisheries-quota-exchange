@@ -30,7 +30,7 @@ export function PayOrderButton({ orderId }: { orderId: number }) {
           }
         }}
       >
-        {pending ? "Opening Stripe…" : "Pay with card"}
+        {pending ? "Opening Stripe…" : "Pay"}
       </button>
     </div>
   );

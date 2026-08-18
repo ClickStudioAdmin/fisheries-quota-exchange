@@ -134,8 +134,8 @@ export default async function ListingPage({
               >
                 Sign in
               </Link>{" "}
-              to purchase. Quota is reserved when you buy. If the seller
-              accepts cards, you pay FQX in Stripe test mode.
+              to purchase. Quota is reserved when you buy. You pay FQX through
+              Stripe. FQX holds the funds until settlement.
             </p>
           ) : organisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
@@ -148,7 +148,7 @@ export default async function ListingPage({
             </p>
           ) : !sellerAcceptsCards ? (
             <p className="text-sm text-ink-muted">
-              This seller has not completed card payment setup, so the listing
+              This seller has not completed payment setup, so the listing
               cannot be purchased yet.
             </p>
           ) : canPurchase ? (

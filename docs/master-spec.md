@@ -208,7 +208,7 @@ Server-side auction logic. Never rely on client-side bid timestamps.
 
 ## 28. Phase 9 — Stripe test payments
 
-Stripe Connect in test mode behind a `PaymentProvider` abstraction. Idempotent webhooks.
+Stripe Connect in test mode behind a `PaymentProvider` abstraction. Separate charges and transfers. Idempotent webhooks.
 
 ## 29. Phase 10 — Settlement
 

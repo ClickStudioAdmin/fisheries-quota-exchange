@@ -27,7 +27,7 @@ export default async function DashboardPaymentsPage({
           Payments
         </h1>
         <p className="text-ink-muted">
-          Add your business details before connecting card payments.
+          Add your business details before connecting Stripe payments.
         </p>
       </div>
     );
@@ -45,24 +45,25 @@ export default async function DashboardPaymentsPage({
           Payments
         </h1>
         <p className="mt-2 max-w-lg text-sm text-ink-muted">
-          FQX uses Stripe to process payments. We do not hold or handle the
-          funds. You must complete Stripe account setup here before you can
-          list quota for sale or lease. This is Stripe test mode only.
+          FQX uses Stripe to process payments. Buyers pay FQX. We hold those
+          funds until settlement, then pay the seller. You must complete Stripe
+          account setup here before you can list quota for sale or lease. This
+          is Stripe test mode only.
         </p>
       </div>
       {!configured || !publishableKey ? (
         <p className="text-sm text-ink-muted">
-          Card payments are not configured. Purchases stay on the simulated
+          Payments are not configured. Purchases stay on the simulated
           path until Stripe test keys are set.
         </p>
       ) : (
         <div className={`max-w-2xl space-y-4 ${panelClassName}`}>
           <p className="text-sm text-ink">
             {status?.chargesEnabled
-              ? "This account can accept test card payments."
+              ? "This account can receive settlement transfers."
               : status?.detailsSubmitted
                 ? "Stripe has your details and is reviewing them. Refresh this page in a minute."
-                : "Complete onboarding to accept test card payments on your listings."}
+                : "Complete onboarding to receive settlement transfers on your listings."}
           </p>
           {canManage ? (
             <PaymentsConnect

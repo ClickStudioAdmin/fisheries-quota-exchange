@@ -64,6 +64,28 @@ export async function handleStripeWebhook(payload: string, signature: string) {
           throw new Error(error.message);
         }
       }
+    } else if (orderId && event.type === "checkout.session.async_payment_succeeded") {
+      const paymentIntent =
+        asString(data.payment_intent) ??
+        asString(asRecord(data.payment_intent)?.id);
+      const { error } = await supabase.rpc("mark_order_paid", {
+        p_order_id: orderId,
+        p_checkout_session_id: asString(data.id),
+        p_payment_intent_id: paymentIntent,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } else if (orderId && event.type === "checkout.session.async_payment_failed") {
+      const { error } = await supabase.rpc("fail_unpaid_order", {
+        p_order_id: orderId,
+        p_payment_status: "FAILED",
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
     } else if (orderId && event.type === "checkout.session.expired") {
       const { error } = await supabase.rpc("fail_unpaid_order", {
         p_order_id: orderId,

@@ -125,7 +125,7 @@ export async function getPaymentForOrder(orderId: number) {
   const { data, error } = await supabase
     .from("payments")
     .select(
-      "id, order_id, provider, checkout_session_id, payment_intent_id, status, amount_aud, fee_amount_aud, currency, created_at",
+      "id, order_id, provider, checkout_session_id, payment_intent_id, stripe_transfer_id, status, amount_aud, fee_amount_aud, currency, created_at",
     )
     .eq("order_id", orderId)
     .maybeSingle();

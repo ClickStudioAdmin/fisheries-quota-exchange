@@ -21,7 +21,7 @@ Current tables:
 | `orders` | 7 | Simulated purchase of a listing or winning auction. |
 | `quota_reservations` | 7 | Active reserved quantity against a holding. |
 | `transactions` | 7 | Simulated settlement record. No live payment. |
-| `payments` | 9 | Stripe Checkout / PaymentIntent for an order. |
+| `payments` | 9 | Stripe Checkout / PaymentIntent for an order. `stripe_transfer_id` after settlement Transfer to the seller. |
 | `stripe_webhook_events` | 9 | Processed Stripe event ids (idempotency). |
 | `audit_events` | 7 | Order workflow audit. |
 | `bids` | 8 | Auction bids. `created_at` is server time. |
@@ -29,7 +29,7 @@ Current tables:
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. `organisation_users.full_name` is required. Auth metadata still overrides that name when present. The insert trigger `organisation_users_fill_name` reads `auth.users` as `security definer` so adding a member does not require the signed-in role to select from Auth. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Changing Auth name updates `organisation_users.full_name`. Platform admins also read name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
 
-`organisations` may store a Stripe Connect account id and charge flags. Members cannot change those columns; `attach_organisation_stripe_account` and the signed `account.updated` webhook do. `orders.status` may be `AWAITING_PAYMENT` until a signed webhook marks the order paid. `payments` and `stripe_webhook_events` are written by the app server. The browser is not trusted for payment status.
+`organisations` may store a Stripe Connect account id and charge flags. Members cannot change those columns; `attach_organisation_stripe_account` and the signed `account.updated` webhook do. `orders.status` may be `AWAITING_PAYMENT` until a signed webhook marks the order paid. The buyer charge sits on the FQX Stripe balance until Simulate settlement Transfers the seller amount. `payments` and `stripe_webhook_events` are written by the app server. The browser is not trusted for payment status.
 
 `fisheries.quantity_type` must be `KG` or `UNITS`. Holdings and listings show that unit beside quantity.
 

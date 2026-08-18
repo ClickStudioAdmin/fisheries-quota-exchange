@@ -8,7 +8,9 @@ import { getPaymentProvider } from "@/lib/payments/provider";
 import {
   getOrderSellerPaymentAccount,
   getOrganisationPaymentStatus,
+  getPaymentForOrder,
 } from "@/lib/payments/queries";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getOrder } from "@/lib/orders/queries";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getSiteUrl } from "@/lib/site-url";
@@ -30,7 +32,7 @@ export async function createAccountSessionAction(
   }
 
   if (!provider) {
-    return { error: "Card payments are not configured." };
+    return { error: "Payments are not configured." };
   }
 
   const role = await getMyRole(organisationId);
@@ -109,7 +111,7 @@ export async function startOrderCheckoutAction(
   }
 
   if (!provider) {
-    return { error: "Card payments are not configured." };
+    return { error: "Payments are not configured." };
   }
 
   const order = await getOrder(orderId);
@@ -125,7 +127,7 @@ export async function startOrderCheckoutAction(
   const seller = await getOrderSellerPaymentAccount(order.id);
 
   if (!seller?.accountId || !seller.chargesEnabled) {
-    return { error: "This seller cannot accept card payments yet." };
+    return { error: "This seller cannot accept payments yet." };
   }
 
   const siteUrl = await getSiteUrl();
@@ -140,7 +142,6 @@ export async function startOrderCheckoutAction(
     offeringLabel: listingOfferingLabel(order.offering),
     amountAud: order.amount_aud,
     feeAmountAud: order.fee_amount_aud,
-    sellerAccountId: seller.accountId,
     buyerEmail: user.email,
     successUrl: `${siteUrl}/orders/${order.id}?paid=1`,
     cancelUrl: `${siteUrl}/orders/${order.id}?pay=cancelled`,
@@ -159,4 +160,75 @@ export async function startOrderCheckoutAction(
   }
 
   redirect(checkout.url);
+}
+
+export async function transferOrderSellerProceeds(
+  orderId: number,
+): Promise<{ error?: string }> {
+  const provider = getPaymentProvider();
+
+  if (!provider) {
+    return {};
+  }
+
+  const order = await getOrder(orderId);
+  const payment = await getPaymentForOrder(orderId);
+
+  if (!order) {
+    return { error: "Order not found." };
+  }
+
+  if (!payment) {
+    return {};
+  }
+
+  if (payment.status !== "PAID") {
+    return { error: "This order has not been paid." };
+  }
+
+  if (payment.stripe_transfer_id) {
+    return {};
+  }
+
+  const seller = await getOrderSellerPaymentAccount(order.id);
+
+  if (!seller?.accountId) {
+    return { error: "This seller does not have a Stripe account." };
+  }
+
+  const service = createServiceClient();
+
+  if (!service) {
+    return { error: "Could not record the seller transfer." };
+  }
+
+  try {
+    const transferId = await provider.transferSellerProceeds({
+      orderId: order.id,
+      amountAud: order.amount_aud,
+      sellerAccountId: seller.accountId,
+      paymentIntentId: payment.payment_intent_id
+        ? String(payment.payment_intent_id)
+        : null,
+    });
+
+    if (!transferId) {
+      return {};
+    }
+
+    const { error } = await service.rpc("attach_order_seller_transfer", {
+      p_order_id: order.id,
+      p_transfer_id: transferId,
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return {};
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Seller transfer failed.";
+    return { error: message };
+  }
 }

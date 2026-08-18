@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Take card payments in **Stripe test mode** through Stripe Connect. Buyers pay FQX. Sellers onboard and receive transfers on the same charge. FQX is liable for refunds and chargebacks.
+Take payments in **Stripe test mode** through Stripe Connect using **separate charges and transfers**. Buyers pay FQX (card or AU BECS bank debit when enabled). FQX holds the funds. At settlement, FQX Transfers the seller’s share to their connected account and keeps the platform fee. FQX is liable for refunds and chargebacks.
 
-Do not implement live (non-test) keys, seller payouts, or a financial ledger in this phase. Admin still simulates transfer and settlement after payment.
+Do not implement live (non-test) keys, seller bank payouts, funds segregation, or a financial ledger in this phase. Admin still simulates the authority transfer. Settlement both completes quota and creates the Stripe Transfer.
 
 Never trust the browser or the Checkout success URL for payment status. The webhook is the source of truth.
 
@@ -12,16 +12,18 @@ Never trust the browser or the Checkout success URL for payment status. The webh
 
 1. Organisation `OWNER` or `ADMIN` opens **Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
 2. Stripe sends `account.updated`. The app stores whether the account can accept charges. Opening **Payments** also refreshes that flag from Stripe. The browser is not trusted for it.
-3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and the buyer is sent to Stripe Checkout (destination charge, platform fee as `application_fee_amount`).
-4. Stripe sends `checkout.session.completed`. The app marks the order paid, then records the event id so a retry after a failed write still applies. Refreshing the success URL does not charge again.
-5. Expired Checkout cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
-6. Admin then runs the existing compliance / transfer / settlement simulation. Settlement still emails the dummy tax invoice.
+3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and the buyer is sent to Stripe Checkout. The full amount (quota + fee) is charged to the **FQX** Stripe account. There is no destination charge.
+4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance. Refreshing the success URL does not charge again.
+5. Expired Checkout or failed async payment cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
+6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails the dummy tax invoice.
 
 If Stripe keys are missing, purchase stays on the Phase 7 path (`AWAITING_COMPLIANCE` immediately). No live payment.
 
 Auction wins use the same rule: if the seller can accept charges, the order waits for payment.
 
 When Stripe is configured, an organisation cannot create a listing or auction until `stripe_charges_enabled` is true.
+
+Checkout asks Stripe for `card` and `au_becs_debit`. If BECS is not enabled on the Stripe account, Checkout falls back to cards only. Enable BECS (and later PayTo) in the Stripe Dashboard to offer bank debit.
 
 ## Pages
 
@@ -35,10 +37,10 @@ When Stripe is configured, an organisation cannot create a listing or auction un
 
 ## Database
 
-Migration: `supabase/migrations/20260818010000_stripe_test_payments.sql`
+Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`
 
 - `organisations.stripe_account_id` and charge/payout flags
-- `payments` (one row per order; Stripe Checkout / PaymentIntent ids)
+- `payments` (Checkout / PaymentIntent ids; `stripe_transfer_id` after settlement)
 - `stripe_webhook_events` (event id primary key)
 
 Functions:
@@ -50,6 +52,7 @@ Functions:
 - `record_stripe_webhook_event` (service role)
 - `mark_order_paid` (service role)
 - `fail_unpaid_order` (service role)
+- `attach_order_seller_transfer` (service role)
 
 `insert_simulated_order` writes `AWAITING_PAYMENT` when the seller has `stripe_charges_enabled`. `cancel_order` also allows `AWAITING_PAYMENT`.
 
@@ -62,26 +65,37 @@ Server only (never `NEXT_PUBLIC_` except the publishable key):
 | `STRIPE_SECRET_KEY` | Test secret (`sk_test_...`) |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_...`) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Test publishable key (`pk_test_...`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Webhook updates only. Never expose to the browser. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Webhook and settlement transfer updates. Never expose to the browser. |
 
-Point the Stripe sandbox webhook at `/api/stripe/webhook` (`checkout.session.completed`, `checkout.session.expired`, `account.updated`).
+Point the Stripe sandbox webhook at `/api/stripe/webhook`:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `checkout.session.expired`
+- `account.updated`
+
+Turn **off automatic payouts** on the FQX platform Stripe account so held seller funds are not paid out to FQX’s bank before settlement.
 
 Test card: `4242 4242 4242 4242`.
 
 ## Not in this phase
 
 - Live Stripe keys or production charges
-- Seller payouts or available/pending balances
+- Funds segregation (Stripe private preview)
+- Seller bank payouts or available/pending balance UI
 - Refund or chargeback workflows
 - Authority transfer adapters
-- Replacing simulated settlement
+- Replacing simulated quota settlement
 
 ## Acceptance criteria
 
 - Seller completes Connect onboarding in the sandbox
-- Buyer pays a listing with a test card
-- Webhook marks the order paid; refreshing the success URL does not double-charge or double-advance
+- Buyer pays a listing with a test card (and bank debit if BECS is enabled)
+- Webhook marks the order paid; funds remain on FQX until Simulate settlement
+- Simulate settlement Transfers the seller amount and keeps the fee
+- Refreshing the success URL does not double-charge or double-advance
 - Unpaid Checkout expiry cancels the order and releases quota
 - Without Stripe keys, simulated purchase still works
-- Push to `develop` applies the migration
+- Push to `develop` applies the migrations
 - Vercel Preview build succeeds

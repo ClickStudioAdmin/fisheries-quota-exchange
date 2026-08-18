@@ -90,13 +90,13 @@ export function createStripePaymentProvider(): PaymentProvider {
       const totalCents = audToCents(
         orderChargeAud(input.amountAud, input.feeAmountAud),
       );
-      const feeCents = audToCents(input.feeAmountAud);
 
       if (totalCents < 50) {
         throw new Error("Charge must be at least $0.50.");
       }
 
-      const session = await stripe.checkout.sessions.create({
+      const transferGroup = `order_${input.orderId}`;
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode: "payment",
         customer_email: input.buyerEmail,
         success_url: input.successUrl,
@@ -115,10 +115,7 @@ export function createStripePaymentProvider(): PaymentProvider {
           },
         ],
         payment_intent_data: {
-          application_fee_amount: feeCents,
-          transfer_data: {
-            destination: input.sellerAccountId,
-          },
+          transfer_group: transferGroup,
           metadata: {
             order_id: String(input.orderId),
           },
@@ -126,7 +123,21 @@ export function createStripePaymentProvider(): PaymentProvider {
         metadata: {
           order_id: String(input.orderId),
         },
-      });
+      };
+
+      let session: Stripe.Checkout.Session;
+
+      try {
+        session = await stripe.checkout.sessions.create({
+          ...sessionParams,
+          payment_method_types: ["card", "au_becs_debit"],
+        });
+      } catch {
+        session = await stripe.checkout.sessions.create({
+          ...sessionParams,
+          payment_method_types: ["card"],
+        });
+      }
 
       if (!session.url) {
         throw new Error("Stripe did not return a Checkout URL.");
@@ -142,6 +153,54 @@ export function createStripePaymentProvider(): PaymentProvider {
         checkoutSessionId: session.id,
         paymentIntentId: paymentIntent,
       };
+    },
+
+    async transferSellerProceeds(input) {
+      const stripe = stripeClient();
+      const amountCents = audToCents(input.amountAud);
+
+      if (amountCents < 1) {
+        throw new Error("Transfer amount must be greater than zero.");
+      }
+
+      let sourceTransaction: string | undefined;
+
+      if (input.paymentIntentId) {
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          input.paymentIntentId,
+        );
+
+        if (paymentIntent.transfer_data?.destination) {
+          return null;
+        }
+
+        const charge =
+          typeof paymentIntent.latest_charge === "string"
+            ? paymentIntent.latest_charge
+            : paymentIntent.latest_charge?.id;
+
+        if (charge) {
+          sourceTransaction = charge;
+        }
+      }
+
+      const transfer = await stripe.transfers.create(
+        {
+          amount: amountCents,
+          currency: "aud",
+          destination: input.sellerAccountId,
+          transfer_group: `order_${input.orderId}`,
+          metadata: {
+            order_id: String(input.orderId),
+          },
+          ...(sourceTransaction
+            ? { source_transaction: sourceTransaction }
+            : {}),
+        },
+        { idempotencyKey: `fqx-order-transfer-${input.orderId}` },
+      );
+
+      return transfer.id;
     },
 
     async parseWebhook(payload, signature) {

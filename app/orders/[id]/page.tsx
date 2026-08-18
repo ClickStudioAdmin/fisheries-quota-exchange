@@ -84,8 +84,7 @@ export default async function OrderPage({
       ) : null}
       {query.pay === "setup" ? (
         <p className="mt-3 text-sm text-ink-muted">
-          The order was reserved. Use Pay with card below if Checkout did not
-          open.
+          The order was reserved. Use Pay below if Checkout did not open.
         </p>
       ) : null}
       <div className={`mt-8 max-w-lg ${panelClassName}`}>
@@ -119,16 +118,20 @@ export default async function OrderPage({
               value: reservation?.status ?? "None",
             },
             {
-              label: "Card payment",
+              label: "Payment",
               value: payment?.status
                 ? payment.status === "PAID"
-                  ? "Paid"
+                  ? "Paid (held by FQX until settlement)"
                   : payment.status === "PENDING"
                     ? "Pending"
                     : payment.status === "EXPIRED"
                       ? "Expired"
                       : "Failed"
                 : "None",
+            },
+            {
+              label: "Seller transfer",
+              value: payment?.stripe_transfer_id ? "Sent at settlement" : "Not yet",
             },
             {
               label: "Settlement simulation",

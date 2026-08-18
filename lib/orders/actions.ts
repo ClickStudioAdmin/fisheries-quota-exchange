@@ -6,7 +6,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import type { OrderFormState } from "@/lib/orders/types";
 import { isPaymentsConfigured } from "@/lib/payments/env";
 import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
-import { startOrderCheckoutAction } from "@/lib/payments/actions";
+import { startOrderCheckoutAction, transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 
@@ -44,7 +44,7 @@ export async function createOrderAction(
     if (!accepts) {
       return {
         error:
-          "This seller has not completed card payment setup, so the listing cannot be purchased yet.",
+          "This seller has not completed payment setup, so the listing cannot be purchased yet.",
       };
     }
   }
@@ -154,6 +154,15 @@ export async function simulateSettlementAction(formData: FormData) {
 
   if (!Number.isInteger(orderId)) {
     return;
+  }
+
+  if (isPaymentsConfigured()) {
+    const transfer = await transferOrderSellerProceeds(orderId);
+
+    if (transfer.error) {
+      console.error("transferOrderSellerProceeds failed", transfer.error);
+      redirect("/admin/orders");
+    }
   }
 
   const { error } = await supabase.rpc("simulate_settlement", {
