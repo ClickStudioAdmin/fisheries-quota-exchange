@@ -38,7 +38,7 @@ export function HomeHeroSlider({ slides }: { slides: HomeHeroSlide[] }) {
   if (!current) {
     return (
       <div className="min-h-72 border border-line bg-paper-raised">
-        <div className="h-1 bg-chrome" />
+        <div className="h-1 bg-sea" />
         <div className="flex min-h-72 items-center p-8">
           <p className="text-sm text-ink-muted">
             Fisheries will appear here as they are added.
@@ -66,7 +66,7 @@ export function HomeHeroSlider({ slides }: { slides: HomeHeroSlide[] }) {
         setPaused(false);
       }}
     >
-      <div className="h-1 bg-chrome" />
+      <div className="h-1 bg-sea" />
       <div
         className="flex min-h-80 flex-col p-6 sm:min-h-[22rem] sm:p-8"
         role="region"
@@ -129,7 +129,7 @@ export function HomeHeroSlider({ slides }: { slides: HomeHeroSlide[] }) {
                 aria-label={slide.fishery.name}
                 className={
                   slideIndex === index
-                    ? "h-1 w-8 bg-chrome"
+                    ? "h-1 w-8 bg-sea"
                     : "h-1 w-8 bg-line hover:bg-sea"
                 }
                 onClick={() => goTo(slideIndex)}

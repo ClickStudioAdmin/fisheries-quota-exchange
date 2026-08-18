@@ -19,7 +19,7 @@ import { registrationsAllowed } from "@/lib/settings/queries";
 import { getUser } from "@/lib/supabase/server";
 
 const outlineButtonClassName =
-  "border border-line bg-paper-raised px-4 py-2 text-sm font-medium text-ink hover:border-chrome";
+  "border border-line bg-paper-raised px-4 py-2 text-sm font-medium text-ink hover:border-sea";
 
 export default async function Home() {
   const [listings, fisheries, jurisdictions, prices, user, allowRegister] =

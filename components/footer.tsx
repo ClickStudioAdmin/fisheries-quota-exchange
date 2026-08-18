@@ -3,7 +3,7 @@ import { pageWidthClassName } from "@/components/surface";
 
 export function Footer() {
   return (
-    <footer className="mt-auto shrink-0 bg-chrome text-paper">
+    <footer className="mt-auto shrink-0 border-t border-line bg-ink text-paper">
       <div className={`${pageWidthClassName} flex flex-col gap-6 py-8 lg:flex-row lg:items-start lg:justify-between`}>
         <div className="space-y-2 text-sm">
           <p className="font-medium text-paper">Fisheries Quota Exchange</p>

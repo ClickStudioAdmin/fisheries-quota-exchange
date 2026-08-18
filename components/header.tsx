@@ -19,7 +19,7 @@ export async function Header() {
   ]);
 
   return (
-    <header className="shrink-0 bg-chrome text-paper">
+    <header className="shrink-0 bg-ink text-paper">
       <div className={`${pageWidthClassName} flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between`}>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           <Logo />

@@ -11,10 +11,10 @@ import {
 } from "@react-email/components";
 import type { EmailTemplates } from "@/lib/email/types";
 
-const sea = "#0d5ea8";
-const ink = "#121820";
-const muted = "#44505c";
-const paper = "#e8edf2";
+const sea = "#1a5c63";
+const ink = "#10232b";
+const muted = "#3d4f56";
+const paper = "#f5f2ea";
 
 export function OrderSettledEmail({
   orderId,
