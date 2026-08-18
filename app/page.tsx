@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { ListingCards } from "@/components/listing-card";
-import { FisheryLogo } from "@/components/fishery-logo";
+import { FisheryCard } from "@/components/fishery-card";
+import { HomeHeroSlider, type HomeHeroSlide } from "@/components/home-hero-slider";
 import { buttonClassName } from "@/components/auth-card";
 import {
-  cardClassName,
-  LabeledFields,
   pageWidthClassName,
   panelClassName,
 } from "@/components/surface";
@@ -71,6 +70,35 @@ export default async function Home() {
       return bCount - aCount;
     })
     .slice(0, 6);
+  const heroSlides: HomeHeroSlide[] = [...fisheries]
+    .sort((a, b) => {
+      const aCount =
+        (listingCounts[a.name]?.sale ?? 0) + (listingCounts[a.name]?.lease ?? 0);
+      const bCount =
+        (listingCounts[b.name]?.sale ?? 0) + (listingCounts[b.name]?.lease ?? 0);
+      if (Boolean(b.logo_path) !== Boolean(a.logo_path)) {
+        return a.logo_path ? -1 : 1;
+      }
+      return bCount - aCount;
+    })
+    .slice(0, 6)
+    .map((fishery) => {
+      const jurisdiction = jurisdictions.find(
+        (item) => item.id === fishery.jurisdiction_id,
+      );
+      const sale = lastSale.get(fishery.id);
+      const unit = quantityTypeLabel(fishery.quantity_type);
+      const counts = listingCounts[fishery.name] ?? { sale: 0, lease: 0 };
+
+      return {
+        fishery,
+        jurisdiction: jurisdictionLabel(jurisdiction),
+        lastSale: sale
+          ? `${formatAud(sale.unit_price_aud)} / ${unit}`
+          : "No sales yet",
+        openLabel: `${counts.sale} sale · ${counts.lease} lease`,
+      };
+    });
   const fisheriesByName = new Map(
     fisheries.map((fishery) => [fishery.name, fishery]),
   );
@@ -81,42 +109,49 @@ export default async function Home() {
 
   return (
     <div>
-      <section className={`${pageWidthClassName} py-12 sm:py-20`}>
-        <p className="text-sm font-medium uppercase tracking-[0.16em] text-sea">
-          Australia
-        </p>
-        <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-          Trade commercial fisheries quota
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-muted">
-          Fisheries Quota Exchange (FQX) is a marketplace for Australian
-          Commonwealth, state and territory quota. Buy, sell, or lease at a
-          fixed price, or bid in an English auction.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/marketplace" className={buttonClassName}>
-            Browse marketplace
-          </Link>
-          <Link href="/fisheries" className={outlineButtonClassName}>
-            View fisheries
-          </Link>
-          {user ? (
-            <Link href="/dashboard" className={outlineButtonClassName}>
-              Dashboard
-            </Link>
-          ) : allowRegister ? (
-            <Link href="/register" className={outlineButtonClassName}>
-              Register
-            </Link>
-          ) : (
-            <Link href="/login" className={outlineButtonClassName}>
-              Log in
-            </Link>
-          )}
+      <section className="bg-paper-stripe">
+        <div
+          className={`${pageWidthClassName} grid items-center gap-10 py-12 lg:grid-cols-2 lg:gap-16 lg:py-20`}
+        >
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.16em] text-sea">
+              Australia
+            </p>
+            <h1 className="mt-3 max-w-xl text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+              Trade commercial fisheries quota
+            </h1>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-muted">
+              Fisheries Quota Exchange (FQX) is a marketplace for Australian
+              Commonwealth, state and territory quota. Buy, sell, or lease at a
+              fixed price, or bid in an English auction.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href="/marketplace" className={buttonClassName}>
+                Browse marketplace
+              </Link>
+              <Link href="/fisheries" className={outlineButtonClassName}>
+                View fisheries
+              </Link>
+              {user ? (
+                <Link href="/dashboard" className={outlineButtonClassName}>
+                  Dashboard
+                </Link>
+              ) : allowRegister ? (
+                <Link href="/register" className={outlineButtonClassName}>
+                  Register
+                </Link>
+              ) : (
+                <Link href="/login" className={outlineButtonClassName}>
+                  Log in
+                </Link>
+              )}
+            </div>
+            <p className="mt-4 text-sm text-ink-muted">
+              This is a development site, not a live market.
+            </p>
+          </div>
+          <HomeHeroSlider slides={heroSlides} />
         </div>
-        <p className="mt-4 text-sm text-ink-muted">
-          This is a development site, not a live market.
-        </p>
       </section>
 
       <section className="border-y border-line bg-paper-raised">
@@ -220,43 +255,19 @@ export default async function Home() {
                 (item) => item.id === fishery.jurisdiction_id,
               );
               const sale = lastSale.get(fishery.id);
-              const unit = quantityTypeLabel(fishery.quantity_type);
               const counts = listingCounts[fishery.name] ?? {
                 sale: 0,
                 lease: 0,
               };
 
               return (
-                <Link
+                <FisheryCard
                   key={fishery.id}
-                  href={`/fisheries/${fishery.id}`}
-                  className={`flex min-w-0 items-start gap-4 ${cardClassName}`}
-                >
-                  <FisheryLogo fishery={fishery} size="md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-ink">{fishery.name}</p>
-                    <div className="mt-4">
-                      <LabeledFields
-                        items={[
-                          {
-                            label: "Jurisdiction",
-                            value: jurisdictionLabel(jurisdiction),
-                          },
-                          {
-                            label: "Last sale",
-                            value: sale
-                              ? `${formatAud(sale.unit_price_aud)} / ${unit}`
-                              : "No sales yet",
-                          },
-                          {
-                            label: "Open now",
-                            value: `${counts.sale} sale · ${counts.lease} lease`,
-                          },
-                        ]}
-                      />
-                    </div>
-                  </div>
-                </Link>
+                  fishery={fishery}
+                  jurisdiction={jurisdiction}
+                  lastSale={sale}
+                  listingCounts={counts}
+                />
               );
             })}
           </div>

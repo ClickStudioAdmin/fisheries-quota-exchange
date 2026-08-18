@@ -48,6 +48,23 @@ export async function listAllOrders() {
   return (data ?? []) as Order[];
 }
 
+export async function listAdminQueueOrders() {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("orders")
+    .select(orderColumns)
+    .in("status", [
+      "AWAITING_COMPLIANCE",
+      "AWAITING_TRANSFER",
+      "AWAITING_SETTLEMENT",
+    ])
+    .order("id", { ascending: false });
+
+  return (data ?? []) as Order[];
+}
+
 export async function listOrdersByCreator(email: string) {
   const supabase = await createClient();
   if (!supabase) return [];

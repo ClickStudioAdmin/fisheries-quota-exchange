@@ -1,22 +1,18 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
-import Link from "next/link";
-import { FisheryLogo } from "@/components/fishery-logo";
+import { FisheryCard } from "@/components/fishery-card";
 import {
   ListPager,
   listRangeLabel,
   paginateItems,
   useListPagination,
 } from "@/components/list-pager";
-import { cardClassName, LabeledFields } from "@/components/surface";
 import {
   jurisdictionLabel,
-  quantityTypeLabel,
   type Fishery,
   type Jurisdiction,
 } from "@/lib/fisheries/types";
-import { formatAud } from "@/lib/listings/types";
 import type { LatestSalePrice } from "@/lib/market/types";
 
 const filterFieldClassName =
@@ -106,44 +102,16 @@ export function FisheriesList({
               (item) => item.id === fishery.jurisdiction_id,
             );
             const sale = lastSale.get(fishery.id);
-            const unit = quantityTypeLabel(fishery.quantity_type);
             const counts = listingCounts[fishery.name] ?? { sale: 0, lease: 0 };
 
             return (
-              <Link
+              <FisheryCard
                 key={fishery.id}
-                href={`/fisheries/${fishery.id}`}
-                className={`flex min-w-0 items-start gap-4 ${cardClassName}`}
-              >
-                <FisheryLogo fishery={fishery} size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-ink">{fishery.name}</p>
-                  <div className="mt-4">
-                    <LabeledFields
-                      items={[
-                        {
-                          label: "Jurisdiction",
-                          value: jurisdictionLabel(jurisdiction),
-                        },
-                        {
-                          label: "Last sale",
-                          value: sale
-                            ? `${formatAud(sale.unit_price_aud)} / ${unit}`
-                            : "No sales yet",
-                        },
-                        {
-                          label: "Sale listings",
-                          value: String(counts.sale),
-                        },
-                        {
-                          label: "Lease listings",
-                          value: String(counts.lease),
-                        },
-                      ]}
-                    />
-                  </div>
-                </div>
-              </Link>
+                fishery={fishery}
+                jurisdiction={jurisdiction}
+                lastSale={sale}
+                listingCounts={counts}
+              />
             );
           })}
         </div>

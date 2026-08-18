@@ -37,6 +37,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 
 | Path | Purpose |
 | --- | --- |
+| `/admin` | Overview: queues, platform fees, Stripe test mode |
 | `/dashboard/payments` | Embedded Connect onboarding and account management |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |
 | `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the tax invoice. Return URL is not authoritative |

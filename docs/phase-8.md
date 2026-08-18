@@ -36,7 +36,7 @@ Seller or admin can cancel an auction only when it has no bids. An auction with 
 | `/admin/listings` | Approve auctions as well as fixed-price listings |
 | `/admin/users` | Verify users so their holdings skip approval, or remove selected users from all accounts |
 | `/admin/users/[email]` | Admin-only user record: name, email, phone, accounts, holdings, listings, and orders |
-| `/admin/holdings` | Verify holdings created or changed by unverified users |
+| `/admin/holdings` | Verify holdings created or changed by unverified users. Select pending holdings to verify them in a queue. |
 | `/admin/holdings/[id]` | Admin-only holding record, including the immutable quota ledger |
 | `/admin/settings` | Platform settings: fees, registrations, and auto-approval |
 | `/admin/templates` | Email and PDF templates: preview, sample content, and send triggers |

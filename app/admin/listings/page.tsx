@@ -72,6 +72,10 @@ export default async function AdminListingsPage({
           {
             label: "Review",
             action: startListingReviewAction,
+            requireValue: {
+              key: "status",
+              value: "PENDING_APPROVAL",
+            },
           },
         ]}
         columns={[

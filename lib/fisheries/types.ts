@@ -107,6 +107,31 @@ export function holdingVerificationLabel(status: HoldingVerificationStatus) {
   return status === "VERIFIED" ? "Verified" : "Pending verification";
 }
 
+export function parseHoldingIds(value?: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      value
+        .split(/[,\s]+/)
+        .map(Number)
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+}
+
+export function holdingVerifyPath(ids: Array<string | number>) {
+  const unique = parseHoldingIds(ids.join(","));
+
+  if (unique.length === 0) {
+    return "/admin/holdings";
+  }
+
+  return `/admin/holdings?queue=${unique.join(",")}`;
+}
+
 export type QuotaLedgerEntry = {
   id: number;
   holding_id: number;

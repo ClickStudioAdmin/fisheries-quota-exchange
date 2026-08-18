@@ -25,7 +25,7 @@ A second purchase of the same listing fails because it is no longer `PUBLISHED`.
 | `/marketplace/[id]` | Purchase (reserves quota) |
 | `/orders/[id]` | Order, reservation, simulated transaction, audit |
 | `/dashboard/orders` | Buys and sells for the selected account |
-| `/admin/orders` | Compliance, transfer, and settlement simulation. Select orders to approve, reject, simulate transfer, or simulate settlement in bulk. |
+| `/admin/orders` | Compliance, transfer, and settlement simulation. Select orders in the same status to open a review queue, as with listings. |
 
 ## Database
 

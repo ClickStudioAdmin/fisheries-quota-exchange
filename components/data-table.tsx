@@ -64,6 +64,8 @@ type DataTableBulkAction = {
   confirm?: string;
   fieldName?: string;
   hiddenFields?: Record<string, string>;
+  /** Enabled only when every selected row has this values[key]. */
+  requireValue?: { key: string; value: string };
 };
 
 type DataTableProps = {
@@ -110,6 +112,28 @@ function rowText(row: DataTableRow) {
     item.value,
   ]);
   return [...values, ...labels, ...details].join(" ").toLowerCase();
+}
+
+function bulkActionEnabled(
+  item: DataTableBulkAction,
+  rows: DataTableRow[],
+  selectedIds: string[],
+) {
+  if (selectedIds.length === 0) {
+    return false;
+  }
+
+  if (!item.requireValue) {
+    return true;
+  }
+
+  const required = item.requireValue;
+  const byId = new Map(rows.map((row) => [String(row.id), row]));
+
+  return selectedIds.every((id) => {
+    const row = byId.get(id);
+    return String(row?.values[required.key] ?? "") === required.value;
+  });
 }
 
 function uniqueValues(rows: DataTableRow[], key: string) {
@@ -603,13 +627,14 @@ export function DataTable({
           <div className="flex flex-wrap items-center gap-2">
             {resolvedBulkActions.map((item) => {
               const fieldName = item.fieldName ?? "ids";
+              const enabled = bulkActionEnabled(item, rows, selectedIds);
 
               return (
                 <form
                   key={item.label}
                   action={item.action}
                   onSubmit={(event) => {
-                    if (selectedIds.length === 0) {
+                    if (!enabled) {
                       event.preventDefault();
                       return;
                     }
@@ -619,24 +644,26 @@ export function DataTable({
                   }}
                   className="flex items-center gap-2"
                 >
-                  {selectedIds.map((id) => (
-                    <input
-                      key={id}
-                      type="hidden"
-                      name={fieldName}
-                      value={id}
-                    />
-                  ))}
+                  {enabled
+                    ? selectedIds.map((id) => (
+                        <input
+                          key={id}
+                          type="hidden"
+                          name={fieldName}
+                          value={id}
+                        />
+                      ))
+                    : null}
                   {Object.entries(item.hiddenFields ?? {}).map(([name, value]) => (
                     <input key={name} type="hidden" name={name} value={value} />
                   ))}
                   <PendingSubmitButton
-                    disabled={selectedIds.length === 0}
+                    disabled={!enabled}
                     className={tableButtonClassName}
                     pendingLabel="Working…"
                   >
                     {item.label}
-                    {selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+                    {enabled ? ` (${selectedIds.length})` : ""}
                   </PendingSubmitButton>
                 </form>
               );

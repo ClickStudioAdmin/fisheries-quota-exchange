@@ -84,6 +84,41 @@ export function parseOrderIds(value?: string | null) {
   ];
 }
 
+export const ORDER_QUEUE_STATUSES = [
+  "AWAITING_COMPLIANCE",
+  "AWAITING_TRANSFER",
+  "AWAITING_SETTLEMENT",
+] as const;
+
+export type OrderQueueStatus = (typeof ORDER_QUEUE_STATUSES)[number];
+
+export function isOrderQueueStatus(
+  status: string,
+): status is OrderQueueStatus {
+  return (ORDER_QUEUE_STATUSES as readonly string[]).includes(status);
+}
+
+export function orderQueuePath(ids: Array<string | number>) {
+  const unique = parseOrderIds(ids.join(","));
+
+  if (unique.length === 0) {
+    return "/admin/orders";
+  }
+
+  return `/admin/orders?queue=${unique.join(",")}`;
+}
+
+export function orderQueueTitle(status: OrderQueueStatus) {
+  switch (status) {
+    case "AWAITING_COMPLIANCE":
+      return "Review orders";
+    case "AWAITING_TRANSFER":
+      return "Simulate transfer";
+    case "AWAITING_SETTLEMENT":
+      return "Simulate settlement";
+  }
+}
+
 export function orderStatusLabel(status: OrderStatus) {
   switch (status) {
     case "AWAITING_PAYMENT":

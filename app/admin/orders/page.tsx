@@ -1,37 +1,67 @@
 import { redirect } from "next/navigation";
-import {
-  approveComplianceAction,
-  rejectComplianceAction,
-  simulateSettlementAction,
-  simulateTransferAction,
-} from "@/lib/orders/actions";
+import { startOrderQueueAction } from "@/lib/orders/actions";
 import { listAllOrders } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
+import {
+  isOrderQueueStatus,
+  orderQueuePath,
+  orderQueueTitle,
+  orderStatusLabel,
+  parseOrderIds,
+  type Order,
+} from "@/lib/orders/types";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { fisherySelectLabelForName } from "@/lib/fisheries/types";
-import { fieldClassName, tableButtonClassName } from "@/components/auth-card";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { OrderTableLinks } from "@/components/order-table-links";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TableModal } from "@/components/table-modal";
+import { ReviewOrderForms } from "@/components/review-order-forms";
+import { BulkReviewOrdersModal } from "@/components/bulk-review-orders-modal";
 import { formatTableDate } from "@/lib/format";
 
 export const metadata = {
   title: "Orders",
 };
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ queue?: string }>;
+}) {
   if (!(await isPlatformAdmin())) {
     redirect("/admin");
   }
 
+  const query = await searchParams;
   const [orders, fisheries, jurisdictions] = await Promise.all([
     listAllOrders(),
     listFisheries(),
     listJurisdictions(),
   ]);
+  const queued = parseOrderIds(query.queue);
+  const byId = new Map(orders.map((order) => [order.id, order]));
+  const firstQueued = queued
+    .map((id) => byId.get(id))
+    .find(
+      (order): order is Order =>
+        order != null && isOrderQueueStatus(order.status),
+    );
+  const queueStatus = firstQueued?.status;
+  const queueOrders = queueStatus
+    ? queued
+        .map((id) => byId.get(id))
+        .filter(
+          (order): order is Order =>
+            order != null && order.status === queueStatus,
+        )
+    : [];
+  const remainingPath = orderQueuePath(queueOrders.map((order) => order.id));
+  const requestedPath = orderQueuePath(queued);
+
+  if (queued.length > 0 && remainingPath !== requestedPath) {
+    redirect(remainingPath);
+  }
 
   return (
     <div className="space-y-6">
@@ -41,11 +71,11 @@ export default async function AdminOrdersPage() {
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           No live payment. Approve compliance, simulate transfer, then simulate
-          settlement. Select orders to run those actions in bulk; only matching
-          statuses are applied. The buyer pays the listed amount. Settlement
-          Transfers the seller’s share after the platform fee, writes
-          SALE/PURCHASE or LEASE_OUT/LEASE_IN ledger rows, consumes the
-          reservation, and emails a dummy tax invoice to the buyer.
+          settlement. Select orders in the same status to open a queue. The
+          buyer pays the listed amount. Settlement Transfers the seller’s share
+          after the platform fee, writes SALE/PURCHASE or LEASE_OUT/LEASE_IN
+          ledger rows, consumes the reservation, and emails a dummy tax invoice
+          to the buyer.
         </p>
       </div>
       <DataTable
@@ -56,24 +86,31 @@ export default async function AdminOrdersPage() {
         selectable
         bulkActions={[
           {
-            label: "Approve compliance",
-            action: approveComplianceAction,
-          },
-          {
-            label: "Reject compliance",
-            action: rejectComplianceAction,
-            confirm:
-              "Reject the selected orders that are awaiting compliance? Reservations will be released.",
+            label: "Review",
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "status",
+              value: "AWAITING_COMPLIANCE",
+            },
+            hiddenFields: { expected_status: "AWAITING_COMPLIANCE" },
           },
           {
             label: "Simulate transfer",
-            action: simulateTransferAction,
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "status",
+              value: "AWAITING_TRANSFER",
+            },
+            hiddenFields: { expected_status: "AWAITING_TRANSFER" },
           },
           {
             label: "Simulate settlement",
-            action: simulateSettlementAction,
-            confirm:
-              "Settle the selected orders that are awaiting settlement? This Transfers the seller’s share and completes quota.",
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "status",
+              value: "AWAITING_SETTLEMENT",
+            },
+            hiddenFields: { expected_status: "AWAITING_SETTLEMENT" },
           },
         ]}
         columns={[
@@ -176,85 +213,56 @@ export default async function AdminOrdersPage() {
               <>
                 {order.status === "AWAITING_COMPLIANCE" ? (
                   <TableModal title="Review compliance" label="Review">
-                    <div className="space-y-4">
-                      <form
-                        id={`approve-compliance-${order.id}`}
-                        action={approveComplianceAction}
-                      >
-                        <input type="hidden" name="order_id" value={order.id} />
-                        <PendingSubmitButton
-                          className={tableButtonClassName}
-                          pendingLabel="Approving…"
-                        >
-                          Approve
-                        </PendingSubmitButton>
-                      </form>
-                      <form action={rejectComplianceAction} className="space-y-3">
-                        <input type="hidden" name="order_id" value={order.id} />
-                        <div>
-                          <label
-                            htmlFor={`reject-note-${order.id}`}
-                            className="block text-sm text-ink"
-                          >
-                            Reason (optional)
-                          </label>
-                          <input
-                            id={`reject-note-${order.id}`}
-                            name="review_note"
-                            className={fieldClassName}
-                          />
-                        </div>
-                        <PendingSubmitButton
-                          className={tableButtonClassName}
-                          pendingLabel="Rejecting…"
-                        >
-                          Reject
-                        </PendingSubmitButton>
-                      </form>
-                      <div>
-                        <label
-                          htmlFor={`approve-note-${order.id}`}
-                          className="block text-sm text-ink"
-                        >
-                          Note (optional)
-                        </label>
-                        <input
-                          id={`approve-note-${order.id}`}
-                          name="review_note"
-                          form={`approve-compliance-${order.id}`}
-                          className={fieldClassName}
-                        />
-                      </div>
-                    </div>
+                    <ReviewOrderForms order={order} />
                   </TableModal>
                 ) : null}
-                {order.status === "AWAITING_TRANSFER" ? (
-                  <form action={simulateTransferAction}>
-                    <input type="hidden" name="order_id" value={order.id} />
-                    <PendingSubmitButton
-                      className={tableButtonClassName}
-                      pendingLabel="Simulating…"
-                    >
-                      Simulate transfer
-                    </PendingSubmitButton>
-                  </form>
-                ) : null}
-                {order.status === "AWAITING_SETTLEMENT" ? (
-                  <form action={simulateSettlementAction}>
-                    <input type="hidden" name="order_id" value={order.id} />
-                    <PendingSubmitButton
-                      className={tableButtonClassName}
-                      pendingLabel="Settling…"
-                    >
-                      Simulate settlement
-                    </PendingSubmitButton>
-                  </form>
+                {order.status === "AWAITING_TRANSFER" ||
+                order.status === "AWAITING_SETTLEMENT" ? (
+                  <ReviewOrderForms order={order} />
                 ) : null}
               </>
             }
           />
         ))}
       </DataTable>
+      {queueOrders.length > 0 &&
+      queueStatus &&
+      isOrderQueueStatus(queueStatus) ? (
+        <BulkReviewOrdersModal
+          title={orderQueueTitle(queueStatus)}
+          count={queueOrders.length}
+        >
+          {queueOrders.map((order, index) => (
+            <section
+              key={order.id}
+              className="space-y-4 py-6 first:pt-0 last:pb-0"
+            >
+              <div>
+                <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+                  {index + 1} of {queueOrders.length}
+                </p>
+                <h3 className="mt-1 text-lg font-semibold text-ink">
+                  Order {order.id} · {order.buyer_name} / {order.seller_name}
+                </h3>
+                <p className="mt-1 text-sm text-ink-muted">
+                  {listingOfferingLabel(order.offering)} ·{" "}
+                  {fisherySelectLabelForName(
+                    order.fishery_name,
+                    fisheries,
+                    jurisdictions,
+                  )}{" "}
+                  · {order.quantity} {order.unit_label} ·{" "}
+                  {formatAud(order.amount_aud)}
+                </p>
+              </div>
+              <ReviewOrderForms
+                order={order}
+                reviewQueue={queueOrders.map((item) => item.id)}
+              />
+            </section>
+          ))}
+        </BulkReviewOrdersModal>
+      ) : null}
     </div>
   );
 }

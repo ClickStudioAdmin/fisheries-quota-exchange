@@ -10,8 +10,9 @@ import { getListing } from "@/lib/listings/queries";
 import { getOrder } from "@/lib/orders/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 import {
+  isOrderQueueStatus,
+  orderQueuePath,
   parseOrderIds,
-  type Order,
   type OrderFormState,
   type OrderStatus,
 } from "@/lib/orders/types";
@@ -21,21 +22,24 @@ function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
 }
 
-function readOrderIds(formData: FormData) {
-  return parseOrderIds(
-    [
-      ...formData.getAll("ids").map(String),
-      String(formData.get("order_id") ?? ""),
-    ].join(","),
-  );
+function redirectAfterOrderQueue(formData: FormData) {
+  redirect(orderQueuePath(formData.getAll("review_queue").map(String)));
 }
 
-async function ordersForAdminAction(formData: FormData, status: OrderStatus) {
-  const found = await Promise.all(readOrderIds(formData).map(getOrder));
+async function currentOrderForStatus(formData: FormData, status: OrderStatus) {
+  const orderId = Number(formData.get("order_id"));
 
-  return found.filter(
-    (order): order is Order => order != null && order.status === status,
-  );
+  if (!Number.isInteger(orderId)) {
+    return null;
+  }
+
+  const order = await getOrder(orderId);
+
+  if (!order || order.status !== status) {
+    return null;
+  }
+
+  return order;
 }
 
 export async function createOrderAction(
@@ -98,6 +102,31 @@ export async function cancelOrderAction(formData: FormData) {
   redirect(next);
 }
 
+export async function startOrderQueueAction(formData: FormData) {
+  if (!(await isPlatformAdmin())) {
+    redirect("/admin");
+  }
+
+  const expected = String(formData.get("expected_status") ?? "");
+  const selected = parseOrderIds(formData.getAll("ids").map(String).join(","));
+
+  if (!isOrderQueueStatus(expected) || selected.length === 0) {
+    redirect("/admin/orders");
+  }
+
+  const found = await Promise.all(selected.map(getOrder));
+
+  if (
+    found.some(
+      (order) => order == null || order.status !== expected,
+    )
+  ) {
+    redirect("/admin/orders");
+  }
+
+  redirect(orderQueuePath(selected));
+}
+
 export async function approveComplianceAction(formData: FormData) {
   const supabase = await createClient();
 
@@ -105,17 +134,17 @@ export async function approveComplianceAction(formData: FormData) {
     return;
   }
 
+  const order = await currentOrderForStatus(formData, "AWAITING_COMPLIANCE");
   const note = read(formData, "review_note");
-  const orders = await ordersForAdminAction(formData, "AWAITING_COMPLIANCE");
 
-  for (const order of orders) {
+  if (order) {
     await supabase.rpc("approve_compliance", {
       p_order_id: order.id,
       p_note: note || null,
     });
   }
 
-  redirect("/admin/orders");
+  redirectAfterOrderQueue(formData);
 }
 
 export async function rejectComplianceAction(formData: FormData) {
@@ -125,17 +154,17 @@ export async function rejectComplianceAction(formData: FormData) {
     return;
   }
 
+  const order = await currentOrderForStatus(formData, "AWAITING_COMPLIANCE");
   const note = read(formData, "review_note");
-  const orders = await ordersForAdminAction(formData, "AWAITING_COMPLIANCE");
 
-  for (const order of orders) {
+  if (order) {
     await supabase.rpc("reject_compliance", {
       p_order_id: order.id,
       p_note: note || null,
     });
   }
 
-  redirect("/admin/orders");
+  redirectAfterOrderQueue(formData);
 }
 
 export async function simulateTransferAction(formData: FormData) {
@@ -145,13 +174,13 @@ export async function simulateTransferAction(formData: FormData) {
     return;
   }
 
-  const orders = await ordersForAdminAction(formData, "AWAITING_TRANSFER");
+  const order = await currentOrderForStatus(formData, "AWAITING_TRANSFER");
 
-  for (const order of orders) {
+  if (order) {
     await supabase.rpc("simulate_transfer", { p_order_id: order.id });
   }
 
-  redirect("/admin/orders");
+  redirectAfterOrderQueue(formData);
 }
 
 export async function simulateSettlementAction(formData: FormData) {
@@ -161,15 +190,15 @@ export async function simulateSettlementAction(formData: FormData) {
     return;
   }
 
-  const orders = await ordersForAdminAction(formData, "AWAITING_SETTLEMENT");
+  const order = await currentOrderForStatus(formData, "AWAITING_SETTLEMENT");
 
-  for (const order of orders) {
+  if (order) {
     if (isPaymentsConfigured()) {
       const transfer = await transferOrderSellerProceeds(order.id);
 
       if (transfer.error) {
         console.error("transferOrderSellerProceeds failed", transfer.error);
-        continue;
+        redirectAfterOrderQueue(formData);
       }
     }
 
@@ -190,5 +219,5 @@ export async function simulateSettlementAction(formData: FormData) {
     }
   }
 
-  redirect("/admin/orders");
+  redirectAfterOrderQueue(formData);
 }

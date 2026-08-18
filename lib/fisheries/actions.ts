@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { isQuantityType } from "@/lib/fisheries/types";
+import {
+  holdingVerifyPath,
+  isQuantityType,
+  parseHoldingIds,
+} from "@/lib/fisheries/types";
+import { getHolding } from "@/lib/fisheries/queries";
 import { userFacingError } from "@/lib/errors/user-message";
 import {
   FISHERY_LOGO_BUCKET,
@@ -304,6 +309,33 @@ export async function adjustHoldingAction(
   return { message: "Holding updated. Ledger recorded ADJUSTMENT." };
 }
 
+export async function startHoldingVerifyAction(formData: FormData) {
+  if (!(await isPlatformAdmin())) {
+    redirect("/admin");
+  }
+
+  const selected = parseHoldingIds(
+    formData.getAll("ids").map(String).join(","),
+  );
+
+  if (selected.length === 0) {
+    redirect("/admin/holdings");
+  }
+
+  const found = await Promise.all(selected.map(getHolding));
+
+  if (
+    found.some(
+      (holding) =>
+        holding == null || holding.verification_status !== "PENDING_VERIFICATION",
+    )
+  ) {
+    redirect("/admin/holdings");
+  }
+
+  redirect(holdingVerifyPath(selected));
+}
+
 export async function verifyHoldingAction(formData: FormData) {
   const admin = await requireAdmin();
   if (admin.error || !admin.supabase) return;
@@ -323,6 +355,12 @@ export async function verifyHoldingAction(formData: FormData) {
   revalidatePath(`/admin/holdings/${holdingId}`);
   revalidatePath(`/dashboard/holdings/${holdingId}`);
   revalidatePath("/admin/users", "layout");
+
+  if (String(formData.get("from_queue") ?? "") === "1") {
+    redirect(
+      holdingVerifyPath(formData.getAll("review_queue").map(String)),
+    );
+  }
 }
 
 export async function updateFisheryLogoAction(

@@ -5,6 +5,7 @@ const sizeClassName = {
   sm: "h-12 w-12 text-base",
   md: "h-16 w-16 text-lg",
   lg: "h-24 w-24 text-2xl",
+  xl: "h-32 w-32 text-3xl sm:h-40 sm:w-40 sm:text-4xl",
 };
 
 type FisheryLogoProps = {
