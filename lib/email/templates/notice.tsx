@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Body,
   Button,
@@ -9,42 +10,56 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import type { EmailTemplates } from "@/lib/email/types";
 
 const sea = "#1a5c63";
 const ink = "#10232b";
 const muted = "#3d4f56";
 const paper = "#f5f2ea";
 
-export function OrderSettledEmail({
-  orderId,
-  buyerName,
-  offeringLabel,
-  amount,
-  orderUrl,
-}: EmailTemplates["order_settled"]) {
+export function NoticeEmail({
+  preview,
+  heading,
+  paragraphs,
+  actionLabel,
+  actionUrl,
+}: {
+  preview: string;
+  heading: string;
+  paragraphs: string[];
+  actionLabel?: string;
+  actionUrl?: string;
+  children?: ReactNode;
+}) {
   return (
     <Html>
       <Head />
-          <Preview>{`Simulated tax invoices for FQX order ${orderId}`}</Preview>
-          <Body style={{ backgroundColor: paper, color: ink, fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
+      <Preview>{preview}</Preview>
+      <Body
+        style={{
+          backgroundColor: paper,
+          color: ink,
+          fontFamily: "ui-sans-serif, system-ui, sans-serif",
+        }}
+      >
         <Container style={{ padding: "32px 16px", maxWidth: "520px" }}>
           <Heading style={{ fontSize: "22px", fontWeight: 600, color: ink }}>
             Fisheries Quota Exchange
           </Heading>
           <Text style={{ fontSize: "16px", lineHeight: "24px", color: ink }}>
-            Simulated settlement is complete for order {orderId} ({offeringLabel}
-            {" "}for {buyerName}). Dummy tax invoices are attached: one for the
-            quota and one for the platform fee.
+            {heading}
           </Text>
-          <Text style={{ fontSize: "16px", lineHeight: "24px", color: muted }}>
-            Quota total {amount}. These are not real tax invoices and no payment
-            has been taken.
-          </Text>
-          {orderUrl ? (
+          {paragraphs.map((paragraph, index) => (
+            <Text
+              key={`${index}-${paragraph.slice(0, 24)}`}
+              style={{ fontSize: "16px", lineHeight: "24px", color: muted }}
+            >
+              {paragraph}
+            </Text>
+          ))}
+          {actionUrl && actionLabel ? (
             <Section style={{ marginTop: "24px" }}>
               <Button
-                href={orderUrl}
+                href={actionUrl}
                 style={{
                   backgroundColor: sea,
                   color: paper,
@@ -54,7 +69,7 @@ export function OrderSettledEmail({
                   textDecoration: "none",
                 }}
               >
-                View order
+                {actionLabel}
               </Button>
             </Section>
           ) : null}

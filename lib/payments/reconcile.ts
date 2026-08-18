@@ -3,6 +3,8 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getPaymentProvider } from "@/lib/payments/provider";
 import { getPaymentForOrder } from "@/lib/payments/queries";
+import { getOrderForSystem } from "@/lib/orders/queries";
+import { notifyPaymentReceived } from "@/lib/email/events";
 
 export type OrderPaymentLiveStatus = "paid" | "processing" | "unpaid" | "expired";
 
@@ -41,6 +43,11 @@ export async function reconcileOrderPayment(
     if (error) {
       console.error("reconcile mark_order_paid failed", error.message);
       return "unpaid";
+    }
+
+    const order = await getOrderForSystem(orderId);
+    if (order) {
+      await notifyPaymentReceived(order);
     }
 
     return "paid";

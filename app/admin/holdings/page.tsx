@@ -190,6 +190,7 @@ export default async function HoldingsAdminPage({
                 <VerifyHoldingForm
                   holdingId={holding.id}
                   reviewQueue={queueHoldings.map((item) => item.id)}
+                  withRequestChanges
                 />
               </section>
             );

@@ -7,6 +7,14 @@ import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { userFacingError } from "@/lib/errors/user-message";
 import type { AuctionFormState, BidFormState } from "@/lib/auctions/types";
+import { getListing } from "@/lib/listings/queries";
+import { listBids } from "@/lib/auctions/queries";
+import { getOrder } from "@/lib/orders/queries";
+import {
+  notifyAuctionClosed,
+  notifyBidPlaced,
+  notifyListingCreated,
+} from "@/lib/email/events";
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -90,6 +98,11 @@ export async function createAuctionAction(
     redirect(accountPath(organisationId, "/dashboard/listings"));
   }
 
+  const listing = await getListing(listingId);
+  if (listing) {
+    await notifyListingCreated(listing);
+  }
+
   redirect(`/auctions/${listingId}`);
 }
 
@@ -116,6 +129,8 @@ export async function placeBidAction(
     return { error: "Bid must be greater than zero." };
   }
 
+  const listing = await getListing(listingId);
+  const previous = (await listBids(listingId))[0] ?? null;
   const { error } = await supabase.rpc("place_bid", {
     p_listing_id: listingId,
     p_bidder_organisation_id: organisationId,
@@ -124,6 +139,16 @@ export async function placeBidAction(
 
   if (error) {
     return { error: userFacingError(error) };
+  }
+
+  if (listing && user.email) {
+    await notifyBidPlaced({
+      listing,
+      amount,
+      bidderEmail: user.email,
+      bidderOrganisationId: organisationId,
+      previous,
+    });
   }
 
   redirect(`/auctions/${listingId}`);
@@ -137,12 +162,19 @@ export async function closeAuctionAction(formData: FormData) {
     return;
   }
 
+  const listing = await getListing(listingId);
+  const bids = await listBids(listingId);
   const { data, error } = await supabase.rpc("close_auction", {
     p_listing_id: listingId,
   });
 
   if (error) {
     redirect(`/auctions/${listingId}`);
+  }
+
+  const order = data ? await getOrder(Number(data)) : null;
+  if (listing) {
+    await notifyAuctionClosed({ listing, bids, order });
   }
 
   if (data) {

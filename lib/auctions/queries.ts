@@ -56,6 +56,17 @@ export async function ensureAuctionClosed(listing: Listing) {
     return listing;
   }
 
+  const bids = await listBids(listing.id);
   await supabase.rpc("close_auction", { p_listing_id: listing.id });
-  return (await getListing(listing.id)) ?? listing;
+  const closed = (await getListing(listing.id)) ?? listing;
+  const { getOrderForListing } = await import("@/lib/orders/queries");
+  const { notifyAuctionClosed } = await import("@/lib/email/events");
+  const order = await getOrderForListing(listing.id);
+  await notifyAuctionClosed({
+    listing,
+    bids,
+    order:
+      closed.status === "RESERVED" || closed.status === "SOLD" ? order : null,
+  });
+  return closed;
 }

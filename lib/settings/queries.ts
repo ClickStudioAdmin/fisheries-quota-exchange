@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   DEFAULT_PLATFORM_SETTINGS,
   type PlatformSettings,
@@ -15,11 +16,14 @@ function asSettings(row: Record<string, unknown> | null): PlatformSettings {
     allow_registrations: row.allow_registrations !== false,
     auto_approve_holdings: row.auto_approve_holdings !== false,
     auto_approve_listings: row.auto_approve_listings === true,
+    disabled_emails: Array.isArray(row.disabled_emails)
+      ? row.disabled_emails.map(String)
+      : [],
   };
 }
 
 export async function getPlatformSettings(): Promise<PlatformSettings> {
-  const supabase = await createClient();
+  const supabase = createServiceClient() ?? (await createClient());
 
   if (!supabase) {
     return DEFAULT_PLATFORM_SETTINGS;
@@ -28,7 +32,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   const { data, error } = await supabase
     .from("platform_settings")
     .select(
-      "sale_fee_percent, lease_fee_percent, allow_registrations, auto_approve_holdings, auto_approve_listings",
+      "sale_fee_percent, lease_fee_percent, allow_registrations, auto_approve_holdings, auto_approve_listings, disabled_emails",
     )
     .eq("id", 1)
     .maybeSingle();

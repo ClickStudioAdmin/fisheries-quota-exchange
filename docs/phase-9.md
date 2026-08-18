@@ -48,10 +48,11 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/orders/[id]/invoice/fee` | Platform fee tax invoice PDF (FQX to seller) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored |
 | `/api/stripe/webhook` | Signed Stripe events |
 | `/api/stripe/account-session` | Account Session client secret for embedded components |
+| `/api/cron/emails` | Hourly scheduled mail (listing expired, auction ending soon, payment reminder). Requires `CRON_SECRET` |
 
 ## Database
 
-Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`
+Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`
 
 - `organisations.stripe_account_id` and charge/payout flags
 - `payments` (Checkout / PaymentIntent ids; `stripe_transfer_id` after settlement)
@@ -79,7 +80,8 @@ Server only (never `NEXT_PUBLIC_` except the publishable key):
 | `STRIPE_SECRET_KEY` | Test secret (`sk_test_...`) |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_...`) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Test publishable key (`pk_test_...`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Webhook and settlement transfer updates. Never expose to the browser. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Webhook, settlement transfer updates, and scheduled email. Never expose to the browser. |
+| `CRON_SECRET` | Bearer token for `/api/cron/emails`. Vercel Cron sends it automatically when set. |
 
 Point the Stripe sandbox webhook at `/api/stripe/webhook`:
 
@@ -97,6 +99,24 @@ Turn **off automatic payouts** on the FQX platform Stripe account so held seller
 In the test-mode Dashboard, add Radar rule `Block if :card_country: != 'AU'` so international cards cannot underfund the listed amount after Stripe’s 3.5% fee. Repeat the rule in live mode in a later phase.
 
 Test card (AU Visa): `4000 0003 6000 0006`. Test BECS debit: BSB `000-000`, account `000123456`. Do not use `4242 4242 4242 4242` once the Radar rule is on.
+
+## Transactional email
+
+Mail is sent from the server after the database write. Auth confirm and password reset stay on Supabase Auth. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; the action still succeeds. Platform admins can disable each product email on `/admin/settings`. Previews are on `/admin/templates`.
+
+Buyer and seller managers both receive `order_settled` with both dummy tax invoice PDFs.
+
+One-shot mail uses `email_dispatches` via `claim_email_dispatch` so payment, checkout, listing expiry, auction ending soon, payment reminder, and payments-setup messages are not resent.
+
+Hourly cron (`vercel.json` → `/api/cron/emails`) sends:
+
+- `listing_expired` for published fixed-price listings past `expires_at`
+- `auction_ending_soon` for published auctions ending within 24 hours
+- `payment_reminder` for orders still `AWAITING_PAYMENT` after 24 hours
+
+Holding “request changes” emails the seller and leaves the holding `PENDING_VERIFICATION` (there is no rejected holding status).
+
+Do not put Resend keys or `CRON_SECRET` in `NEXT_PUBLIC_` variables.
 
 ## Not in this phase
 

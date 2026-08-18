@@ -1,10 +1,11 @@
 import "server-only";
 
-import { sendEmail } from "@/lib/email/send";
+import { emailCopy } from "@/lib/email/copy";
+import { notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
+import { organisationManagerEmails, uniqueEmails } from "@/lib/email/recipients";
 import { getSettledOrderInvoices } from "@/lib/invoices/for-order";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getOrder } from "@/lib/orders/queries";
-import { getSiteUrl } from "@/lib/site-url";
 
 export async function sendSettledOrderInvoice(orderId: number) {
   const order = await getOrder(orderId);
@@ -14,33 +15,48 @@ export async function sendSettledOrderInvoice(orderId: number) {
     return;
   }
 
-  const to = order.created_by_email.trim().toLowerCase();
-
-  if (!to.includes("@")) {
-    return;
-  }
-
-  const siteUrl = await getSiteUrl();
-
-  await sendEmail({
-    to,
-    template: "order_settled",
-    data: {
-      orderId: order.id,
-      buyerName: order.buyer_name,
-      offeringLabel: listingOfferingLabel(order.offering),
-      amount: invoices.quota.data.total,
-      orderUrl: siteUrl ? `${siteUrl}/orders/${order.id}` : "",
+  const siteUrl = await siteUrlOrEmpty();
+  const orderUrl = siteUrl ? `${siteUrl}/orders/${order.id}` : "";
+  const offeringLabel = listingOfferingLabel(order.offering);
+  const amount = invoices.quota.data.total;
+  const attachments = [
+    {
+      filename: invoices.quota.filename,
+      content: invoices.quota.pdf,
     },
-    attachments: [
-      {
-        filename: invoices.quota.filename,
-        content: invoices.quota.pdf,
-      },
-      {
-        filename: invoices.fee.filename,
-        content: invoices.fee.pdf,
-      },
-    ],
-  });
+    {
+      filename: invoices.fee.filename,
+      content: invoices.fee.pdf,
+    },
+  ];
+  const buyers = uniqueEmails([
+    ...(await organisationManagerEmails(order.buyer_organisation_id)),
+    order.created_by_email,
+  ]);
+  const sellers = await organisationManagerEmails(order.seller_organisation_id);
+
+  await notifyEmail(
+    "order_settled",
+    buyers,
+    emailCopy.order_settled({
+      orderId: order.id,
+      offeringLabel,
+      amount,
+      orderUrl,
+      forSeller: false,
+    }),
+    attachments,
+  );
+  await notifyEmail(
+    "order_settled",
+    sellers,
+    emailCopy.order_settled({
+      orderId: order.id,
+      offeringLabel,
+      amount,
+      orderUrl,
+      forSeller: true,
+    }),
+    attachments,
+  );
 }

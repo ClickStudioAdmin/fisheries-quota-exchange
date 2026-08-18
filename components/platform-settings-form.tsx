@@ -10,6 +10,10 @@ import {
   type SettingsFormState,
 } from "@/lib/settings/actions";
 import type { PlatformSettings } from "@/lib/settings/types";
+import {
+  PRODUCT_EMAIL_IDS,
+  PRODUCT_EMAIL_LABELS,
+} from "@/lib/email/product-emails";
 
 const initialState: SettingsFormState = {};
 
@@ -24,7 +28,7 @@ export function PlatformSettingsForm({
   );
 
   return (
-    <form action={formAction} className="max-w-lg space-y-6">
+    <form action={formAction} className="max-w-2xl space-y-6">
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
@@ -127,6 +131,35 @@ export function PlatformSettingsForm({
             </span>
           </span>
         </label>
+      </fieldset>
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium text-ink">
+          Transactional email
+        </legend>
+        <p className="text-sm text-ink-muted">
+          Uncheck a message to stop sending it. Auth confirm and password reset
+          stay on Supabase and are not listed here. Actions still complete if
+          mail is skipped.
+        </p>
+        <div className="max-h-80 space-y-2 overflow-y-auto border border-line bg-paper-raised p-3">
+          {PRODUCT_EMAIL_IDS.map((id) => (
+            <label key={id} className="flex items-start gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                name="email_enabled"
+                value={id}
+                defaultChecked={!settings.disabled_emails.includes(id)}
+                className="mt-0.5"
+              />
+              <span>
+                {PRODUCT_EMAIL_LABELS[id]}
+                <span className="mt-0.5 block font-mono text-xs text-ink-muted">
+                  {id}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
       </fieldset>
       <button type="submit" className={buttonClassName} disabled={pending}>
         {pending ? "Saving…" : "Save settings"}

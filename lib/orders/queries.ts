@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import type {
   AuditEvent,
   Order,
@@ -113,10 +114,10 @@ export async function getOrderForListing(listingId: number) {
   return (data as Order | null) ?? null;
 }
 
-export async function getOrder(id: number) {
-  const supabase = await createClient();
-  if (!supabase) return null;
-
+async function fetchOrder(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  id: number,
+) {
   const { data } = await supabase
     .from("orders")
     .select(orderColumns)
@@ -124,6 +125,18 @@ export async function getOrder(id: number) {
     .maybeSingle();
 
   return (data as Order | null) ?? null;
+}
+
+export async function getOrder(id: number) {
+  const supabase = (await createClient()) ?? createServiceClient();
+  if (!supabase) return null;
+  return fetchOrder(supabase, id);
+}
+
+export async function getOrderForSystem(id: number) {
+  const supabase = createServiceClient() ?? (await createClient());
+  if (!supabase) return null;
+  return fetchOrder(supabase, id);
 }
 
 export async function getReservationForOrder(orderId: number) {

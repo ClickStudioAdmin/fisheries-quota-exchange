@@ -25,7 +25,8 @@ Current tables:
 | `stripe_webhook_events` | 9 | Processed Stripe event ids (idempotency). |
 | `audit_events` | 7 | Order workflow audit. |
 | `bids` | 8 | Auction bids. `created_at` is server time. |
-| `platform_settings` | 8 | Singleton: sale/lease fee %, registrations, auto-approve holdings/listings. |
+| `platform_settings` | 8–9 | Singleton: sale/lease fee %, registrations, auto-approve holdings/listings, `disabled_emails`. |
+| `email_dispatches` | 9 | One-shot transactional mail keys (`template` + `entity_key`). |
 
 `organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. `organisation_users.full_name` is required. Auth metadata still overrides that name when present. The insert trigger `organisation_users_fill_name` reads `auth.users` as `security definer` so adding a member does not require the signed-in role to select from Auth. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`. Changing Auth name updates `organisation_users.full_name`. Platform admins also read name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
 
@@ -39,7 +40,7 @@ Current tables:
 
 Creating or changing a holding sets `VERIFIED` only if the actor is in `verified_users` and `platform_settings.auto_approve_holdings` is on. Otherwise it is `PENDING_VERIFICATION`, including when a platform admin updates a holding for an unverified account. A listing or auction cannot be created from an unverified holding. If `auto_approve_listings` is on, a verified holder’s new listing or auction is published immediately; otherwise it waits on `/admin/listings`. Platform admin verifies holdings on `/admin/holdings` and users on `/admin/users`. `/admin/users/[email]` is an admin-only record of that person, including holdings in their accounts. `/admin/holdings/[id]` and `/dashboard/holdings/[id]` show the holding, its ledger, and related listings and orders. `admin_delete_users` removes selected users from `organisation_users`, `verified_users`, and `platform_admins`. Admins cannot delete themselves or the last platform admin. Organisations and quota ledgers stay in place.
 
-`platform_settings` is one row. Platform admins change it on `/admin/settings`. Sale and lease fees are separate percentages, snapshotted onto each new order. The buyer pays the listed amount; the fee is deducted from the seller at settlement. `allow_registrations` is enforced in `registerAction`, not only in the browser.
+`platform_settings` is one row. Platform admins change it on `/admin/settings`. Sale and lease fees are separate percentages, snapshotted onto each new order. The buyer pays the listed amount; the fee is deducted from the seller at settlement. `allow_registrations` is enforced in `registerAction`, not only in the browser. `disabled_emails` lists product email ids that must not be sent; actions still succeed.
 
 Anonymous visitors can read `fisheries` and `jurisdictions`. Sale and lease prices for `/fisheries/[id]` come from `list_market_sales` (quantity, unit price, and offering only). Holding valuation uses `latest_sale_prices` and SALE prices only. Fishery logos are public files in the `fishery-logos` bucket; only platform admins can upload, replace, or remove them.
 
@@ -47,4 +48,4 @@ Development fixtures may include extra fisheries, organisations, users, listings
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md), [phase-8.md](phase-8.md) and [phase-9.md](phase-9.md).
 
-Transactional email is sent from the app server with Resend. There is no email table. Auth confirmation and password reset stay on Supabase Auth. Simulated settlement emails dummy tax invoice PDFs generated in the app (quota and platform fee); the PDFs are not stored in the database. Buyer and seller can download them from `/orders/[id]` after settlement.
+Transactional email is sent from the app server with Resend after the database write. Auth confirmation and password reset stay on Supabase Auth. Each product email can be disabled on `/admin/settings`. One-shot mail is recorded in `email_dispatches`. Simulated settlement emails dummy tax invoice PDFs generated in the app (quota and platform fee) to buyer and seller managers; the PDFs are not stored in the database. Buyer and seller can download them from `/orders/[id]` after settlement. See [phase-9.md](phase-9.md).

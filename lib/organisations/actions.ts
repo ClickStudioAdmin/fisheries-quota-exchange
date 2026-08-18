@@ -17,6 +17,8 @@ import {
   organisationRoleLabel,
 } from "@/lib/organisations/types";
 import { sendEmail } from "@/lib/email/send";
+import { emailCopy } from "@/lib/email/copy";
+import { notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import { getSiteUrl } from "@/lib/site-url";
 
 export type OrganisationFormState = {
@@ -129,12 +131,12 @@ export async function addMemberAction(
     ? await sendEmail({
         to: email,
         template: "member_added",
-        data: {
+        data: emailCopy.member_added({
           accountName,
           role: organisationRoleLabel(memberRole),
           registerUrl: `${siteUrl}/register`,
           loginUrl: `${siteUrl}/login`,
-        },
+        }),
       })
     : { sent: false as const, skipped: true as const };
 
@@ -190,6 +192,13 @@ export async function updateMemberRoleAction(
     return { error: "You do not have permission to change roles." };
   }
 
+  const { data: member } = await supabase
+    .from("organisation_users")
+    .select("email, role")
+    .eq("id", memberId)
+    .eq("organisation_id", organisationId)
+    .maybeSingle();
+
   const { data, error } = await supabase
     .from("organisation_users")
     .update({ role: memberRole })
@@ -207,6 +216,32 @@ export async function updateMemberRoleAction(
 
   revalidatePath("/dashboard/members");
   revalidatePath("/dashboard");
+
+  const siteUrl = await siteUrlOrEmpty();
+  const accountName =
+    (await getOrganisationLegalName(organisationId)) ?? "an FQX account";
+  const memberEmail = String(member?.email ?? "");
+  if (memberRole === "OWNER") {
+    await notifyEmail(
+      "ownership_transferred",
+      memberEmail,
+      emailCopy.ownership_transferred({
+        accountName,
+        accountUrl: `${siteUrl}${accountPath(organisationId)}`,
+      }),
+    );
+  } else {
+    await notifyEmail(
+      "member_role_changed",
+      memberEmail,
+      emailCopy.member_role_changed({
+        accountName,
+        role: organisationRoleLabel(memberRole),
+        accountUrl: `${siteUrl}${accountPath(organisationId)}`,
+      }),
+    );
+  }
+
   return { message: "Role updated." };
 }
 
@@ -272,6 +307,18 @@ export async function removeMemberAction(
   if (isSelf) {
     return { left: true, message: "You left the account." };
   }
+
+  const siteUrl = await siteUrlOrEmpty();
+  const accountName =
+    (await getOrganisationLegalName(organisationId)) ?? "an FQX account";
+  await notifyEmail(
+    "member_removed",
+    targetEmail,
+    emailCopy.member_removed({
+      accountName,
+      siteUrl: siteUrl || "https://fisheries-quota-exchange.vercel.app",
+    }),
+  );
 
   return { message: "Person removed." };
 }

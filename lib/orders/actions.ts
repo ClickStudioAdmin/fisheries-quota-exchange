@@ -10,6 +10,13 @@ import { getListing } from "@/lib/listings/queries";
 import { getOrder } from "@/lib/orders/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 import {
+  notifyOrderCreated,
+  notifySettlementFailed,
+  notifyTransferComplete,
+  notifyTransferException,
+  notifyTransferInProgress,
+} from "@/lib/email/events";
+import {
   isOrderQueueStatus,
   orderQueuePath,
   parseOrderIds,
@@ -86,6 +93,11 @@ export async function createOrderAction(
     return { error: userFacingError(error) };
   }
 
+  const order = await getOrder(Number(data));
+  if (order) {
+    await notifyOrderCreated(order, listing);
+  }
+
   redirect(`/orders/${data}`);
 }
 
@@ -142,6 +154,10 @@ export async function approveComplianceAction(formData: FormData) {
       p_order_id: order.id,
       p_note: note || null,
     });
+    const updated = await getOrder(order.id);
+    if (updated) {
+      await notifyTransferInProgress(updated);
+    }
   }
 
   redirectAfterOrderQueue(formData);
@@ -177,7 +193,20 @@ export async function simulateTransferAction(formData: FormData) {
   const order = await currentOrderForStatus(formData, "AWAITING_TRANSFER");
 
   if (order) {
-    await supabase.rpc("simulate_transfer", { p_order_id: order.id });
+    const { error } = await supabase.rpc("simulate_transfer", {
+      p_order_id: order.id,
+    });
+    if (error) {
+      await notifyTransferException(
+        order,
+        error.message || "Simulated authority transfer failed.",
+      );
+    } else {
+      const updated = await getOrder(order.id);
+      if (updated) {
+        await notifyTransferComplete(updated);
+      }
+    }
   }
 
   redirectAfterOrderQueue(formData);
@@ -198,6 +227,7 @@ export async function simulateSettlementAction(formData: FormData) {
 
       if (transfer.error) {
         console.error("transferOrderSellerProceeds failed", transfer.error);
+        await notifySettlementFailed(order);
         redirectAfterOrderQueue(formData);
       }
     }

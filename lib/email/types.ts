@@ -1,20 +1,17 @@
-export type EmailTemplates = {
-  member_added: {
-    accountName: string;
-    role: string;
-    registerUrl: string;
-    loginUrl: string;
-  };
-  order_settled: {
-    orderId: number;
-    buyerName: string;
-    offeringLabel: string;
-    amount: string;
-    orderUrl: string;
-  };
+import type { ProductEmailId } from "@/lib/email/product-emails";
+
+export type NoticeEmailData = {
+  subject: string;
+  preview: string;
+  heading: string;
+  paragraphs: string[];
+  actionLabel?: string;
+  actionUrl?: string;
 };
 
-export type EmailTemplate = keyof EmailTemplates;
+export type EmailTemplates = Record<ProductEmailId, NoticeEmailData>;
+
+export type EmailTemplate = ProductEmailId;
 
 export type SendEmailResult =
   | { sent: true }

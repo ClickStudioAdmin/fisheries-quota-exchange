@@ -14,6 +14,7 @@ import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { safeNextPath } from "@/lib/auth/paths";
+import { notifyListingCancelled, notifyListingCreated, notifyListingPublished, notifyListingRejected } from "@/lib/email/events";
 
 export type ListingFormState = {
   error?: string;
@@ -81,11 +82,15 @@ export async function createListingAction(
   }
 
   const listingId = Number(data);
+  const createdListing =
+    Number.isInteger(listingId) ? await getListing(listingId) : null;
+
+  if (createdListing) {
+    await notifyListingCreated(createdListing);
+  }
+
   const created =
-    Number.isInteger(listingId) &&
-    (await getListing(listingId))?.status === "PENDING_APPROVAL"
-      ? "pending"
-      : "listing";
+    createdListing?.status === "PENDING_APPROVAL" ? "pending" : "listing";
 
   revalidatePath("/dashboard/holdings");
   revalidatePath("/dashboard/listings");
@@ -150,12 +155,17 @@ export async function cancelListingAction(formData: FormData) {
     return;
   }
 
+  const listing = await getListing(listingId);
   const { error } = await supabase.rpc("cancel_listing", {
     p_listing_id: listingId,
   });
 
   if (error) {
     return;
+  }
+
+  if (listing) {
+    await notifyListingCancelled(listing);
   }
 
   redirect(safeNextPath(next));
@@ -215,6 +225,11 @@ export async function approveListingAction(formData: FormData) {
     return;
   }
 
+  const listing = await getListing(listingId);
+  if (listing) {
+    await notifyListingPublished(listing);
+  }
+
   redirectAfterListingReview(formData);
 }
 
@@ -232,6 +247,7 @@ export async function rejectListingAction(formData: FormData) {
     return;
   }
 
+  const listing = await getListing(listingId);
   const { error } = await supabase.rpc("reject_listing", {
     p_listing_id: listingId,
     p_note: note || null,
@@ -239,6 +255,10 @@ export async function rejectListingAction(formData: FormData) {
 
   if (error) {
     return;
+  }
+
+  if (listing) {
+    await notifyListingRejected(listing, note);
   }
 
   redirectAfterListingReview(formData);

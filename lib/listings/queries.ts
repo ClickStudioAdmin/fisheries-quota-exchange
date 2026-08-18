@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { userFacingError } from "@/lib/errors/user-message";
 import type { Listing } from "@/lib/listings/types";
 
@@ -35,7 +36,7 @@ export async function listMarketplaceListings() {
 }
 
 export async function getListing(id: number) {
-  const supabase = await createClient();
+  const supabase = (await createClient()) ?? createServiceClient();
   if (!supabase) return null;
 
   const { data, error } = await supabase

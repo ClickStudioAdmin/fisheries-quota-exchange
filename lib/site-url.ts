@@ -11,9 +11,10 @@ export async function getSiteUrl() {
   const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
   const protocol = headerList.get("x-forwarded-proto") ?? "https";
 
-  if (!host) {
-    return null;
+  if (host) {
+    return `${protocol}://${host}`;
   }
 
-  return `${protocol}://${host}`;
+  const vercel = process.env.VERCEL_URL?.trim();
+  return vercel ? `https://${vercel}` : null;
 }

@@ -4,6 +4,7 @@ export type PlatformSettings = {
   allow_registrations: boolean;
   auto_approve_holdings: boolean;
   auto_approve_listings: boolean;
+  disabled_emails: string[];
 };
 
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
@@ -12,6 +13,7 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   allow_registrations: true,
   auto_approve_holdings: true,
   auto_approve_listings: false,
+  disabled_emails: [],
 };
 
 export function formatFeePercent(value: string | number) {

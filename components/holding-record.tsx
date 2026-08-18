@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { tableButtonClassName } from "@/components/auth-card";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   DataTable,
   DataTableRowExtras,
@@ -12,7 +11,7 @@ import { EditHoldingButton } from "@/components/holding-actions";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { LedgerTable } from "@/components/ledger-table";
 import { LabeledFields } from "@/components/surface";
-import { verifyHoldingAction } from "@/lib/fisheries/actions";
+import { VerifyHoldingForm } from "@/components/verify-holding-form";
 import {
   getFishery,
   listHoldingCommitments,
@@ -122,19 +121,7 @@ export async function HoldingRecord({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {variant === "admin" && !verified ? (
-              <form action={verifyHoldingAction}>
-                <input
-                  type="hidden"
-                  name="holding_id"
-                  value={String(holding.id)}
-                />
-                <PendingSubmitButton
-                  className={tableButtonClassName}
-                  pendingLabel="Verifying…"
-                >
-                  Verify holding
-                </PendingSubmitButton>
-              </form>
+              <VerifyHoldingForm holdingId={holding.id} withRequestChanges />
             ) : null}
             {canManage ? (
               <EditHoldingButton

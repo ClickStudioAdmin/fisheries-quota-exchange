@@ -1,3 +1,10 @@
+import {
+  PRODUCT_EMAIL_IDS,
+  PRODUCT_EMAIL_LABELS,
+  isProductEmailId,
+  type ProductEmailId,
+} from "@/lib/email/product-emails";
+import { sampleEmailData as sampleProductEmail } from "@/lib/email/sample";
 import type { EmailTemplate, EmailTemplates } from "@/lib/email/types";
 import { buildTaxInvoiceData } from "@/lib/invoices/from-order";
 import type { TaxInvoiceData, TaxInvoiceKind } from "@/lib/invoices/types";
@@ -5,8 +12,7 @@ import type { Order } from "@/lib/orders/types";
 import { orderChargeAud } from "@/lib/payments/money";
 
 export const MESSAGE_TEMPLATE_IDS = [
-  "member_added",
-  "order_settled",
+  ...PRODUCT_EMAIL_IDS,
   "tax_invoice_quota",
   "tax_invoice_fee",
 ] as const;
@@ -28,48 +34,298 @@ export type MessageTemplate = {
   related: { id: MessageTemplateId; label: string }[];
 };
 
-const templates: MessageTemplate[] = [
-  {
-    id: "member_added",
-    kind: "email",
-    name: "Member added",
+const skipWhen =
+  "The template is disabled on /admin/settings, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. The triggering action still succeeds.";
+
+const EMAIL_CATALOG: Record<
+  ProductEmailId,
+  Pick<MessageTemplate, "description" | "summary" | "sentWhen" | "trigger" | "recipient">
+> = {
+  member_added: {
+    summary: "After a person is added to an account",
     description:
       "Tells a person they have been added to an FQX account and how to log in or register with the same email.",
-    summary: "After a person is added to an account",
-    sentWhen:
-      "Immediately after a membership row is inserted. The person is still added if mail is skipped or fails.",
-    trigger:
-      "Account Owner or Admin submits Add person on /dashboard/members. addMemberAction inserts organisation_users, then sendEmail({ template: \"member_added\" }).",
-    recipient:
-      "The new member’s email from the membership row (lowercased). Not a separate address from the browser.",
-    skipWhen:
-      "RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, or Resend rejects the send (for example an unverified from-domain, or a recipient other than the Resend account while using the onboarding sender).",
-    source: "lib/email/templates/member-added.tsx",
-    attachments: [],
-    related: [],
+    sentWhen: "Immediately after a membership row is inserted.",
+    trigger: "Account Owner or Admin submits Add person. addMemberAction then sendEmail(member_added).",
+    recipient: "The new member’s email.",
   },
-  {
-    id: "order_settled",
-    kind: "email",
-    name: "Order settled",
+  member_role_changed: {
+    summary: "After a non-owner role change",
+    description: "Tells the member their role on the account changed.",
+    sentWhen: "After organisation_users.role is updated to Admin or Member.",
+    trigger: "updateMemberRoleAction when the new role is not Owner.",
+    recipient: "The member whose role changed.",
+  },
+  member_removed: {
+    summary: "After someone is removed from an account",
+    description: "Tells the person they are no longer a member of the account.",
+    sentWhen: "After the membership row is deleted by another member.",
+    trigger: "removeMemberAction when the actor is not leaving themselves.",
+    recipient: "The removed member’s email.",
+  },
+  ownership_transferred: {
+    summary: "After a member is made Owner",
+    description: "Tells the member they are now an owner of the account.",
+    sentWhen: "After organisation_users.role is set to Owner.",
+    trigger: "updateMemberRoleAction when the new role is Owner.",
+    recipient: "The new Owner.",
+  },
+  payments_setup_complete: {
+    summary: "When Stripe charges are enabled",
     description:
-      "Confirms simulated settlement and attaches dummy tax invoice PDFs for the quota and the platform fee.",
-    summary: "After simulated settlement completes",
-    sentWhen:
-      "After simulate_settlement succeeds and the order status is COMPLETED. Settlement still completes if mail is skipped or fails.",
-    trigger:
-      "Platform admin clicks Simulate settlement on /admin/orders. simulateSettlementAction runs simulate_settlement, then sendSettledOrderInvoice.",
-    recipient:
-      "orders.created_by_email — the buyer who placed the order.",
-    skipWhen:
-      "RESEND_API_KEY or EMAIL_FROM is missing, the order is not COMPLETED, created_by_email is invalid, or Resend rejects the send.",
-    source: "lib/email/templates/order-settled.tsx",
-    attachments: ["tax_invoice_quota", "tax_invoice_fee"],
-    related: [
-      { id: "tax_invoice_quota", label: "Quota tax invoice PDF" },
-      { id: "tax_invoice_fee", label: "Fee tax invoice PDF" },
-    ],
+      "Tells account managers that Connect onboarding can accept charges and settlement transfers.",
+    sentWhen: "Once per organisation, when Stripe account.updated reports charges_enabled.",
+    trigger: "handleStripeWebhook account.updated, then claim_email_dispatch(payments_setup_complete).",
+    recipient: "Account Owner and Admin emails.",
   },
+  holding_verified: {
+    summary: "After a holding is verified",
+    description: "Tells managers the holding can be listed when payments setup is complete.",
+    sentWhen: "After verify_quota_holding, or when create_quota_holding auto-verifies.",
+    trigger: "verifyHoldingAction or createHoldingAction when status is VERIFIED.",
+    recipient: "Account Owner and Admin emails.",
+  },
+  holding_needs_changes: {
+    summary: "When admin requests holding changes",
+    description:
+      "Tells managers FQX needs more information. The holding stays pending verification.",
+    sentWhen: "When a platform admin submits Request changes. Status does not change.",
+    trigger: "requestHoldingChangesAction on /admin/holdings.",
+    recipient: "Account Owner and Admin emails.",
+  },
+  listing_submitted: {
+    summary: "After a listing waits for approval",
+    description: "Confirms the listing is pending FQX approval.",
+    sentWhen: "After create_listing when status is PENDING_APPROVAL.",
+    trigger: "createListingAction / createAuctionAction then notifyListingCreated.",
+    recipient: "Account owners/admins and the creator.",
+  },
+  listing_published: {
+    summary: "When a fixed-price listing is published",
+    description: "Tells the seller the listing is on the marketplace.",
+    sentWhen: "On create when auto-published, or when admin approves a fixed-price listing.",
+    trigger: "notifyListingCreated or notifyListingPublished for FIXED_PRICE.",
+    recipient: "Account owners/admins and the creator.",
+  },
+  listing_rejected: {
+    summary: "When a listing is rejected",
+    description: "Tells the seller FQX did not publish the listing.",
+    sentWhen: "After reject_listing.",
+    trigger: "rejectListingAction.",
+    recipient: "Account owners/admins and the creator.",
+  },
+  listing_expired: {
+    summary: "When a published listing has passed its end time",
+    description: "Tells the seller the listing is no longer open.",
+    sentWhen: "Hourly cron, once per listing, when a published fixed-price listing has expired.",
+    trigger: "runScheduledEmails via /api/cron/emails.",
+    recipient: "Account owners/admins and the creator.",
+  },
+  listing_cancelled: {
+    summary: "When a fixed-price listing is cancelled",
+    description: "Confirms cancellation and that quota can be listed again.",
+    sentWhen: "After cancel_listing for a fixed-price listing.",
+    trigger: "cancelListingAction then notifyListingCancelled.",
+    recipient: "Account owners/admins and the creator.",
+  },
+  listing_purchased: {
+    summary: "Seller: listing or auction became an order",
+    description: "Tells the seller quota is reserved and the buyer pays FQX next.",
+    sentWhen: "After create_order, or when an auction closes with a winner.",
+    trigger: "notifyOrderCreated or notifyAuctionClosed.",
+    recipient: "Seller account Owner and Admin emails.",
+  },
+  purchase_received: {
+    summary: "Buyer: purchase created",
+    description: "Tells the buyer to pay FQX from the order page.",
+    sentWhen: "After create_order for a fixed-price purchase.",
+    trigger: "notifyOrderCreated.",
+    recipient: "Buyer owners/admins and the person who placed the order.",
+  },
+  auction_published: {
+    summary: "When an auction is published",
+    description: "Tells the seller the auction is on the marketplace.",
+    sentWhen: "On create when auto-published, or when admin approves an auction.",
+    trigger: "notifyListingCreated or notifyListingPublished for AUCTION.",
+    recipient: "Account owners/admins and the creator.",
+  },
+  bid_placed: {
+    summary: "After a bid is recorded",
+    description: "Confirms the bid using server time.",
+    sentWhen: "After place_bid succeeds.",
+    trigger: "placeBidAction then notifyBidPlaced.",
+    recipient: "The bidder’s email.",
+  },
+  bid_outbid: {
+    summary: "When a later bid takes the lead",
+    description: "Tells the previous highest bidder they were outbid.",
+    sentWhen: "After a new bid from a different organisation.",
+    trigger: "notifyBidPlaced when a previous bid exists.",
+    recipient: "Previous bidder account Owner and Admin emails.",
+  },
+  auction_new_bid: {
+    summary: "Seller: new bid on their auction",
+    description: "Tells the seller a new bid was placed.",
+    sentWhen: "After each successful bid.",
+    trigger: "notifyBidPlaced.",
+    recipient: "Seller account Owner and Admin emails.",
+  },
+  auction_won: {
+    summary: "Winning bidder after close",
+    description: "Tells the winner an order was created.",
+    sentWhen: "When ensureAuctionClosed / closeAuction creates an order.",
+    trigger: "notifyAuctionClosed.",
+    recipient: "Winning organisation owners/admins and the order creator.",
+  },
+  auction_not_won: {
+    summary: "Other bidders after a sale",
+    description: "Tells unsuccessful bidders the auction closed with a winner.",
+    sentWhen: "After auction close with an order, once per other bidding organisation.",
+    trigger: "notifyAuctionClosed.",
+    recipient: "Owner/Admin emails of other bidding organisations.",
+  },
+  auction_unsold: {
+    summary: "Seller: auction closed with no winner",
+    description: "Tells the seller there was no qualifying bid.",
+    sentWhen: "When an auction closes without an order.",
+    trigger: "notifyAuctionClosed.",
+    recipient: "Seller owners/admins and the creator.",
+  },
+  auction_cancelled: {
+    summary: "When an auction is cancelled",
+    description: "Confirms cancellation before close.",
+    sentWhen: "After cancel_listing for an auction.",
+    trigger: "notifyListingCancelled.",
+    recipient: "Account owners/admins and the creator.",
+  },
+  auction_ending_soon: {
+    summary: "Auction due to end within 24 hours",
+    description: "Reminds seller and bidders the auction is ending. Bid times use the server clock.",
+    sentWhen: "Hourly cron, once per auction, while published and ending within 24 hours.",
+    trigger: "runScheduledEmails via /api/cron/emails.",
+    recipient: "Seller owners/admins, creator, and bidding organisation managers.",
+  },
+  payment_received: {
+    summary: "When FQX records payment",
+    description: "Tells buyer and seller payment is held until settlement.",
+    sentWhen: "Once per order after mark_order_paid (webhook or reconcile).",
+    trigger: "handleStripeWebhook or reconcileOrderPayment, then claim_email_dispatch(payment_received).",
+    recipient: "Buyer and seller owners/admins, and the order creator.",
+  },
+  bank_debit_submitted: {
+    summary: "When BECS checkout completes unpaid",
+    description: "Tells the buyer the bank debit was submitted and may show Incoming until it clears.",
+    sentWhen: "Once per order on checkout.session.completed with payment_status unpaid.",
+    trigger: "handleStripeWebhook then claim_email_dispatch(bank_debit_submitted).",
+    recipient: "Buyer owners/admins and the order creator.",
+  },
+  settlement_failed: {
+    summary: "When the seller settlement transfer fails",
+    description:
+      "Tells parties quota settlement did not complete because the Stripe Transfer failed.",
+    sentWhen: "Before simulate_settlement, if transferOrderSellerProceeds returns an error.",
+    trigger: "simulateSettlementAction.",
+    recipient: "Buyer and seller owners/admins, and the order creator.",
+  },
+  checkout_expired: {
+    summary: "When unpaid checkout expires",
+    description: "Tells the buyer the order was cancelled and quota released.",
+    sentWhen: "Once per order on checkout.session.expired after fail_unpaid_order.",
+    trigger: "handleStripeWebhook then claim_email_dispatch(checkout_expired).",
+    recipient: "Buyer owners/admins and the order creator.",
+  },
+  payment_reminder: {
+    summary: "Unpaid order still awaiting payment after 24 hours",
+    description: "Reminds the buyer to pay FQX to keep the reservation.",
+    sentWhen: "Hourly cron, once per order, when status is AWAITING_PAYMENT for more than 24 hours.",
+    trigger: "runScheduledEmails via /api/cron/emails.",
+    recipient: "Buyer owners/admins and the order creator.",
+  },
+  transfer_in_progress: {
+    summary: "After compliance is approved",
+    description: "Tells parties the authority transfer step has started.",
+    sentWhen: "After approve_compliance.",
+    trigger: "approveComplianceAction then notifyTransferInProgress.",
+    recipient: "Buyer and seller owners/admins, and the order creator.",
+  },
+  transfer_complete: {
+    summary: "After simulated authority transfer",
+    description: "Tells parties transfer is complete and settlement is next.",
+    sentWhen: "After simulate_transfer succeeds.",
+    trigger: "simulateTransferAction then notifyTransferComplete.",
+    recipient: "Buyer and seller owners/admins, and the order creator.",
+  },
+  order_settled: {
+    summary: "After simulated settlement completes",
+    description:
+      "Confirms settlement and attaches dummy tax invoice PDFs for the quota and the platform fee.",
+    sentWhen: "After simulate_settlement succeeds and the order is COMPLETED.",
+    trigger: "simulateSettlementAction then sendSettledOrderInvoice.",
+    recipient: "Buyer owners/admins, the order creator, and seller owners/admins. Both receive both PDFs.",
+  },
+  operator_holding_pending: {
+    summary: "Operator: holding needs verification",
+    description: "Alerts platform admins that a holding is waiting.",
+    sentWhen: "After create_quota_holding when status is PENDING_VERIFICATION.",
+    trigger: "createHoldingAction then notifyHoldingPending.",
+    recipient: "platform_admins emails.",
+  },
+  operator_listing_pending: {
+    summary: "Operator: listing needs approval",
+    description: "Alerts platform admins that a listing or auction is waiting.",
+    sentWhen: "After create when status is PENDING_APPROVAL.",
+    trigger: "notifyListingCreated.",
+    recipient: "platform_admins emails.",
+  },
+  operator_order_pending: {
+    summary: "Operator: order needs action",
+    description: "Alerts platform admins that an order is in a queue status.",
+    sentWhen:
+      "When an order enters AWAITING_COMPLIANCE, after payment, after compliance, or after transfer.",
+    trigger: "notifyOrderCreated, notifyPaymentReceived, notifyTransferInProgress, notifyTransferComplete.",
+    recipient: "platform_admins emails.",
+  },
+  operator_payment_exception: {
+    summary: "Operator: payment exception",
+    description: "Alerts platform admins to expired checkout, failed debit, or failed settlement transfer.",
+    sentWhen: "On checkout.session.expired, async_payment_failed, or settlement transfer error.",
+    trigger: "notifyCheckoutExpired, notifyPaymentFailed, notifySettlementFailed.",
+    recipient: "platform_admins emails.",
+  },
+  operator_transfer_exception: {
+    summary: "Operator: transfer exception",
+    description: "Alerts platform admins that simulated authority transfer failed.",
+    sentWhen: "When simulate_transfer returns an error.",
+    trigger: "simulateTransferAction then notifyTransferException.",
+    recipient: "platform_admins emails.",
+  },
+};
+
+const emailTemplates: MessageTemplate[] = PRODUCT_EMAIL_IDS.map((id) => {
+  const meta = EMAIL_CATALOG[id];
+  return {
+    id,
+    kind: "email",
+    name: PRODUCT_EMAIL_LABELS[id],
+    description: meta.description,
+    summary: meta.summary,
+    sentWhen: meta.sentWhen,
+    trigger: meta.trigger,
+    recipient: meta.recipient,
+    skipWhen,
+    source: "lib/email/templates/notice.tsx",
+    attachments: id === "order_settled" ? ["tax_invoice_quota", "tax_invoice_fee"] : [],
+    related:
+      id === "order_settled"
+        ? [
+            { id: "tax_invoice_quota", label: "Quota tax invoice PDF" },
+            { id: "tax_invoice_fee", label: "Fee tax invoice PDF" },
+          ]
+        : [],
+  };
+});
+
+const pdfTemplates: MessageTemplate[] = [
   {
     id: "tax_invoice_quota",
     kind: "pdf",
@@ -80,9 +336,9 @@ const templates: MessageTemplate[] = [
     sentWhen:
       "Generated when the order settled email is sent, and on download from /orders/[id]/invoice/quota after COMPLETED. It is not emailed on its own.",
     trigger:
-      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice/quota. generateTaxInvoicePdf renders lib/invoices/tax-invoice.tsx.",
+      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice/quota.",
     recipient:
-      "Email attachment to the buyer (created_by_email). Download for buyer, seller, or platform admin after settlement.",
+      "Email attachment to buyer and seller managers. Download for buyer, seller, or platform admin after settlement.",
     skipWhen:
       "The order settled email is skipped or fails before attach. Settlement still completes.",
     source: "lib/invoices/tax-invoice.tsx",
@@ -102,9 +358,9 @@ const templates: MessageTemplate[] = [
     sentWhen:
       "Generated when the order settled email is sent, and on download from /orders/[id]/invoice/fee after COMPLETED. It is not emailed on its own.",
     trigger:
-      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice/fee. generateTaxInvoicePdf renders lib/invoices/tax-invoice.tsx.",
+      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice/fee.",
     recipient:
-      "Email attachment to the buyer (created_by_email). Download for buyer, seller, or platform admin after settlement.",
+      "Email attachment to buyer and seller managers. Download for buyer, seller, or platform admin after settlement.",
     skipWhen:
       "The order settled email is skipped or fails before attach. Settlement still completes.",
     source: "lib/invoices/tax-invoice.tsx",
@@ -115,6 +371,8 @@ const templates: MessageTemplate[] = [
     ],
   },
 ];
+
+const templates: MessageTemplate[] = [...emailTemplates, ...pdfTemplates];
 
 export function isMessageTemplateId(value: string): value is MessageTemplateId {
   return MESSAGE_TEMPLATE_IDS.includes(value as MessageTemplateId);
@@ -129,38 +387,14 @@ export function getMessageTemplate(id: string) {
 }
 
 export function isEmailTemplateId(id: MessageTemplateId): id is EmailTemplate {
-  return id === "member_added" || id === "order_settled";
+  return isProductEmailId(id);
 }
 
 export function sampleEmailData(
-  id: "member_added",
-  siteUrl: string,
-): EmailTemplates["member_added"];
-export function sampleEmailData(
-  id: "order_settled",
-  siteUrl: string,
-): EmailTemplates["order_settled"];
-export function sampleEmailData(
   id: EmailTemplate,
   siteUrl: string,
-): EmailTemplates[EmailTemplate];
-export function sampleEmailData(id: EmailTemplate, siteUrl: string) {
-  if (id === "member_added") {
-    return {
-      accountName: "Sample Fisheries Pty Ltd",
-      role: "Member",
-      registerUrl: `${siteUrl}/register`,
-      loginUrl: `${siteUrl}/login`,
-    } satisfies EmailTemplates["member_added"];
-  }
-
-  return {
-    orderId: 1001,
-    buyerName: "Sample Fisheries Pty Ltd",
-    offeringLabel: "Sale",
-    amount: "$750.00",
-    orderUrl: `${siteUrl}/orders/1001`,
-  } satisfies EmailTemplates["order_settled"];
+): EmailTemplates[EmailTemplate] {
+  return sampleProductEmail(id, siteUrl);
 }
 
 export function sampleTaxInvoiceData(kind: TaxInvoiceKind): TaxInvoiceData {
@@ -201,25 +435,25 @@ export function sampleTaxInvoiceData(kind: TaxInvoiceKind): TaxInvoiceData {
 }
 
 export function sampleContentFields(id: MessageTemplateId, siteUrl: string) {
-  if (id === "member_added") {
-    const data = sampleEmailData("member_added", siteUrl);
-    return [
-      { label: "Account", value: data.accountName },
-      { label: "Role", value: data.role },
-      { label: "Login URL", value: data.loginUrl },
-      { label: "Register URL", value: data.registerUrl },
+  if (isProductEmailId(id)) {
+    const data = sampleEmailData(id, siteUrl);
+    const fields = [
+      { label: "Subject", value: data.subject },
+      { label: "Heading", value: data.heading },
+      ...data.paragraphs.map((paragraph, index) => ({
+        label: `Paragraph ${index + 1}`,
+        value: paragraph,
+      })),
     ];
-  }
 
-  if (id === "order_settled") {
-    const data = sampleEmailData("order_settled", siteUrl);
-    return [
-      { label: "Order", value: String(data.orderId) },
-      { label: "Buyer", value: data.buyerName },
-      { label: "Offering", value: data.offeringLabel },
-      { label: "Total", value: data.amount },
-      { label: "Order URL", value: data.orderUrl },
-    ];
+    if (data.actionUrl) {
+      fields.push({
+        label: data.actionLabel ?? "Action",
+        value: data.actionUrl,
+      });
+    }
+
+    return fields;
   }
 
   const invoice = sampleTaxInvoiceData(

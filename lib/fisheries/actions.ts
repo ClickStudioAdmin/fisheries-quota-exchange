@@ -9,7 +9,12 @@ import {
   isQuantityType,
   parseHoldingIds,
 } from "@/lib/fisheries/types";
-import { getHolding } from "@/lib/fisheries/queries";
+import { getHolding, getFishery } from "@/lib/fisheries/queries";
+import {
+  notifyHoldingNeedsChanges,
+  notifyHoldingPending,
+  notifyHoldingVerified,
+} from "@/lib/email/events";
 import { userFacingError } from "@/lib/errors/user-message";
 import {
   FISHERY_LOGO_BUCKET,
@@ -261,7 +266,7 @@ export async function createHoldingAction(
     return { error: "Organisation, fishery and quantity are required." };
   }
 
-  const { error } = await supabase.rpc("create_quota_holding", {
+  const { data, error } = await supabase.rpc("create_quota_holding", {
     p_organisation_id: organisationId,
     p_fishery_id: fisheryId,
     p_quantity: quantity,
@@ -269,6 +274,21 @@ export async function createHoldingAction(
   });
 
   if (error) return { error: userFacingError(error) };
+
+  const holdingId = Number(data);
+  if (Number.isInteger(holdingId)) {
+    const holding = await getHolding(holdingId);
+    if (holding?.verification_status === "PENDING_VERIFICATION") {
+      await notifyHoldingPending(holdingId);
+    } else if (holding?.verification_status === "VERIFIED") {
+      const fishery = await getFishery(holding.fishery_id);
+      await notifyHoldingVerified({
+        organisationId: holding.organisation_id,
+        fisheryName: fishery?.name ?? "Holding",
+        holdingId: holding.id,
+      });
+    }
+  }
 
   revalidatePath("/dashboard/holdings");
   revalidatePath("/admin/holdings");
@@ -346,9 +366,19 @@ export async function verifyHoldingAction(formData: FormData) {
     return;
   }
 
+  const holding = await getHolding(holdingId);
   await admin.supabase.rpc("verify_quota_holding", {
     p_holding_id: holdingId,
   });
+
+  if (holding) {
+    const fishery = await getFishery(holding.fishery_id);
+    await notifyHoldingVerified({
+      organisationId: holding.organisation_id,
+      fisheryName: fishery?.name ?? "Holding",
+      holdingId: holding.id,
+    });
+  }
 
   revalidatePath("/admin/holdings");
   revalidatePath("/dashboard/holdings");
@@ -361,6 +391,37 @@ export async function verifyHoldingAction(formData: FormData) {
       holdingVerifyPath(formData.getAll("review_queue").map(String)),
     );
   }
+}
+
+export async function requestHoldingChangesAction(formData: FormData) {
+  const admin = await requireAdmin();
+  if (admin.error || !admin.supabase) return;
+
+  const holdingId = Number(formData.get("holding_id"));
+  const note = String(formData.get("review_note") ?? "").trim();
+
+  if (!Number.isInteger(holdingId) || !note) {
+    return;
+  }
+
+  const holding = await getHolding(holdingId);
+
+  if (!holding || holding.verification_status !== "PENDING_VERIFICATION") {
+    return;
+  }
+
+  const fishery = await getFishery(holding.fishery_id);
+  await notifyHoldingNeedsChanges({
+    organisationId: holding.organisation_id,
+    fisheryName: fishery?.name ?? "Holding",
+    holdingId: holding.id,
+    note,
+  });
+
+  revalidatePath("/admin/holdings");
+  revalidatePath("/dashboard/holdings");
+  revalidatePath(`/admin/holdings/${holdingId}`);
+  revalidatePath(`/dashboard/holdings/${holdingId}`);
 }
 
 export async function updateFisheryLogoAction(

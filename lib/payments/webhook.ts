@@ -2,6 +2,14 @@ import "server-only";
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { getPaymentProvider } from "@/lib/payments/provider";
+import { getOrderForSystem } from "@/lib/orders/queries";
+import {
+  notifyBankDebitSubmitted,
+  notifyCheckoutExpired,
+  notifyPaymentFailed,
+  notifyPaymentReceived,
+  notifyPaymentsSetupComplete,
+} from "@/lib/email/events";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object"
@@ -68,6 +76,21 @@ export async function handleStripeWebhook(payload: string, signature: string) {
       if (error) {
         throw new Error(error.message);
       }
+
+      if (Boolean(data.charges_enabled)) {
+        const { data: organisation } = await supabase
+          .from("organisations")
+          .select("id, legal_name")
+          .eq("stripe_account_id", accountId)
+          .maybeSingle();
+
+        if (organisation) {
+          await notifyPaymentsSetupComplete(
+            Number(organisation.id),
+            String(organisation.legal_name ?? "your account"),
+          );
+        }
+      }
     }
   } else {
     const orderId = orderIdFrom(data);
@@ -79,6 +102,15 @@ export async function handleStripeWebhook(payload: string, signature: string) {
           checkoutSessionId: asString(data.id),
           paymentIntentId: paymentIntentIdFrom(data),
         });
+        const order = await getOrderForSystem(orderId);
+        if (order) {
+          await notifyPaymentReceived(order);
+        }
+      } else {
+        const order = await getOrderForSystem(orderId);
+        if (order) {
+          await notifyBankDebitSubmitted(order);
+        }
       }
     } else if (
       orderId &&
@@ -94,7 +126,12 @@ export async function handleStripeWebhook(payload: string, signature: string) {
             ? asString(data.id)
             : paymentIntentIdFrom(data),
       });
+      const order = await getOrderForSystem(orderId);
+      if (order) {
+        await notifyPaymentReceived(order);
+      }
     } else if (orderId && event.type === "checkout.session.async_payment_failed") {
+      const order = await getOrderForSystem(orderId);
       const { error } = await supabase.rpc("fail_unpaid_order", {
         p_order_id: orderId,
         p_payment_status: "FAILED",
@@ -103,7 +140,12 @@ export async function handleStripeWebhook(payload: string, signature: string) {
       if (error) {
         throw new Error(error.message);
       }
+
+      if (order) {
+        await notifyPaymentFailed(order);
+      }
     } else if (orderId && event.type === "checkout.session.expired") {
+      const order = await getOrderForSystem(orderId);
       const { error } = await supabase.rpc("fail_unpaid_order", {
         p_order_id: orderId,
         p_payment_status: "EXPIRED",
@@ -111,6 +153,10 @@ export async function handleStripeWebhook(payload: string, signature: string) {
 
       if (error) {
         throw new Error(error.message);
+      }
+
+      if (order) {
+        await notifyCheckoutExpired(order);
       }
     }
   }

@@ -7,6 +7,7 @@ import { emailSubject, renderEmailHtml } from "@/lib/email/render";
 import { getSiteUrl } from "@/lib/site-url";
 import {
   getMessageTemplate,
+  isEmailTemplateId,
   isMessageTemplateId,
   sampleContentFields,
   sampleEmailData,
@@ -47,14 +48,10 @@ export default async function AdminTemplatePage({ params }: TemplatePageProps) {
   let subject: string | null = null;
   let html: string | null = null;
 
-  if (id === "member_added") {
-    const data = sampleEmailData("member_added", siteUrl);
-    subject = emailSubject("member_added", data);
-    html = await renderEmailHtml("member_added", data);
-  } else if (id === "order_settled") {
-    const data = sampleEmailData("order_settled", siteUrl);
-    subject = emailSubject("order_settled", data);
-    html = await renderEmailHtml("order_settled", data);
+  if (isEmailTemplateId(id)) {
+    const data = sampleEmailData(id, siteUrl);
+    subject = emailSubject(id, data);
+    html = await renderEmailHtml(id, data);
   }
 
   return (

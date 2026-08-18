@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
+import { disabledProductEmails } from "@/lib/email/product-emails";
 import { createClient } from "@/lib/supabase/server";
 import { userFacingError } from "@/lib/errors/user-message";
 
@@ -50,12 +51,17 @@ export async function updatePlatformSettingsAction(
     return { error: "Database is not configured." };
   }
 
+  const disabledEmails = disabledProductEmails(
+    formData.getAll("email_enabled").map((value) => String(value)),
+  );
+
   const { error } = await supabase.rpc("update_platform_settings", {
     p_sale_fee_percent: sale.value,
     p_lease_fee_percent: lease.value,
     p_allow_registrations: readToggle(formData, "allow_registrations"),
     p_auto_approve_holdings: readToggle(formData, "auto_approve_holdings"),
     p_auto_approve_listings: readToggle(formData, "auto_approve_listings"),
+    p_disabled_emails: disabledEmails,
   });
 
   if (error) {

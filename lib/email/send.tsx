@@ -3,23 +3,27 @@ import "server-only";
 import { Resend } from "resend";
 import { getEmailEnv } from "@/lib/email/env";
 import { emailSubject, renderEmailTemplate } from "@/lib/email/render";
-import type {
-  EmailTemplate,
-  EmailTemplates,
-  SendEmailResult,
-} from "@/lib/email/types";
+import { emailIsDisabled, type ProductEmailId } from "@/lib/email/product-emails";
+import { getPlatformSettings } from "@/lib/settings/queries";
+import type { EmailTemplates, SendEmailResult } from "@/lib/email/types";
 
 export type EmailAttachment = {
   filename: string;
   content: Buffer;
 };
 
-export async function sendEmail<K extends EmailTemplate>(options: {
+export async function sendEmail<K extends ProductEmailId>(options: {
   to: string;
   template: K;
   data: EmailTemplates[K];
   attachments?: EmailAttachment[];
 }): Promise<SendEmailResult> {
+  const settings = await getPlatformSettings();
+
+  if (emailIsDisabled(settings.disabled_emails, options.template)) {
+    return { sent: false, skipped: true };
+  }
+
   const env = getEmailEnv();
 
   if (!env) {
