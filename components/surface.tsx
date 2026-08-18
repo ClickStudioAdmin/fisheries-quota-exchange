@@ -46,33 +46,43 @@ export function ActionNotice({
   title,
   href,
   actionLabel,
+  action,
   icon,
   children,
 }: {
   title: string;
-  href: string;
-  actionLabel: string;
+  href?: string;
+  actionLabel?: string;
+  action?: ReactNode;
   icon?: ReactNode;
   children?: ReactNode;
 }) {
-  return (
-    <div
-      className="flex flex-col gap-4 border border-sea bg-sea/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-      role="status"
-    >
-      <div className="flex min-w-0 items-start gap-3">
-        {icon ? <div className="mt-0.5 shrink-0">{icon}</div> : null}
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-ink">{title}</p>
-          {children ? <p className="mt-1 text-sm text-ink">{children}</p> : null}
-        </div>
-      </div>
+  const cta =
+    action ??
+    (href && actionLabel ? (
       <Link
         href={href}
         className="shrink-0 bg-sea px-4 py-2 text-center text-sm font-medium text-paper hover:opacity-90"
       >
         {actionLabel}
       </Link>
+    ) : null);
+
+  return (
+    <div
+      className="flex flex-col gap-4 border border-sea bg-sea/10 p-4 sm:flex-row sm:items-start sm:justify-between"
+      role="status"
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        {icon ? <div className="mt-0.5 shrink-0">{icon}</div> : null}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-ink">{title}</p>
+          {children ? (
+            <div className="mt-1 text-sm text-ink">{children}</div>
+          ) : null}
+        </div>
+      </div>
+      {cta}
     </div>
   );
 }

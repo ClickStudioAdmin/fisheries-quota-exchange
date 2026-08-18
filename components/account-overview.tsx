@@ -13,7 +13,12 @@ import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { StatusBadge } from "@/components/status-badge";
-import { LabeledFields, panelClassName, statClassName } from "@/components/surface";
+import {
+  ActionNotice,
+  LabeledFields,
+  panelClassName,
+  statClassName,
+} from "@/components/surface";
 import type { User } from "@supabase/supabase-js";
 
 const OPEN_ORDER_STATUSES = new Set([
@@ -91,10 +96,24 @@ export async function AccountOverviewSection({
             ]}
           />
         </div>
-        {acceptedTerms ? null : <AcceptTermsForm />}
-        {hasAccount ? (
-          acceptedTerms && sellError ? (
-            <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3">
+          {acceptedTerms ? null : <AcceptTermsForm />}
+          {hasAccount ? (
+            acceptedTerms && sellError ? (
+              <>
+                <p className="text-sm text-ink-muted">
+                  You have agreed to the{" "}
+                  <Link href="/terms" className="underline">
+                    terms of service
+                  </Link>
+                  .
+                </p>
+                <PaymentsSetupNotice href={href("/dashboard/payments")}>
+                  Before you can be eligible to list quota for sale, you must
+                  provide us with your payment details first.
+                </PaymentsSetupNotice>
+              </>
+            ) : acceptedTerms ? (
               <p className="text-sm text-ink-muted">
                 You have agreed to the{" "}
                 <Link href="/terms" className="underline">
@@ -102,29 +121,18 @@ export async function AccountOverviewSection({
                 </Link>
                 .
               </p>
-              <PaymentsSetupNotice href={href("/dashboard/payments")}>
-                Before you can be eligible to list quota for sale, you must
-                provide us with your payment details first.
-              </PaymentsSetupNotice>
-            </div>
-          ) : acceptedTerms ? (
-            <p className="mt-4 text-sm text-ink-muted">
-              You have agreed to the{" "}
-              <Link href="/terms" className="underline">
-                terms of service
-              </Link>
-              .
-            </p>
-          ) : null
-        ) : (
-          <p className="mt-4 text-sm text-ink-muted">
-            Add your business details on{" "}
-            <Link href="/dashboard/profile" className="underline">
-              Profile
-            </Link>{" "}
-            before you can buy or list quota.
-          </p>
-        )}
+            ) : null
+          ) : (
+            <ActionNotice
+              title="Add business details"
+              href="/dashboard/profile"
+              actionLabel="Go to Profile"
+            >
+              Add your business details on Profile before you can buy or list
+              quota.
+            </ActionNotice>
+          )}
+        </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <Link href={href("/dashboard/holdings")} className={statClassName}>
