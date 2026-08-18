@@ -14,5 +14,18 @@ export default async function AdminSettingsPage() {
 
   const settings = await getPlatformSettings();
 
-  return <PlatformSettingsForm settings={settings} />;
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          Platform settings
+        </h1>
+        <p className="mt-2 max-w-lg text-sm text-ink-muted">
+          These rules apply immediately. Fees are deducted from the seller.
+          The buyer pays the listed amount.
+        </p>
+      </div>
+      <PlatformSettingsForm settings={settings} />
+    </div>
+  );
 }

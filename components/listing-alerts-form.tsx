@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 import { useActionState } from "react";
+import { buttonClassName } from "@/components/auth-card";
 import {
   tableBodyCellClassName,
   tableClassName,
@@ -11,7 +12,6 @@ import {
   tableWrapClassName,
 } from "@/components/data-table";
 import { SettingsSwitch } from "@/components/settings-switch";
-import { StickySettingsHeader } from "@/components/sticky-settings-header";
 import {
   updateListingAlertsAction,
   type PreferenceFormState,
@@ -112,19 +112,13 @@ export function ListingAlertsForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="max-w-3xl space-y-6">
       {Array.from(sales, (id) => (
         <input key={`sale-${id}`} type="hidden" name="sale" value={id} />
       ))}
       {Array.from(leases, (id) => (
         <input key={`lease-${id}`} type="hidden" name="lease" value={id} />
       ))}
-      <StickySettingsHeader
-        title="Alerts"
-        description="Choose which fisheries to watch. A published sale or lease listing (including auctions) notifies you when that switch is on."
-        pending={pending}
-        saveLabel="Save alerts"
-      />
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
@@ -217,6 +211,9 @@ export function ListingAlertsForm({
           </table>
         </div>
       )}
+      <button type="submit" className={buttonClassName} disabled={pending}>
+        {pending ? "Saving…" : "Save alerts"}
+      </button>
     </form>
   );
 }
