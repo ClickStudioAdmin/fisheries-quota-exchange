@@ -13,7 +13,7 @@ import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import { fieldClassName, tableButtonClassName } from "@/components/auth-card";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
-import { OrderTableDownloads, OrderTableLinks } from "@/components/order-table-links";
+import { OrderTableLinks } from "@/components/order-table-links";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TableModal } from "@/components/table-modal";
 import { formatTableDate } from "@/lib/format";
@@ -41,10 +41,11 @@ export default async function AdminOrdersPage() {
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           No live payment. Approve compliance, simulate transfer, then simulate
-          settlement. The buyer pays the listed amount. Settlement Transfers
-          the seller’s share after the platform fee, writes SALE/PURCHASE or
-          LEASE_OUT/LEASE_IN ledger rows, consumes the reservation, and emails
-          a dummy tax invoice to the buyer.
+          settlement. Select orders to run those actions in bulk; only matching
+          statuses are applied. The buyer pays the listed amount. Settlement
+          Transfers the seller’s share after the platform fee, writes
+          SALE/PURCHASE or LEASE_OUT/LEASE_IN ledger rows, consumes the
+          reservation, and emails a dummy tax invoice to the buyer.
         </p>
       </div>
       <DataTable
@@ -53,6 +54,28 @@ export default async function AdminOrdersPage() {
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
         selectable
+        bulkActions={[
+          {
+            label: "Approve compliance",
+            action: approveComplianceAction,
+          },
+          {
+            label: "Reject compliance",
+            action: rejectComplianceAction,
+            confirm:
+              "Reject the selected orders that are awaiting compliance? Reservations will be released.",
+          },
+          {
+            label: "Simulate transfer",
+            action: simulateTransferAction,
+          },
+          {
+            label: "Simulate settlement",
+            action: simulateSettlementAction,
+            confirm:
+              "Settle the selected orders that are awaiting settlement? This Transfers the seller’s share and completes quota.",
+          },
+        ]}
         columns={[
           { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
           {
@@ -149,12 +172,6 @@ export default async function AdminOrdersPage() {
             key={order.id}
             id={order.id}
             links={<OrderTableLinks orderId={order.id} />}
-            downloads={
-              <OrderTableDownloads
-                orderId={order.id}
-                settled={order.status === "COMPLETED"}
-              />
-            }
             actions={
               <>
                 {order.status === "AWAITING_COMPLIANCE" ? (

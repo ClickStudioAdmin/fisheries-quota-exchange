@@ -69,6 +69,21 @@ export type OrderFormState = {
   error?: string;
 };
 
+export function parseOrderIds(value?: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      value
+        .split(/[,\s]+/)
+        .map(Number)
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+}
+
 export function orderStatusLabel(status: OrderStatus) {
   switch (status) {
     case "AWAITING_PAYMENT":

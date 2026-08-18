@@ -149,9 +149,11 @@ export async function AccountMembersSection({
 export async function AccountHoldingsSection({
   organisationId,
   created,
+  listingId,
 }: {
   organisationId: number;
   created?: string;
+  listingId?: number;
 }) {
   const result = await getOrganisation(organisationId);
 
@@ -197,13 +199,26 @@ export async function AccountHoldingsSection({
             ? "Create or update a holding here. Unverified holdings must be approved by a platform admin before you can list or auction them. Changing quantity records an ADJUSTMENT on the ledger."
             : "Owners and admins can create and update holdings for this account."}
         </p>
-        {created === "pending" ? (
-          <SuccessNotice title="Listing created">
-            A platform admin must approve it before it appears on the
-            marketplace.
+        {created === "pending" || created === "listing" ? (
+          <SuccessNotice
+            title="Listing created"
+            action={
+              listingId ? (
+                <Link
+                  href={`/marketplace/${listingId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-sea underline"
+                >
+                  View Listing
+                </Link>
+              ) : null
+            }
+          >
+            {created === "pending"
+              ? "A platform admin must approve it before it appears on the marketplace."
+              : null}
           </SuccessNotice>
-        ) : created === "listing" ? (
-          <SuccessNotice title="Listing created" />
         ) : null}
         {canManage && sellError ? (
           <p className="mt-3 text-sm text-ink-muted">

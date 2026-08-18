@@ -90,7 +90,10 @@ export async function createListingAction(
   revalidatePath("/dashboard/holdings");
   revalidatePath("/dashboard/listings");
   redirect(
-    accountPath(organisationId, "/dashboard/holdings", { created }),
+    accountPath(organisationId, "/dashboard/holdings", {
+      created,
+      ...(Number.isInteger(listingId) ? { listing: String(listingId) } : {}),
+    }),
   );
 }
 

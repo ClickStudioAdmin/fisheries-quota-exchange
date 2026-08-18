@@ -8,7 +8,7 @@ export const metadata = {
 export default async function DashboardHoldingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ account?: string; created?: string }>;
+  searchParams: Promise<{ account?: string; created?: string; listing?: string }>;
 }) {
   const params = await searchParams;
   const account = await resolveDashboardAccount(
@@ -20,10 +20,13 @@ export default async function DashboardHoldingsPage({
     return null;
   }
 
+  const listingId = Number(params.listing);
+
   return (
     <AccountHoldingsSection
       organisationId={account.selected.id}
       created={params.created}
+      listingId={Number.isInteger(listingId) ? listingId : undefined}
     />
   );
 }

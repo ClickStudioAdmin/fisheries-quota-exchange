@@ -12,9 +12,11 @@ export const statClassName = "border border-line bg-paper-raised p-4";
 
 export function SuccessNotice({
   title,
+  action,
   children,
 }: {
   title: string;
+  action?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -28,8 +30,11 @@ export function SuccessNotice({
       >
         ✓
       </span>
-      <div>
-        <p className="text-sm font-semibold text-sea">{title}</p>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <p className="text-sm font-semibold text-sea">{title}</p>
+          {action}
+        </div>
         {children ? <p className="mt-1 text-sm text-ink">{children}</p> : null}
       </div>
     </div>

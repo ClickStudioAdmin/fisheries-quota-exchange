@@ -3,16 +3,39 @@
 import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
-import type { OrderFormState } from "@/lib/orders/types";
 import { isPaymentsConfigured } from "@/lib/payments/env";
 import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
 import { transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
+import { getOrder } from "@/lib/orders/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
+import {
+  parseOrderIds,
+  type Order,
+  type OrderFormState,
+  type OrderStatus,
+} from "@/lib/orders/types";
 import { userFacingError } from "@/lib/errors/user-message";
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
+}
+
+function readOrderIds(formData: FormData) {
+  return parseOrderIds(
+    [
+      ...formData.getAll("ids").map(String),
+      String(formData.get("order_id") ?? ""),
+    ].join(","),
+  );
+}
+
+async function ordersForAdminAction(formData: FormData, status: OrderStatus) {
+  const found = await Promise.all(readOrderIds(formData).map(getOrder));
+
+  return found.filter(
+    (order): order is Order => order != null && order.status === status,
+  );
 }
 
 export async function createOrderAction(
@@ -82,17 +105,15 @@ export async function approveComplianceAction(formData: FormData) {
     return;
   }
 
-  const orderId = Number(formData.get("order_id"));
   const note = read(formData, "review_note");
+  const orders = await ordersForAdminAction(formData, "AWAITING_COMPLIANCE");
 
-  if (!Number.isInteger(orderId)) {
-    return;
+  for (const order of orders) {
+    await supabase.rpc("approve_compliance", {
+      p_order_id: order.id,
+      p_note: note || null,
+    });
   }
-
-  await supabase.rpc("approve_compliance", {
-    p_order_id: orderId,
-    p_note: note || null,
-  });
 
   redirect("/admin/orders");
 }
@@ -104,17 +125,15 @@ export async function rejectComplianceAction(formData: FormData) {
     return;
   }
 
-  const orderId = Number(formData.get("order_id"));
   const note = read(formData, "review_note");
+  const orders = await ordersForAdminAction(formData, "AWAITING_COMPLIANCE");
 
-  if (!Number.isInteger(orderId)) {
-    return;
+  for (const order of orders) {
+    await supabase.rpc("reject_compliance", {
+      p_order_id: order.id,
+      p_note: note || null,
+    });
   }
-
-  await supabase.rpc("reject_compliance", {
-    p_order_id: orderId,
-    p_note: note || null,
-  });
 
   redirect("/admin/orders");
 }
@@ -126,13 +145,12 @@ export async function simulateTransferAction(formData: FormData) {
     return;
   }
 
-  const orderId = Number(formData.get("order_id"));
+  const orders = await ordersForAdminAction(formData, "AWAITING_TRANSFER");
 
-  if (!Number.isInteger(orderId)) {
-    return;
+  for (const order of orders) {
+    await supabase.rpc("simulate_transfer", { p_order_id: order.id });
   }
 
-  await supabase.rpc("simulate_transfer", { p_order_id: orderId });
   redirect("/admin/orders");
 }
 
@@ -143,32 +161,32 @@ export async function simulateSettlementAction(formData: FormData) {
     return;
   }
 
-  const orderId = Number(formData.get("order_id"));
+  const orders = await ordersForAdminAction(formData, "AWAITING_SETTLEMENT");
 
-  if (!Number.isInteger(orderId)) {
-    return;
-  }
+  for (const order of orders) {
+    if (isPaymentsConfigured()) {
+      const transfer = await transferOrderSellerProceeds(order.id);
 
-  if (isPaymentsConfigured()) {
-    const transfer = await transferOrderSellerProceeds(orderId);
-
-    if (transfer.error) {
-      console.error("transferOrderSellerProceeds failed", transfer.error);
-      redirect("/admin/orders");
+      if (transfer.error) {
+        console.error("transferOrderSellerProceeds failed", transfer.error);
+        continue;
+      }
     }
-  }
 
-  const { error } = await supabase.rpc("simulate_settlement", {
-    p_order_id: orderId,
-  });
+    const { error } = await supabase.rpc("simulate_settlement", {
+      p_order_id: order.id,
+    });
 
-  if (!error) {
-    try {
-      await sendSettledOrderInvoice(orderId);
-    } catch (mailError) {
-      const message =
-        mailError instanceof Error ? mailError.message : "Invoice email failed.";
-      console.error("sendSettledOrderInvoice failed", message);
+    if (!error) {
+      try {
+        await sendSettledOrderInvoice(order.id);
+      } catch (mailError) {
+        const message =
+          mailError instanceof Error
+            ? mailError.message
+            : "Invoice email failed.";
+        console.error("sendSettledOrderInvoice failed", message);
+      }
     }
   }
 
