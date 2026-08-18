@@ -191,8 +191,6 @@ export function FisheryOfferingSection({
           listings={paged}
           empty={empty}
           hideFishery
-          hideOffering
-          columns={1}
         />
         <ListPager
           page={currentPage}
@@ -210,7 +208,7 @@ export function FisheryOfferingSection({
 
 export function FisheryOfferings({ listings }: { listings: Listing[] }) {
   return (
-    <div className="mt-12 grid min-w-0 items-start gap-10 md:grid-cols-2">
+    <div className="mt-12 space-y-12">
       <FisheryOfferingSection
         title="Current Sale Listings"
         kind="sale"
