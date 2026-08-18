@@ -151,7 +151,7 @@ export function createStripePaymentProvider(): PaymentProvider {
 
         if (
           existing?.status === "open" &&
-          existing.ui_mode === "embedded" &&
+          existing.ui_mode === "embedded_page" &&
           existing.client_secret
         ) {
           return checkoutResult(existing);
@@ -160,7 +160,7 @@ export function createStripePaymentProvider(): PaymentProvider {
 
       const transferGroup = `order_${input.orderId}`;
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
-        ui_mode: "embedded",
+        ui_mode: "embedded_page",
         mode: "payment",
         customer_email: input.buyerEmail,
         return_url: input.returnUrl,
