@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
+
 export function OrderCheckoutStatus({
   title,
   children,
 }: {
   title: string;
-  children: string;
+  children: ReactNode;
 }) {
   return (
     <div
