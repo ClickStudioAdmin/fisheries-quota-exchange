@@ -187,9 +187,14 @@ export default async function Home() {
       </section>
 
       <section className={`${pageWidthClassName} py-12 sm:py-16`}>
-        <h2 className="text-2xl font-semibold tracking-tight text-ink">
-          How it works
-        </h2>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-2xl font-semibold tracking-tight text-ink">
+            How it works
+          </h2>
+          <Link href="/how-it-works" className="text-sm underline">
+            Buyer and seller steps
+          </Link>
+        </div>
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {STEPS.map((step, index) => (
             <div key={step.title} className={panelClassName}>

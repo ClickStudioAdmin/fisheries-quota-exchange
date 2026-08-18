@@ -15,7 +15,7 @@ Never trust the browser or the Checkout return URL for payment status. The webho
 3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The buyer chooses **bank debit** or **card** first. Bank debit charges the listed quota amount. Card charges the listed amount plus the Stripe card processing surcharge (Checkout line items: quota, then **Card processing (Stripe)**). Each method is a separate Checkout session. The charge sits on the **FQX** Stripe account. The platform fee is not added to the buyer charge. There is no destination charge. The order page totals show the listed amount and the card amount.
 4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` / `payment_intent.succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance (often **Incoming** until they clear). Refreshing the return URL does not charge again. Opening the order page also reconciles payment status from Stripe. Pay FQX on `/orders/[id]` has three display states while the order is still the buyer’s: **Checkout** (embedded Stripe, only if a session can still be started), **Pending** (spinner while a debit is processing or payment is recorded but the order has not yet moved to `AWAITING_COMPLIANCE`), and **Paid** (checkout hidden once the order is `AWAITING_COMPLIANCE` or later). Pending polls the server about every five seconds while the tab is visible. The browser is still not trusted for payment status.
 5. Expired Checkout or failed async payment cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
-6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` minus `fee_amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails the dummy tax invoice. Buyer and seller can download that PDF from the order page after settlement.
+6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` minus `fee_amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails dummy tax invoice PDFs (quota: seller to buyer; fee: FQX to seller). Buyer and seller can download both from the order page after settlement.
 
 If Stripe keys are missing, purchase stays on the Phase 7 path (`AWAITING_COMPLIANCE` immediately). No live payment.
 
@@ -37,11 +37,15 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 
 | Path | Purpose |
 | --- | --- |
+| `/how-it-works` | Buyer and seller steps from account through payment and settlement |
+| `/privacy` | Privacy policy for this development site |
+| `/terms` | Terms of service for this development site |
 | `/admin` | Overview: queues, platform fees, Stripe test mode |
 | `/dashboard/payments` | Embedded Connect onboarding and account management |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |
-| `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the tax invoice. Return URL is not authoritative |
-| `/orders/[id]/invoice` | Tax invoice PDF download after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. |
+| `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the quota and fee tax invoices. Return URL is not authoritative |
+| `/orders/[id]/invoice/quota` | Quota tax invoice PDF (seller to buyer) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. `/orders/[id]/invoice` redirects here |
+| `/orders/[id]/invoice/fee` | Platform fee tax invoice PDF (FQX to seller) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored |
 | `/api/stripe/webhook` | Signed Stripe events |
 | `/api/stripe/account-session` | Account Session client secret for embedded components |
 

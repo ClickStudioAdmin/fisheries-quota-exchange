@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { tableLinkClassName } from "@/components/data-table";
+import { taxInvoicePath } from "@/lib/invoices/types";
 
 export function OrderTableLinks({ orderId }: { orderId: number }) {
   return (
@@ -26,8 +27,16 @@ export function OrderTableDownloads({
   }
 
   return (
-    <a href={`/orders/${orderId}/invoice`} className={tableLinkClassName}>
-      Tax Invoice
-    </a>
+    <span className="inline-flex flex-wrap gap-x-3 gap-y-1">
+      <a
+        href={taxInvoicePath(orderId, "quota")}
+        className={tableLinkClassName}
+      >
+        Quota invoice
+      </a>
+      <a href={taxInvoicePath(orderId, "fee")} className={tableLinkClassName}>
+        Fee invoice
+      </a>
+    </span>
   );
 }

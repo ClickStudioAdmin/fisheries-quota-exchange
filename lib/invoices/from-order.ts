@@ -1,12 +1,11 @@
 import { formatTableDate } from "@/lib/format";
+import type { TaxInvoiceData, TaxInvoiceKind } from "@/lib/invoices/types";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
-import type { TaxInvoiceData } from "@/lib/invoices/types";
 import type { Order } from "@/lib/orders/types";
-import {
-  buyerCardFeeAud,
-  orderChargeAud,
-  orderSellerPayoutAud,
-} from "@/lib/payments/money";
+import { buyerCardFeeAud, orderSellerPayoutAud } from "@/lib/payments/money";
+
+export const PLATFORM_INVOICE_NAME = "Fisheries Quota Exchange";
+export const PLATFORM_INVOICE_ABN = "Not recorded";
 
 function formatAbn(abn: string | null) {
   if (!abn) {
@@ -22,41 +21,83 @@ function formatAbn(abn: string | null) {
   return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
 }
 
+function invoiceNumber(orderId: number, kind: TaxInvoiceKind) {
+  return `FQX-SIM-${orderId}-${kind === "quota" ? "Q" : "F"}`;
+}
+
 export function buildTaxInvoiceData(
+  kind: TaxInvoiceKind,
   order: Order,
   abns: { buyerAbn: string | null; sellerAbn: string | null },
   chargedAud?: string | number,
 ): TaxInvoiceData {
   const charge =
-    chargedAud == null ? orderChargeAud(order.amount_aud) : Number(chargedAud);
+    chargedAud == null ? Number(order.amount_aud) : Number(chargedAud);
+  const paidAud = Number.isFinite(charge) ? charge : Number(order.amount_aud);
   const cardFee = buyerCardFeeAud(
     order.amount_aud,
     order.fee_amount_aud,
-    Number.isFinite(charge) ? charge : order.amount_aud,
+    paidAud,
   );
   const sellerProceeds = orderSellerPayoutAud(
     order.amount_aud,
     order.fee_amount_aud,
-    Number.isFinite(charge) ? charge : undefined,
+    chargedAud == null ? undefined : paidAud,
   );
+  const offeringLabel = listingOfferingLabel(order.offering);
+  const issuedAt = formatTableDate(order.updated_at);
+
+  if (kind === "quota") {
+    const amount = formatAud(order.amount_aud);
+    const cardNote =
+      cardFee > 0
+        ? ` Card processing of ${formatAud(cardFee)} was collected by FQX and is not part of this invoice.`
+        : "";
+
+    return {
+      kind,
+      invoiceNumber: invoiceNumber(order.id, kind),
+      issuedAt,
+      orderId: order.id,
+      title: "Simulated quota tax invoice",
+      supplierName: order.seller_name,
+      supplierAbn: formatAbn(abns.sellerAbn),
+      recipientName: order.buyer_name,
+      recipientAbn: formatAbn(abns.buyerAbn),
+      lines: [
+        {
+          description: `${offeringLabel} — ${order.fishery_name}`,
+          quantity: `${order.quantity} ${order.unit_label}`,
+          unitPrice: formatAud(order.unit_price_aud),
+          amount,
+        },
+      ],
+      total: amount,
+      note: `Payment was collected by FQX on behalf of the supplier.${cardNote} GST is not calculated.`,
+    };
+  }
+
+  const feeAmount = formatAud(order.fee_amount_aud);
 
   return {
-    invoiceNumber: `FQX-SIM-${order.id}`,
-    issuedAt: formatTableDate(order.updated_at),
+    kind,
+    invoiceNumber: invoiceNumber(order.id, kind),
+    issuedAt,
     orderId: order.id,
-    offeringLabel: listingOfferingLabel(order.offering),
-    fisheryName: order.fishery_name,
-    quantityLabel: `${order.quantity} ${order.unit_label}`,
-    unitPrice: formatAud(order.unit_price_aud),
-    amount: formatAud(order.amount_aud),
-    cardFee: formatAud(cardFee),
-    feePercent: `${order.fee_percent}%`,
-    feeAmount: formatAud(order.fee_amount_aud),
-    sellerProceeds: formatAud(sellerProceeds),
-    total: formatAud(Number.isFinite(charge) ? charge : order.amount_aud),
-    sellerName: order.seller_name,
-    sellerAbn: formatAbn(abns.sellerAbn),
-    buyerName: order.buyer_name,
-    buyerAbn: formatAbn(abns.buyerAbn),
+    title: "Simulated platform fee tax invoice",
+    supplierName: PLATFORM_INVOICE_NAME,
+    supplierAbn: PLATFORM_INVOICE_ABN,
+    recipientName: order.seller_name,
+    recipientAbn: formatAbn(abns.sellerAbn),
+    lines: [
+      {
+        description: `Platform fee (${order.fee_percent}%) — ${offeringLabel} — ${order.fishery_name}`,
+        quantity: "1",
+        unitPrice: feeAmount,
+        amount: feeAmount,
+      },
+    ],
+    total: feeAmount,
+    note: `Deducted from the listed quota amount at settlement. Seller proceeds ${formatAud(sellerProceeds)}. GST is not calculated.`,
   };
 }

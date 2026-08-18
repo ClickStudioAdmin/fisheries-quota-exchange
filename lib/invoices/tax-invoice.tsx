@@ -97,6 +97,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingTop: 6,
   },
+  note: {
+    color: muted,
+    marginTop: 12,
+    maxWidth: 360,
+    lineHeight: 1.4,
+  },
   footer: {
     position: "absolute",
     bottom: 36,
@@ -133,7 +139,7 @@ export function TaxInvoiceDocument({ data }: { data: TaxInvoiceData }) {
     <Document
       title={data.invoiceNumber}
       author="Fisheries Quota Exchange"
-      subject="Simulated tax invoice"
+      subject={data.title}
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.banner}>
@@ -150,7 +156,7 @@ export function TaxInvoiceDocument({ data }: { data: TaxInvoiceData }) {
             <Text style={{ color: muted, marginTop: 4 }}>FQX</Text>
           </View>
           <View>
-            <Text style={styles.title}>Simulated tax invoice</Text>
+            <Text style={styles.title}>{data.title}</Text>
             <Text style={styles.meta}>{data.invoiceNumber}</Text>
             <Text style={styles.meta}>Order {data.orderId}</Text>
             <Text style={styles.meta}>{data.issuedAt}</Text>
@@ -160,13 +166,13 @@ export function TaxInvoiceDocument({ data }: { data: TaxInvoiceData }) {
         <View style={styles.parties}>
           <View style={styles.party}>
             <Text style={styles.partyLabel}>Supplier</Text>
-            <Text style={styles.partyName}>{data.sellerName}</Text>
-            <Text>ABN {data.sellerAbn}</Text>
+            <Text style={styles.partyName}>{data.supplierName}</Text>
+            <Text>ABN {data.supplierAbn}</Text>
           </View>
           <View style={styles.party}>
             <Text style={styles.partyLabel}>Recipient</Text>
-            <Text style={styles.partyName}>{data.buyerName}</Text>
-            <Text>ABN {data.buyerAbn}</Text>
+            <Text style={styles.partyName}>{data.recipientName}</Text>
+            <Text>ABN {data.recipientAbn}</Text>
           </View>
         </View>
 
@@ -177,37 +183,22 @@ export function TaxInvoiceDocument({ data }: { data: TaxInvoiceData }) {
           <Text style={styles.colAmount}>Amount</Text>
         </View>
 
-        <Line
-          description={`${data.offeringLabel} — ${data.fisheryName}`}
-          quantity={data.quantityLabel}
-          price={data.unitPrice}
-          amount={data.amount}
-        />
+        {data.lines.map((line) => (
+          <Line
+            key={`${line.description}-${line.amount}`}
+            description={line.description}
+            quantity={line.quantity}
+            price={line.unitPrice}
+            amount={line.amount}
+          />
+        ))}
 
         <View style={styles.totals}>
-          <View style={styles.totalRow}>
-            <Text>Quota</Text>
-            <Text>{data.amount}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text>Card processing (Stripe)</Text>
-            <Text>{data.cardFee}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text>Platform fee (seller, {data.feePercent})</Text>
-            <Text>{data.feeAmount}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text>Seller proceeds</Text>
-            <Text>{data.sellerProceeds}</Text>
-          </View>
           <View style={[styles.totalRow, styles.totalStrong]}>
-            <Text>Total paid by buyer</Text>
+            <Text>Total</Text>
             <Text>{data.total}</Text>
           </View>
-          <Text style={{ color: muted, marginTop: 8 }}>
-            GST not calculated
-          </Text>
+          <Text style={styles.note}>{data.note}</Text>
         </View>
 
         <Text style={styles.footer}>

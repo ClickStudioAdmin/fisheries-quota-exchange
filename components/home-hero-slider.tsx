@@ -145,41 +145,21 @@ export function HomeHeroSlider({ slides }: { slides: HomeHeroSlide[] }) {
           </dl>
         </div>
         {slides.length > 1 ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex gap-2">
+          <div className="flex gap-2" aria-label="Fishery slides">
+            {slides.map((slide, slideIndex) => (
               <button
+                key={slide.fishery.id}
                 type="button"
-                className="border border-line bg-paper-raised px-3 py-1.5 text-sm text-ink hover:border-sea"
-                onClick={() => goTo(index - 1)}
-                aria-label="Previous fishery"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="border border-line bg-paper-raised px-3 py-1.5 text-sm text-ink hover:border-sea"
-                onClick={() => goTo(index + 1)}
-                aria-label="Next fishery"
-              >
-                Next
-              </button>
-            </div>
-            <div className="flex gap-2" aria-label="Fishery slides">
-              {slides.map((slide, slideIndex) => (
-                <button
-                  key={slide.fishery.id}
-                  type="button"
-                  aria-current={slideIndex === index ? "true" : undefined}
-                  aria-label={slide.fishery.name}
-                  className={
-                    slideIndex === index
-                      ? "h-1.5 w-6 bg-sea"
-                      : "h-1.5 w-6 bg-line hover:bg-sea"
-                  }
-                  onClick={() => goTo(slideIndex)}
-                />
-              ))}
-            </div>
+                aria-current={slideIndex === index ? "true" : undefined}
+                aria-label={slide.fishery.name}
+                className={
+                  slideIndex === index
+                    ? "h-1.5 w-6 bg-sea"
+                    : "h-1.5 w-6 bg-line hover:bg-sea"
+                }
+                onClick={() => goTo(slideIndex)}
+              />
+            ))}
           </div>
         ) : null}
       </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loginPath } from "@/lib/auth/paths";
-import { getSettledOrderInvoice } from "@/lib/invoices/for-order";
+import { taxInvoicePath } from "@/lib/invoices/types";
 import { getUser } from "@/lib/supabase/server";
 
 export async function GET(
@@ -20,16 +20,5 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const invoice = await getSettledOrderInvoice(orderId);
-
-  if (!invoice) {
-    return new NextResponse("Not found", { status: 404 });
-  }
-
-  return new NextResponse(new Uint8Array(invoice.pdf), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${invoice.filename}"`,
-    },
-  });
+  return NextResponse.redirect(new URL(taxInvoicePath(orderId, "quota"), request.url));
 }

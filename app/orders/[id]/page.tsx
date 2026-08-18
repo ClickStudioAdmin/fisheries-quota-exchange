@@ -35,6 +35,7 @@ import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { formatTableDateTime } from "@/lib/format";
 import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
+import { taxInvoicePath } from "@/lib/invoices/types";
 
 export const metadata = {
   title: "Order",
@@ -318,17 +319,26 @@ export default async function OrderPage({
           </p>
         ) : order.status === "COMPLETED" ? (
           <div className={panelClassName}>
-            <h2 className="text-lg font-semibold text-ink">Tax invoice</h2>
+            <h2 className="text-lg font-semibold text-ink">Tax invoices</h2>
             <p className="mt-2 text-sm text-ink-muted">
-              Dummy tax invoice from simulated settlement. GST is not
-              calculated. This is not a real tax invoice.
+              Dummy invoices from simulated settlement. GST is not calculated.
+              These are not real tax invoices. The quota invoice is from the
+              seller to the buyer. The fee invoice is from FQX to the seller.
             </p>
-            <a
-              href={`/orders/${order.id}/invoice`}
-              className={`${buttonClassName} mt-6 inline-block`}
-            >
-              Download tax invoice
-            </a>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a
+                href={taxInvoicePath(order.id, "quota")}
+                className={`${buttonClassName} inline-block`}
+              >
+                Download quota invoice
+              </a>
+              <a
+                href={taxInvoicePath(order.id, "fee")}
+                className={`${buttonClassName} inline-block`}
+              >
+                Download fee invoice
+              </a>
+            </div>
           </div>
         ) : null}
       </div>

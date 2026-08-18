@@ -1,16 +1,16 @@
 import "server-only";
 
 import { sendEmail } from "@/lib/email/send";
-import { getSettledOrderInvoice } from "@/lib/invoices/for-order";
+import { getSettledOrderInvoices } from "@/lib/invoices/for-order";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getOrder } from "@/lib/orders/queries";
 import { getSiteUrl } from "@/lib/site-url";
 
 export async function sendSettledOrderInvoice(orderId: number) {
   const order = await getOrder(orderId);
-  const invoice = await getSettledOrderInvoice(orderId);
+  const invoices = await getSettledOrderInvoices(orderId);
 
-  if (!order || !invoice) {
+  if (!order || !invoices) {
     return;
   }
 
@@ -29,13 +29,17 @@ export async function sendSettledOrderInvoice(orderId: number) {
       orderId: order.id,
       buyerName: order.buyer_name,
       offeringLabel: listingOfferingLabel(order.offering),
-      amount: invoice.data.total,
+      amount: invoices.quota.data.total,
       orderUrl: siteUrl ? `${siteUrl}/orders/${order.id}` : "",
     },
     attachments: [
       {
-        filename: invoice.filename,
-        content: invoice.pdf,
+        filename: invoices.quota.filename,
+        content: invoices.quota.pdf,
+      },
+      {
+        filename: invoices.fee.filename,
+        content: invoices.fee.pdf,
       },
     ],
   });

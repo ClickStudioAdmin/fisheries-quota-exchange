@@ -17,8 +17,23 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/how-it-works" className="text-paper/75 hover:text-paper">
+                How it works
+              </Link>
+            </li>
+            <li>
               <Link href="/contact" className="text-paper/75 hover:text-paper">
                 Contact us
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="text-paper/75 hover:text-paper">
+                Privacy policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="text-paper/75 hover:text-paper">
+                Terms of service
               </Link>
             </li>
           </ul>

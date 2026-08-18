@@ -74,8 +74,8 @@ export default async function AdminOrdersPage({
           settlement. Select orders in the same status to open a queue. The
           buyer pays the listed amount. Settlement Transfers the seller’s share
           after the platform fee, writes SALE/PURCHASE or LEASE_OUT/LEASE_IN
-          ledger rows, consumes the reservation, and emails a dummy tax invoice
-          to the buyer.
+          ledger rows, consumes the reservation, and emails dummy tax invoices
+          (quota and platform fee) to the buyer.
         </p>
       </div>
       <DataTable

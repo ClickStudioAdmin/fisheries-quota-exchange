@@ -26,19 +26,20 @@ export function OrderSettledEmail({
   return (
     <Html>
       <Head />
-      <Preview>{`Simulated tax invoice for FQX order ${orderId}`}</Preview>
-      <Body style={{ backgroundColor: paper, color: ink, fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
+          <Preview>{`Simulated tax invoices for FQX order ${orderId}`}</Preview>
+          <Body style={{ backgroundColor: paper, color: ink, fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
         <Container style={{ padding: "32px 16px", maxWidth: "520px" }}>
           <Heading style={{ fontSize: "22px", fontWeight: 600, color: ink }}>
             Fisheries Quota Exchange
           </Heading>
           <Text style={{ fontSize: "16px", lineHeight: "24px", color: ink }}>
             Simulated settlement is complete for order {orderId} ({offeringLabel}
-            {" "}for {buyerName}). A dummy tax invoice is attached.
+            {" "}for {buyerName}). Dummy tax invoices are attached: one for the
+            quota and one for the platform fee.
           </Text>
           <Text style={{ fontSize: "16px", lineHeight: "24px", color: muted }}>
-            Total {amount}. This is not a real tax invoice and no payment has
-            been taken.
+            Quota total {amount}. These are not real tax invoices and no payment
+            has been taken.
           </Text>
           {orderUrl ? (
             <Section style={{ marginTop: "24px" }}>

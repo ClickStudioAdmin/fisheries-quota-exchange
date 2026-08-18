@@ -1,10 +1,14 @@
 import type { EmailTemplate, EmailTemplates } from "@/lib/email/types";
-import type { TaxInvoiceData } from "@/lib/invoices/types";
+import { buildTaxInvoiceData } from "@/lib/invoices/from-order";
+import type { TaxInvoiceData, TaxInvoiceKind } from "@/lib/invoices/types";
+import type { Order } from "@/lib/orders/types";
+import { orderChargeAud } from "@/lib/payments/money";
 
 export const MESSAGE_TEMPLATE_IDS = [
   "member_added",
   "order_settled",
-  "tax_invoice",
+  "tax_invoice_quota",
+  "tax_invoice_fee",
 ] as const;
 
 export type MessageTemplateId = (typeof MESSAGE_TEMPLATE_IDS)[number];
@@ -49,7 +53,7 @@ const templates: MessageTemplate[] = [
     kind: "email",
     name: "Order settled",
     description:
-      "Confirms simulated settlement and attaches the dummy tax invoice PDF. No live payment.",
+      "Confirms simulated settlement and attaches dummy tax invoice PDFs for the quota and the platform fee.",
     summary: "After simulated settlement completes",
     sentWhen:
       "After simulate_settlement succeeds and the order status is COMPLETED. Settlement still completes if mail is skipped or fails.",
@@ -60,27 +64,55 @@ const templates: MessageTemplate[] = [
     skipWhen:
       "RESEND_API_KEY or EMAIL_FROM is missing, the order is not COMPLETED, created_by_email is invalid, or Resend rejects the send.",
     source: "lib/email/templates/order-settled.tsx",
-    attachments: ["tax_invoice"],
-    related: [{ id: "tax_invoice", label: "Simulated tax invoice PDF" }],
+    attachments: ["tax_invoice_quota", "tax_invoice_fee"],
+    related: [
+      { id: "tax_invoice_quota", label: "Quota tax invoice PDF" },
+      { id: "tax_invoice_fee", label: "Fee tax invoice PDF" },
+    ],
   },
   {
-    id: "tax_invoice",
+    id: "tax_invoice_quota",
     kind: "pdf",
-    name: "Simulated tax invoice",
+    name: "Simulated quota tax invoice",
     description:
-      "Dummy A4 tax invoice for a simulated quota sale or lease. Marked as not a real tax invoice. GST is not calculated. The PDF is generated in memory and is not stored.",
+      "Dummy A4 tax invoice for the quota: seller to buyer for the listed amount. Marked as not a real tax invoice. GST is not calculated. The PDF is generated in memory and is not stored.",
     summary: "Attached to the order settled email; downloadable after settlement",
     sentWhen:
-      "Generated when the order settled email is sent, and on download from /orders/[id] after COMPLETED. It is not emailed on its own.",
+      "Generated when the order settled email is sent, and on download from /orders/[id]/invoice/quota after COMPLETED. It is not emailed on its own.",
     trigger:
-      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice. generateTaxInvoicePdf renders lib/invoices/tax-invoice.tsx.",
+      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice/quota. generateTaxInvoicePdf renders lib/invoices/tax-invoice.tsx.",
     recipient:
       "Email attachment to the buyer (created_by_email). Download for buyer, seller, or platform admin after settlement.",
     skipWhen:
       "The order settled email is skipped or fails before attach. Settlement still completes.",
     source: "lib/invoices/tax-invoice.tsx",
     attachments: [],
-    related: [{ id: "order_settled", label: "Order settled email" }],
+    related: [
+      { id: "order_settled", label: "Order settled email" },
+      { id: "tax_invoice_fee", label: "Fee tax invoice PDF" },
+    ],
+  },
+  {
+    id: "tax_invoice_fee",
+    kind: "pdf",
+    name: "Simulated platform fee tax invoice",
+    description:
+      "Dummy A4 tax invoice for the FQX platform fee: FQX to the seller. Marked as not a real tax invoice. GST is not calculated. The PDF is generated in memory and is not stored.",
+    summary: "Attached to the order settled email; downloadable after settlement",
+    sentWhen:
+      "Generated when the order settled email is sent, and on download from /orders/[id]/invoice/fee after COMPLETED. It is not emailed on its own.",
+    trigger:
+      "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice/fee. generateTaxInvoicePdf renders lib/invoices/tax-invoice.tsx.",
+    recipient:
+      "Email attachment to the buyer (created_by_email). Download for buyer, seller, or platform admin after settlement.",
+    skipWhen:
+      "The order settled email is skipped or fails before attach. Settlement still completes.",
+    source: "lib/invoices/tax-invoice.tsx",
+    attachments: [],
+    related: [
+      { id: "order_settled", label: "Order settled email" },
+      { id: "tax_invoice_quota", label: "Quota tax invoice PDF" },
+    ],
   },
 ];
 
@@ -131,26 +163,41 @@ export function sampleEmailData(id: EmailTemplate, siteUrl: string) {
   } satisfies EmailTemplates["order_settled"];
 }
 
-export function sampleTaxInvoiceData(): TaxInvoiceData {
-  return {
-    invoiceNumber: "FQX-SIM-1001",
-    issuedAt: "17/08/2026",
-    orderId: 1001,
-    offeringLabel: "Sale",
-    fisheryName: "Northern Prawn Fishery",
-    quantityLabel: "40 kg",
-    unitPrice: "$18.75",
-    amount: "$750.00",
-    cardFee: "$13.47",
-    feePercent: "5%",
-    feeAmount: "$37.50",
-    sellerProceeds: "$712.50",
-    total: "$763.47",
-    sellerName: "Sample Quota Holdings Pty Ltd",
-    sellerAbn: "81 000 000 001",
-    buyerName: "Sample Fisheries Pty Ltd",
-    buyerAbn: "81 000 000 002",
+export function sampleTaxInvoiceData(kind: TaxInvoiceKind): TaxInvoiceData {
+  const order: Order = {
+    id: 1001,
+    listing_id: 1,
+    holding_id: 1,
+    seller_organisation_id: 2,
+    buyer_organisation_id: 3,
+    offering: "SALE",
+    quantity: "40",
+    unit_price_aud: "18.75",
+    amount_aud: "750",
+    fee_percent: "5",
+    fee_amount_aud: "37.50",
+    status: "COMPLETED",
+    seller_name: "Sample Quota Holdings Pty Ltd",
+    buyer_name: "Sample Fisheries Pty Ltd",
+    fishery_name: "Northern Prawn Fishery",
+    quota_type_name: "Quota",
+    measurement_kind: "WEIGHT",
+    unit_label: "kg",
+    created_by_email: "buyer@example.com",
+    created_at: "2026-08-17T00:00:00.000Z",
+    updated_at: "2026-08-17T00:00:00.000Z",
+    review_note: null,
   };
+
+  return buildTaxInvoiceData(
+    kind,
+    order,
+    {
+      buyerAbn: "81000000002",
+      sellerAbn: "81000000001",
+    },
+    orderChargeAud(order.amount_aud),
+  );
 }
 
 export function sampleContentFields(id: MessageTemplateId, siteUrl: string) {
@@ -175,23 +222,29 @@ export function sampleContentFields(id: MessageTemplateId, siteUrl: string) {
     ];
   }
 
-  const invoice = sampleTaxInvoiceData();
+  const invoice = sampleTaxInvoiceData(
+    id === "tax_invoice_fee" ? "fee" : "quota",
+  );
   return [
     { label: "Invoice number", value: invoice.invoiceNumber },
+    { label: "Title", value: invoice.title },
     { label: "Issued", value: invoice.issuedAt },
     { label: "Order", value: String(invoice.orderId) },
-    { label: "Supplier", value: `${invoice.sellerName} (ABN ${invoice.sellerAbn})` },
-    { label: "Recipient", value: `${invoice.buyerName} (ABN ${invoice.buyerAbn})` },
-    { label: "Line", value: `${invoice.offeringLabel} — ${invoice.fisheryName}` },
-    { label: "Quantity", value: invoice.quantityLabel },
-    { label: "Unit price", value: invoice.unitPrice },
-    { label: "Quota amount", value: invoice.amount },
-    { label: "Card processing (Stripe)", value: invoice.cardFee },
     {
-      label: "Platform fee (seller)",
-      value: `${invoice.feeAmount} (${invoice.feePercent})`,
+      label: "Supplier",
+      value: `${invoice.supplierName} (ABN ${invoice.supplierAbn})`,
     },
-    { label: "Seller proceeds", value: invoice.sellerProceeds },
-    { label: "Total paid by buyer", value: invoice.total },
+    {
+      label: "Recipient",
+      value: `${invoice.recipientName} (ABN ${invoice.recipientAbn})`,
+    },
+    {
+      label: "Line",
+      value: invoice.lines[0]
+        ? `${invoice.lines[0].description} — ${invoice.lines[0].amount}`
+        : "",
+    },
+    { label: "Total", value: invoice.total },
+    { label: "Note", value: invoice.note },
   ];
 }

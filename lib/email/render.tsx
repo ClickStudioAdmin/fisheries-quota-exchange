@@ -16,7 +16,7 @@ export function emailSubject<K extends EmailTemplate>(
     }
     case "order_settled": {
       const order = data as EmailTemplates["order_settled"];
-      return `Simulated tax invoice for FQX order ${order.orderId}`;
+      return `Simulated tax invoices for FQX order ${order.orderId}`;
     }
     default:
       return "Fisheries Quota Exchange";

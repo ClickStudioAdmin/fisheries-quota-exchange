@@ -18,7 +18,9 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const invoice = sampleTaxInvoiceData();
+  const invoice = sampleTaxInvoiceData(
+    template.id === "tax_invoice_fee" ? "fee" : "quota",
+  );
   const pdf = await generateTaxInvoicePdf(invoice);
 
   return new NextResponse(new Uint8Array(pdf), {
