@@ -23,7 +23,7 @@ Auction wins use the same rule: if the seller can accept charges, the order wait
 
 When Stripe is configured, an organisation cannot create a listing or auction until `stripe_charges_enabled` is true.
 
-Checkout asks Stripe for `card` and `au_becs_debit`. If that is rejected, it uses the payment methods enabled on the Stripe account, then cards only. Enable **AU BECS Direct Debit** for Checkout in the Stripe Dashboard (Settings → Payment methods) to offer bank debit. Test BECS: BSB `000-000`, account `000123456`.
+Checkout asks Stripe for `card` and `au_becs_debit`. If that is rejected, it uses the payment methods enabled on the Stripe account, then cards only. Enable **AU BECS Direct Debit** for Checkout in the Stripe Dashboard (Settings → Payment methods) to offer bank debit. Stripe hides BECS when the charge is above the account debit limit (A$10,000 per transaction by default in test). Test BECS: BSB `000-000`, account `000123456`.
 
 ## Pages
 

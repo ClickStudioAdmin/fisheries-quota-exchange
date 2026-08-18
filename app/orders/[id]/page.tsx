@@ -157,13 +157,24 @@ export default async function OrderPage({
               ]}
             />
           </div>
+          {canCancel ? (
+            <form action={cancelOrderAction} className="mt-6">
+              <input type="hidden" name="order_id" value={order.id} />
+              <input type="hidden" name="next" value={`/orders/${order.id}`} />
+              <button type="submit" className={buttonClassName}>
+                Cancel order
+              </button>
+            </form>
+          ) : null}
         </div>
         {canPay && publishableKey ? (
           <div className={panelClassName}>
             <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
             <p className="mt-2 text-sm text-ink-muted">
               Pay by card or Australian bank debit (BECS) in Stripe test mode.
-              FQX holds the funds until settlement, then pays the seller.
+              Stripe only shows BECS when the charge is within your account’s
+              debit limit (A$10,000 by default). FQX holds the funds until
+              settlement, then pays the seller.
             </p>
             <div className="mt-6">
               <OrderCheckout
@@ -180,18 +191,6 @@ export default async function OrderPage({
       </div>
       {order.review_note ? (
         <p className="mt-6 text-sm text-ink-muted">Note: {order.review_note}</p>
-      ) : null}
-      {canCancel ? (
-        <form action={cancelOrderAction} className="mt-6">
-          <input type="hidden" name="order_id" value={order.id} />
-          <input type="hidden" name="next" value={`/orders/${order.id}`} />
-          <button
-            type="submit"
-            className={buttonClassName}
-          >
-            Cancel order
-          </button>
-        </form>
       ) : null}
       <section className="mt-10">
         <h2 className="text-xl font-semibold text-ink">Audit</h2>
