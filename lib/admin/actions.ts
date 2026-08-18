@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { adminUserPath } from "@/lib/organisations/paths";
 import { createClient } from "@/lib/supabase/server";
+import { userFacingError } from "@/lib/errors/user-message";
 
 function readEmails(formData: FormData, fieldName = "emails") {
   return [
@@ -30,7 +31,7 @@ async function applyUserVerified(emails: string[], verified: boolean) {
     });
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(userFacingError(error));
     }
 
     revalidatePath(adminUserPath(email));
@@ -74,7 +75,7 @@ export async function deleteUsersAction(formData: FormData) {
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(userFacingError(error));
   }
 
   revalidatePath("/admin/users");

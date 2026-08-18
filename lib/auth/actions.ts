@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/paths";
+import { userFacingError } from "@/lib/errors/user-message";
 import { getSiteUrl } from "@/lib/site-url";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
@@ -98,7 +99,7 @@ export async function registerAction(
   );
 
   if (allowedError) {
-    return { error: allowedError.message };
+    return { error: userFacingError(allowedError) };
   }
 
   if (allowed !== true) {
@@ -122,7 +123,7 @@ export async function registerAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   if (!data.session) {
@@ -160,7 +161,7 @@ export async function loginAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   const {
@@ -201,7 +202,7 @@ export async function forgotPasswordAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   return {
@@ -228,7 +229,7 @@ export async function updatePasswordAction(
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   redirect("/dashboard");
@@ -316,7 +317,7 @@ export async function updatePersonAction(
   );
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   if (organisationUpdate) {
@@ -326,7 +327,7 @@ export async function updatePersonAction(
       .eq("id", organisationId);
 
     if (organisationError) {
-      return { error: organisationError.message };
+      return { error: userFacingError(organisationError) };
     }
   }
 
@@ -381,7 +382,7 @@ export async function updateProfilePasswordAction(
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   return { message: "Password updated." };

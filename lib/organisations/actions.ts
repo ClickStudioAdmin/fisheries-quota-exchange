@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { userFacingError } from "@/lib/errors/user-message";
 import {
   canAddMember,
   canAssignRole,
@@ -71,7 +72,7 @@ export async function createOrganisationAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   redirect(accountPath(Number(data)));
@@ -115,11 +116,7 @@ export async function addMemberAction(
   });
 
   if (error) {
-    if (error.code === "23505") {
-      return { error: "That email is already a member." };
-    }
-
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   revalidatePath("/dashboard/members");
@@ -201,7 +198,7 @@ export async function updateMemberRoleAction(
     .select("id");
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   if (!data?.length) {
@@ -256,7 +253,7 @@ export async function removeMemberAction(
     .eq("organisation_id", organisationId);
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   const { data: remaining } = await supabase

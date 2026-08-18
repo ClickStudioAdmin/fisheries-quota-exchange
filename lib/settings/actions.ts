@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/server";
+import { userFacingError } from "@/lib/errors/user-message";
 
 export type SettingsFormState = {
   error?: string;
@@ -58,7 +59,7 @@ export async function updatePlatformSettingsAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   revalidatePath("/", "layout");

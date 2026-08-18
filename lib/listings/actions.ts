@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
+import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 
@@ -69,7 +70,7 @@ export async function createListingAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   const listingId = Number(data);

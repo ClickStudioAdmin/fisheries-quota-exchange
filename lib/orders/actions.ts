@@ -9,6 +9,7 @@ import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
 import { startOrderCheckoutAction, transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
+import { userFacingError } from "@/lib/errors/user-message";
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -55,7 +56,7 @@ export async function createOrderAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   if (isPaymentsConfigured()) {

@@ -15,6 +15,7 @@ import { getOrder } from "@/lib/orders/queries";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getSiteUrl } from "@/lib/site-url";
 import { orderChargeAud } from "@/lib/payments/money";
+import { userFacingError } from "@/lib/errors/user-message";
 
 export type PaymentFormState = {
   error?: string;
@@ -64,7 +65,7 @@ export async function createAccountSessionAction(
       });
 
       if (error) {
-        return { error: error.message };
+        return { error: userFacingError(error) };
       }
     }
 
@@ -87,15 +88,13 @@ export async function createAccountSessionAction(
       });
 
       if (error) {
-        return { error: error.message };
+        return { error: userFacingError(error) };
       }
 
       return { clientSecret: await provider.createAccountSession(accountId) };
     }
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not start Stripe onboarding.";
-    return { error: message };
+    return { error: userFacingError(error, "Could not start Stripe onboarding.") };
   }
 }
 
@@ -156,7 +155,7 @@ export async function startOrderCheckoutAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   redirect(checkout.url);
@@ -222,13 +221,11 @@ export async function transferOrderSellerProceeds(
     });
 
     if (error) {
-      return { error: error.message };
+      return { error: userFacingError(error) };
     }
 
     return {};
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Seller transfer failed.";
-    return { error: message };
+    return { error: userFacingError(error, "Seller transfer failed.") };
   }
 }

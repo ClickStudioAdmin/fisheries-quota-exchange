@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { isQuantityType } from "@/lib/fisheries/types";
+import { userFacingError } from "@/lib/errors/user-message";
 import {
   FISHERY_LOGO_BUCKET,
   fisheryLogoExtension,
@@ -67,7 +68,7 @@ async function storeFisheryLogo(
     .upload(path, file, { contentType: file.type, upsert: true });
 
   if (uploadError) {
-    return { error: uploadError.message };
+    return { error: userFacingError(uploadError) };
   }
 
   const { error: updateError } = await supabase
@@ -77,7 +78,7 @@ async function storeFisheryLogo(
 
   if (updateError) {
     await supabase.storage.from(FISHERY_LOGO_BUCKET).remove([path]);
-    return { error: updateError.message };
+    return { error: userFacingError(updateError) };
   }
 
   if (previousPath && previousPath !== path) {
@@ -117,7 +118,7 @@ export async function createJurisdictionAction(
   if (!code || !name) return { error: "Code and name are required." };
 
   const { error } = await admin.supabase.from("jurisdictions").insert({ code, name });
-  if (error) return { error: error.message };
+  if (error) return { error: userFacingError(error) };
   return { message: "Jurisdiction created." };
 }
 
@@ -160,7 +161,7 @@ export async function createFisheryAction(
     .select("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) return { error: userFacingError(error) };
 
   if (logo) {
     await storeFisheryLogo(admin.supabase, data.id, logo, null);
@@ -200,7 +201,7 @@ export async function updateFisheryAction(
     })
     .eq("id", fisheryId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: userFacingError(error) };
 
   const logo = readLogoFile(formData);
   if (logo) {
@@ -262,7 +263,7 @@ export async function createHoldingAction(
     p_note: note || null,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: userFacingError(error) };
 
   revalidatePath("/dashboard/holdings");
   revalidatePath("/admin/holdings");
@@ -294,7 +295,7 @@ export async function adjustHoldingAction(
     p_note: note || null,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: userFacingError(error) };
 
   revalidatePath("/dashboard/holdings");
   revalidatePath("/admin/holdings");
@@ -396,7 +397,7 @@ export async function removeFisheryLogoAction(
     .eq("id", fisheryId);
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   const previousPath = (fishery.logo_path as string | null) ?? null;

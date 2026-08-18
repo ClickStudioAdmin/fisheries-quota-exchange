@@ -5,6 +5,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { userFacingError } from "@/lib/errors/user-message";
 import type { AuctionFormState, BidFormState } from "@/lib/auctions/types";
 
 function read(formData: FormData, name: string) {
@@ -80,7 +81,7 @@ export async function createAuctionAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   const listingId = Number(data);
@@ -122,7 +123,7 @@ export async function placeBidAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   redirect(`/auctions/${listingId}`);

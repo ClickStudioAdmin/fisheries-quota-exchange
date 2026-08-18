@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { userFacingError } from "@/lib/errors/user-message";
 import type { Listing } from "@/lib/listings/types";
 
 const columns =
@@ -74,7 +75,7 @@ export async function listAllListings() {
 
   if (error) {
     console.error("listAllListings failed", error.message);
-    return { listings: [] as Listing[], error: error.message };
+    return { listings: [] as Listing[], error: userFacingError(error) };
   }
 
   return { listings: (data ?? []) as Listing[] };
