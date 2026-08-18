@@ -110,11 +110,10 @@ export default async function OrderPage({
   const showCheckout = payPanel === "checkout";
   const showPending = payPanel === "pending";
   const publishableKey = showCheckout ? getStripePublishableKey() : null;
-  const chargeAud =
-    payment?.status === "PAID"
-      ? Number(payment.amount_aud)
-      : orderChargeAud(order.amount_aud);
-  const totalDue = formatAud(chargeAud);
+  const listedDue = formatAud(order.amount_aud);
+  const cardDue = formatAud(orderChargeAud(order.amount_aud));
+  const paidAmount =
+    payment?.status === "PAID" ? formatAud(payment.amount_aud) : null;
   const cardFeeAud =
     payment?.status === "PAID"
       ? buyerCardFeeAud(
@@ -154,22 +153,21 @@ export default async function OrderPage({
     label: `Price per ${order.unit_label}`,
     value: formatAud(order.unit_price_aud),
   };
-  const cardFeeItem =
-    cardFeeAud > 0
-      ? {
-          label: "Card processing (Stripe)",
-          value: `${formatAud(cardFeeAud)} (${stripeCardFeeRateLabel()})`,
-        }
-      : null;
   const quotaItem = {
     label: isSeller ? "Listed amount" : "Quota amount",
     value: formatAud(order.amount_aud),
   };
+  const unpaidCardItem =
+    !paidAmount && cardFeeAud > 0
+      ? {
+          label: showCommission ? "If buyer pays by card" : "If you pay by card",
+          value: `${cardDue} (includes Stripe ${stripeCardFeeRateLabel()})`,
+        }
+      : null;
   const totalItems = showCommission
     ? [
         unitPriceItem,
         quotaItem,
-        ...(cardFeeItem && !isSeller ? [cardFeeItem] : []),
         { label: "Platform fee", value: feeLabel },
         {
           label: isSeller ? "You receive" : "Seller proceeds",
@@ -179,23 +177,20 @@ export default async function OrderPage({
           ? []
           : [
               {
-                label:
-                  payment?.status === "PAID" ? "Buyer paid" : "Buyer pays",
-                value: totalDue,
+                label: paidAmount ? "Buyer paid" : "Buyer pays",
+                value: paidAmount ?? listedDue,
               },
+              ...(unpaidCardItem ? [unpaidCardItem] : []),
             ]),
       ]
     : [
         unitPriceItem,
+        quotaItem,
         {
-          label: "Quota amount",
-          value: formatAud(order.amount_aud),
+          label: paidAmount ? "You paid" : "You pay",
+          value: paidAmount ?? listedDue,
         },
-        ...(cardFeeItem ? [cardFeeItem] : []),
-        {
-          label: payment?.status === "PAID" ? "You paid" : "You pay",
-          value: totalDue,
-        },
+        ...(unpaidCardItem ? [unpaidCardItem] : []),
       ];
 
   return (
@@ -301,13 +296,12 @@ export default async function OrderPage({
             <h2 className="text-lg font-semibold text-ink">Pay FQX</h2>
             <p className="mt-2 text-sm text-ink-muted">
               Pay by card or Australian bank debit (BECS) in Stripe test mode.
-              The total includes Stripe's card processing fee (
-              {stripeCardFeeRateLabel()}) so the listed quota amount reaches
-              FQX. The platform fee is deducted from the seller. Bank debit is
-              charged this same total in test mode. Stripe only shows BECS when
-              the charge is within your account’s debit limit (A$10,000 by
-              default). FQX holds the funds until settlement, then pays the
-              seller.
+              You pay the listed amount. If you pay by card, Stripe's processing
+              fee ({stripeCardFeeRateLabel()}) is added so FQX receives the
+              quota price. The platform fee is deducted from the seller. Stripe
+              only shows BECS when the charge is within your account’s debit
+              limit (A$10,000 by default). FQX holds the funds until
+              settlement, then pays the seller.
             </p>
             <div className="mt-6">
               <OrderCheckout
