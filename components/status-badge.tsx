@@ -74,7 +74,8 @@ export function isStatusColumn(key: string, header?: string) {
     header === "Status" ||
     header === "Verified" ||
     header === "Access" ||
-    header === "Admin"
+    header === "Admin" ||
+    header === "Send"
   );
 }
 

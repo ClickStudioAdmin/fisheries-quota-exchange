@@ -38,9 +38,10 @@ export default async function AdminTemplatesPage() {
         columns={[
           { key: "name", header: "Template", sortable: true },
           { key: "kind", header: "Type", sortable: true, filter: "select" },
+          { key: "sentWhen", header: "Sent when" },
           {
             key: "admin",
-            header: "Admin",
+            header: "Send",
             sortable: true,
             filter: "select",
             filterOptions: [
@@ -48,7 +49,6 @@ export default async function AdminTemplatesPage() {
               { value: "disabled", label: "Disabled" },
             ],
           },
-          { key: "sentWhen", header: "Sent when" },
         ]}
         rows={templates.map((template) => {
           const disabled =

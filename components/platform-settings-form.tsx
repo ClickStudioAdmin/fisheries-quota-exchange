@@ -1,10 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  buttonClassName,
-  fieldClassName,
-} from "@/components/auth-card";
+import { fieldClassName } from "@/components/auth-card";
 import {
   tableBodyCellClassName,
   tableClassName,
@@ -14,6 +11,7 @@ import {
   tableWrapClassName,
 } from "@/components/data-table";
 import { SettingsSwitch, SettingsSwitchRow } from "@/components/settings-switch";
+import { StickySettingsHeader } from "@/components/sticky-settings-header";
 import {
   updatePlatformSettingsAction,
   type SettingsFormState,
@@ -37,7 +35,14 @@ export function PlatformSettingsForm({
   );
 
   return (
-    <form action={formAction} className="max-w-3xl space-y-6">
+    <form action={formAction} className="space-y-6">
+      <StickySettingsHeader
+        title="Platform settings"
+        description="These rules apply immediately. Fees are deducted from the seller. The buyer pays the listed amount."
+        pending={pending}
+        saveLabel="Save settings"
+      />
+      <div className="max-w-3xl space-y-6">
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
@@ -166,9 +171,7 @@ export function PlatformSettingsForm({
           </table>
         </div>
       </fieldset>
-      <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Saving…" : "Save settings"}
-      </button>
+      </div>
     </form>
   );
 }
