@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   DataTable,
   DataTableRowExtras,
-  TableActionRow,
   tableLinkClassName,
 } from "@/components/data-table";
 import { tableButtonClassName } from "@/components/auth-card";
@@ -25,17 +24,12 @@ export const metadata = {
   title: "Users",
 };
 
-export default async function AdminUsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export default async function AdminUsersPage() {
   if (!(await isPlatformAdmin())) {
     redirect("/admin");
   }
 
-  const [{ error }, users, user] = await Promise.all([
-    searchParams,
+  const [users, user] = await Promise.all([
     listUsersForAdmin(),
     getUser(),
   ]);
@@ -54,12 +48,6 @@ export default async function AdminUsersPage({
           verified, revoke verification, or remove them from all accounts.
         </p>
       </div>
-      {error === "switch" ? (
-        <p className="text-sm text-red-800" role="alert">
-          Could not sign in as that user. They need an existing login account,
-          and you cannot switch while already logged in as someone else.
-        </p>
-      ) : null}
       <DataTable
         caption="Users"
         empty="No users yet."
@@ -176,27 +164,17 @@ export default async function AdminUsersPage({
               </Link>
             }
             actions={
-              <TableActionRow>
-                {item.email !== currentEmail ? (
-                  <form action="/api/admin/impersonate" method="post">
-                    <input type="hidden" name="email" value={item.email} />
-                    <button type="submit" className={tableButtonClassName}>
-                      Switch to User
-                    </button>
-                  </form>
-                ) : null}
-                <form action={setUserVerifiedAction}>
-                  <input type="hidden" name="email" value={item.email} />
-                  <input
-                    type="hidden"
-                    name="verified"
-                    value={item.verified ? "false" : "true"}
-                  />
-                  <button type="submit" className={tableButtonClassName}>
-                    {item.verified ? "Revoke verification" : "Mark as verified"}
-                  </button>
-                </form>
-              </TableActionRow>
+              <form action={setUserVerifiedAction}>
+                <input type="hidden" name="email" value={item.email} />
+                <input
+                  type="hidden"
+                  name="verified"
+                  value={item.verified ? "false" : "true"}
+                />
+                <button type="submit" className={tableButtonClassName}>
+                  {item.verified ? "Revoke verification" : "Mark as verified"}
+                </button>
+              </form>
             }
           />
         ))}

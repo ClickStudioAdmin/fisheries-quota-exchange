@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { clearImpersonationCookies } from "@/lib/admin/impersonate";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth/paths";
 import { getSiteUrl } from "@/lib/site-url";
@@ -395,6 +394,5 @@ export async function logoutAction() {
     await supabase.auth.signOut();
   }
 
-  await clearImpersonationCookies();
   redirect("/");
 }

@@ -37,7 +37,6 @@ import {
 } from "@/lib/organisations/admin-queries";
 import { parseAdminUserEmailParam, adminHoldingPath } from "@/lib/organisations/paths";
 import { organisationRoleLabel } from "@/lib/organisations/types";
-import { getUser } from "@/lib/supabase/server";
 
 type AdminUserPageProps = {
   params: Promise<{ email: string }>;
@@ -69,10 +68,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     notFound();
   }
 
-  const [profile, viewer] = await Promise.all([
-    getAdminUserForAdmin(email),
-    getUser(),
-  ]);
+  const profile = await getAdminUserForAdmin(email);
 
   if (!profile) {
     notFound();
@@ -114,27 +110,17 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               <p className="mt-1 text-sm text-ink-muted">{profile.email}</p>
             ) : null}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {profile.email !== viewer?.email?.toLowerCase() ? (
-              <form action="/api/admin/impersonate" method="post">
-                <input type="hidden" name="email" value={profile.email} />
-                <button type="submit" className={tableButtonClassName}>
-                  Switch to User
-                </button>
-              </form>
-            ) : null}
-            <form action={setUserVerifiedAction}>
-              <input type="hidden" name="email" value={profile.email} />
-              <input
-                type="hidden"
-                name="verified"
-                value={profile.verified ? "false" : "true"}
-              />
-              <button type="submit" className={tableButtonClassName}>
-                {profile.verified ? "Revoke verification" : "Mark as verified"}
-              </button>
-            </form>
-          </div>
+          <form action={setUserVerifiedAction}>
+            <input type="hidden" name="email" value={profile.email} />
+            <input
+              type="hidden"
+              name="verified"
+              value={profile.verified ? "false" : "true"}
+            />
+            <button type="submit" className={tableButtonClassName}>
+              {profile.verified ? "Revoke verification" : "Mark as verified"}
+            </button>
+          </form>
         </div>
       </div>
 
