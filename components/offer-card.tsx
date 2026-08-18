@@ -73,8 +73,11 @@ export function OfferCard({
       <Link href={href} className="flex min-w-0 flex-1 flex-col gap-4 p-5">
         <div className="flex min-w-0 items-start gap-4">
           {logoFishery ? <FisheryLogo fishery={logoFishery} size="md" /> : null}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+            <p className="min-w-0 truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
+              {title}
+            </p>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {hideOffering ? null : (
                 <KindBadge tone="filled">
                   {listingOfferingLabel(listing.offering)}
@@ -87,7 +90,6 @@ export function OfferCard({
                 <span className="text-xs text-ink-muted">{badge}</span>
               ) : null}
             </div>
-            <p className="mt-3 truncate font-semibold text-ink">{title}</p>
           </div>
         </div>
         <div>
