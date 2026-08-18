@@ -183,7 +183,7 @@ export function MarketplaceList({
           </select>
         </label>
         <label className={filterLabelClassName}>
-          <span className="whitespace-nowrap">Type</span>
+          <span className="whitespace-nowrap">Offering</span>
           <select
             value={offering}
             onChange={(event) =>

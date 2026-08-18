@@ -216,7 +216,7 @@ export function sampleContentFields(id: MessageTemplateId, siteUrl: string) {
     return [
       { label: "Order", value: String(data.orderId) },
       { label: "Buyer", value: data.buyerName },
-      { label: "Type", value: data.offeringLabel },
+      { label: "Offering", value: data.offeringLabel },
       { label: "Total", value: data.amount },
       { label: "Order URL", value: data.orderUrl },
     ];

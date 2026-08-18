@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { ListingCards } from "@/components/listing-card";
+import { buttonClassName } from "@/components/auth-card";
 import { FisheryCard } from "@/components/fishery-card";
 import { HomeHeroSlider, type HomeHeroSlide } from "@/components/home-hero-slider";
-import { buttonClassName } from "@/components/auth-card";
+import { ListingCards } from "@/components/listing-card";
 import {
   pageWidthClassName,
   panelClassName,
 } from "@/components/surface";
-import { getUser } from "@/lib/supabase/server";
-import { registrationsAllowed } from "@/lib/settings/queries";
+import {
+  HOW_IT_WORKS_BUYER_STEPS,
+  HOW_IT_WORKS_SELLER_STEPS,
+} from "@/lib/content/how-it-works";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import {
   jurisdictionLabel,
@@ -16,32 +18,15 @@ import {
 } from "@/lib/fisheries/types";
 import { listMarketplaceListings } from "@/lib/listings/queries";
 import {
-  formatAud,
+  formatAudPerUnit,
   openListingCountsByFisheryName,
 } from "@/lib/listings/types";
 import { listLatestSalePrices, latestSalePriceMap } from "@/lib/market/queries";
+import { registrationsAllowed } from "@/lib/settings/queries";
+import { getUser } from "@/lib/supabase/server";
 
 const outlineButtonClassName =
   "border border-line bg-paper-raised px-4 py-2 text-sm font-medium text-ink hover:border-sea";
-
-const STEPS = [
-  {
-    title: "Create an account",
-    body: "Register your organisation, then record quota holdings for each fishery you fish.",
-  },
-  {
-    title: "List quota",
-    body: "Publish a fixed-price sale or lease, or run an English auction. Listings wait for approval unless your account is set to auto-publish.",
-  },
-  {
-    title: "Buy or bid",
-    body: "Purchase reserves the quota so it cannot be sold twice. Auctions use server time for bids and close.",
-  },
-  {
-    title: "Pay and settle",
-    body: "Buyers pay FQX. After compliance, settlement transfers quota to the buyer and pays the seller’s share.",
-  },
-];
 
 export default async function Home() {
   const [listings, fisheries, jurisdictions, prices, user, allowRegister] =
@@ -94,7 +79,7 @@ export default async function Home() {
         fishery,
         jurisdiction: jurisdictionLabel(jurisdiction),
         lastSale: sale
-          ? `${formatAud(sale.unit_price_aud)} / ${unit}`
+          ? formatAudPerUnit(sale.unit_price_aud, unit)
           : "No sales yet",
         openLabel: `${counts.sale} sale · ${counts.lease} lease`,
       };
@@ -195,18 +180,23 @@ export default async function Home() {
             Buyer and seller steps
           </Link>
         </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {STEPS.map((step, index) => (
-            <div key={step.title} className={panelClassName}>
-              <p className="text-xs uppercase tracking-[0.12em] text-sea">
-                {String(index + 1).padStart(2, "0")}
-              </p>
-              <h3 className="mt-3 text-lg font-semibold text-ink">
-                {step.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                {step.body}
-              </p>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {[
+            { heading: "For buyers", steps: HOW_IT_WORKS_BUYER_STEPS },
+            { heading: "For sellers", steps: HOW_IT_WORKS_SELLER_STEPS },
+          ].map((column) => (
+            <div key={column.heading} className={panelClassName}>
+              <h3 className="text-lg font-semibold text-ink">{column.heading}</h3>
+              <ol className="mt-4 space-y-3">
+                {column.steps.map((step, index) => (
+                  <li key={step.title} className="text-sm">
+                    <span className="text-xs uppercase tracking-[0.12em] text-sea">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="ml-2 font-medium text-ink">{step.title}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
           ))}
         </div>

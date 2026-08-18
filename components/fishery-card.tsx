@@ -7,7 +7,7 @@ import {
   type Fishery,
   type Jurisdiction,
 } from "@/lib/fisheries/types";
-import { formatAud } from "@/lib/listings/types";
+import { formatAudPerUnit } from "@/lib/listings/types";
 import type { LatestSalePrice } from "@/lib/market/types";
 
 export function FisheryCard({
@@ -31,7 +31,9 @@ export function FisheryCard({
     >
       <FisheryLogo fishery={fishery} size="md" />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-ink">{fishery.name}</p>
+        <p className="font-semibold tracking-tight text-ink text-lg sm:text-xl">
+          {fishery.name}
+        </p>
         <div className="mt-4">
           <LabeledFields
             items={[
@@ -42,7 +44,7 @@ export function FisheryCard({
               {
                 label: "Last sale",
                 value: lastSale
-                  ? `${formatAud(lastSale.unit_price_aud)} / ${unit}`
+                  ? formatAudPerUnit(lastSale.unit_price_aud, unit)
                   : "No sales yet",
               },
               {

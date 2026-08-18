@@ -330,7 +330,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           },
           {
             key: "offering",
-            header: "Type",
+            header: "Offering",
             sortable: true,
             filter: "select",
             filterOptions: [

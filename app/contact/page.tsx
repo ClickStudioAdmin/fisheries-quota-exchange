@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <PageIntro title="Contact us">
+    <PageIntro title="Contact us" width="article">
       <p>
         FQX is in development. There is no live support desk on this site yet.
       </p>

@@ -73,8 +73,8 @@ export function BidForm({ listingId, minimumBid, organisations }: BidFormProps) 
         />
       </div>
       <p className="text-sm text-ink-muted">
-        The bid time is recorded by the server. There is no live payment. A
-        winning close creates a Phase 7 order and reserves quota.
+        The bid time is recorded by the server. This is a development site. If
+        you win, quota is reserved and you pay FQX in Stripe test mode.
       </p>
       <button type="submit" className={buttonClassName} disabled={pending}>
         {pending ? "Bidding…" : "Place bid"}

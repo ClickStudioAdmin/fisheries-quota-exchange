@@ -1,0 +1,45 @@
+export const HOW_IT_WORKS_BUYER_STEPS = [
+  {
+    title: "Create an account",
+    body: "Register your organisation. You buy as that account, not as a personal shopper.",
+  },
+  {
+    title: "Find quota",
+    body: "Browse the marketplace and fisheries. Fixed-price sales and leases sit alongside English auctions.",
+  },
+  {
+    title: "Buy or bid",
+    body: "A purchase reserves the quota so it cannot be sold twice. Auction bids and close times use server time, not your browser clock.",
+  },
+  {
+    title: "Pay FQX",
+    body: "Pay the listed amount by Australian bank debit, or pay by Australian-issued card (the listed amount plus Stripe’s card processing). FQX holds the funds. You do not pay the platform fee on top. Payments on this site are Stripe test mode only.",
+  },
+  {
+    title: "Wait for settlement",
+    body: "FQX runs compliance, then the quota transfer. When settlement completes, the quota is on your ledger and you can download the quota tax invoice.",
+  },
+];
+
+export const HOW_IT_WORKS_SELLER_STEPS = [
+  {
+    title: "Create an account",
+    body: "Register your organisation, then complete payments setup so FQX can pay you at settlement.",
+  },
+  {
+    title: "Record holdings",
+    body: "Add the quota you hold in each fishery. Holdings must be verified before you can list them.",
+  },
+  {
+    title: "List quota",
+    body: "Publish a fixed-price sale or lease, or run an English auction. Listings wait for approval unless your account is set to auto-publish.",
+  },
+  {
+    title: "Buyer pays FQX",
+    body: "The buyer pays FQX the listed amount. FQX holds the funds until settlement. The platform fee comes out of your proceeds, not added on top for the buyer.",
+  },
+  {
+    title: "Settle the trade",
+    body: "After compliance and transfer, settlement moves quota to the buyer and pays you the listed amount minus the platform fee. You can download the quota invoice and the fee invoice.",
+  },
+];

@@ -41,6 +41,30 @@ function KindBadge({
   );
 }
 
+export function ListingKindBadges({
+  listing,
+  hideOffering = false,
+  badge,
+}: {
+  listing: Pick<Listing, "offering" | "listing_type">;
+  hideOffering?: boolean;
+  badge?: string;
+}) {
+  return (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+      {hideOffering ? null : (
+        <KindBadge tone="filled">
+          {listingOfferingLabel(listing.offering)}
+        </KindBadge>
+      )}
+      <KindBadge tone="outline">
+        {listingTypeLabel(listing.listing_type)}
+      </KindBadge>
+      {badge ? <span className="text-xs text-ink-muted">{badge}</span> : null}
+    </div>
+  );
+}
+
 export function OfferCard({
   listing,
   href,
@@ -77,19 +101,11 @@ export function OfferCard({
             <p className="min-w-0 truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
               {title}
             </p>
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-              {hideOffering ? null : (
-                <KindBadge tone="filled">
-                  {listingOfferingLabel(listing.offering)}
-                </KindBadge>
-              )}
-              <KindBadge tone="outline">
-                {listingTypeLabel(listing.listing_type)}
-              </KindBadge>
-              {badge ? (
-                <span className="text-xs text-ink-muted">{badge}</span>
-              ) : null}
-            </div>
+            <ListingKindBadges
+              listing={listing}
+              hideOffering={hideOffering}
+              badge={badge}
+            />
           </div>
         </div>
         <div>

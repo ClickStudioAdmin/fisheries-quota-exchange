@@ -46,6 +46,10 @@ export function formatAud(value: string | number) {
   }).format(Number(value));
 }
 
+export function formatAudPerUnit(value: string | number, unit: string) {
+  return `${formatAud(value)} / ${unit}`;
+}
+
 export function listingTypeLabel(type: ListingType) {
   return type === "AUCTION" ? "Auction" : "Fixed price";
 }

@@ -21,8 +21,8 @@ export default async function MarketplacePage() {
       <PageIntro title="Marketplace">
         <p>
           Approved fixed-price listings and English auctions. Purchase or a
-          winning bid reserves quota and starts a simulated transaction. There
-          is no live payment.
+          winning bid reserves quota. Buyers pay FQX in Stripe test mode. This
+          is a development site, not a live market.
         </p>
       </PageIntro>
       <div className={`${pageWidthClassName} pb-16`}>

@@ -10,7 +10,7 @@ import {
 } from "@/components/list-pager";
 import { OfferCard } from "@/components/offer-card";
 import type { Fishery } from "@/lib/fisheries/types";
-import { formatTableDateTime } from "@/lib/format";
+import { formatTableDate } from "@/lib/format";
 import {
   listingTypeLabel,
   type Listing,
@@ -41,7 +41,7 @@ export function ListingCard({
       fisheryId={fisheryId}
       fishery={fishery}
       extraFields={[
-        { label: "Expires", value: formatTableDateTime(listing.expires_at) },
+        { label: "Expires", value: formatTableDate(listing.expires_at) },
       ]}
     />
   );
@@ -210,12 +210,12 @@ export function FisheryOfferings({ listings }: { listings: Listing[] }) {
   return (
     <div className="mt-12 space-y-12">
       <FisheryOfferingSection
-        title="Current Sale Listings"
+        title="Current sale listings"
         kind="sale"
         listings={listings.filter((listing) => listing.offering === "SALE")}
       />
       <FisheryOfferingSection
-        title="Current Lease Listings"
+        title="Current lease listings"
         kind="lease"
         listings={listings.filter((listing) => listing.offering === "LEASE")}
       />

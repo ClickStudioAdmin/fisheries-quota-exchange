@@ -14,7 +14,7 @@ import {
 } from "@/lib/orders/queries";
 import { auditEventLabel, orderStatusLabel } from "@/lib/orders/types";
 import { buildOrderSteps } from "@/lib/orders/progress";
-import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
+import { formatAud, formatAudPerUnit, listingOfferingLabel } from "@/lib/listings/types";
 import { LabeledFields, panelClassName } from "@/components/surface";
 import { StatusBadge } from "@/components/status-badge";
 import { OrderProgress } from "@/components/order-progress";
@@ -151,8 +151,8 @@ export default async function OrderPage({
         })`
       : "None";
   const unitPriceItem = {
-    label: `Price per ${order.unit_label}`,
-    value: formatAud(order.unit_price_aud),
+    label: "Price",
+    value: formatAudPerUnit(order.unit_price_aud, order.unit_label),
   };
   const quotaItem = {
     label: isSeller ? "Listed amount" : "Quota amount",
@@ -245,7 +245,7 @@ export default async function OrderPage({
                       </Link>
                     ),
                   },
-                  { label: "Type", value: listingOfferingLabel(order.offering) },
+                  { label: "Offering", value: listingOfferingLabel(order.offering) },
                   { label: "Seller", value: order.seller_name },
                   { label: "Buyer", value: order.buyer_name },
                   {
@@ -298,7 +298,7 @@ export default async function OrderPage({
             <p className="mt-2 text-sm text-ink-muted">
               Choose bank debit or an Australian-issued card, then pay in
               Stripe test mode. Bank debit charges the listed amount. Card adds
-              Stripe's processing fee ({stripeCardFeeRateLabel()}) so FQX
+              Stripe&apos;s processing fee ({stripeCardFeeRateLabel()}) so FQX
               receives the quota price. Cards issued outside Australia are
               declined. The platform fee is deducted from the seller. Bank
               debit is only offered up to A$10,000. FQX holds the funds until

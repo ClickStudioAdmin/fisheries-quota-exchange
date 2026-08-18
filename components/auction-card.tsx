@@ -1,5 +1,5 @@
 import { OfferCard } from "@/components/offer-card";
-import { formatTableDateTime } from "@/lib/format";
+import { formatTableDate } from "@/lib/format";
 import { auctionHasEnded, auctionHasStarted } from "@/lib/auctions/types";
 import type { Fishery } from "@/lib/fisheries/types";
 import type { Listing } from "@/lib/listings/types";
@@ -33,14 +33,14 @@ export function AuctionCard({
     <OfferCard
       listing={listing}
       href={`/auctions/${listing.id}`}
-      priceLabel="Current Bid"
+      priceLabel="Current bid"
       badge={badge}
       hideFishery={hideFishery}
       hideOffering={hideOffering}
       fisheryId={fisheryId}
       fishery={fishery}
       extraFields={[
-        { label: "Ends", value: formatTableDateTime(listing.expires_at) },
+        { label: "Ends", value: formatTableDate(listing.expires_at) },
       ]}
     />
   );

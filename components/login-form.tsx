@@ -55,7 +55,7 @@ export function LoginForm({ next }: LoginFormProps) {
         />
       </div>
       <button type="submit" className={authButtonClassName} disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? "Logging in…" : "Log in"}
       </button>
     </form>
   );

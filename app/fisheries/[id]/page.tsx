@@ -8,7 +8,7 @@ import { pageWidthClassName, panelClassName, statClassName } from "@/components/
 import { getFishery, listJurisdictions } from "@/lib/fisheries/queries";
 import { jurisdictionLabel, quantityTypeLabel } from "@/lib/fisheries/types";
 import { formatTableDate } from "@/lib/format";
-import { formatAud } from "@/lib/listings/types";
+import { formatAudPerUnit } from "@/lib/listings/types";
 import {
   listMarketSales,
   listOpenListingsForFishery,
@@ -83,12 +83,12 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </div>
 
-      <dl className="mt-8 grid grid-cols-4 gap-3 text-sm">
+      <dl className="mt-8 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
         <div className={statClassName}>
-          <dt className="font-medium text-ink">Last Sale</dt>
+          <dt className="font-medium text-ink">Last sale</dt>
           <dd className="mt-1 text-ink">
             {lastSale
-              ? `${formatAud(lastSale.unit_price_aud)} / ${unit}`
+              ? formatAudPerUnit(lastSale.unit_price_aud, unit)
               : "—"}
           </dd>
           {lastSale ? (
@@ -98,17 +98,17 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
           ) : null}
         </div>
         <div className={statClassName}>
-          <dt className="font-medium text-ink">Average Sale</dt>
+          <dt className="font-medium text-ink">Average sale</dt>
           <dd className="mt-1 text-ink">
-            {averageSale != null ? `${formatAud(averageSale)} / ${unit}` : "—"}
+            {averageSale != null ? formatAudPerUnit(averageSale, unit) : "—"}
           </dd>
           <dd className="mt-1 text-ink-muted">Last 5</dd>
         </div>
         <div className={statClassName}>
-          <dt className="font-medium text-ink">Last Lease</dt>
+          <dt className="font-medium text-ink">Last lease</dt>
           <dd className="mt-1 text-ink">
             {lastLease
-              ? `${formatAud(lastLease.unit_price_aud)} / ${unit}`
+              ? formatAudPerUnit(lastLease.unit_price_aud, unit)
               : "—"}
           </dd>
           {lastLease ? (
@@ -118,9 +118,9 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
           ) : null}
         </div>
         <div className={statClassName}>
-          <dt className="font-medium text-ink">Average Lease</dt>
+          <dt className="font-medium text-ink">Average lease</dt>
           <dd className="mt-1 text-ink">
-            {averageLease != null ? `${formatAud(averageLease)} / ${unit}` : "—"}
+            {averageLease != null ? formatAudPerUnit(averageLease, unit) : "—"}
           </dd>
           <dd className="mt-1 text-ink-muted">Last 5</dd>
         </div>
@@ -129,7 +129,7 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
       <FisheryOfferings listings={offers} />
 
       <section className="mt-12">
-        <h2 className="text-xl font-semibold text-ink">Historical Prices</h2>
+        <h2 className="text-xl font-semibold text-ink">Historical prices</h2>
         <div className="mt-4 grid min-w-0 items-start gap-10 md:grid-cols-2">
           <div className={`min-w-0 overflow-hidden ${panelClassName}`}>
             <PriceChart

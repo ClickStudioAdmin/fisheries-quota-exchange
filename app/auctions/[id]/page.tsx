@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { ListingKindBadges } from "@/components/offer-card";
 import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
+import { formatTableDateTime } from "@/lib/format";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
 import {
@@ -18,9 +20,8 @@ import { getListing } from "@/lib/listings/queries";
 import {
   canCancelOpenListing,
   formatAud,
-  listingOfferingLabel,
+  formatAudPerUnit,
   listingStatusLabel,
-  listingTypeLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
@@ -84,33 +85,33 @@ export default async function AuctionPage({
           Marketplace
         </Link>
       </p>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">
-        {listing.fishery_name}
-      </h1>
-      <p className="mt-2 text-ink-muted">
-        {listingTypeLabel(listing.listing_type)}
-        {fishery ? (
-          <>
-            {" "}
-            ·{" "}
-            <Link href={`/fisheries/${fishery.id}`} className="underline">
-              View fishery
-            </Link>
-          </>
-        ) : null}
-      </p>
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          {listing.fishery_name}
+        </h1>
+        <ListingKindBadges listing={listing} />
+      </div>
+      {fishery ? (
+        <p className="mt-2 text-ink-muted">
+          <Link href={`/fisheries/${fishery.id}`} className="underline">
+            View fishery
+          </Link>
+        </p>
+      ) : null}
       <div className={`mt-8 max-w-lg ${panelClassName}`}>
         <LabeledFields
           items={[
             { label: "Seller", value: listing.seller_name },
-            { label: "Type", value: listingOfferingLabel(listing.offering) },
             {
               label: "Quantity",
               value: `${listing.quantity} ${listing.unit_label}`,
             },
             {
-              label: "Current Bid",
-              value: `${formatAud(listing.unit_price_aud)} per ${listing.unit_label}`,
+              label: "Current bid",
+              value: formatAudPerUnit(
+                listing.unit_price_aud,
+                listing.unit_label,
+              ),
             },
             ...(feeLabel
               ? [{ label: "Platform fee", value: feeLabel }]
@@ -133,12 +134,12 @@ export default async function AuctionPage({
             {
               label: "Starts",
               value: listing.starts_at
-                ? new Date(listing.starts_at).toLocaleString("en-AU")
+                ? formatTableDateTime(listing.starts_at)
                 : "—",
             },
             {
               label: "Ends",
-              value: new Date(listing.expires_at).toLocaleString("en-AU"),
+              value: formatTableDateTime(listing.expires_at),
             },
           ]}
         />
@@ -151,9 +152,10 @@ export default async function AuctionPage({
                 href={`/login?next=/auctions/${listing.id}`}
                 className="underline"
               >
-                Sign in
+                Log in
               </Link>{" "}
-              to bid. Bid time is recorded by the server.
+              to bid. Bid time is recorded by the server. If you win, you pay
+              FQX in Stripe test mode.
             </p>
           ) : organisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
