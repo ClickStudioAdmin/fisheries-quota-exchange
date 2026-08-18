@@ -56,7 +56,6 @@ export function InAppNotificationList({
         ]}
         rows={notifications.map((item) => ({
           id: item.id,
-          needsAction: !item.read_at,
           values: {
             message: item.title,
             when: item.created_at,
