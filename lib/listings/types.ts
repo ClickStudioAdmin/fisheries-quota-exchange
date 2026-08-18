@@ -56,12 +56,6 @@ export function listingHref(listing: Pick<Listing, "id" | "listing_type">) {
     : `/marketplace/${listing.id}`;
 }
 
-export function listingEditPath(
-  listing: Pick<Listing, "id" | "organisation_id">,
-) {
-  return `/organisations/${listing.organisation_id}/listings/${listing.id}/edit`;
-}
-
 export function listingIsOpen(listing: Pick<Listing, "status">) {
   return listing.status === "PENDING_APPROVAL" || listing.status === "PUBLISHED";
 }
@@ -70,6 +64,26 @@ export function canEditListingPrice(
   listing: Pick<Listing, "listing_type" | "status">,
 ) {
   return listing.listing_type === "FIXED_PRICE" && listingIsOpen(listing);
+}
+
+export function listingEditMaxQuantity(
+  listingQuantity: string | number,
+  holdingQuantity: string | number | null | undefined,
+  committed: number,
+) {
+  const current = Number(listingQuantity);
+  const holding = Number(holdingQuantity);
+
+  if (!Number.isFinite(current) || current <= 0) {
+    return "0";
+  }
+
+  if (!Number.isFinite(holding)) {
+    return String(current);
+  }
+
+  const max = holding - committed + current;
+  return String(Math.max(max, current));
 }
 
 export function canCancelOpenListing(

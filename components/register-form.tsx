@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { registerAction } from "@/lib/auth/actions";
 import type { AuthFormState } from "@/lib/auth/types";
-import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { authButtonClassName, authFieldClassName } from "@/components/auth-card";
 
 const initialState: AuthFormState = {};
 
@@ -35,7 +35,7 @@ export function RegisterForm() {
           type="text"
           autoComplete="name"
           required
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
       <div>
@@ -48,7 +48,7 @@ export function RegisterForm() {
           type="email"
           autoComplete="email"
           required
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
       <div>
@@ -61,7 +61,7 @@ export function RegisterForm() {
           type="tel"
           autoComplete="tel"
           required
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
       <div>
@@ -75,7 +75,7 @@ export function RegisterForm() {
           autoComplete="new-password"
           required
           minLength={8}
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
       <p className="pt-2 text-sm font-medium text-ink">Business details</p>
@@ -87,7 +87,7 @@ export function RegisterForm() {
           id="legal_name"
           name="legal_name"
           required
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
       <div>
@@ -97,7 +97,7 @@ export function RegisterForm() {
         <input
           id="trading_name"
           name="trading_name"
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
       <div>
@@ -109,10 +109,10 @@ export function RegisterForm() {
           name="abn"
           inputMode="numeric"
           autoComplete="off"
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
-      <button type="submit" className={buttonClassName} disabled={pending}>
+      <button type="submit" className={authButtonClassName} disabled={pending}>
         {pending ? "Creating account…" : "Create account"}
       </button>
     </form>

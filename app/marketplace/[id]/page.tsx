@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
+import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
 import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
 import { cancelListingAction } from "@/lib/listings/actions";
-import { listFisheries } from "@/lib/fisheries/queries";
+import {
+  getHolding,
+  listFisheries,
+  listHoldingCommitments,
+} from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
 import {
   canCancelOpenListing,
   canEditListingPrice,
   formatAud,
-  listingEditPath,
+  listingEditMaxQuantity,
   listingOfferingLabel,
   listingStatusLabel,
   listingTypeLabel,
@@ -49,10 +54,12 @@ export default async function ListingPage({
     redirect(`/auctions/${listing.id}`);
   }
 
-  const [user, fisheries, settings] = await Promise.all([
+  const [user, fisheries, settings, holding, commitments] = await Promise.all([
     getUser(),
     listFisheries(),
     getPlatformSettings(),
+    getHolding(listing.holding_id),
+    listHoldingCommitments([listing.holding_id]),
   ]);
   const fishery = fisheries.find((item) => item.name === listing.fishery_name);
   const role = user ? await getMyRole(listing.organisation_id) : null;
@@ -64,6 +71,11 @@ export default async function ListingPage({
   const canManage = admin || role === "OWNER" || role === "ADMIN";
   const showEdit = canManage && canEditListingPrice(listing);
   const showCancel = canManage && canCancelOpenListing(listing);
+  const maxQuantity = listingEditMaxQuantity(
+    listing.quantity,
+    holding?.quantity,
+    commitments.get(listing.holding_id) ?? 0,
+  );
   const expired = new Date(listing.expires_at) <= new Date();
   const paymentsOn = isPaymentsConfigured();
   const sellerAcceptsCards = paymentsOn
@@ -168,9 +180,15 @@ export default async function ListingPage({
       {showEdit || showCancel ? (
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {showEdit ? (
-            <Link href={listingEditPath(listing)} className={buttonClassName}>
-              Edit price
-            </Link>
+            <EditListingPriceButton
+              title="Edit listing"
+              label="Edit listing"
+              listingId={listing.id}
+              unitLabel={listing.unit_label}
+              currentQuantity={listing.quantity}
+              maxQuantity={maxQuantity}
+              currentPrice={listing.unit_price_aud}
+            />
           ) : null}
           {showCancel ? (
             <form action={cancelListingAction}>

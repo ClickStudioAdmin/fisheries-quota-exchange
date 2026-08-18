@@ -5,7 +5,7 @@ import {
   updatePasswordAction,
 } from "@/lib/auth/actions";
 import type { AuthFormState } from "@/lib/auth/types";
-import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { authButtonClassName, authFieldClassName } from "@/components/auth-card";
 
 const initialState: AuthFormState = {};
 
@@ -33,10 +33,10 @@ export function UpdatePasswordForm() {
           autoComplete="new-password"
           required
           minLength={8}
-          className={fieldClassName}
+          className={authFieldClassName}
         />
       </div>
-      <button type="submit" className={buttonClassName} disabled={pending}>
+      <button type="submit" className={authButtonClassName} disabled={pending}>
         {pending ? "Updating…" : "Update password"}
       </button>
     </form>

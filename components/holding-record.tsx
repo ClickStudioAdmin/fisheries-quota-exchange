@@ -7,6 +7,7 @@ import {
   tableLinkClassName,
 } from "@/components/data-table";
 import { EditHoldingButton } from "@/components/holding-actions";
+import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { LedgerTable } from "@/components/ledger-table";
 import { LabeledFields } from "@/components/surface";
 import { verifyHoldingAction } from "@/lib/fisheries/actions";
@@ -29,7 +30,7 @@ import { listListingsByHolding } from "@/lib/listings/queries";
 import {
   canEditListingPrice,
   formatAud,
-  listingEditPath,
+  listingEditMaxQuantity,
   listingHref,
   listingOfferingLabel,
   listingStatusLabel,
@@ -333,24 +334,30 @@ export async function HoldingRecord({
             key={listing.id}
             id={listing.id}
             links={
-              <>
-                <Link
-                  href={listingHref(listing)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={tableLinkClassName}
-                >
-                  View
-                </Link>
-                {canManage && canEditListingPrice(listing) ? (
-                  <Link
-                    href={listingEditPath(listing)}
-                    className={tableLinkClassName}
-                  >
-                    Edit
-                  </Link>
-                ) : null}
-              </>
+              <Link
+                href={listingHref(listing)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
+                View
+              </Link>
+            }
+            actions={
+              canManage && canEditListingPrice(listing) ? (
+                <EditListingPriceButton
+                  title="Edit listing"
+                  listingId={listing.id}
+                  unitLabel={listing.unit_label}
+                  currentQuantity={listing.quantity}
+                  maxQuantity={listingEditMaxQuantity(
+                    listing.quantity,
+                    holding.quantity,
+                    listed,
+                  )}
+                  currentPrice={listing.unit_price_aud}
+                />
+              ) : null
             }
           />
         ))}

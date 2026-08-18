@@ -10,7 +10,7 @@ There is no marketplace, auction, or fishery functionality in this phase.
 
 | Path | Purpose |
 | --- | --- |
-| `/` | Home |
+| `/` | Public home: what FQX is, how trading works, current listings and fisheries |
 | `/marketplace` | Placeholder for listings |
 | `/fisheries` | Placeholder for fishery data |
 | `/auctions` | Placeholder for auctions |

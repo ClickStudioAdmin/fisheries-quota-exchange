@@ -10,6 +10,7 @@ import type { User } from "@supabase/supabase-js";
 import { DataTable, DataTableRowExtras, TableActionRow, tableLinkClassName } from "@/components/data-table";
 import { HoldingForm } from "@/components/holding-form";
 import { EditHoldingButton } from "@/components/holding-actions";
+import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import {
   listFisheries,
   listHoldingCommitments,
@@ -27,7 +28,7 @@ import {
   canCancelOpenListing,
   canEditListingPrice,
   formatAud,
-  listingEditPath,
+  listingEditMaxQuantity,
   listingOfferingLabel,
   listingStatusLabel,
   listingTypeLabel,
@@ -391,16 +392,19 @@ export async function AccountListingsSection({
   }
 
   const listings = await listOrganisationListings(organisationId);
-  const [fisheries, jurisdictions, sellError, auctionBidIds] = await Promise.all([
-    listFisheries(),
-    listJurisdictions(),
-    organisationCanSellError(organisationId),
-    listingIdsWithBids(
-      listings
-        .filter((listing) => listing.listing_type === "AUCTION")
-        .map((listing) => listing.id),
-    ),
-  ]);
+  const [fisheries, jurisdictions, sellError, auctionBidIds, holdings, commitments] =
+    await Promise.all([
+      listFisheries(),
+      listJurisdictions(),
+      organisationCanSellError(organisationId),
+      listingIdsWithBids(
+        listings
+          .filter((listing) => listing.listing_type === "AUCTION")
+          .map((listing) => listing.id),
+      ),
+      listHoldingsForOrganisation(organisationId),
+      listHoldingCommitments(listings.map((listing) => listing.holding_id)),
+    ]);
   const canList = canEditOrganisation(result.role);
 
   return (
@@ -498,48 +502,58 @@ export async function AccountListingsSection({
           const showEdit = canList && canEditListingPrice(listing);
           const showCancel =
             canList && canCancelOpenListing(listing, bidCount);
+          const holding = holdings.find((item) => item.id === listing.holding_id);
+          const maxQuantity = listingEditMaxQuantity(
+            listing.quantity,
+            holding?.quantity,
+            commitments.get(listing.holding_id) ?? 0,
+          );
 
           return (
           <DataTableRowExtras
             key={listing.id}
             id={listing.id}
             links={
-              <>
-                <Link
-                  href={
-                    listing.listing_type === "AUCTION"
-                      ? `/auctions/${listing.id}`
-                      : `/marketplace/${listing.id}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={tableLinkClassName}
-                >
-                  View
-                </Link>
-                {showEdit ? (
-                  <Link
-                    href={listingEditPath(listing)}
-                    className={tableLinkClassName}
-                  >
-                    Edit
-                  </Link>
-                ) : null}
-              </>
+              <Link
+                href={
+                  listing.listing_type === "AUCTION"
+                    ? `/auctions/${listing.id}`
+                    : `/marketplace/${listing.id}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
+                View
+              </Link>
             }
             actions={
-              showCancel ? (
-                <form action={cancelListingAction}>
-                  <input type="hidden" name="listing_id" value={listing.id} />
-                  <input
-                    type="hidden"
-                    name="next"
-                    value={accountPath(organisationId, "/dashboard/listings")}
-                  />
-                  <button type="submit" className={tableButtonClassName}>
-                    Cancel
-                  </button>
-                </form>
+              showEdit || showCancel ? (
+                <>
+                  {showEdit ? (
+                    <EditListingPriceButton
+                      title="Edit listing"
+                      listingId={listing.id}
+                      unitLabel={listing.unit_label}
+                      currentQuantity={listing.quantity}
+                      maxQuantity={maxQuantity}
+                      currentPrice={listing.unit_price_aud}
+                    />
+                  ) : null}
+                  {showCancel ? (
+                    <form action={cancelListingAction}>
+                      <input type="hidden" name="listing_id" value={listing.id} />
+                      <input
+                        type="hidden"
+                        name="next"
+                        value={accountPath(organisationId, "/dashboard/listings")}
+                      />
+                      <button type="submit" className={tableButtonClassName}>
+                        Cancel
+                      </button>
+                    </form>
+                  ) : null}
+                </>
               ) : null
             }
           />

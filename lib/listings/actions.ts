@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
@@ -83,7 +84,7 @@ export async function createListingAction(
   redirect(`/marketplace/${listingId}`);
 }
 
-export async function updateListingPriceAction(
+export async function updateListingAction(
   _prev: ListingFormState,
   formData: FormData,
 ): Promise<ListingFormState> {
@@ -95,19 +96,24 @@ export async function updateListingPriceAction(
   }
 
   const listingId = Number(formData.get("listing_id"));
+  const quantity = Number(read(formData, "quantity"));
   const unitPrice = Number(read(formData, "unit_price_aud"));
-  const next = read(formData, "next") || `/marketplace/${listingId}`;
 
   if (!Number.isInteger(listingId)) {
     return { error: "Listing not found." };
+  }
+
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    return { error: "Quantity must be greater than zero." };
   }
 
   if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
     return { error: "Price must be greater than zero." };
   }
 
-  const { error } = await supabase.rpc("update_listing_price", {
+  const { error } = await supabase.rpc("update_listing", {
     p_listing_id: listingId,
+    p_quantity: quantity,
     p_unit_price_aud: unitPrice,
   });
 
@@ -115,7 +121,11 @@ export async function updateListingPriceAction(
     return { error: userFacingError(error) };
   }
 
-  redirect(safeNextPath(next));
+  revalidatePath(`/marketplace/${listingId}`);
+  revalidatePath("/marketplace");
+  revalidatePath("/dashboard/listings");
+  revalidatePath("/dashboard/holdings", "layout");
+  return { message: "Listing updated." };
 }
 
 export async function cancelListingAction(formData: FormData) {
