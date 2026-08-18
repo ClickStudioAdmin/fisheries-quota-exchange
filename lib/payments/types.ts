@@ -1,3 +1,5 @@
+import type { CheckoutMethod } from "@/lib/payments/money";
+
 export type OrganisationPaymentStatus = {
   accountId: string | null;
   chargesEnabled: boolean;
@@ -11,6 +13,7 @@ export type CreateCheckoutInput = {
   offeringLabel: string;
   amountAud: string;
   feeAmountAud: string;
+  method: CheckoutMethod;
   buyerEmail: string;
   returnUrl: string;
   existingCheckoutSessionId?: string | null;

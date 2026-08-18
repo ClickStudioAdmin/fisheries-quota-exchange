@@ -13,7 +13,13 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getOrder } from "@/lib/orders/queries";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getSiteUrl } from "@/lib/site-url";
-import { orderChargeAud, orderSellerPayoutAud } from "@/lib/payments/money";
+import {
+  checkoutAllowsBecs,
+  isCheckoutMethod,
+  orderCheckoutChargeAud,
+  orderSellerPayoutAud,
+  type CheckoutMethod,
+} from "@/lib/payments/money";
 import { userFacingError } from "@/lib/errors/user-message";
 
 export type PaymentFormState = {
@@ -101,6 +107,7 @@ export async function createAccountSessionAction(
 
 export async function startOrderCheckoutAction(
   orderId: number,
+  method: CheckoutMethod,
 ): Promise<PaymentFormState> {
   const user = await getUser();
   const provider = getPaymentProvider();
@@ -114,6 +121,10 @@ export async function startOrderCheckoutAction(
     return { error: "Payments are not configured." };
   }
 
+  if (!isCheckoutMethod(method)) {
+    return { error: "Choose card or bank debit." };
+  }
+
   const order = await getOrder(orderId);
 
   if (!order) {
@@ -122,6 +133,12 @@ export async function startOrderCheckoutAction(
 
   if (order.status !== "AWAITING_PAYMENT") {
     return { pending: true };
+  }
+
+  if (method === "becs" && !checkoutAllowsBecs(order.amount_aud)) {
+    return {
+      error: "Bank debit is only available for charges of A$10,000 or less.",
+    };
   }
 
   const seller = await getOrderSellerPaymentAccount(order.id);
@@ -144,6 +161,7 @@ export async function startOrderCheckoutAction(
       offeringLabel: listingOfferingLabel(order.offering),
       amountAud: order.amount_aud,
       feeAmountAud: order.fee_amount_aud,
+      method,
       buyerEmail: user.email,
       returnUrl: `${siteUrl}/orders/${order.id}?paid=1&session_id={CHECKOUT_SESSION_ID}`,
       existingCheckoutSessionId: existing?.checkout_session_id
@@ -155,7 +173,7 @@ export async function startOrderCheckoutAction(
       p_order_id: order.id,
       p_checkout_session_id: checkout.checkoutSessionId,
       p_payment_intent_id: checkout.paymentIntentId,
-      p_amount_aud: orderChargeAud(order.amount_aud),
+      p_amount_aud: orderCheckoutChargeAud(order.amount_aud, method),
       p_fee_amount_aud: Number(order.fee_amount_aud),
     });
 

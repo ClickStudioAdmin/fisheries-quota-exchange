@@ -4,6 +4,8 @@ import Stripe from "stripe";
 import { getStripeEnv } from "@/lib/payments/env";
 import {
   audToCents,
+  checkoutAllowsBecs,
+  orderCheckoutChargeAud,
   orderSellerPayoutAud,
   stripeCardFeeCents,
   stripeCardFeeRateLabel,
@@ -41,32 +43,7 @@ async function createEmbeddedCheckoutSession(
   stripe: Stripe,
   params: Stripe.Checkout.SessionCreateParams,
 ) {
-  const attempts: Array<Pick<
-    Stripe.Checkout.SessionCreateParams,
-    "payment_method_types"
-  > | Record<string, never>> = [
-    { payment_method_types: ["card", "au_becs_debit"] },
-    {},
-    { payment_method_types: ["card"] },
-  ];
-
-  let lastError: unknown;
-
-  for (const extra of attempts) {
-    try {
-      return await stripe.checkout.sessions.create({
-        ...params,
-        ...extra,
-      });
-    } catch (error) {
-      lastError = error;
-      console.error("Stripe Checkout session attempt failed", extra, error);
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("Could not create a Stripe Checkout session.");
+  return stripe.checkout.sessions.create(params);
 }
 
 export function createStripePaymentProvider(): PaymentProvider {
@@ -142,12 +119,21 @@ export function createStripePaymentProvider(): PaymentProvider {
     async createCheckout(input) {
       const stripe = stripeClient();
       const listedCents = audToCents(input.amountAud);
-      const cardFeeCents = stripeCardFeeCents(listedCents);
-      const totalCents = listedCents + cardFeeCents;
+      const cardFeeCents =
+        input.method === "card" ? stripeCardFeeCents(listedCents) : 0;
+      const totalCents = audToCents(
+        orderCheckoutChargeAud(input.amountAud, input.method),
+      );
       const sellerPayoutAud = orderSellerPayoutAud(
         input.amountAud,
         input.feeAmountAud,
       );
+
+      if (input.method === "becs" && !checkoutAllowsBecs(input.amountAud)) {
+        throw new Error(
+          "Bank debit is only available for charges of A$10,000 or less.",
+        );
+      }
 
       if (totalCents < 50) {
         throw new Error("Charge must be at least $0.50.");
@@ -160,11 +146,18 @@ export function createStripePaymentProvider(): PaymentProvider {
           })
           .catch(() => null);
 
+        const methods = existing?.payment_method_types ?? [];
+        const matchesMethod =
+          input.method === "card"
+            ? methods.includes("card") && !methods.includes("au_becs_debit")
+            : methods.includes("au_becs_debit") && !methods.includes("card");
+
         if (
           existing?.status === "open" &&
           existing.ui_mode === "embedded_page" &&
           existing.client_secret &&
-          existing.amount_total === totalCents
+          existing.amount_total === totalCents &&
+          matchesMethod
         ) {
           return checkoutResult(existing);
         }
@@ -204,6 +197,8 @@ export function createStripePaymentProvider(): PaymentProvider {
         customer_email: input.buyerEmail,
         return_url: input.returnUrl,
         redirect_on_completion: "if_required",
+        payment_method_types:
+          input.method === "card" ? ["card"] : ["au_becs_debit"],
         line_items: [
           {
             quantity: 1,
@@ -238,10 +233,12 @@ export function createStripePaymentProvider(): PaymentProvider {
             order_id: String(input.orderId),
             fee_amount_aud: String(input.feeAmountAud),
             seller_payout_aud: String(sellerPayoutAud),
+            checkout_method: input.method,
           },
         },
         metadata: {
           order_id: String(input.orderId),
+          checkout_method: input.method,
         },
       };
 

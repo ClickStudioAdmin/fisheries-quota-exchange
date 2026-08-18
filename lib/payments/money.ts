@@ -57,6 +57,27 @@ export function orderChargeAud(amountAud: string | number) {
   return centsToAud(listedCents + stripeCardFeeCents(listedCents));
 }
 
+export const STRIPE_BECS_MAX_AUD = 10000;
+
+export const CHECKOUT_METHODS = ["becs", "card"] as const;
+export type CheckoutMethod = (typeof CHECKOUT_METHODS)[number];
+
+export function isCheckoutMethod(value: unknown): value is CheckoutMethod {
+  return value === "becs" || value === "card";
+}
+
+export function checkoutAllowsBecs(amountAud: string | number) {
+  return Number(amountAud) <= STRIPE_BECS_MAX_AUD;
+}
+
+/** Listed amount for bank debit; listed plus card processing for cards. */
+export function orderCheckoutChargeAud(
+  amountAud: string | number,
+  method: CheckoutMethod,
+) {
+  return method === "card" ? orderChargeAud(amountAud) : Number(amountAud);
+}
+
 /** True when Checkout charged listed + platform fee (early Phase 9). */
 export function buyerPaidPlatformFeeOnTop(
   amountAud: string | number,

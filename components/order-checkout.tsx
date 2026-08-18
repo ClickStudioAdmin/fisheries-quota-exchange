@@ -9,19 +9,37 @@ import {
 } from "@stripe/react-stripe-js";
 import { OrderCheckoutStatus } from "@/components/order-checkout-status";
 import { OrderPaymentPoll } from "@/components/order-payment-poll";
+import { formatAud } from "@/lib/listings/types";
 import { startOrderCheckoutAction } from "@/lib/payments/actions";
+import {
+  checkoutAllowsBecs,
+  type CheckoutMethod,
+} from "@/lib/payments/money";
+
+const methodButtonClass = {
+  on: "border border-sea bg-sea px-3 py-2 text-sm font-medium text-paper",
+  off: "border border-line bg-paper-raised px-3 py-2 text-sm font-medium text-ink hover:border-sea",
+};
 
 export function OrderCheckout({
   orderId,
   publishableKey,
+  listedAud,
+  cardAud,
 }: {
   orderId: number;
   publishableKey: string;
+  listedAud: string;
+  cardAud: string;
 }) {
   const router = useRouter();
   const stripePromise = useMemo(
     () => loadStripe(publishableKey),
     [publishableKey],
+  );
+  const becsAvailable = checkoutAllowsBecs(listedAud);
+  const [method, setMethod] = useState<CheckoutMethod>(
+    becsAvailable ? "becs" : "card",
   );
   const checkoutRef = useRef<HTMLDivElement>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -32,7 +50,12 @@ export function OrderCheckout({
   useEffect(() => {
     let cancelled = false;
 
-    startOrderCheckoutAction(orderId).then((result) => {
+    setClientSecret(null);
+    setCheckoutReady(false);
+    setError(null);
+    setPending(false);
+
+    startOrderCheckoutAction(orderId, method).then((result) => {
       if (cancelled) {
         return;
       }
@@ -58,7 +81,7 @@ export function OrderCheckout({
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, method]);
 
   useEffect(() => {
     if (!clientSecret) {
@@ -92,6 +115,29 @@ export function OrderCheckout({
     router.refresh();
   }, [router]);
 
+  const methodPicker = (
+    <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Payment method">
+      {becsAvailable ? (
+        <button
+          type="button"
+          aria-pressed={method === "becs"}
+          className={methodButtonClass[method === "becs" ? "on" : "off"]}
+          onClick={() => setMethod("becs")}
+        >
+          Bank debit {formatAud(listedAud)}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        aria-pressed={method === "card"}
+        className={methodButtonClass[method === "card" ? "on" : "off"]}
+        onClick={() => setMethod("card")}
+      >
+        Card {formatAud(cardAud)}
+      </button>
+    </div>
+  );
+
   if (pending) {
     return (
       <>
@@ -106,38 +152,48 @@ export function OrderCheckout({
 
   if (error) {
     return (
-      <p className="text-sm text-red-800" role="alert">
-        {error}
-      </p>
+      <div>
+        {methodPicker}
+        <p className="text-sm text-red-800" role="alert">
+          {error}
+        </p>
+      </div>
     );
   }
 
   if (!clientSecret) {
     return (
-      <OrderCheckoutStatus title="Preparing checkout">
-        Loading card and bank debit from Stripe. Stay on this page — this
-        usually takes a few seconds.
-      </OrderCheckoutStatus>
+      <div>
+        {methodPicker}
+        <OrderCheckoutStatus title="Preparing checkout">
+          Loading {method === "card" ? "card" : "bank debit"} from Stripe. Stay
+          on this page — this usually takes a few seconds.
+        </OrderCheckoutStatus>
+      </div>
     );
   }
 
   return (
-    <div className="relative min-h-64">
-      {checkoutReady ? null : (
-        <div className="absolute inset-0 z-10 bg-paper-raised">
-          <OrderCheckoutStatus title="Preparing checkout">
-            Loading card and bank debit from Stripe. Stay on this page — this
-            usually takes a few seconds.
-          </OrderCheckoutStatus>
+    <div>
+      {methodPicker}
+      <div className="relative min-h-64">
+        {checkoutReady ? null : (
+          <div className="absolute inset-0 z-10 bg-paper-raised">
+            <OrderCheckoutStatus title="Preparing checkout">
+              Loading {method === "card" ? "card" : "bank debit"} from Stripe.
+              Stay on this page — this usually takes a few seconds.
+            </OrderCheckoutStatus>
+          </div>
+        )}
+        <div ref={checkoutRef}>
+          <EmbeddedCheckoutProvider
+            key={clientSecret}
+            stripe={stripePromise}
+            options={{ clientSecret, onComplete }}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
         </div>
-      )}
-      <div ref={checkoutRef}>
-        <EmbeddedCheckoutProvider
-          stripe={stripePromise}
-          options={{ clientSecret, onComplete }}
-        >
-          <EmbeddedCheckout />
-        </EmbeddedCheckoutProvider>
       </div>
     </div>
   );
