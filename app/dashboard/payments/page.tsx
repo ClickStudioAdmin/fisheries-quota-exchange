@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PaymentsConnect } from "@/components/payments-connect";
+import { StripeLogo } from "@/components/stripe-logo";
 import { panelClassName } from "@/components/surface";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
@@ -24,9 +25,12 @@ export default async function DashboardPaymentsPage({
   if (account.needsSetup) {
     return (
       <div className="max-w-lg space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Payments
-        </h1>
+        <div className="flex items-center justify-between gap-6">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+            Payments
+          </h1>
+          <StripeLogo />
+        </div>
         <p className="text-ink-muted">
           Add your business details on{" "}
           <Link href="/dashboard/profile" className="underline">
@@ -46,9 +50,12 @@ export default async function DashboardPaymentsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Payments
-        </h1>
+        <div className="flex max-w-2xl items-center justify-between gap-6">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+            Payments
+          </h1>
+          <StripeLogo />
+        </div>
         <p className="mt-2 max-w-lg text-sm text-ink-muted">
           FQX uses Stripe to process payments. Buyers pay into FQX’s Stripe
           account and we hold the funds until settlement, then pay the seller.
@@ -63,13 +70,16 @@ export default async function DashboardPaymentsPage({
         </p>
       ) : (
         <div className={`max-w-2xl space-y-4 ${panelClassName}`}>
-          <p className="text-sm text-ink">
-            {status?.chargesEnabled
-              ? "This account can receive settlement transfers."
-              : status?.detailsSubmitted
-                ? "Stripe has your details and is reviewing them. Refresh this page in a minute."
-                : "Complete onboarding to receive settlement transfers on your listings."}
-          </p>
+          {status?.chargesEnabled ? (
+            <p className="text-sm text-ink">
+              This account can receive settlement transfers.
+            </p>
+          ) : status?.detailsSubmitted ? (
+            <p className="text-sm text-ink">
+              Stripe has your details and is reviewing them. Refresh this page
+              in a minute.
+            </p>
+          ) : null}
           {canManage ? (
             <PaymentsConnect
               organisationId={account.selected.id}
