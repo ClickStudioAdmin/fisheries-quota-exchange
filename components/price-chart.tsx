@@ -132,7 +132,7 @@ function PriceChartPlot({
         {coords.length > 1 ? (
           <polyline
             fill="none"
-            stroke="#1a5c63"
+            className="stroke-sea"
             strokeWidth="2"
             points={line}
           />
@@ -143,7 +143,7 @@ function PriceChartPlot({
             cx={point.x}
             cy={point.y}
             r="4"
-            fill="#1a5c63"
+            className="fill-sea"
           />
         ))}
         <text
