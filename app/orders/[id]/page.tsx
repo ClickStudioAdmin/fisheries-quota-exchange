@@ -60,15 +60,20 @@ export default async function OrderPage({
     order = (await getOrder(orderId)) ?? order;
   }
 
-  const [reservation, transaction, events, buyerRole, admin, payment] =
+  const [reservation, transaction, events, buyerRole, sellerRole, admin, payment] =
     await Promise.all([
       getReservationForOrder(order.id),
       getTransactionForOrder(order.id),
       listOrderAuditEvents(order.id),
       getMyRole(order.buyer_organisation_id),
+      getMyRole(order.seller_organisation_id),
       isPlatformAdmin(),
       getPaymentForOrder(order.id),
     ]);
+
+  const isBuyer = buyerRole !== null;
+  const isSeller = sellerRole !== null;
+  const showCommission = isSeller || (Boolean(admin) && !isBuyer);
 
   const canCancel =
     (order.status === "AWAITING_COMPLIANCE" ||
@@ -127,6 +132,78 @@ export default async function OrderPage({
       : transaction?.status === "PENDING"
         ? { label: "Pending", code: "PENDING" }
         : { label: "None", code: "none" };
+  const feeLabel =
+    Number(order.fee_percent) > 0
+      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%, ${
+          buyerPaidFeeOnTop ? "added to buyer payment" : "deducted from seller"
+        })`
+      : "None";
+  const totalItems = showCommission
+    ? [
+        {
+          label: isSeller ? "Listed amount" : "Quota amount",
+          value: formatAud(order.amount_aud),
+        },
+        { label: "Platform fee", value: feeLabel },
+        {
+          label: isSeller ? "You receive" : "Seller proceeds",
+          value: sellerProceeds,
+        },
+        ...(isSeller
+          ? []
+          : [
+              {
+                label:
+                  payment?.status === "PAID" ? "Buyer paid" : "Buyer pays",
+                value: totalDue,
+              },
+            ]),
+      ]
+    : [
+        {
+          label: payment?.status === "PAID" ? "You paid" : "You pay",
+          value: totalDue,
+        },
+      ];
+  const statusItems = [
+    {
+      label: "Quota reservation",
+      value: (
+        <StatusBadge
+          label={reservationLabel}
+          code={reservation?.status ?? "none"}
+        />
+      ),
+    },
+    {
+      label: "Payment",
+      value: (
+        <StatusBadge label={paymentBadge.label} code={paymentBadge.code} />
+      ),
+    },
+    ...(showCommission
+      ? [
+          {
+            label: "Seller transfer",
+            value: (
+              <StatusBadge
+                label={transferBadge.label}
+                code={transferBadge.code}
+              />
+            ),
+          },
+        ]
+      : []),
+    {
+      label: "Settlement",
+      value: (
+        <StatusBadge
+          label={settlementBadge.label}
+          code={settlementBadge.code}
+        />
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -191,69 +268,13 @@ export default async function OrderPage({
           <section className="mt-6 border-t border-line pt-5">
             <h3 className="text-sm font-semibold text-ink">Totals</h3>
             <div className="mt-3">
-              <LabeledFields
-                items={[
-                  { label: "Quota amount", value: formatAud(order.amount_aud) },
-                  {
-                    label: "Platform fee",
-                    value:
-                      Number(order.fee_percent) > 0
-                        ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%, ${
-                            buyerPaidFeeOnTop
-                              ? "added to buyer payment"
-                              : "deducted from seller"
-                          })`
-                        : "None",
-                  },
-                  { label: "Seller proceeds", value: sellerProceeds },
-                  { label: "Total due to FQX", value: totalDue },
-                ]}
-              />
+              <LabeledFields items={totalItems} />
             </div>
           </section>
           <section className="mt-6 border-t border-line pt-5">
             <h3 className="text-sm font-semibold text-ink">Status</h3>
             <div className="mt-3">
-              <LabeledFields
-                items={[
-                  {
-                    label: "Quota reservation",
-                    value: (
-                      <StatusBadge
-                        label={reservationLabel}
-                        code={reservation?.status ?? "none"}
-                      />
-                    ),
-                  },
-                  {
-                    label: "Payment",
-                    value: (
-                      <StatusBadge
-                        label={paymentBadge.label}
-                        code={paymentBadge.code}
-                      />
-                    ),
-                  },
-                  {
-                    label: "Seller transfer",
-                    value: (
-                      <StatusBadge
-                        label={transferBadge.label}
-                        code={transferBadge.code}
-                      />
-                    ),
-                  },
-                  {
-                    label: "Settlement simulation",
-                    value: (
-                      <StatusBadge
-                        label={settlementBadge.label}
-                        code={settlementBadge.code}
-                      />
-                    ),
-                  },
-                ]}
-              />
+              <LabeledFields items={statusItems} />
             </div>
           </section>
           {canCancel ? (
