@@ -3,14 +3,7 @@ import { buttonClassName } from "@/components/auth-card";
 import { FisheryCard } from "@/components/fishery-card";
 import { HomeHeroSlider, type HomeHeroSlide } from "@/components/home-hero-slider";
 import { ListingCards } from "@/components/listing-card";
-import {
-  pageWidthClassName,
-  panelClassName,
-} from "@/components/surface";
-import {
-  HOW_IT_WORKS_BUYER_STEPS,
-  HOW_IT_WORKS_SELLER_STEPS,
-} from "@/lib/content/how-it-works";
+import { pageWidthClassName } from "@/components/surface";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import {
   jurisdictionLabel,
@@ -172,37 +165,6 @@ export default async function Home() {
       </section>
 
       <section className={`${pageWidthClassName} py-12 sm:py-16`}>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-2xl font-semibold tracking-tight text-ink">
-            How it works
-          </h2>
-          <Link href="/how-it-works" className="text-sm underline">
-            Buyer and seller steps
-          </Link>
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {[
-            { heading: "For buyers", steps: HOW_IT_WORKS_BUYER_STEPS },
-            { heading: "For sellers", steps: HOW_IT_WORKS_SELLER_STEPS },
-          ].map((column) => (
-            <div key={column.heading} className={panelClassName}>
-              <h3 className="text-lg font-semibold text-ink">{column.heading}</h3>
-              <ol className="mt-4 space-y-3">
-                {column.steps.map((step, index) => (
-                  <li key={step.title} className="text-sm">
-                    <span className="text-xs uppercase tracking-[0.12em] text-sea">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="ml-2 font-medium text-ink">{step.title}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className={`${pageWidthClassName} pb-12 sm:pb-16`}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-ink">
