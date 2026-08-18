@@ -6,6 +6,7 @@ import {
   tableLinkClassName,
 } from "@/components/data-table";
 import { tableButtonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
   deleteUsersAction,
@@ -171,9 +172,12 @@ export default async function AdminUsersPage() {
                   name="verified"
                   value={item.verified ? "false" : "true"}
                 />
-                <button type="submit" className={tableButtonClassName}>
+                <PendingSubmitButton
+                  className={tableButtonClassName}
+                  pendingLabel="Updating…"
+                >
                   {item.verified ? "Revoke verification" : "Mark as verified"}
-                </button>
+                </PendingSubmitButton>
               </form>
             }
           />

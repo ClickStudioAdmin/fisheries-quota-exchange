@@ -14,6 +14,7 @@ import {
   type ReactNode,
 } from "react";
 import { tableButtonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge, isStatusColumn } from "@/components/status-badge";
 import {
   ListPager,
@@ -623,14 +624,14 @@ export function DataTable({
                   {Object.entries(item.hiddenFields ?? {}).map(([name, value]) => (
                     <input key={name} type="hidden" name={name} value={value} />
                   ))}
-                  <button
-                    type="submit"
+                  <PendingSubmitButton
                     disabled={selectedIds.length === 0}
                     className={tableButtonClassName}
+                    pendingLabel="Working…"
                   >
                     {item.label}
                     {selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
-                  </button>
+                  </PendingSubmitButton>
                 </form>
               );
             })}

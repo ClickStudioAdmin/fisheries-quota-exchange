@@ -12,11 +12,9 @@ import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { fisherySelectLabelForName } from "@/lib/fisheries/types";
-import {
-  fieldClassName,
-  tableButtonClassName,
-} from "@/components/auth-card";
+import { fieldClassName, tableButtonClassName } from "@/components/auth-card";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TableModal } from "@/components/table-modal";
 import { formatTableDate } from "@/lib/format";
 
@@ -169,9 +167,12 @@ export default async function AdminOrdersPage() {
                         action={approveComplianceAction}
                       >
                         <input type="hidden" name="order_id" value={order.id} />
-                        <button type="submit" className={tableButtonClassName}>
+                        <PendingSubmitButton
+                          className={tableButtonClassName}
+                          pendingLabel="Approving…"
+                        >
                           Approve
-                        </button>
+                        </PendingSubmitButton>
                       </form>
                       <form action={rejectComplianceAction} className="space-y-3">
                         <input type="hidden" name="order_id" value={order.id} />
@@ -188,9 +189,12 @@ export default async function AdminOrdersPage() {
                             className={fieldClassName}
                           />
                         </div>
-                        <button type="submit" className={tableButtonClassName}>
+                        <PendingSubmitButton
+                          className={tableButtonClassName}
+                          pendingLabel="Rejecting…"
+                        >
                           Reject
-                        </button>
+                        </PendingSubmitButton>
                       </form>
                       <div>
                         <label
@@ -212,17 +216,23 @@ export default async function AdminOrdersPage() {
                 {order.status === "AWAITING_TRANSFER" ? (
                   <form action={simulateTransferAction}>
                     <input type="hidden" name="order_id" value={order.id} />
-                    <button type="submit" className={tableButtonClassName}>
+                    <PendingSubmitButton
+                      className={tableButtonClassName}
+                      pendingLabel="Simulating…"
+                    >
                       Simulate transfer
-                    </button>
+                    </PendingSubmitButton>
                   </form>
                 ) : null}
                 {order.status === "AWAITING_SETTLEMENT" ? (
                   <form action={simulateSettlementAction}>
                     <input type="hidden" name="order_id" value={order.id} />
-                    <button type="submit" className={tableButtonClassName}>
+                    <PendingSubmitButton
+                      className={tableButtonClassName}
+                      pendingLabel="Settling…"
+                    >
                       Simulate settlement
-                    </button>
+                    </PendingSubmitButton>
                   </form>
                 ) : null}
               </>

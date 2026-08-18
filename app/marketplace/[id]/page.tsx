@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
 import { cancelListingAction } from "@/lib/listings/actions";
 import {
@@ -198,9 +199,12 @@ export default async function ListingPage({
                 name="next"
                 value={`/marketplace/${listing.id}`}
               />
-              <button type="submit" className={buttonClassName}>
+              <PendingSubmitButton
+                className={buttonClassName}
+                pendingLabel="Cancelling…"
+              >
                 Cancel listing
-              </button>
+              </PendingSubmitButton>
             </form>
           ) : null}
         </div>

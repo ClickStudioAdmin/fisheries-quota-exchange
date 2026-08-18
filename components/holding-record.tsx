@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { tableButtonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   DataTable,
   DataTableRowExtras,
@@ -126,9 +127,12 @@ export async function HoldingRecord({
                   name="holding_id"
                   value={String(holding.id)}
                 />
-                <button type="submit" className={tableButtonClassName}>
+                <PendingSubmitButton
+                  className={tableButtonClassName}
+                  pendingLabel="Verifying…"
+                >
                   Verify holding
-                </button>
+                </PendingSubmitButton>
               </form>
             ) : null}
             {canManage ? (

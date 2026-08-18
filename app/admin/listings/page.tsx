@@ -19,6 +19,7 @@ import {
   tableButtonClassName,
 } from "@/components/auth-card";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { TableModal } from "@/components/table-modal";
 import { formatTableDate } from "@/lib/format";
 
@@ -150,9 +151,12 @@ export default async function AdminListingsPage() {
                       action={approveListingAction}
                     >
                       <input type="hidden" name="listing_id" value={listing.id} />
-                      <button type="submit" className={tableButtonClassName}>
+                      <PendingSubmitButton
+                        className={tableButtonClassName}
+                        pendingLabel="Approving…"
+                      >
                         Approve
-                      </button>
+                      </PendingSubmitButton>
                     </form>
                     <form action={rejectListingAction} className="space-y-3">
                       <input type="hidden" name="listing_id" value={listing.id} />
@@ -169,9 +173,12 @@ export default async function AdminListingsPage() {
                           className={fieldClassName}
                         />
                       </div>
-                      <button type="submit" className={tableButtonClassName}>
+                      <PendingSubmitButton
+                        className={tableButtonClassName}
+                        pendingLabel="Rejecting…"
+                      >
                         Reject
-                      </button>
+                      </PendingSubmitButton>
                     </form>
                     <div>
                       <label

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { HoldingForm } from "@/components/holding-form";
 import { tableButtonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { verifyHoldingAction } from "@/lib/fisheries/actions";
 import { listAllHoldings, listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
@@ -117,9 +118,12 @@ export default async function HoldingsAdminPage() {
                     name="holding_id"
                     value={String(holding.id)}
                   />
-                  <button type="submit" className={tableButtonClassName}>
+                  <PendingSubmitButton
+                    className={tableButtonClassName}
+                    pendingLabel="Verifying…"
+                  >
                     Verify holding
-                  </button>
+                  </PendingSubmitButton>
                 </form>
               )
             }

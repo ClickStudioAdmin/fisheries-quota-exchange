@@ -1,4 +1,5 @@
 import { buttonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { claimFirstAdminAction } from "@/lib/fisheries/actions";
 import { isPlatformAdmin, platformAdminCount } from "@/lib/admin/access";
 import { listFisheries, listAllHoldings } from "@/lib/fisheries/queries";
@@ -22,9 +23,12 @@ export default async function AdminPage() {
           role can create test fisheries and quota holdings.
         </p>
         <form action={claimFirstAdminAction}>
-          <button type="submit" className={buttonClassName}>
+          <PendingSubmitButton
+            className={buttonClassName}
+            pendingLabel="Claiming…"
+          >
             Claim platform admin
-          </button>
+          </PendingSubmitButton>
         </form>
       </div>
     );

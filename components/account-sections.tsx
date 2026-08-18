@@ -44,6 +44,7 @@ import { cancelListingAction } from "@/lib/listings/actions";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { tableButtonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { formatTableDate } from "@/lib/format";
 import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
@@ -548,9 +549,12 @@ export async function AccountListingsSection({
                         name="next"
                         value={accountPath(organisationId, "/dashboard/listings")}
                       />
-                      <button type="submit" className={tableButtonClassName}>
+                      <PendingSubmitButton
+                        className={tableButtonClassName}
+                        pendingLabel="Cancelling…"
+                      >
                         Cancel
-                      </button>
+                      </PendingSubmitButton>
                     </form>
                   ) : null}
                 </>

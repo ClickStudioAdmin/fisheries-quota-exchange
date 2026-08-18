@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { cancelOrderAction } from "@/lib/orders/actions";
 import { OrderCheckout } from "@/components/order-checkout";
 import { buttonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   getOrder,
   getReservationForOrder,
@@ -176,9 +177,12 @@ export default async function OrderPage({
             <form action={cancelOrderAction} className="mt-6">
               <input type="hidden" name="order_id" value={order.id} />
               <input type="hidden" name="next" value={`/orders/${order.id}`} />
-              <button type="submit" className={buttonClassName}>
+              <PendingSubmitButton
+                className={buttonClassName}
+                pendingLabel="Cancelling…"
+              >
                 Cancel order
-              </button>
+              </PendingSubmitButton>
             </form>
           ) : null}
         </div>

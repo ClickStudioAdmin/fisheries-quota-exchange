@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { tableButtonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { LabeledFields } from "@/components/surface";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { setUserVerifiedAction } from "@/lib/admin/actions";
@@ -117,9 +118,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               name="verified"
               value={profile.verified ? "false" : "true"}
             />
-            <button type="submit" className={tableButtonClassName}>
+            <PendingSubmitButton
+              className={tableButtonClassName}
+              pendingLabel="Updating…"
+            >
               {profile.verified ? "Revoke verification" : "Mark as verified"}
-            </button>
+            </PendingSubmitButton>
           </form>
         </div>
       </div>
@@ -289,9 +293,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
                     name="holding_id"
                     value={String(holding.id)}
                   />
-                  <button type="submit" className={tableButtonClassName}>
+                  <PendingSubmitButton
+                    className={tableButtonClassName}
+                    pendingLabel="Verifying…"
+                  >
                     Verify holding
-                  </button>
+                  </PendingSubmitButton>
                 </form>
               )
             }

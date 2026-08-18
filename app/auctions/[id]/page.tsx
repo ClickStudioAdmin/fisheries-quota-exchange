@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
 import { buttonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
@@ -208,18 +209,24 @@ export default async function AuctionPage({
       {canClose ? (
         <form action={closeAuctionAction} className="mt-6">
           <input type="hidden" name="listing_id" value={listing.id} />
-          <button type="submit" className={buttonClassName}>
+          <PendingSubmitButton
+            className={buttonClassName}
+            pendingLabel="Closing…"
+          >
             Close auction
-          </button>
+          </PendingSubmitButton>
         </form>
       ) : null}
       {canCancel ? (
         <form action={cancelListingAction} className="mt-6">
           <input type="hidden" name="listing_id" value={listing.id} />
           <input type="hidden" name="next" value={`/auctions/${listing.id}`} />
-          <button type="submit" className={buttonClassName}>
+          <PendingSubmitButton
+            className={buttonClassName}
+            pendingLabel="Cancelling…"
+          >
             Cancel auction
-          </button>
+          </PendingSubmitButton>
         </form>
       ) : canManage &&
         (listing.status === "PENDING_APPROVAL" ||
