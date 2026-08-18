@@ -27,6 +27,10 @@ export function AcceptTermsForm() {
           {state.message}
         </p>
       ) : null}
+      <p className="text-sm text-ink-muted">
+        Agree to the terms and add business details on Profile before you can
+        buy or list.
+      </p>
       <label className="flex items-start gap-2 text-sm text-ink">
         <input
           type="checkbox"

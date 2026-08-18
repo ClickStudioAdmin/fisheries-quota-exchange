@@ -71,10 +71,6 @@ export default function TermsPage() {
         <p>That means you must:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            Finish payments setup with Stripe before you list, so FQX can pay
-            you at settlement.
-          </li>
-          <li>
             Only list quota you are entitled to transfer from a verified
             holding.
           </li>

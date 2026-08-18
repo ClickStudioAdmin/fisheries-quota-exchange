@@ -76,10 +76,6 @@ export async function AccountOverviewSection({
       </div>
       <div className={panelClassName}>
         <h2 className="text-lg font-semibold text-ink">Onboarding</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          Agree to the terms and add business details on Profile before you
-          can buy or list. Sellers must also finish payments setup.
-        </p>
         <div className="mt-4">
           <LabeledFields
             items={[
@@ -102,7 +98,8 @@ export async function AccountOverviewSection({
               <Link href="/terms" className="underline">
                 terms of service
               </Link>
-              . {sellError}{" "}
+              . Before you can be eligible to list quota for sale, you must
+              provide us with your payment details first.{" "}
               <Link href={href("/dashboard/payments")} className="underline">
                 Go to Payments
               </Link>
