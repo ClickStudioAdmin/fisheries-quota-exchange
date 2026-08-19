@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { PublicSellerName } from "@/components/public-seller-name";
 import {
   tableBodyCellClassName,
   tableClassName,
@@ -23,7 +22,6 @@ import {
   listOpenListingsForFishery,
 } from "@/lib/market/queries";
 import type { Fishery } from "@/lib/fisheries/types";
-import { loadPublicSellerDisplays } from "@/lib/organisations/queries";
 
 const OTHER_LISTING_LIMIT = 6;
 const RECENT_TRADE_LIMIT = 8;
@@ -55,7 +53,6 @@ export async function ListingRelatedMarket({
     .reverse();
   const tradeTitle =
     offering === "LEASE" ? "Recent leases" : "Recent sales";
-  const sellerDisplays = await loadPublicSellerDisplays(others);
 
   return (
     <div className="mt-12 grid items-start gap-8 lg:grid-cols-2">
@@ -78,40 +75,29 @@ export async function ListingRelatedMarket({
               <thead className={tableHeadClassName}>
                 <tr>
                   <th className={`${tableHeaderCellClassName} w-[22%] pl-4`}>
-                    Seller
-                  </th>
-                  <th className={`${tableHeaderCellClassName} w-[18%]`}>
                     Type
                   </th>
-                  <th className={`${tableHeaderCellClassName} w-[15%]`}>
+                  <th className={`${tableHeaderCellClassName} w-[16%]`}>
                     Quantity
                   </th>
-                  <th className={`${tableHeaderCellClassName} w-[15%]`}>
+                  <th className={`${tableHeaderCellClassName} w-[16%]`}>
                     Price
                   </th>
-                  <th className={`${tableHeaderCellClassName} w-[15%]`}>
+                  <th className={`${tableHeaderCellClassName} w-[16%]`}>
                     Total
                   </th>
-                  <th className={`${tableHeaderCellClassName} w-[15%] pr-4`}>
+                  <th className={`${tableHeaderCellClassName} w-[16%]`}>
                     Expires
+                  </th>
+                  <th className={`${tableHeaderCellClassName} w-[14%] pr-4`}>
+                    View
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {others.map((listing, index) => {
-                  const seller = sellerDisplays[listing.id] ?? {
-                    label: listing.seller_name,
-                    tooltip: null,
-                  };
-
-                  return (
+                {others.map((listing, index) => (
                     <tr key={listing.id} className={tableRowClassName(index)}>
                       <td className={`${tableBodyCellClassName} pl-4`}>
-                        <Link href={listingHref(listing)} className="underline">
-                          <PublicSellerName display={seller} />
-                        </Link>
-                      </td>
-                      <td className={tableBodyCellClassName}>
                         {listingOfferingLabel(listing.offering)} ·{" "}
                         {listingTypeLabel(listing.listing_type)}
                       </td>
@@ -130,12 +116,16 @@ export async function ListingRelatedMarket({
                           listing.unit_price_aud,
                         )}
                       </td>
-                      <td className={`${tableBodyCellClassName} pr-4`}>
+                      <td className={tableBodyCellClassName}>
                         {formatTableDate(listing.expires_at)}
                       </td>
+                      <td className={`${tableBodyCellClassName} pr-4`}>
+                        <Link href={listingHref(listing)} className="underline">
+                          View
+                        </Link>
+                      </td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>
