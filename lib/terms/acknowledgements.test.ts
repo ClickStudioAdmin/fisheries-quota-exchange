@@ -16,8 +16,13 @@ test("seller and buyer acknowledgements each have distinct names", () => {
   ]) {
     const names = group.map((item) => item.name);
     assert.equal(new Set(names).size, names.length);
-    assert.ok(names.length >= 4);
+    assert.ok(names.length >= 1);
   }
+
+  assert.ok(SELLER_ACKNOWLEDGEMENTS.length >= 4);
+  assert.ok(BUYER_PURCHASE_ACKNOWLEDGEMENTS.length >= 4);
+  assert.equal(BUYER_BID_ACKNOWLEDGEMENTS.length, 1);
+  assert.equal(BUYER_BID_ACKNOWLEDGEMENTS[0].name, "ack_bid_terms");
 });
 
 test("requireAcknowledgements refuses a missing tick", () => {

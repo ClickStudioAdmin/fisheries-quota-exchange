@@ -44,7 +44,7 @@ export function BidForm({ listingId, minimumBid }: BidFormProps) {
         />
       </div>
       <TermsAcknowledgements
-        title="Buyer acknowledgements"
+        title="Bidder acknowledgements"
         items={BUYER_BID_ACKNOWLEDGEMENTS}
       />
       <button type="submit" className={buttonClassName} disabled={pending}>

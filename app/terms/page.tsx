@@ -54,10 +54,21 @@ export default function TermsPage() {
           that would have applied to that trade. Changing your mind does not
           cancel that commission.
         </p>
+      </LegalSection>
+
+      <LegalSection title="Bidders">
         <p>
-          A bid uses server time. If you are the winning bidder when the
-          auction closes (at or above reserve), the same completion and
-          commission rules apply as a purchase.
+          Bid time is recorded by the server, not your browser. The time on
+          your device is not used to decide whether a bid is in time or is
+          the highest bid.
+        </p>
+        <p>
+          If you win (at or above reserve), you enter a binding agreement to
+          complete the trade, quota is reserved, and you must pay FQX.
+        </p>
+        <p>
+          If you do not proceed after winning, you may be liable to pay FQX
+          the platform commission that would have applied to this trade.
         </p>
       </LegalSection>
 

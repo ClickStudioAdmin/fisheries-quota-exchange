@@ -62,22 +62,8 @@ export const BUYER_PURCHASE_ACKNOWLEDGEMENTS = [
 
 export const BUYER_BID_ACKNOWLEDGEMENTS = [
   {
-    name: "ack_bid_server_time",
-    label: "Bid time is recorded by the server, not my browser.",
-  },
-  {
-    name: "ack_bid_binding",
-    label:
-      "If I win (at or above reserve), I enter a binding agreement to complete the trade, quota is reserved, and I must pay FQX.",
-  },
-  {
-    name: "ack_bid_commission_abort",
-    label:
-      "If I do not proceed after winning, I may be liable to pay FQX the platform commission that would have applied to this trade.",
-  },
-  {
     name: "ack_bid_terms",
-    label: "I have read and agree to the buyer terms of service.",
+    label: "I have read and agree to the bidder terms of service.",
   },
 ] as const;
 

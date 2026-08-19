@@ -167,6 +167,20 @@ export function MarketplaceList({
           </select>
         </label>
         <label className={filterLabelClassName}>
+          <span className="whitespace-nowrap">Offering</span>
+          <select
+            value={offering}
+            onChange={(event) =>
+              setOffering(event.target.value as "ALL" | ListingOffering)
+            }
+            className={filterFieldClassName}
+          >
+            <option value="ALL">All</option>
+            <option value="SALE">{listingOfferingLabel("SALE")}</option>
+            <option value="LEASE">{listingOfferingLabel("LEASE")}</option>
+          </select>
+        </label>
+        <label className={filterLabelClassName}>
           <span className="whitespace-nowrap">Listing type</span>
           <select
             value={listingType}
@@ -180,20 +194,6 @@ export function MarketplaceList({
               {listingTypeLabel("FIXED_PRICE")}
             </option>
             <option value="AUCTION">{listingTypeLabel("AUCTION")}</option>
-          </select>
-        </label>
-        <label className={filterLabelClassName}>
-          <span className="whitespace-nowrap">Offering</span>
-          <select
-            value={offering}
-            onChange={(event) =>
-              setOffering(event.target.value as "ALL" | ListingOffering)
-            }
-            className={filterFieldClassName}
-          >
-            <option value="ALL">All</option>
-            <option value="SALE">{listingOfferingLabel("SALE")}</option>
-            <option value="LEASE">{listingOfferingLabel("LEASE")}</option>
           </select>
         </label>
         <label className={`${filterLabelClassName} min-w-[11rem]`}>
