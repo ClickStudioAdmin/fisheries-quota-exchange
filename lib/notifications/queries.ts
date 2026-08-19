@@ -21,15 +21,22 @@ export async function insertInAppNotification(input: {
   email: string;
   template: ProductEmailId;
   data: NoticeEmailData;
+  accountDisabledInApp?: readonly string[];
 }) {
   if (isOperatorEmailId(input.template)) {
     return;
   }
 
-  const prefs = await getUserNotificationPreferences(input.email);
+  if (input.accountDisabledInApp) {
+    if (emailIsDisabled(input.accountDisabledInApp, input.template)) {
+      return;
+    }
+  } else {
+    const prefs = await getUserNotificationPreferences(input.email);
 
-  if (emailIsDisabled(prefs.disabledInApp, input.template)) {
-    return;
+    if (emailIsDisabled(prefs.disabledInApp, input.template)) {
+      return;
+    }
   }
 
   const supabase = await db();

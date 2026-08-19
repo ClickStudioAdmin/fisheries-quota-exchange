@@ -27,6 +27,10 @@ import {
   organisationRoleLabel,
 } from "@/lib/organisations/types";
 import { emailCopy } from "@/lib/email/copy";
+import {
+  ACCOUNT_NOTIFICATION_EMAIL_IDS,
+  disabledProductEmails,
+} from "@/lib/email/product-emails";
 import { notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -181,6 +185,51 @@ export async function updateOrganisationNotificationRolesAction(
   const { error } = await supabase
     .from("organisations")
     .update({ notification_roles: roles })
+    .eq("id", organisationId);
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/dashboard/account");
+  return { message: "Notification settings saved." };
+}
+
+export async function updateOrganisationNotificationPreferencesAction(
+  _prev: OrganisationFormState,
+  formData: FormData,
+): Promise<OrganisationFormState> {
+  const supabase = await createClient();
+  const organisationId = Number(formData.get("organisation_id"));
+
+  if (!supabase || !Number.isInteger(organisationId)) {
+    return { error: "Organisation not found." };
+  }
+
+  const mismatch = await requireActiveOrganisationMatch(organisationId);
+
+  if (mismatch) {
+    return { error: mismatch };
+  }
+
+  const actorRole = await getMyRole(organisationId);
+
+  if (!actorRole || !canEditOrganisation(actorRole)) {
+    return { error: "You do not have permission to change notification settings." };
+  }
+
+  const { error } = await supabase
+    .from("organisations")
+    .update({
+      disabled_notification_emails: disabledProductEmails(
+        formData.getAll("email_enabled").map((value) => String(value)),
+        ACCOUNT_NOTIFICATION_EMAIL_IDS,
+      ),
+      disabled_notification_in_app: disabledProductEmails(
+        formData.getAll("in_app_enabled").map((value) => String(value)),
+        ACCOUNT_NOTIFICATION_EMAIL_IDS,
+      ),
+    })
     .eq("id", organisationId);
 
   if (error) {

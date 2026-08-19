@@ -7,8 +7,6 @@ import { listingAlertMatches } from "@/lib/alerts/types";
 import type { ListingOffering } from "@/lib/listings/types";
 import { uniqueEmails } from "@/lib/email/recipients";
 import {
-  accountNotificationEmailIds,
-  personalNotificationEmailIds,
   profileNotificationEmailIds,
 } from "@/lib/email/product-emails";
 import type { NotificationPreferences } from "@/lib/notifications/types";
@@ -144,14 +142,6 @@ async function myNotificationAudience() {
   };
 }
 
-export async function myPersonalNotificationEmailIds() {
-  return personalNotificationEmailIds(await myNotificationAudience());
-}
-
 export async function myProfileNotificationEmailIds() {
   return profileNotificationEmailIds(await myNotificationAudience());
-}
-
-export async function myAccountNotificationEmailIds() {
-  return accountNotificationEmailIds(await myNotificationAudience());
 }

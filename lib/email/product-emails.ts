@@ -116,8 +116,22 @@ const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
   "order_settled",
 ];
 
+export const ACCOUNT_NOTIFICATION_EMAIL_IDS = SELLER_MANAGER_EMAIL_IDS;
+
 export function isAccountNotificationEmailId(id: ProductEmailId) {
-  return (SELLER_MANAGER_EMAIL_IDS as readonly ProductEmailId[]).includes(id);
+  return (ACCOUNT_NOTIFICATION_EMAIL_IDS as readonly ProductEmailId[]).includes(
+    id,
+  );
+}
+
+export function parseDisabledProductEmails(value: unknown): ProductEmailId[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((id) => String(id))
+    .filter((id): id is ProductEmailId => isProductEmailId(id) && !isOperatorEmailId(id));
 }
 
 export function personalNotificationEmailIds(input: {

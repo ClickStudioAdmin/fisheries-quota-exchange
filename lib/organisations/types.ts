@@ -1,3 +1,5 @@
+import type { ProductEmailId } from "@/lib/email/product-emails";
+
 export const ORGANISATION_ROLES = ["OWNER", "ADMIN", "MEMBER"] as const;
 
 export type OrganisationRole = (typeof ORGANISATION_ROLES)[number];
@@ -8,6 +10,8 @@ export type Organisation = {
   trading_name: string | null;
   abn: string | null;
   notification_roles: OrganisationRole[];
+  disabled_notification_emails: ProductEmailId[];
+  disabled_notification_in_app: ProductEmailId[];
   created_at: string;
   updated_at: string;
 };

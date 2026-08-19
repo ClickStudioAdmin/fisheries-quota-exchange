@@ -22,6 +22,7 @@ export async function sendEmail<K extends ProductEmailId>(options: {
   template: K;
   data: EmailTemplates[K];
   attachments?: EmailAttachment[];
+  accountDisabledEmails?: readonly string[];
 }): Promise<SendEmailResult> {
   const settings = await getPlatformSettings();
 
@@ -35,7 +36,11 @@ export async function sendEmail<K extends ProductEmailId>(options: {
     return { sent: false, error: "Invalid recipient." };
   }
 
-  if (!isOperatorEmailId(options.template)) {
+  if (options.accountDisabledEmails) {
+    if (emailIsDisabled(options.accountDisabledEmails, options.template)) {
+      return { sent: false, skipped: true };
+    }
+  } else if (!isOperatorEmailId(options.template)) {
     const userDisabled = await getUserDisabledEmails(to);
 
     if (emailIsDisabled(userDisabled, options.template)) {

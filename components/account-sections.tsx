@@ -57,9 +57,9 @@ import { accountPath, accountPaymentsPath, dashboardHoldingPath } from "@/lib/or
 import {
   getMyNotificationPreferences,
   listMyListingAlerts,
-  myAccountNotificationEmailIds,
   myProfileNotificationEmailIds,
 } from "@/lib/alerts/queries";
+import { ACCOUNT_NOTIFICATION_EMAIL_IDS } from "@/lib/email/product-emails";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -174,11 +174,7 @@ export async function AccountNotificationsSection({
     return <p>Account not found.</p>;
   }
 
-  const [members, prefs, emailIds] = await Promise.all([
-    listMembers(organisationId),
-    getMyNotificationPreferences(),
-    myAccountNotificationEmailIds(),
-  ]);
+  const members = await listMembers(organisationId);
   const canEdit = canEditOrganisation(result.role);
 
   return (
@@ -197,10 +193,12 @@ export async function AccountNotificationsSection({
       )}
       <NotificationSettingsForm
         scope="account"
-        disabledEmails={prefs.disabledEmails}
-        disabledInApp={prefs.disabledInApp}
-        emailIds={emailIds}
-        description="Listings, holdings, payments, and settlement for this account. Who receives them is chosen above. You can still turn email or in-app off for yourself. Personal messages are on Profile → Notifications."
+        organisationId={organisationId}
+        canEdit={canEdit}
+        disabledEmails={result.organisation.disabled_notification_emails}
+        disabledInApp={result.organisation.disabled_notification_in_app}
+        emailIds={ACCOUNT_NOTIFICATION_EMAIL_IDS}
+        description="Listings, holdings, payments, and settlement for this account. These switches belong to the account, not to you. They change when you switch account. Who receives them is chosen above. Personal messages are on Profile → Notifications."
       />
     </div>
   );

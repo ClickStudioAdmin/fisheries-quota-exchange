@@ -1,8 +1,7 @@
 import "server-only";
 
 import { emailCopy } from "@/lib/email/copy";
-import { claimEmailDispatch, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
-import { organisationNotificationEmails } from "@/lib/email/recipients";
+import { claimEmailDispatch, notifyAccountEmail, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import { listingHref, type Listing } from "@/lib/listings/types";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -38,21 +37,21 @@ export async function runScheduledEmails() {
     >;
     const href = `${siteUrl}${listingHref(listing)}`;
     const expires = new Date(listing.expires_at).getTime();
-    const managers = await organisationNotificationEmails(listing.organisation_id);
-    const to = [...managers, listing.created_by_email];
+    const extra = [listing.created_by_email];
 
     if (
       listing.listing_type === "FIXED_PRICE" &&
       expires <= now &&
       (await claimEmailDispatch("listing_expired", String(listing.id)))
     ) {
-      await notifyEmail(
+      await notifyAccountEmail(
         "listing_expired",
-        to,
+        listing.organisation_id,
         emailCopy.listing_expired({
           fisheryName: listing.fishery_name,
           listingUrl: href,
         }),
+        extra,
       );
     }
 
@@ -62,26 +61,32 @@ export async function runScheduledEmails() {
       expires <= now + ENDING_SOON_MS &&
       (await claimEmailDispatch("auction_ending_soon", String(listing.id)))
     ) {
+      const copy = emailCopy.auction_ending_soon({
+        fisheryName: listing.fishery_name,
+        auctionUrl: href,
+      });
+      await notifyAccountEmail(
+        "auction_ending_soon",
+        listing.organisation_id,
+        copy,
+        extra,
+      );
       const { data: bids } = await supabase
         .from("bids")
         .select("organisation_id")
         .eq("listing_id", listing.id);
       const bidderOrgs = [
         ...new Set(
-          (bids ?? []).map((bid) => Number(bid.organisation_id)).filter(Number.isInteger),
+          (bids ?? [])
+            .map((bid) => Number(bid.organisation_id))
+            .filter(
+              (id) => Number.isInteger(id) && id !== listing.organisation_id,
+            ),
         ),
       ];
-      const bidderEmails = (
-        await Promise.all(bidderOrgs.map((id) => organisationNotificationEmails(id)))
-      ).flat();
-      await notifyEmail(
-        "auction_ending_soon",
-        [...to, ...bidderEmails],
-        emailCopy.auction_ending_soon({
-          fisheryName: listing.fishery_name,
-          auctionUrl: href,
-        }),
-      );
+      for (const organisationId of bidderOrgs) {
+        await notifyAccountEmail("auction_ending_soon", organisationId, copy);
+      }
     }
   }
 

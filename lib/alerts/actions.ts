@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import {
   getMyNotificationPreferences,
-  myAccountNotificationEmailIds,
   myProfileNotificationEmailIds,
 } from "@/lib/alerts/queries";
 import { parseFisheryIds } from "@/lib/alerts/types";
@@ -31,10 +30,7 @@ export async function updateNotificationPreferencesAction(
     return { error: "You must be signed in." };
   }
 
-  const visibleIds =
-    String(formData.get("notification_scope") ?? "") === "account"
-      ? await myAccountNotificationEmailIds()
-      : await myProfileNotificationEmailIds();
+  const visibleIds = await myProfileNotificationEmailIds();
   const visible = new Set(visibleIds);
   const prefs = await getMyNotificationPreferences();
   const formDisabledEmails = disabledProductEmails(

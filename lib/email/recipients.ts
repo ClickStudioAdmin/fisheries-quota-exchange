@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
 
 async function db() {
@@ -85,6 +86,28 @@ export async function platformAdminEmails() {
   return uniqueEmails(
     (data ?? []).map((row) => String(row.email ?? "")),
   );
+}
+
+export async function organisationNotificationPreferences(organisationId: number) {
+  const supabase = await db();
+
+  if (!supabase || !Number.isInteger(organisationId)) {
+    return {
+      disabledEmails: [] as ReturnType<typeof parseDisabledProductEmails>,
+      disabledInApp: [] as ReturnType<typeof parseDisabledProductEmails>,
+    };
+  }
+
+  const { data } = await supabase
+    .from("organisations")
+    .select("disabled_notification_emails, disabled_notification_in_app")
+    .eq("id", organisationId)
+    .maybeSingle();
+
+  return {
+    disabledEmails: parseDisabledProductEmails(data?.disabled_notification_emails),
+    disabledInApp: parseDisabledProductEmails(data?.disabled_notification_in_app),
+  };
 }
 
 export function uniqueEmails(values: Array<string | null | undefined>) {

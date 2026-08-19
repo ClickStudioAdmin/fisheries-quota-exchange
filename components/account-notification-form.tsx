@@ -42,7 +42,7 @@ export function AccountNotificationForm({
       <p className="text-sm text-ink-muted">
         Account email and in-app notices for listings, holdings, payments, and
         settlement go to these roles. Personal mail such as invitations, your
-        bids, and your purchases is not controlled here.
+        bids, and your purchases is on Profile → Notifications.
       </p>
       <fieldset className="space-y-2" disabled={!canEdit}>
         <legend className="text-sm text-ink">Roles that receive account email</legend>

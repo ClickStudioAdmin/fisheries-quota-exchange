@@ -15,6 +15,7 @@ import {
   updateNotificationPreferencesAction,
   type PreferenceFormState,
 } from "@/lib/alerts/actions";
+import { updateOrganisationNotificationPreferencesAction } from "@/lib/organisations/actions";
 import {
   PRODUCT_EMAIL_LABELS,
   type ProductEmailId,
@@ -28,21 +29,29 @@ export function NotificationSettingsForm({
   emailIds,
   scope,
   description,
+  organisationId,
+  canEdit = true,
 }: {
   disabledEmails: string[];
   disabledInApp: string[];
   emailIds: ProductEmailId[];
   scope: "profile" | "account";
   description: string;
+  organisationId?: number;
+  canEdit?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
-    updateNotificationPreferencesAction,
+    scope === "account"
+      ? updateOrganisationNotificationPreferencesAction
+      : updateNotificationPreferencesAction,
     initialState,
   );
 
   return (
     <form action={formAction} className="max-w-3xl space-y-6">
-      <input type="hidden" name="notification_scope" value={scope} />
+      {organisationId ? (
+        <input type="hidden" name="organisation_id" value={organisationId} />
+      ) : null}
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
@@ -54,53 +63,61 @@ export function NotificationSettingsForm({
         </p>
       ) : null}
       <p className="text-sm text-ink-muted">{description}</p>
-      <div className={tableWrapClassName}>
-        <table className={tableClassName}>
-          <thead className={tableHeadClassName}>
-            <tr>
-              <th className={tableHeaderCellClassName}>Message</th>
-              <th className={`w-24 ${tableHeaderCellClassName}`}>Email</th>
-              <th className={`w-24 ${tableHeaderCellClassName}`}>In-app</th>
-            </tr>
-          </thead>
-          <tbody>
-            {emailIds.map((id, index) => (
-              <tr key={id} className={tableRowClassName(index)}>
-                <td className={tableBodyCellClassName}>
-                  {PRODUCT_EMAIL_LABELS[id]}
-                  <span className="mt-0.5 block font-mono text-xs text-ink-muted">
-                    {id}
-                  </span>
-                </td>
-                <td className={tableBodyCellClassName}>
-                  <SettingsSwitch
-                    name="email_enabled"
-                    value={id}
-                    defaultChecked={!disabledEmails.includes(id)}
-                    label={`Email ${PRODUCT_EMAIL_LABELS[id]}`}
-                  />
-                </td>
-                <td className={tableBodyCellClassName}>
-                  <SettingsSwitch
-                    name="in_app_enabled"
-                    value={id}
-                    defaultChecked={!disabledInApp.includes(id)}
-                    label={`In-app ${PRODUCT_EMAIL_LABELS[id]}`}
-                  />
-                </td>
+      <fieldset disabled={!canEdit} className="space-y-6">
+        <div className={tableWrapClassName}>
+          <table className={tableClassName}>
+            <thead className={tableHeadClassName}>
+              <tr>
+                <th className={tableHeaderCellClassName}>Message</th>
+                <th className={`w-24 ${tableHeaderCellClassName}`}>Email</th>
+                <th className={`w-24 ${tableHeaderCellClassName}`}>In-app</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {emailIds.length === 0 ? (
-        <p className="text-sm text-ink-muted">
-          No notifications are available here yet.
-        </p>
-      ) : null}
-      <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Saving…" : "Save notifications"}
-      </button>
+            </thead>
+            <tbody>
+              {emailIds.map((id, index) => (
+                <tr key={id} className={tableRowClassName(index)}>
+                  <td className={tableBodyCellClassName}>
+                    {PRODUCT_EMAIL_LABELS[id]}
+                    <span className="mt-0.5 block font-mono text-xs text-ink-muted">
+                      {id}
+                    </span>
+                  </td>
+                  <td className={tableBodyCellClassName}>
+                    <SettingsSwitch
+                      name="email_enabled"
+                      value={id}
+                      defaultChecked={!disabledEmails.includes(id)}
+                      label={`Email ${PRODUCT_EMAIL_LABELS[id]}`}
+                    />
+                  </td>
+                  <td className={tableBodyCellClassName}>
+                    <SettingsSwitch
+                      name="in_app_enabled"
+                      value={id}
+                      defaultChecked={!disabledInApp.includes(id)}
+                      label={`In-app ${PRODUCT_EMAIL_LABELS[id]}`}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {emailIds.length === 0 ? (
+          <p className="text-sm text-ink-muted">
+            No notifications are available here yet.
+          </p>
+        ) : null}
+        {canEdit ? (
+          <button type="submit" className={buttonClassName} disabled={pending}>
+            {pending ? "Saving…" : "Save notifications"}
+          </button>
+        ) : (
+          <p className="text-sm text-ink-muted">
+            Only owners and admins can change account notification settings.
+          </p>
+        )}
+      </fieldset>
     </form>
   );
 }

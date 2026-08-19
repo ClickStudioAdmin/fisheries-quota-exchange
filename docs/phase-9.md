@@ -59,7 +59,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 
 ## Database
 
-Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`, `20260819120000_organisation_notification_roles.sql`
+Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`, `20260819120000_organisation_notification_roles.sql`, `20260819130000_organisation_notification_preferences.sql`
 
 Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts eight in-app notices for `click.studio.admin@gmail.com` when that membership exists (mix of read and unread). Links use real holdings, listings, and orders when they are present.
 
@@ -69,6 +69,7 @@ Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts
 - `terms_acceptances` (email + version; required before buy, bid, or list)
 - `organisation_invitations` (pending invites; membership starts only after accept)
 - `organisations.notification_roles` (which membership roles receive account email; default Owner and Admin)
+- `organisations.disabled_notification_emails` and `disabled_notification_in_app` (account-level channel mutes)
 
 Every signed-in user must agree to the current terms on Overview and add business details on Account Settings before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase shows the buyer acknowledgements as a confirmation step after Purchase Now; bid requires ticking them on the auction page. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms may make them liable to pay the platform commission. This phase does not auto-invoice that abort commission.
 
@@ -126,7 +127,7 @@ Test card (AU Visa): `4000 0003 6000 0006`. Test BECS debit: BSB `000-000`, acco
 
 Mail is sent from the server after the database write. Auth confirm and password reset stay on Supabase Auth. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; the action still succeeds. The same events also write an in-app notice. Platform admins can disable each product **email** on `/admin/settings`. Previews are on `/admin/templates`.
 
-Account mail (listings, holdings, payments, and settlement for that organisation) goes to the roles chosen on Account Settings → Notifications. Default is Owner and Admin. The picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Personal mail (invitations, your bid, your purchase, listing alerts) is not role-routed. Each person can turn email or in-app off for personal messages on Profile → Notifications, and for account messages on Account Settings → Notifications.
+Account mail (listings, holdings, payments, and settlement for that organisation) goes to the roles chosen on Account Settings → Notifications. Default is Owner and Admin. The picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Email and in-app switches for those account messages are stored on the organisation (`disabled_notification_emails`, `disabled_notification_in_app`). They do not follow the signed-in person when they switch account. Personal mail (invitations, your bid, your purchase, listing alerts) is not role-routed. Each person can turn email or in-app off for personal messages on Profile → Notifications.
 
 Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. The buyer copy goes to the person who placed the order. The seller copy goes to the account notification roles.
 

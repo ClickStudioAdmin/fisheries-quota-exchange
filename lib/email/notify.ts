@@ -6,14 +6,21 @@ import { getSiteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { NoticeEmailData, SendEmailResult } from "@/lib/email/types";
-import { uniqueEmails } from "@/lib/email/recipients";
+import {
+  organisationNotificationEmails,
+  organisationNotificationPreferences,
+  uniqueEmails,
+} from "@/lib/email/recipients";
 import { insertInAppNotification } from "@/lib/notifications/queries";
 
 export async function notifyEmail(
   template: ProductEmailId,
   to: string | string[] | null | undefined,
   data: NoticeEmailData,
-  attachments?: EmailAttachment[],
+  options?: {
+    attachments?: EmailAttachment[];
+    organisationId?: number;
+  },
 ): Promise<SendEmailResult> {
   const recipients = uniqueEmails(Array.isArray(to) ? to : [to]);
 
@@ -21,6 +28,9 @@ export async function notifyEmail(
     return { sent: false, skipped: true };
   }
 
+  const accountPrefs = options?.organisationId
+    ? await organisationNotificationPreferences(options.organisationId)
+    : null;
   let result: SendEmailResult = { sent: false, skipped: true };
 
   for (const email of recipients) {
@@ -29,7 +39,8 @@ export async function notifyEmail(
         to: email,
         template,
         data,
-        attachments,
+        attachments: options?.attachments,
+        accountDisabledEmails: accountPrefs?.disabledEmails,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Email failed.";
@@ -42,6 +53,7 @@ export async function notifyEmail(
         email,
         template,
         data,
+        accountDisabledInApp: accountPrefs?.disabledInApp,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "In-app failed.";
@@ -50,6 +62,21 @@ export async function notifyEmail(
   }
 
   return result;
+}
+
+export async function notifyAccountEmail(
+  template: ProductEmailId,
+  organisationId: number,
+  data: NoticeEmailData,
+  extraTo?: Array<string | null | undefined>,
+  attachments?: EmailAttachment[],
+) {
+  const to = uniqueEmails([
+    ...(await organisationNotificationEmails(organisationId)),
+    ...(extraTo ?? []),
+  ]);
+
+  return notifyEmail(template, to, data, { attachments, organisationId });
 }
 
 export async function siteUrlOrEmpty() {

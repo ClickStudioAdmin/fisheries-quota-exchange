@@ -7,6 +7,7 @@ import {
   disabledProductEmails,
   emailIsDisabled,
   isAccountNotificationEmailId,
+  parseDisabledProductEmails,
   personalNotificationEmailIds,
   profileNotificationEmailIds,
 } from "./product-emails.ts";
@@ -83,6 +84,17 @@ test("profile and account lists split personal mail from org mail", () => {
   assert.equal(accountManager.includes("listing_purchased"), true);
   assert.equal(accountManager.includes("holding_verified"), true);
   assert.equal(accountManager.includes("listing_alert"), false);
+});
+
+test("parseDisabledProductEmails keeps known product ids", () => {
+  assert.deepEqual(parseDisabledProductEmails(["holding_verified", "nope"]), [
+    "holding_verified",
+  ]);
+  assert.deepEqual(parseDisabledProductEmails(null), []);
+  assert.equal(
+    parseDisabledProductEmails(["operator_holding_pending"]).length,
+    0,
+  );
 });
 
 test("isAccountNotificationEmailId is listing and settlement org mail, not personal mail", () => {

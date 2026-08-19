@@ -8,6 +8,7 @@ import type {
 } from "@/lib/organisations/types";
 import { isOrganisationRole } from "@/lib/organisations/types";
 import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
+import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
 
 export async function listMyOrganisations(): Promise<OrganisationSummary[]> {
@@ -87,7 +88,7 @@ export async function getOrganisation(
   const { data, error } = await supabase
     .from("organisations")
     .select(
-      "id, legal_name, trading_name, abn, notification_roles, created_at, updated_at",
+      "id, legal_name, trading_name, abn, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -103,6 +104,12 @@ export async function getOrganisation(
       trading_name: data.trading_name,
       abn: data.abn,
       notification_roles: parseNotificationRoles(data.notification_roles),
+      disabled_notification_emails: parseDisabledProductEmails(
+        data.disabled_notification_emails,
+      ),
+      disabled_notification_in_app: parseDisabledProductEmails(
+        data.disabled_notification_in_app,
+      ),
       created_at: data.created_at,
       updated_at: data.updated_at,
     },

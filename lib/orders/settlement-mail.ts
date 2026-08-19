@@ -1,8 +1,8 @@
 import "server-only";
 
 import { emailCopy } from "@/lib/email/copy";
-import { notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
-import { organisationNotificationEmails, uniqueEmails } from "@/lib/email/recipients";
+import { notifyAccountEmail, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
+import { uniqueEmails } from "@/lib/email/recipients";
 import { getSettledOrderInvoices } from "@/lib/invoices/for-order";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getOrder } from "@/lib/orders/queries";
@@ -30,7 +30,6 @@ export async function sendSettledOrderInvoice(orderId: number) {
     },
   ];
   const buyers = uniqueEmails([order.created_by_email]);
-  const sellers = await organisationNotificationEmails(order.seller_organisation_id);
 
   await notifyEmail(
     "order_settled",
@@ -42,11 +41,11 @@ export async function sendSettledOrderInvoice(orderId: number) {
       orderUrl,
       forSeller: false,
     }),
-    attachments,
+    { attachments },
   );
-  await notifyEmail(
+  await notifyAccountEmail(
     "order_settled",
-    sellers,
+    order.seller_organisation_id,
     emailCopy.order_settled({
       orderId: order.id,
       offeringLabel,
@@ -54,6 +53,7 @@ export async function sendSettledOrderInvoice(orderId: number) {
       orderUrl,
       forSeller: true,
     }),
+    undefined,
     attachments,
   );
 }

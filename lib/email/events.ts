@@ -2,7 +2,7 @@ import "server-only";
 
 import { listingAlertEmails } from "@/lib/alerts/queries";
 import { emailCopy } from "@/lib/email/copy";
-import { claimEmailDispatch, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
+import { claimEmailDispatch, notifyAccountEmail, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import {
   organisationNotificationEmails,
   organisationMemberEmails,
@@ -29,18 +29,18 @@ function listingUrl(siteUrl: string, listing: Pick<Listing, "id" | "listing_type
 
 export async function notifyListingCreated(listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
-  const managers = await organisationNotificationEmails(listing.organisation_id);
-  const to = [...managers, listing.created_by_email];
+  const extra = [listing.created_by_email];
   const href = listingUrl(siteUrl, listing);
 
   if (listing.status === "PENDING_APPROVAL") {
-    await notifyEmail(
+    await notifyAccountEmail(
       "listing_submitted",
-      to,
+      listing.organisation_id,
       emailCopy.listing_submitted({
         fisheryName: listing.fishery_name,
         listingUrl: href,
       }),
+      extra,
     );
     await notifyEmail(
       "operator_listing_pending",
@@ -58,57 +58,58 @@ export async function notifyListingCreated(listing: Listing) {
   }
 
   if (listing.listing_type === "AUCTION") {
-    await notifyEmail(
+    await notifyAccountEmail(
       "auction_published",
-      to,
+      listing.organisation_id,
       emailCopy.auction_published({
         fisheryName: listing.fishery_name,
         auctionUrl: href,
       }),
+      extra,
     );
     await notifyNewListingAlert(listing);
     return;
   }
 
-  await notifyEmail(
+  await notifyAccountEmail(
     "listing_published",
-    to,
+    listing.organisation_id,
     emailCopy.listing_published({
       fisheryName: listing.fishery_name,
       listingUrl: href,
     }),
+    extra,
   );
   await notifyNewListingAlert(listing);
 }
 
 export async function notifyListingPublished(listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
-  const to = [
-    ...(await organisationNotificationEmails(listing.organisation_id)),
-    listing.created_by_email,
-  ];
+  const extra = [listing.created_by_email];
   const href = listingUrl(siteUrl, listing);
 
   if (listing.listing_type === "AUCTION") {
-    await notifyEmail(
+    await notifyAccountEmail(
       "auction_published",
-      to,
+      listing.organisation_id,
       emailCopy.auction_published({
         fisheryName: listing.fishery_name,
         auctionUrl: href,
       }),
+      extra,
     );
     await notifyNewListingAlert(listing);
     return;
   }
 
-  await notifyEmail(
+  await notifyAccountEmail(
     "listing_published",
-    to,
+    listing.organisation_id,
     emailCopy.listing_published({
       fisheryName: listing.fishery_name,
       listingUrl: href,
     }),
+    extra,
   );
   await notifyNewListingAlert(listing);
 }
@@ -153,70 +154,62 @@ async function notifyNewListingAlert(listing: Listing) {
 
 export async function notifyListingRejected(listing: Listing, note: string) {
   const siteUrl = await siteUrlOrEmpty();
-  await notifyEmail(
+  await notifyAccountEmail(
     "listing_rejected",
-    [
-      ...(await organisationNotificationEmails(listing.organisation_id)),
-      listing.created_by_email,
-    ],
+    listing.organisation_id,
     emailCopy.listing_rejected({
       fisheryName: listing.fishery_name,
       note,
       listingUrl: listingUrl(siteUrl, listing),
     }),
+    [listing.created_by_email],
   );
 }
 
 export async function notifyListingCancelled(listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
-  const to = [
-    ...(await organisationNotificationEmails(listing.organisation_id)),
-    listing.created_by_email,
-  ];
+  const extra = [listing.created_by_email];
   const href = listingUrl(siteUrl, listing);
 
   if (listing.listing_type === "AUCTION") {
-    await notifyEmail(
+    await notifyAccountEmail(
       "auction_cancelled",
-      to,
+      listing.organisation_id,
       emailCopy.auction_cancelled({
         fisheryName: listing.fishery_name,
         auctionUrl: href,
       }),
+      extra,
     );
     return;
   }
 
-  await notifyEmail(
+  await notifyAccountEmail(
     "listing_cancelled",
-    to,
+    listing.organisation_id,
     emailCopy.listing_cancelled({
       fisheryName: listing.fishery_name,
       listingUrl: href,
     }),
+    extra,
   );
 }
 
 export async function notifyOrderCreated(order: Order, listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
   const orderUrl = `${siteUrl}/orders/${order.id}`;
-  const sellers = uniqueEmails([
-    ...(await organisationNotificationEmails(order.seller_organisation_id)),
-    listing.created_by_email,
-  ]);
-  const buyers = uniqueEmails([order.created_by_email]);
-
-  await notifyEmail(
+  await notifyAccountEmail(
     "listing_purchased",
-    sellers,
+    order.seller_organisation_id,
     emailCopy.listing_purchased({
       fisheryName: listing.fishery_name,
       orderUrl,
     }),
+    [listing.created_by_email],
   );
   await notifyEmail(
     "purchase_received",
-    buyers,
+    uniqueEmails([order.created_by_email]),
     emailCopy.purchase_received({
       fisheryName: listing.fishery_name,
       orderUrl,
@@ -260,9 +253,9 @@ export async function notifyBidPlaced(input: {
     );
   }
 
-  await notifyEmail(
+  await notifyAccountEmail(
     "auction_new_bid",
-    await organisationNotificationEmails(input.listing.organisation_id),
+    input.listing.organisation_id,
     emailCopy.auction_new_bid({
       fisheryName: input.listing.fishery_name,
       amount,
@@ -278,19 +271,17 @@ export async function notifyAuctionClosed(input: {
 }) {
   const siteUrl = await siteUrlOrEmpty();
   const auctionUrl = listingUrl(siteUrl, input.listing);
-  const sellers = [
-    ...(await organisationNotificationEmails(input.listing.organisation_id)),
-    input.listing.created_by_email,
-  ];
+  const extra = [input.listing.created_by_email];
 
   if (!input.order) {
-    await notifyEmail(
+    await notifyAccountEmail(
       "auction_unsold",
-      sellers,
+      input.listing.organisation_id,
       emailCopy.auction_unsold({
         fisheryName: input.listing.fishery_name,
         auctionUrl,
       }),
+      extra,
     );
     return;
   }
@@ -304,13 +295,14 @@ export async function notifyAuctionClosed(input: {
       orderUrl: `${siteUrl}/orders/${input.order.id}`,
     }),
   );
-  await notifyEmail(
+  await notifyAccountEmail(
     "listing_purchased",
-    sellers,
+    input.listing.organisation_id,
     emailCopy.listing_purchased({
       fisheryName: input.listing.fishery_name,
       orderUrl: `${siteUrl}/orders/${input.order.id}`,
     }),
+    extra,
   );
 
   const otherOrgs = [
@@ -342,16 +334,19 @@ export async function notifyPaymentReceived(order: Order) {
   }
 
   const siteUrl = await siteUrlOrEmpty();
+  const data = emailCopy.payment_received({
+    orderId: order.id,
+    orderUrl: `${siteUrl}/orders/${order.id}`,
+  });
+  await notifyAccountEmail(
+    "payment_received",
+    order.seller_organisation_id,
+    data,
+  );
   await notifyEmail(
     "payment_received",
-    uniqueEmails([
-      ...(await organisationNotificationEmails(order.seller_organisation_id)),
-      order.created_by_email,
-    ]),
-    emailCopy.payment_received({
-      orderId: order.id,
-      orderUrl: `${siteUrl}/orders/${order.id}`,
-    }),
+    uniqueEmails([order.created_by_email]),
+    data,
   );
   await notifyOperatorOrderPending(order, siteUrl);
 }
@@ -412,16 +407,19 @@ export async function notifyPaymentFailed(order: Order) {
 
 export async function notifySettlementFailed(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
+  const data = emailCopy.settlement_failed({
+    orderId: order.id,
+    orderUrl: `${siteUrl}/orders/${order.id}`,
+  });
+  await notifyAccountEmail(
+    "settlement_failed",
+    order.seller_organisation_id,
+    data,
+  );
   await notifyEmail(
     "settlement_failed",
-    uniqueEmails([
-      ...(await organisationNotificationEmails(order.seller_organisation_id)),
-      order.created_by_email,
-    ]),
-    emailCopy.settlement_failed({
-      orderId: order.id,
-      orderUrl: `${siteUrl}/orders/${order.id}`,
-    }),
+    uniqueEmails([order.created_by_email]),
+    data,
   );
   await notifyEmail(
     "operator_payment_exception",
@@ -436,32 +434,38 @@ export async function notifySettlementFailed(order: Order) {
 
 export async function notifyTransferInProgress(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
+  const data = emailCopy.transfer_in_progress({
+    orderId: order.id,
+    orderUrl: `${siteUrl}/orders/${order.id}`,
+  });
+  await notifyAccountEmail(
+    "transfer_in_progress",
+    order.seller_organisation_id,
+    data,
+  );
   await notifyEmail(
     "transfer_in_progress",
-    uniqueEmails([
-      ...(await organisationNotificationEmails(order.seller_organisation_id)),
-      order.created_by_email,
-    ]),
-    emailCopy.transfer_in_progress({
-      orderId: order.id,
-      orderUrl: `${siteUrl}/orders/${order.id}`,
-    }),
+    uniqueEmails([order.created_by_email]),
+    data,
   );
   await notifyOperatorOrderPending(order, siteUrl);
 }
 
 export async function notifyTransferComplete(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
+  const data = emailCopy.transfer_complete({
+    orderId: order.id,
+    orderUrl: `${siteUrl}/orders/${order.id}`,
+  });
+  await notifyAccountEmail(
+    "transfer_complete",
+    order.seller_organisation_id,
+    data,
+  );
   await notifyEmail(
     "transfer_complete",
-    uniqueEmails([
-      ...(await organisationNotificationEmails(order.seller_organisation_id)),
-      order.created_by_email,
-    ]),
-    emailCopy.transfer_complete({
-      orderId: order.id,
-      orderUrl: `${siteUrl}/orders/${order.id}`,
-    }),
+    uniqueEmails([order.created_by_email]),
+    data,
   );
   await notifyOperatorOrderPending(order, siteUrl);
 }
@@ -485,9 +489,9 @@ export async function notifyPaymentsSetupComplete(organisationId: number, accoun
   }
 
   const siteUrl = await siteUrlOrEmpty();
-  await notifyEmail(
+  await notifyAccountEmail(
     "payments_setup_complete",
-    await organisationNotificationEmails(organisationId),
+    organisationId,
     emailCopy.payments_setup_complete({
       accountName,
       paymentsUrl: `${siteUrl}${accountPaymentsPath(organisationId)}`,
@@ -501,9 +505,9 @@ export async function notifyHoldingVerified(input: {
   holdingId: number;
 }) {
   const siteUrl = await siteUrlOrEmpty();
-  await notifyEmail(
+  await notifyAccountEmail(
     "holding_verified",
-    await organisationNotificationEmails(input.organisationId),
+    input.organisationId,
     emailCopy.holding_verified({
       fisheryName: input.fisheryName,
       holdingUrl: `${siteUrl}/dashboard/holdings/${input.holdingId}`,
@@ -518,9 +522,9 @@ export async function notifyHoldingNeedsChanges(input: {
   note: string;
 }) {
   const siteUrl = await siteUrlOrEmpty();
-  await notifyEmail(
+  await notifyAccountEmail(
     "holding_needs_changes",
-    await organisationNotificationEmails(input.organisationId),
+    input.organisationId,
     emailCopy.holding_needs_changes({
       fisheryName: input.fisheryName,
       note: input.note,
