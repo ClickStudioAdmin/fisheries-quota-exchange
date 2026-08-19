@@ -48,7 +48,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/organisations") ||
     pathname.startsWith("/orders") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/select-account");
+    pathname.startsWith("/select-account") ||
+    pathname.startsWith("/invitations");
 
   if (!env) {
     if (isProtected) {

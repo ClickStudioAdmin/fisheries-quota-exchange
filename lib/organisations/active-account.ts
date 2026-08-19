@@ -63,8 +63,16 @@ export function resolveActiveOrganisation(
   };
 }
 
+export function isInvitationPath(pathname: string) {
+  return pathname === "/invitations" || pathname.startsWith("/invitations/");
+}
+
 export function pathRequiresActiveOrganisation(pathname: string) {
   if (pathname === "/select-account" || pathname.startsWith("/select-account/")) {
+    return false;
+  }
+
+  if (isInvitationPath(pathname)) {
     return false;
   }
 

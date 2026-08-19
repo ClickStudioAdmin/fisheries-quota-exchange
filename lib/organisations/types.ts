@@ -20,6 +20,18 @@ export type OrganisationMember = {
   created_at: string;
 };
 
+export type OrganisationInvitation = {
+  id: number;
+  organisation_id: number;
+  organisation_name: string;
+  email: string;
+  role: OrganisationRole;
+  invited_by_email: string;
+  created_at: string;
+  expires_at: string;
+  token: string;
+};
+
 export type OrganisationSummary = {
   id: number;
   legal_name: string;

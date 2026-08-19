@@ -3,7 +3,13 @@ import test from "node:test";
 import { inAppNotificationHref, safeAppPath } from "./href.ts";
 
 test("inAppNotificationHref keeps app paths from action URLs", () => {
-  assert.equal(inAppNotificationHref("/orders/12"), "/orders/12");
+  assert.equal(inAppNotificationHref("/invitations/abc"), "/invitations/abc");
+  assert.equal(
+    inAppNotificationHref(
+      "https://example.test/invitations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    ),
+    "/invitations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  );
   assert.equal(
     inAppNotificationHref("https://example.test/orders/12?tab=pay"),
     "/orders/12?tab=pay",

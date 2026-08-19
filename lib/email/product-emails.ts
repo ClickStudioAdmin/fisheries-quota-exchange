@@ -138,7 +138,7 @@ export function personalNotificationEmailIds(input: {
 }
 
 export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
-  member_added: "Member added",
+  member_added: "Member invitation",
   member_role_changed: "Member role changed",
   member_removed: "Member removed",
   ownership_transferred: "Ownership transferred",

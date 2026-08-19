@@ -10,6 +10,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getMyRole } from "@/lib/organisations/queries";
+import { safeNextPath } from "@/lib/auth/paths";
 import type { AuthFormState } from "@/lib/auth/types";
 
 function readEmailPassword(formData: FormData) {
@@ -97,11 +98,18 @@ export async function registerAction(
   }
 
   const siteUrl = await getSiteUrl();
+  const rawNext = String(formData.get("next") ?? "").trim();
+  const next = rawNext ? safeNextPath(rawNext) : null;
+  const callback = siteUrl
+    ? next
+      ? `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
+      : `${siteUrl}/auth/callback`
+    : undefined;
   const { data, error } = await supabase.auth.signUp({
     email: parsed.email,
     password: parsed.password,
     options: {
-      emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
+      emailRedirectTo: callback,
       data: {
         full_name: fullName,
         phone: phoneResult.phone,
@@ -123,7 +131,7 @@ export async function registerAction(
     await ensureOwnedAccount(supabase, data.user);
   }
 
-  redirect(await continueAfterAuthentication());
+  redirect(await continueAfterAuthentication(next));
 }
 
 export async function loginAction(

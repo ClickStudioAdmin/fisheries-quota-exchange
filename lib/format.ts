@@ -15,3 +15,8 @@ export function formatTableDateTime(value: string) {
 
   return date.toLocaleString("en-AU");
 }
+
+export function timestampHasPassed(value: string) {
+  const time = Date.parse(value);
+  return !Number.isNaN(time) && time <= Date.now();
+}

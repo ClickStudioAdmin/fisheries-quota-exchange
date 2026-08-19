@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { displayName } from "@/lib/auth/display-name";
+import { MyInvitationList } from "@/components/invitation-lists";
 import { listHoldingsForOrganisation } from "@/lib/fisheries/queries";
 import { holdingIsVerified } from "@/lib/fisheries/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
@@ -9,7 +10,7 @@ import { listMyInAppNotifications } from "@/lib/notifications/queries";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { accountPaymentsPath } from "@/lib/organisations/paths";
 import { selectAccountPath } from "@/lib/organisations/active-account";
-import { getOrganisation } from "@/lib/organisations/queries";
+import { getOrganisation, listMyPendingInvitations } from "@/lib/organisations/queries";
 import type { OrganisationSummary } from "@/lib/organisations/types";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
@@ -43,7 +44,7 @@ export async function AccountOverviewSection({
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
   const acceptedTerms = await hasAcceptedCurrentTerms();
-  const [holdings, listings, orders, sellError, notifications, alerts] =
+  const [holdings, listings, orders, sellError, notifications, alerts, invitations] =
     await Promise.all([
       organisationId
         ? listHoldingsForOrganisation(organisationId)
@@ -57,6 +58,7 @@ export async function AccountOverviewSection({
       organisationId ? organisationCanSellError(organisationId) : Promise.resolve(null),
       listMyInAppNotifications(10),
       listMyListingAlerts(),
+      listMyPendingInvitations(),
     ]);
   const hasAccount = Boolean(result);
   const canBuy = acceptedTerms && hasAccount;
@@ -116,6 +118,7 @@ export async function AccountOverviewSection({
           </p>
         </div>
       ) : null}
+      <MyInvitationList invitations={invitations} />
       <div className={panelClassName}>
         <h2 className="text-lg font-semibold text-ink">Onboarding</h2>
         <div className="mt-4">

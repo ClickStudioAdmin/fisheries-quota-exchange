@@ -42,12 +42,12 @@ const EMAIL_CATALOG: Record<
   Pick<MessageTemplate, "description" | "summary" | "sentWhen" | "trigger" | "recipient">
 > = {
   member_added: {
-    summary: "After a person is added to an account",
+    summary: "When a person is invited to an account",
     description:
-      "Tells a person they have been added to an FQX account and how to log in or register with the same email.",
-    sentWhen: "Immediately after a membership row is inserted.",
-    trigger: "Account Owner or Admin submits Add person. addMemberAction then sendEmail(member_added).",
-    recipient: "The new member’s email.",
+      "Tells a person they have been invited to an FQX account and how to accept. They are not a member until they accept while signed in with that email.",
+    sentWhen: "Immediately after a pending invitation is created or resent.",
+    trigger: "Account Owner or Admin submits Send invitation. inviteMemberAction then sendEmail(member_added).",
+    recipient: "The invited person’s email.",
   },
   member_role_changed: {
     summary: "After a non-owner role change",

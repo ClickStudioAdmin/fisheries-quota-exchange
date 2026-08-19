@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AddMemberForm } from "@/components/add-member-form";
+import { OrganisationInvitationList } from "@/components/invitation-lists";
 import { MemberList } from "@/components/member-list";
 import { BusinessDetailsForm } from "@/components/business-details-form";
 import {
@@ -50,7 +51,7 @@ import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { formatTableDate } from "@/lib/format";
 import { accountPath, accountPaymentsPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
-import { getOrganisation, listMembers } from "@/lib/organisations/queries";
+import { getOrganisation, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { SuccessNotice } from "@/components/surface";
@@ -119,12 +120,16 @@ export async function AccountMembersSection({
 
   const members = await listMembers(organisationId);
   const canInvite = canAddMember(result.role);
+  const invitations = canInvite
+    ? await listOrganisationInvitations(organisationId)
+    : [];
 
   return (
     <div className="space-y-8">
       <p className="text-sm text-ink-muted">
-        Add people to this account with a role. They sign in with that email.
-        No invitation email is sent yet.
+        Invite people to this account with a role. They must accept from the
+        email, while signed in with that address, before they become members.
+        Inviting the same email again replaces the pending invitation.
       </p>
       <MemberList
         organisationId={organisationId}
@@ -133,15 +138,29 @@ export async function AccountMembersSection({
         actorEmail={userEmail}
       />
       {canInvite ? (
-        <section className="max-w-md">
-          <h2 className="text-xl font-semibold text-ink">Add person</h2>
-          <div className="mt-4">
-            <AddMemberForm
-              organisationId={organisationId}
-              actorRole={result.role}
-            />
-          </div>
-        </section>
+        <>
+          <section>
+            <h2 className="text-xl font-semibold text-ink">
+              Pending invitations
+            </h2>
+            <div className="mt-4">
+              <OrganisationInvitationList
+                organisationId={organisationId}
+                invitations={invitations}
+                actorRole={result.role}
+              />
+            </div>
+          </section>
+          <section className="max-w-md">
+            <h2 className="text-xl font-semibold text-ink">Invite person</h2>
+            <div className="mt-4">
+              <AddMemberForm
+                organisationId={organisationId}
+                actorRole={result.role}
+              />
+            </div>
+          </section>
+        </>
       ) : null}
     </div>
   );

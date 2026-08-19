@@ -73,6 +73,16 @@ const EXCEPTION_MESSAGES: Record<string, string> = {
   "terms version is required": "Refresh the page and agree to the current terms.",
   "you already have an account": "You already have a business account.",
   "legal name is required": "Legal name is required.",
+  "you do not have permission to invite members":
+    "You do not have permission to invite members.",
+  "you cannot invite yourself": "You cannot invite yourself.",
+  "that email is already a member of this account":
+    "That email is already a member of this account.",
+  "invitation not found": "Invitation not found.",
+  "this invitation has expired": "This invitation has expired.",
+  "this invitation was sent to a different email":
+    "This invitation was sent to a different email.",
+  "you cannot cancel that invitation": "You cannot cancel that invitation.",
 };
 
 type ErrorLike = {

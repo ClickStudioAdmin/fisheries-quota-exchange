@@ -58,7 +58,7 @@ export default async function DashboardProfilePage({
               className={tabClassName(tab === "security")}
               aria-current={tab === "security" ? "page" : undefined}
             >
-              Password and security
+              Password and Security
             </Link>
           </li>
           <li>

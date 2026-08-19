@@ -19,17 +19,17 @@ export const emailCopy = {
   member_added: (input: {
     accountName: string;
     role: string;
-    loginUrl: string;
+    acceptUrl: string;
     registerUrl: string;
   }) =>
     notice(
-      `You have been added to ${input.accountName} on FQX`,
+      `You have been invited to ${input.accountName} on FQX`,
       [
-        `You have been added to ${input.accountName} as ${input.role}.`,
-        "If you already have an FQX account, log in with this email. If not, register with the same email address so the membership matches.",
-        `Register: ${input.registerUrl}`,
+        `You have been invited to join ${input.accountName} as ${input.role}. You are not a member until you accept.`,
+        "Accept this invitation while signed in with this email. It expires in 14 days.",
+        `If you do not have an FQX account yet, register with this email first: ${input.registerUrl}`,
       ],
-      { label: "Log in", url: input.loginUrl },
+      { label: "Accept invitation", url: input.acceptUrl },
     ),
   member_role_changed: (input: {
     accountName: string;

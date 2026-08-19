@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import {
-  addMemberAction,
+  inviteMemberAction,
   type OrganisationFormState,
 } from "@/lib/organisations/actions";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
@@ -20,7 +20,7 @@ export function AddMemberForm({
   actorRole,
 }: AddMemberFormProps) {
   const [state, formAction, pending] = useActionState(
-    addMemberAction,
+    inviteMemberAction,
     initialState,
   );
 
@@ -60,7 +60,7 @@ export function AddMemberForm({
         </select>
       </div>
       <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Adding…" : "Add person"}
+        {pending ? "Sending…" : "Send invitation"}
       </button>
     </form>
   );

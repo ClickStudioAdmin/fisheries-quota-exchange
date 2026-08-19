@@ -21,7 +21,7 @@ export function sampleEmailData(
       return emailCopy.member_added({
         accountName: "Sample Fisheries Pty Ltd",
         role: "Member",
-        loginUrl: `${siteUrl}/login`,
+        acceptUrl: `${siteUrl}/invitations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`,
         registerUrl: `${siteUrl}/register`,
       });
     case "member_role_changed":

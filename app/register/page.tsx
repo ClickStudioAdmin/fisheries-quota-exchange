@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
 import { RegisterForm } from "@/components/register-form";
 import { pathForSignedInUser } from "@/lib/organisations/active-session";
+import { loginPath, safeNextPath } from "@/lib/auth/paths";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { getUser } from "@/lib/supabase/server";
 import { registrationsAllowed } from "@/lib/settings/queries";
@@ -11,11 +12,17 @@ export const metadata = {
   title: "Register",
 };
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const params = await searchParams;
+  const next = params.next ? safeNextPath(params.next) : null;
   const user = await getUser();
 
   if (user) {
-    redirect(await pathForSignedInUser());
+    redirect(await pathForSignedInUser(next));
   }
 
   const configured = getSupabasePublicEnv() !== null;
@@ -29,7 +36,7 @@ export default async function RegisterPage() {
         </p>
       ) : null}
       {allowRegister ? (
-        <RegisterForm />
+        <RegisterForm next={next ?? undefined} />
       ) : (
         <p className="text-sm text-ink-muted">
           New registrations are closed. If you already have an account, log in.
@@ -37,7 +44,7 @@ export default async function RegisterPage() {
       )}
       <p className="mt-4 text-sm text-ink-muted">
         Already have an account?{" "}
-        <Link href="/login" className="underline">
+        <Link href={loginPath(next)} className="underline">
           Log in
         </Link>
       </p>

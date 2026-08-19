@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   afterAccountSelectionPath,
+  isInvitationPath,
   parseActiveOrganisationId,
   pathRequiresActiveOrganisation,
   resolveActiveOrganisation,
@@ -43,13 +44,24 @@ test("pathRequiresActiveOrganisation covers member trading surfaces", () => {
   assert.equal(pathRequiresActiveOrganisation("/orders/12"), true);
   assert.equal(pathRequiresActiveOrganisation("/organisations/3/listings/new"), true);
   assert.equal(pathRequiresActiveOrganisation("/select-account"), false);
+  assert.equal(pathRequiresActiveOrganisation("/invitations/abc"), false);
   assert.equal(pathRequiresActiveOrganisation("/marketplace/4"), false);
   assert.equal(pathRequiresActiveOrganisation("/admin"), false);
+});
+
+test("isInvitationPath matches invitation accept URLs", () => {
+  assert.equal(isInvitationPath("/invitations/token"), true);
+  assert.equal(isInvitationPath("/invitations"), true);
+  assert.equal(isInvitationPath("/dashboard"), false);
 });
 
 test("selectAccountPath and afterAccountSelectionPath stay on-site", () => {
   assert.equal(selectAccountPath("/orders/3"), "/select-account?next=%2Forders%2F3");
   assert.equal(afterAccountSelectionPath("/orders/3"), "/orders/3");
+  assert.equal(
+    afterAccountSelectionPath("/invitations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+    "/invitations/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  );
   assert.equal(afterAccountSelectionPath("/login"), "/dashboard");
   assert.equal(afterAccountSelectionPath("https://evil.test"), "/dashboard");
 });

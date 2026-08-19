@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
 import { LoginForm } from "@/components/login-form";
 import { pathForSignedInUser } from "@/lib/organisations/active-session";
-import { safeNextPath } from "@/lib/auth/paths";
+import { registerPath, safeNextPath } from "@/lib/auth/paths";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { getUser } from "@/lib/supabase/server";
 import { registrationsAllowed } from "@/lib/settings/queries";
@@ -49,7 +49,7 @@ export default async function LoginPage({
       {allowRegister ? (
         <p className="mt-2 text-sm text-ink-muted">
           No account?{" "}
-          <Link href="/register" className="underline">
+          <Link href={registerPath(next)} className="underline">
             Register
           </Link>
         </p>

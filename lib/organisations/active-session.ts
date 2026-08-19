@@ -6,6 +6,7 @@ import { postLoginPath } from "@/lib/auth/paths";
 import {
   ACTIVE_ORGANISATION_COOKIE,
   activeOrganisationCookieOptions,
+  isInvitationPath,
   parseActiveOrganisationId,
   resolveActiveOrganisation,
   selectAccountPath,
@@ -74,6 +75,11 @@ export async function requireActiveOrganisationMatch(organisationId: number) {
 
 export async function continueAfterAuthentication(next?: string | null) {
   const intended = postLoginPath(next, await isPlatformAdmin());
+
+  if (isInvitationPath(intended)) {
+    return intended;
+  }
+
   const organisations = await listMyOrganisations();
 
   if (organisations.length === 0) {
@@ -92,6 +98,11 @@ export async function continueAfterAuthentication(next?: string | null) {
 
 export async function pathForSignedInUser(next?: string | null) {
   const intended = postLoginPath(next, await isPlatformAdmin());
+
+  if (isInvitationPath(intended)) {
+    return intended;
+  }
+
   const organisations = await listMyOrganisations();
   const cookieId = await readActiveOrganisationCookie();
   const resolved = resolveActiveOrganisation(

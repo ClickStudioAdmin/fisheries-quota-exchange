@@ -22,6 +22,16 @@ export function loginPath(next?: string | null) {
   return `/login?next=${encodeURIComponent(safeNextPath(value))}`;
 }
 
+export function registerPath(next?: string | null) {
+  const value = next?.trim();
+
+  if (!value) {
+    return "/register";
+  }
+
+  return `/register?next=${encodeURIComponent(safeNextPath(value))}`;
+}
+
 export function postLoginPath(
   next: string | null | undefined,
   isAdmin: boolean,

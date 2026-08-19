@@ -1,3 +1,11 @@
+export function invitationPath(token: string) {
+  return `/invitations/${token.trim()}`;
+}
+
+export function isInvitationToken(value: string) {
+  return /^[0-9a-f]{64}$/i.test(value.trim());
+}
+
 export function accountPath(
   _organisationId?: number | null,
   path = "/dashboard",

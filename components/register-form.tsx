@@ -7,7 +7,7 @@ import { authButtonClassName, authFieldClassName } from "@/components/auth-card"
 
 const initialState: AuthFormState = {};
 
-export function RegisterForm() {
+export function RegisterForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(
     registerAction,
     initialState,
@@ -15,6 +15,7 @@ export function RegisterForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}

@@ -9,6 +9,7 @@ Current tables:
 | `system_health` | 0 | Pipeline proof. One row: `FQX`. |
 | `organisations` | 1 | Legal entity. |
 | `organisation_users` | 1 | Email membership, role, and display name. |
+| `organisation_invitations` | 9 | Pending membership invites. A person is not a member until they accept. |
 | `platform_admins` | 5 | Platform administrators. |
 | `jurisdictions` | 5 | Australian jurisdictions. |
 | `fisheries` | 5 | Managed fisheries under a jurisdiction. `quantity_type` is `KG` or `UNITS`. `logo_path` is an optional image in the `fishery-logos` storage bucket. |
@@ -32,7 +33,9 @@ Current tables:
 | `listing_alerts` | 9 | Per-email fishery sale/lease listing alerts. |
 | `terms_acceptances` | 9 | Per-email agreement to a terms version. Required before buy, bid, or list. |
 
-`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. `organisation_users.full_name` is required. Auth metadata still overrides that name when present. The insert trigger `organisation_users_fill_name` reads `auth.users` as `security definer` so adding a member does not require the signed-in role to select from Auth. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`, and also rewrites `user_email_preferences`, `listing_alerts`, `user_notifications`, and `terms_acceptances`. Changing Auth name updates `organisation_users.full_name`. Platform admins also read name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
+`organisation_users.role` must be `OWNER`, `ADMIN`, or `MEMBER`. `organisation_users.full_name` is required. Auth metadata still overrides that name when present. The insert trigger `organisation_users_fill_name` reads `auth.users` as `security definer` so adding a member does not require the signed-in role to select from Auth. Changing an Auth user's email updates matching `organisation_users.email` rows via trigger `sync_organisation_user_email`, and also rewrites `user_email_preferences`, `listing_alerts`, `user_notifications`, `terms_acceptances`, and `organisation_invitations`. Changing Auth name updates `organisation_users.full_name`. Platform admins also read name and phone from Auth metadata through `admin_auth_person` and `admin_auth_people`. `/admin/listings` reads through `admin_list_listings` so the full catalogue is not evaluated under four SELECT policies. Admin menu badges use `admin_action_counts` (holdings pending verification, listings pending approval, and open orders).
+
+Owners and admins invite members through `invite_organisation_member`. That writes `organisation_invitations` and emails an accept link. `accept_organisation_invitation` inserts `organisation_users` when the signed-in email matches. Managers cannot insert membership rows directly.
 
 `organisations` may store a Stripe Connect account id and charge flags. Members cannot change those columns; `attach_organisation_stripe_account` and the signed `account.updated` webhook do. `orders.status` may be `AWAITING_PAYMENT` until a signed webhook marks the order paid. The buyer pays the listed quota amount plus Stripe's card processing fee. That charge sits on the FQX Stripe balance until Simulate settlement Transfers the seller net (`amount_aud` minus the platform fee). `payments` and `stripe_webhook_events` are written by the app server. The browser is not trusted for payment status.
 

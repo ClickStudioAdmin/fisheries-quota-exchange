@@ -8,6 +8,21 @@ export function canAddMember(role: OrganisationRole) {
   return role === "OWNER" || role === "ADMIN";
 }
 
+export function canCancelInvitation(
+  actorRole: OrganisationRole,
+  invitedRole: OrganisationRole,
+) {
+  if (actorRole === "OWNER") {
+    return true;
+  }
+
+  if (actorRole === "ADMIN") {
+    return invitedRole !== "OWNER";
+  }
+
+  return false;
+}
+
 export function canAssignRole(
   actorRole: OrganisationRole,
   newRole: OrganisationRole,

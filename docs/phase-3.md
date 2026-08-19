@@ -23,7 +23,7 @@ Unauthenticated requests to `/dashboard` redirect to `/login?next=…` so the us
 
 - `@supabase/ssr` stores the session in cookies.
 - `middleware.ts` refreshes the session and protects `/dashboard`.
-- Server actions in `lib/auth/actions.ts` handle register, login, logout, password reset, and signed-in updates (name, email, phone on Account details → Profile; password on Password and security).
+- Server actions in `lib/auth/actions.ts` handle register, login, logout, password reset, and signed-in updates (name, email, phone on Account details → Profile; password on Password and Security).
 - Access checks use `getUser()`, not client-trusted session state.
 
 Passwords must be at least 8 characters. Registration and the dashboard profile collect a phone number.

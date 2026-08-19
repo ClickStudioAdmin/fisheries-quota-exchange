@@ -7,12 +7,19 @@ import { userFacingError } from "@/lib/errors/user-message";
 import {
   canAddMember,
   canAssignRole,
+  canCancelInvitation,
   canChangeMemberRole,
   canRemoveMember,
 } from "@/lib/organisations/permissions";
-import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
-import { accountPath } from "@/lib/organisations/paths";
-import { setActiveOrganisationCookie } from "@/lib/organisations/active-session";
+import {
+  getMyRole,
+  getOrganisationLegalName,
+} from "@/lib/organisations/queries";
+import { accountPath, invitationPath, isInvitationToken } from "@/lib/organisations/paths";
+import {
+  requireActiveOrganisationMatch,
+  setActiveOrganisationCookie,
+} from "@/lib/organisations/active-session";
 import {
   isOrganisationRole,
   organisationRoleLabel,
@@ -88,21 +95,32 @@ export async function createOrganisationAction(
   redirect("/dashboard");
 }
 
-export async function addMemberAction(
+export async function inviteMemberAction(
   _prev: OrganisationFormState,
   formData: FormData,
 ): Promise<OrganisationFormState> {
+  const user = await getUser();
   const supabase = await createClient();
   const organisationId = Number(formData.get("organisation_id"));
   const email = readText(formData, "email").toLowerCase();
   const memberRole = readText(formData, "role");
 
-  if (!supabase || !Number.isInteger(organisationId)) {
+  if (!user?.email || !supabase || !Number.isInteger(organisationId)) {
     return { error: "Organisation not found." };
+  }
+
+  const mismatch = await requireActiveOrganisationMatch(organisationId);
+
+  if (mismatch) {
+    return { error: mismatch };
   }
 
   if (!email.includes("@")) {
     return { error: "Enter a valid email address." };
+  }
+
+  if (email === user.email.toLowerCase()) {
+    return { error: "You cannot invite yourself." };
   }
 
   if (!isOrganisationRole(memberRole)) {
@@ -112,21 +130,24 @@ export async function addMemberAction(
   const actorRole = await getMyRole(organisationId);
 
   if (!actorRole || !canAddMember(actorRole)) {
-    return { error: "You do not have permission to add members." };
+    return { error: "You do not have permission to invite members." };
   }
 
   if (!canAssignRole(actorRole, memberRole)) {
     return { error: "You cannot assign that role." };
   }
 
-  const { error } = await supabase.from("organisation_users").insert({
-    organisation_id: organisationId,
-    email,
-    role: memberRole,
-  });
+  const { data: token, error } = await supabase.rpc(
+    "invite_organisation_member",
+    {
+      p_organisation_id: organisationId,
+      p_email: email,
+      p_role: memberRole,
+    },
+  );
 
-  if (error) {
-    return { error: userFacingError(error) };
+  if (error || typeof token !== "string" || !isInvitationToken(token)) {
+    return { error: userFacingError(error ?? "Could not send that invitation.") };
   }
 
   revalidatePath("/dashboard/members");
@@ -136,27 +157,30 @@ export async function addMemberAction(
   const siteUrl = await getSiteUrl();
   const accountName =
     (await getOrganisationLegalName(organisationId)) ?? "an FQX account";
+  const acceptPath = invitationPath(token);
   const mail = await notifyEmail(
     "member_added",
     email,
     emailCopy.member_added({
       accountName,
       role: organisationRoleLabel(memberRole),
-      registerUrl: siteUrl ? `${siteUrl}/register` : "/register",
-      loginUrl: siteUrl ? `${siteUrl}/login` : "/login",
+      acceptUrl: siteUrl ? `${siteUrl}${acceptPath}` : acceptPath,
+      registerUrl: siteUrl
+        ? `${siteUrl}/register?next=${encodeURIComponent(acceptPath)}`
+        : `/register?next=${encodeURIComponent(acceptPath)}`,
     }),
   );
 
   if (mail.sent) {
-    return { message: "Member added. An invitation email was sent." };
+    return { message: "Invitation sent." };
   }
 
   if ("skipped" in mail && mail.skipped) {
-    return { message: "Member added." };
+    return { message: "Invitation created." };
   }
 
   return {
-    message: "Member added. The invitation email could not be sent.",
+    message: "Invitation created. The email could not be sent.",
   };
 }
 
@@ -174,6 +198,105 @@ function readPositiveInt(formData: FormData, name: string) {
   }
 
   return value;
+}
+
+export async function cancelInvitationAction(
+  _prev: MemberActionState,
+  formData: FormData,
+): Promise<MemberActionState> {
+  const supabase = await createClient();
+  const organisationId = readPositiveInt(formData, "organisation_id");
+  const invitationId = readPositiveInt(formData, "invitation_id");
+  const invitedRole = String(formData.get("invited_role") ?? "");
+
+  if (
+    !supabase ||
+    organisationId == null ||
+    invitationId == null ||
+    !isOrganisationRole(invitedRole)
+  ) {
+    return { error: "Could not cancel that invitation." };
+  }
+
+  const mismatch = await requireActiveOrganisationMatch(organisationId);
+
+  if (mismatch) {
+    return { error: mismatch };
+  }
+
+  const actorRole = await getMyRole(organisationId);
+
+  if (!actorRole || !canCancelInvitation(actorRole, invitedRole)) {
+    return { error: "You cannot cancel that invitation." };
+  }
+
+  const { error } = await supabase.rpc("cancel_organisation_invitation", {
+    p_id: invitationId,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard");
+  return { message: "Invitation cancelled." };
+}
+
+export async function acceptInvitationAction(
+  _prev: MemberActionState,
+  formData: FormData,
+): Promise<MemberActionState> {
+  const supabase = await createClient();
+  const token = readText(formData, "token");
+
+  if (!supabase || !isInvitationToken(token)) {
+    return { error: "Invitation not found." };
+  }
+
+  const { data, error } = await supabase.rpc("accept_organisation_invitation", {
+    p_token: token,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  const organisationId = Number(data);
+
+  if (Number.isInteger(organisationId) && organisationId > 0) {
+    await setActiveOrganisationCookie(organisationId);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/profile");
+  revalidatePath("/select-account");
+  redirect("/dashboard");
+}
+
+export async function declineInvitationAction(
+  _prev: MemberActionState,
+  formData: FormData,
+): Promise<MemberActionState> {
+  const supabase = await createClient();
+  const token = readText(formData, "token");
+
+  if (!supabase || !isInvitationToken(token)) {
+    return { error: "Invitation not found." };
+  }
+
+  const { error } = await supabase.rpc("decline_organisation_invitation", {
+    p_token: token,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/profile");
+  return { message: "Invitation declined." };
 }
 
 export async function updateMemberRoleAction(
