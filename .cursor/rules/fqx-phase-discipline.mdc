@@ -7,14 +7,16 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Work only on the current phase. The current phase is Phase 9.
+Phase 9 is complete. There is no current implementation phase until a new phase document is added under `docs/`.
 
 Do feature work on `develop`. Merge to `main` only when the user is ready for production.
 
-Phase 9 may add Stripe Connect in **test mode**, embedded seller onboarding, Checkout, separate charges and transfers at settlement, and idempotent webhooks. Do not add live Stripe keys, seller bank payouts, refund/chargeback workflows, or authority integrations. Never trust the browser for payment status, bid time, or quota availability. Never delete quota ledger rows.
+Do not start a previously listed Phase 10 or later. New phases are defined as we go.
+
+Until a later phase explicitly changes them, keep these constraints: Stripe **test mode** only (no live keys), no seller bank payouts, no refund/chargeback workflows, no authority integrations. Never trust the browser for payment status, bid time, or quota availability. Never delete quota ledger rows.
 
 Do not create later-phase tables or speculative architecture.
 
-Keep dependencies minimal. Prefer the simplest solution that satisfies the current phase.
+Keep dependencies minimal. Prefer the simplest solution that satisfies the current request.
 
 Stop at the end of each phase. After acceptance criteria pass, report results and wait for instruction.

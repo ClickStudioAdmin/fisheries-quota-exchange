@@ -6,11 +6,11 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 9 — Stripe test payments**
+**Phase 9 — Stripe test payments (complete)**
 
-Stripe Connect in test mode. Buyers pay FQX. Sellers onboard in the app. Webhooks mark payment. Settlement is still simulated.
+The next phase is not yet defined. New phases are written under `docs/` when work starts.
 
-See [docs/phase-9.md](docs/phase-9.md).
+See [docs/phase-9.md](docs/phase-9.md) for what shipped.
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -42,9 +42,9 @@ Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 9 acceptance is that a seller can onboard in the Stripe sandbox, a buyer can pay a listing through Stripe Checkout, funds stay on FQX until Simulate settlement Transfers the seller’s share, and the webhook marks the order paid without trusting the browser.
+Phase 9 shipped Stripe Connect in test mode: a seller can onboard in the sandbox, a buyer can pay a listing through Stripe Checkout, funds stay on FQX until Simulate settlement Transfers the seller’s share, and the webhook marks the order paid without trusting the browser.
 
-Later phases will add Vitest and Playwright where the business logic requires it.
+Automated test coverage is added where business logic requires it. There is no standing plan for a Vitest or Playwright phase.
 
 ## Deployment
 

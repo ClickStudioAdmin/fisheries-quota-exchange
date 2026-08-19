@@ -1,5 +1,9 @@
 # Phase 9 — Stripe test payments
 
+## Status
+
+Complete. Do not extend this phase. Further work waits for a new phase document under `docs/`.
+
 ## Purpose
 
 Take payments in **Stripe test mode** through Stripe Connect using **separate charges and transfers**. Buyers pay FQX the listed quota amount by AU BECS bank debit, or the listed amount **plus Stripe's domestic card processing fee** (`1.75% + A$0.30`, grossed up so the listed amount still reaches FQX) if they pay by card. Checkout creates a separate session for each method so the fee is only added on card. FQX holds the funds. At settlement, FQX Transfers the seller’s share (`amount_aud` minus `fee_amount_aud`) to their connected account and keeps the platform fee. The buyer does not pay the **platform** fee on top. FQX is liable for refunds and chargebacks.

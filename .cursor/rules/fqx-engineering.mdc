@@ -9,8 +9,8 @@ Add tests for important business logic. Financial and quota operations need espe
 
 Each phase must remain lint-clean and production-buildable.
 
-Do not add dependencies unless the current phase requires them.
+Do not add dependencies unless the current work requires them.
 
-Do not create files that are not required by the current phase.
+Do not create files that are not required by the current request or phase.
 
 When a change affects architecture, migrations, or deployment, update the relevant file in `docs/`.

@@ -1,10 +1,10 @@
 # Fisheries Quota Exchange (FQX)
 
-Master development specification, version 3.0.
+Master development specification, version 3.1.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 9 — Stripe test payments.
+Current implementation phase: none. Phase 9 is complete. The next phase is defined when work starts.
 
 ## Development philosophy
 
@@ -210,35 +210,15 @@ Server-side auction logic. Never rely on client-side bid timestamps.
 
 Stripe Connect in test mode behind a `PaymentProvider` abstraction. Separate charges and transfers. Idempotent webhooks.
 
-## 29. Phase 10 — Settlement
+**Complete.** See [phase-9.md](phase-9.md).
 
-Payment → compliance → transfer → authority process → settlement → seller proceeds. Immutable financial ledger.
+## 29. Later phases
 
-## 30. Phase 11 — Seller payouts
+Phases after 9 are not pre-planned. A new phase starts only when its objective, scope, and acceptance criteria are written under `docs/`.
 
-Pending, available, and paid balances with duplicate payout protection.
+Do not implement a previously sketched Phase 10–16 (settlement ledger, seller payouts, authority adapters, market-data expansion, closed beta, public launch, or exchange matching) unless a new phase document asks for that work.
 
-## 31. Phase 12 — Authority workflow
-
-`AuthorityAdapter` with a manual first implementation. Do not invent regulatory rules.
-
-## 32. Phase 13 — Market data
-
-History, activity, prices, volume, and fishery pages. Do not present indicative data as official regulatory data.
-
-## 33. Phase 14 — Closed beta
-
-Invite selected participants. Fix operational problems before broad launch.
-
-## 34. Phase 15 — Public launch
-
-Expand fisheries, organisations, and market features.
-
-## 35. Phase 16 — Exchange
-
-Only after marketplace liquidity exists. Do not build matching infrastructure before then.
-
-## 36–44. Long-term architecture
+## 30. Long-term architecture
 
 Every table must be justified by an actual feature. Do not create all tables during early phases.
 
@@ -246,6 +226,6 @@ Quota and financial ledgers are immutable. Never delete historical entries. Neve
 
 Never trust the browser for payment, bid, quota, balance, payout, settlement, or admin state.
 
-## 45. Cursor rules
+## 31. Cursor rules
 
 Project rules in `.cursor/rules/` enforce phase discipline, GitHub as source of truth, migration-only schema changes, secret handling, and the stop condition at the end of each phase.
