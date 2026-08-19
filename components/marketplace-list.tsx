@@ -62,11 +62,13 @@ export function MarketplaceList({
   fisheries,
   jurisdictions,
   sellerDisplays,
+  auctionIdsWithBids,
 }: {
   listings: Listing[];
   fisheries: Fishery[];
   jurisdictions: Jurisdiction[];
   sellerDisplays?: Record<number, PublicSellerDisplay>;
+  auctionIdsWithBids?: number[];
 }) {
   const [listingType, setListingType] = useState<"ALL" | ListingType>("ALL");
   const [offering, setOffering] = useState<"ALL" | ListingOffering>("ALL");
@@ -242,6 +244,7 @@ export function MarketplaceList({
         empty="No listings match these filters."
         fisheriesByName={Object.fromEntries(fisheriesByName)}
         sellerDisplays={sellerDisplays}
+        auctionIdsWithBids={auctionIdsWithBids}
       />
       <ListPager
         page={currentPage}

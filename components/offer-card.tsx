@@ -24,7 +24,10 @@ type OfferCardProps = {
   listing: Listing;
   href?: string;
   priceLabel?: string;
+  priceValue?: string;
+  priceDetail?: string;
   totalLabel?: string;
+  totalValue?: string;
   badge?: string;
   metaLabel?: string;
   metaValue?: ReactNode;
@@ -96,7 +99,10 @@ export function OfferCard({
   listing,
   href,
   priceLabel = "Price",
+  priceValue,
+  priceDetail,
   totalLabel = "Total",
+  totalValue,
   badge,
   metaLabel,
   metaValue,
@@ -130,9 +136,14 @@ export function OfferCard({
     <span className="block truncate">{listing.fishery_name}</span>
   );
   const sellerLine = hideFishery ? null : (
-    <p className="mt-1 min-w-0 text-sm text-ink-muted">
-      <PublicSellerName display={seller} />
-    </p>
+    <div className="mt-1 min-w-0">
+      <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+        Seller
+      </p>
+      <p className="mt-0.5 min-w-0 text-sm text-ink">
+        <PublicSellerName display={seller} />
+      </p>
+    </div>
   );
   const badges = (
     <ListingKindBadges
@@ -162,15 +173,19 @@ export function OfferCard({
         />
         <OfferStat
           label={priceLabel}
-          value={formatAud(listing.unit_price_aud)}
-          detail={`/ ${unitPriceSuffix(listing.unit_label)}`}
+          value={priceValue ?? formatAud(listing.unit_price_aud)}
+          detail={
+            priceDetail !== undefined
+              ? priceDetail
+              : `/ ${unitPriceSuffix(listing.unit_label)}`
+          }
         />
         <OfferStat
           label={totalLabel}
-          value={formatListingTotal(
-            listing.quantity,
-            listing.unit_price_aud,
-          )}
+          value={
+            totalValue ??
+            formatListingTotal(listing.quantity, listing.unit_price_aud)
+          }
         />
       </div>
       {extraStats && extraStats.length > 0 ? (

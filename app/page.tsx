@@ -10,6 +10,7 @@ import {
   quantityTypeLabel,
 } from "@/lib/fisheries/types";
 import { listMarketplaceListings } from "@/lib/listings/queries";
+import { listingIdsWithBids } from "@/lib/auctions/queries";
 import { loadPublicSellerDisplays } from "@/lib/organisations/queries";
 import {
   formatAudPerUnit,
@@ -38,7 +39,10 @@ export default async function Home() {
     (listing) => new Date(listing.expires_at).getTime() > now,
   );
   const featuredListings = openListings.slice(0, 6);
-  const sellerDisplays = await loadPublicSellerDisplays(featuredListings);
+  const [sellerDisplays, auctionIdsWithBids] = await Promise.all([
+    loadPublicSellerDisplays(featuredListings),
+    listingIdsWithBids(featuredListings.map((listing) => Number(listing.id))),
+  ]);
   const listingCounts = openListingCountsByFisheryName(listings);
   const lastSale = latestSalePriceMap(prices);
   const featuredFisheries = [...fisheries]
@@ -186,6 +190,7 @@ export default async function Home() {
             empty="No live listings at the moment."
             fisheriesByName={fisheriesByName}
             sellerDisplays={sellerDisplays}
+            auctionIdsWithBids={[...auctionIdsWithBids]}
           />
         </div>
       </section>

@@ -25,6 +25,7 @@ type ListingCardProps = {
   fisheryId?: number | null;
   fishery?: Pick<Fishery, "name" | "logo_path"> | null;
   sellerDisplay?: PublicSellerDisplay;
+  hasBids?: boolean;
 };
 
 export function ListingCard({
@@ -57,6 +58,7 @@ export function MarketplaceListingCard({
   fisheryId,
   fishery,
   sellerDisplay,
+  hasBids,
 }: ListingCardProps) {
   if (listing.listing_type === "AUCTION") {
     return (
@@ -67,6 +69,7 @@ export function MarketplaceListingCard({
         fisheryId={fisheryId}
         fishery={fishery}
         sellerDisplay={sellerDisplay}
+        hasBids={hasBids}
       />
     );
   }
@@ -90,6 +93,7 @@ export function ListingCards({
   hideOffering,
   fisheriesByName,
   sellerDisplays,
+  auctionIdsWithBids,
   columns = 2,
 }: {
   listings: Listing[];
@@ -98,6 +102,7 @@ export function ListingCards({
   hideOffering?: boolean;
   fisheriesByName?: Record<string, Pick<Fishery, "id" | "name" | "logo_path">>;
   sellerDisplays?: Record<number, PublicSellerDisplay>;
+  auctionIdsWithBids?: number[];
   columns?: 1 | 2;
 }) {
   if (listings.length === 0) {
@@ -124,6 +129,7 @@ export function ListingCards({
             fisheryId={fishery?.id ?? null}
             fishery={fishery}
             sellerDisplay={sellerDisplays?.[listing.id]}
+            hasBids={auctionIdsWithBids?.includes(Number(listing.id))}
           />
         );
       })}
@@ -136,11 +142,13 @@ export function FisheryOfferingSection({
   kind,
   listings,
   sellerDisplays,
+  auctionIdsWithBids,
 }: {
   title: string;
   kind: "sale" | "lease";
   listings: Listing[];
   sellerDisplays?: Record<number, PublicSellerDisplay>;
+  auctionIdsWithBids?: number[];
 }) {
   const [listingType, setListingType] = useState<"ALL" | ListingType>("ALL");
   const { page, setPage, pageSize, setPageSize } = useListPagination();
@@ -203,6 +211,7 @@ export function FisheryOfferingSection({
           empty={empty}
           hideFishery
           sellerDisplays={sellerDisplays}
+          auctionIdsWithBids={auctionIdsWithBids}
         />
         <ListPager
           page={currentPage}
@@ -221,9 +230,11 @@ export function FisheryOfferingSection({
 export function FisheryOfferings({
   listings,
   sellerDisplays,
+  auctionIdsWithBids,
 }: {
   listings: Listing[];
   sellerDisplays?: Record<number, PublicSellerDisplay>;
+  auctionIdsWithBids?: number[];
 }) {
   return (
     <div className="mt-12 space-y-12">
@@ -232,12 +243,14 @@ export function FisheryOfferings({
         kind="sale"
         listings={listings.filter((listing) => listing.offering === "SALE")}
         sellerDisplays={sellerDisplays}
+        auctionIdsWithBids={auctionIdsWithBids}
       />
       <FisheryOfferingSection
         title="Current lease listings"
         kind="lease"
         listings={listings.filter((listing) => listing.offering === "LEASE")}
         sellerDisplays={sellerDisplays}
+        auctionIdsWithBids={auctionIdsWithBids}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import { AuctionCountdown } from "@/components/auction-countdown";
 import { OfferCard } from "@/components/offer-card";
 import { formatTableDate } from "@/lib/format";
-import { auctionHasEnded, auctionHasStarted } from "@/lib/auctions/types";
+import { auctionHasEnded, auctionHasStarted, auctionBidStats } from "@/lib/auctions/types";
 import type { Fishery } from "@/lib/fisheries/types";
 import { listingStatusLabel, type Listing } from "@/lib/listings/types";
 import type { PublicSellerDisplay } from "@/lib/organisations/public-seller";
@@ -13,6 +13,7 @@ type AuctionCardProps = {
   fisheryId?: number | null;
   fishery?: Pick<Fishery, "name" | "logo_path"> | null;
   sellerDisplay?: PublicSellerDisplay;
+  hasBids?: boolean;
 };
 
 export function AuctionCard({
@@ -22,6 +23,7 @@ export function AuctionCard({
   fisheryId,
   fishery,
   sellerDisplay,
+  hasBids = false,
 }: AuctionCardProps) {
   const ended = auctionHasEnded(listing);
   const started = auctionHasStarted(listing);
@@ -39,6 +41,7 @@ export function AuctionCard({
       href={`/auctions/${listing.id}`}
       priceLabel="Current bid"
       totalLabel="Indicative price"
+      {...auctionBidStats(hasBids)}
       badge={badge}
       hideFishery={hideFishery}
       hideOffering={hideOffering}

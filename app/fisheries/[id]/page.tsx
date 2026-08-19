@@ -13,6 +13,7 @@ import {
   listMarketSales,
   listOpenListingsForFishery,
 } from "@/lib/market/queries";
+import { listingIdsWithBids } from "@/lib/auctions/queries";
 import { loadPublicSellerDisplays } from "@/lib/organisations/queries";
 import { averageRecentUnitPrice } from "@/lib/market/types";
 
@@ -53,6 +54,9 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
     listMarketSales(fishery.id),
   ]);
   const sellerDisplays = await loadPublicSellerDisplays(offers);
+  const auctionIdsWithBids = await listingIdsWithBids(
+    offers.map((listing) => Number(listing.id)),
+  );
 
   const jurisdiction = jurisdictions.find(
     (item) => item.id === fishery.jurisdiction_id,
@@ -128,7 +132,11 @@ export default async function FisheryPage({ params }: FisheryPageProps) {
         </div>
       </dl>
 
-      <FisheryOfferings listings={offers} sellerDisplays={sellerDisplays} />
+      <FisheryOfferings
+        listings={offers}
+        sellerDisplays={sellerDisplays}
+        auctionIdsWithBids={[...auctionIdsWithBids]}
+      />
 
       <section className="mt-12">
         <h2 className="text-xl font-semibold text-ink">Historical prices</h2>

@@ -4,6 +4,7 @@ import { PageIntro } from "@/components/page-intro";
 import { pageWidthClassName } from "@/components/surface";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { listMarketplaceListings } from "@/lib/listings/queries";
+import { listingIdsWithBids } from "@/lib/auctions/queries";
 import { loadPublicSellerDisplays } from "@/lib/organisations/queries";
 
 export const metadata: Metadata = {
@@ -16,7 +17,10 @@ export default async function MarketplacePage() {
     listFisheries(),
     listJurisdictions(),
   ]);
-  const sellerDisplays = await loadPublicSellerDisplays(listings);
+  const [sellerDisplays, auctionIdsWithBids] = await Promise.all([
+    loadPublicSellerDisplays(listings),
+    listingIdsWithBids(listings.map((listing) => Number(listing.id))),
+  ]);
 
   return (
     <>
@@ -36,6 +40,7 @@ export default async function MarketplacePage() {
             fisheries={fisheries}
             jurisdictions={jurisdictions}
             sellerDisplays={sellerDisplays}
+            auctionIdsWithBids={[...auctionIdsWithBids]}
           />
         )}
       </div>

@@ -66,3 +66,15 @@ export function auctionReserveLabel(
 
   return "Not Reached";
 }
+
+export function auctionBidStats(hasBids: boolean) {
+  if (hasBids) {
+    return {};
+  }
+
+  return {
+    priceValue: "-",
+    priceDetail: "",
+    totalValue: "-",
+  };
+}

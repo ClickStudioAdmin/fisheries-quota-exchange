@@ -26,6 +26,7 @@ import {
   auctionHasStarted,
   auctionIsLive,
   auctionReserveLabel,
+  auctionBidStats,
   minimumBid,
 } from "@/lib/auctions/types";
 import { cancelListingAction } from "@/lib/listings/actions";
@@ -302,6 +303,7 @@ export default async function AuctionPage({
           sellerDisplay={sellerDisplay}
           priceLabel="Current bid"
           totalLabel="Indicative price"
+          {...auctionBidStats(bids.length > 0)}
           badge={
             ended
               ? listing.status === "PUBLISHED"
