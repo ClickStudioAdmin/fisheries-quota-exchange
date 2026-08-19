@@ -2,6 +2,7 @@ import {
   DataTable,
   DataTableRowExtras,
   TableActionRow,
+  tableLinkClassName,
 } from "@/components/data-table";
 import { tableButtonClassName } from "@/components/auth-card";
 import {
@@ -85,15 +86,17 @@ export function InAppNotificationList({
           <DataTableRowExtras
             key={item.id}
             id={item.id}
+            links={
+              <form action={openNotificationAction}>
+                <input type="hidden" name="id" value={item.id} />
+                <input type="hidden" name="href" value={item.href} />
+                <button type="submit" className={tableLinkClassName}>
+                  {inAppNotificationLinkLabel(item.template, item.href)}
+                </button>
+              </form>
+            }
             actions={
               <TableActionRow>
-                <form action={openNotificationAction}>
-                  <input type="hidden" name="id" value={item.id} />
-                  <input type="hidden" name="href" value={item.href} />
-                  <button type="submit" className={tableButtonClassName}>
-                    {inAppNotificationLinkLabel(item.template, item.href)}
-                  </button>
-                </form>
                 {item.read_at ? (
                   <form action={markNotificationsUnreadAction}>
                     <input type="hidden" name="id" value={item.id} />
