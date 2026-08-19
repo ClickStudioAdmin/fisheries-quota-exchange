@@ -46,8 +46,12 @@ export function formatAud(value: string | number) {
   }).format(Number(value));
 }
 
-export function unitPriceSuffix(unit: string) {
-  return unit.trim().toLowerCase() === "units" ? "Unit" : unit.trim();
+export function unitPriceSuffix(unit: string | null | undefined) {
+  const trimmed = String(unit ?? "").trim();
+  if (!trimmed) {
+    return "";
+  }
+  return trimmed.toLowerCase() === "units" ? "Unit" : trimmed;
 }
 
 export function formatAudPerUnit(value: string | number, unit: string) {

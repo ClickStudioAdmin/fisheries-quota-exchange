@@ -4,23 +4,27 @@ import { useEffect, useState } from "react";
 import { formatCountdown } from "@/lib/format";
 
 export function AuctionCountdown({ at }: { at: string }) {
-  const [now, setNow] = useState<number | null>(null);
+  const target = Date.parse(at);
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    const tick = () => setNow(Date.now());
+    if (Number.isNaN(target)) {
+      return;
+    }
+
+    const tick = () => setRemaining(target - Date.now());
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [target]);
 
-  const target = Date.parse(at);
   if (Number.isNaN(target)) {
     return at;
   }
 
-  return (
-    <span suppressHydrationWarning>
-      {formatCountdown(target - (now ?? Date.now()))}
-    </span>
-  );
+  if (remaining == null) {
+    return "\u00a0";
+  }
+
+  return formatCountdown(remaining);
 }

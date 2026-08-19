@@ -98,6 +98,42 @@ export async function getOrganisation(
     .eq("id", id)
     .maybeSingle();
 
+  if (error?.message?.includes("hide_identity")) {
+    const fallback = await supabase
+      .from("organisations")
+      .select(
+        "id, legal_name, trading_name, abn, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at",
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fallback.error || !fallback.data) {
+      return null;
+    }
+
+    return {
+      organisation: {
+        id: fallback.data.id,
+        legal_name: fallback.data.legal_name,
+        trading_name: fallback.data.trading_name,
+        abn: fallback.data.abn,
+        hide_identity: false,
+        notification_roles: parseNotificationRoles(
+          fallback.data.notification_roles,
+        ),
+        disabled_notification_emails: parseDisabledProductEmails(
+          fallback.data.disabled_notification_emails,
+        ),
+        disabled_notification_in_app: parseDisabledProductEmails(
+          fallback.data.disabled_notification_in_app,
+        ),
+        created_at: fallback.data.created_at,
+        updated_at: fallback.data.updated_at,
+      },
+      role,
+    };
+  }
+
   if (error || !data) {
     return null;
   }
@@ -139,23 +175,27 @@ export async function listOrganisationHideIdentity(
     return hidden;
   }
 
-  const { data, error } = await supabase.rpc("organisations_hide_identity", {
-    p_ids: ids,
-  });
+  try {
+    const { data, error } = await supabase.rpc("organisations_hide_identity", {
+      p_ids: ids,
+    });
 
-  if (error) {
-    console.error("organisations_hide_identity failed", error.message);
-    return hidden;
-  }
-
-  for (const row of (data ?? []) as {
-    organisation_id?: unknown;
-    hide_identity?: unknown;
-  }[]) {
-    const id = Number(row.organisation_id);
-    if (Number.isInteger(id)) {
-      hidden.set(id, row.hide_identity === true);
+    if (error) {
+      console.error("organisations_hide_identity failed", error.message);
+      return hidden;
     }
+
+    for (const row of (data ?? []) as {
+      organisation_id?: unknown;
+      hide_identity?: unknown;
+    }[]) {
+      const id = Number(row.organisation_id);
+      if (Number.isInteger(id)) {
+        hidden.set(id, row.hide_identity === true);
+      }
+    }
+  } catch (error) {
+    console.error("organisations_hide_identity failed", error);
   }
 
   return hidden;
@@ -168,27 +208,43 @@ export async function loadPublicSellerDisplays(
     seller_name: string;
   }[],
 ): Promise<Record<number, PublicSellerDisplay>> {
-  const organisationIds = [
-    ...new Set(listings.map((listing) => listing.organisation_id)),
-  ];
-  const [hideMap, organisations, admin] = await Promise.all([
-    listOrganisationHideIdentity(organisationIds),
-    listMyOrganisations(),
-    isPlatformAdmin(),
-  ]);
-  const memberIds = new Set(organisations.map((organisation) => organisation.id));
-  const displays: Record<number, PublicSellerDisplay> = {};
+  const visible = (): Record<number, PublicSellerDisplay> => {
+    const displays: Record<number, PublicSellerDisplay> = {};
+    for (const listing of listings) {
+      displays[listing.id] = {
+        label: listing.seller_name,
+        tooltip: null,
+      };
+    }
+    return displays;
+  };
 
-  for (const listing of listings) {
-    displays[listing.id] = publicSellerDisplay({
-      sellerName: listing.seller_name,
-      hideIdentity: hideMap.get(listing.organisation_id) === true,
-      viewerIsSellerMember: memberIds.has(listing.organisation_id),
-      isPlatformAdmin: admin,
-    });
+  try {
+    const organisationIds = [
+      ...new Set(listings.map((listing) => listing.organisation_id)),
+    ];
+    const [hideMap, organisations, admin] = await Promise.all([
+      listOrganisationHideIdentity(organisationIds),
+      listMyOrganisations(),
+      isPlatformAdmin(),
+    ]);
+    const memberIds = new Set(organisations.map((organisation) => organisation.id));
+    const displays: Record<number, PublicSellerDisplay> = {};
+
+    for (const listing of listings) {
+      displays[listing.id] = publicSellerDisplay({
+        sellerName: listing.seller_name,
+        hideIdentity: hideMap.get(listing.organisation_id) === true,
+        viewerIsSellerMember: memberIds.has(listing.organisation_id),
+        isPlatformAdmin: admin,
+      });
+    }
+
+    return displays;
+  } catch (error) {
+    console.error("loadPublicSellerDisplays failed", error);
+    return visible();
   }
-
-  return displays;
 }
 
 export async function listMembers(
