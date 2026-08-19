@@ -6,6 +6,7 @@ import {
   type OrganisationFormState,
 } from "@/lib/organisations/actions";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { SettingsSwitchRow } from "@/components/settings-switch";
 import type { Organisation } from "@/lib/organisations/types";
 
 const initialState: OrganisationFormState = {};
@@ -71,6 +72,15 @@ export function OrganisationDetailsForm({
           defaultValue={organisation.abn ?? ""}
           disabled={!canEdit}
           className={fieldClassName}
+        />
+      </div>
+      <div className="divide-y divide-line border border-line bg-paper-raised">
+        <SettingsSwitchRow
+          name="hide_identity"
+          defaultChecked={organisation.hide_identity}
+          disabled={!canEdit}
+          title="Hide my Identity"
+          description='Marketplace, fishery, and auction pages show “Private Seller” instead of this business name. Orders, invoices, and admin records still use the real name.'
         />
       </div>
       {canEdit ? (

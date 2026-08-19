@@ -10,6 +10,11 @@ import { isOrganisationRole } from "@/lib/organisations/types";
 import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
 import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
+import { isPlatformAdmin } from "@/lib/admin/access";
+import {
+  publicSellerDisplay,
+  type PublicSellerDisplay,
+} from "@/lib/organisations/public-seller";
 
 export async function listMyOrganisations(): Promise<OrganisationSummary[]> {
   const user = await getUser();
@@ -88,7 +93,7 @@ export async function getOrganisation(
   const { data, error } = await supabase
     .from("organisations")
     .select(
-      "id, legal_name, trading_name, abn, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at",
+      "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -103,6 +108,7 @@ export async function getOrganisation(
       legal_name: data.legal_name,
       trading_name: data.trading_name,
       abn: data.abn,
+      hide_identity: data.hide_identity === true,
       notification_roles: parseNotificationRoles(data.notification_roles),
       disabled_notification_emails: parseDisabledProductEmails(
         data.disabled_notification_emails,
@@ -115,6 +121,74 @@ export async function getOrganisation(
     },
     role,
   };
+}
+
+export async function listOrganisationHideIdentity(
+  organisationIds: number[],
+): Promise<Map<number, boolean>> {
+  const ids = [...new Set(organisationIds.filter((id) => Number.isInteger(id)))];
+  const hidden = new Map<number, boolean>();
+
+  if (ids.length === 0) {
+    return hidden;
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return hidden;
+  }
+
+  const { data, error } = await supabase.rpc("organisations_hide_identity", {
+    p_ids: ids,
+  });
+
+  if (error) {
+    console.error("organisations_hide_identity failed", error.message);
+    return hidden;
+  }
+
+  for (const row of (data ?? []) as {
+    organisation_id?: unknown;
+    hide_identity?: unknown;
+  }[]) {
+    const id = Number(row.organisation_id);
+    if (Number.isInteger(id)) {
+      hidden.set(id, row.hide_identity === true);
+    }
+  }
+
+  return hidden;
+}
+
+export async function loadPublicSellerDisplays(
+  listings: readonly {
+    id: number;
+    organisation_id: number;
+    seller_name: string;
+  }[],
+): Promise<Record<number, PublicSellerDisplay>> {
+  const organisationIds = [
+    ...new Set(listings.map((listing) => listing.organisation_id)),
+  ];
+  const [hideMap, organisations, admin] = await Promise.all([
+    listOrganisationHideIdentity(organisationIds),
+    listMyOrganisations(),
+    isPlatformAdmin(),
+  ]);
+  const memberIds = new Set(organisations.map((organisation) => organisation.id));
+  const displays: Record<number, PublicSellerDisplay> = {};
+
+  for (const listing of listings) {
+    displays[listing.id] = publicSellerDisplay({
+      sellerName: listing.seller_name,
+      hideIdentity: hideMap.get(listing.organisation_id) === true,
+      viewerIsSellerMember: memberIds.has(listing.organisation_id),
+      isPlatformAdmin: admin,
+    });
+  }
+
+  return displays;
 }
 
 export async function listMembers(

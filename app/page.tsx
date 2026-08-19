@@ -10,6 +10,7 @@ import {
   quantityTypeLabel,
 } from "@/lib/fisheries/types";
 import { listMarketplaceListings } from "@/lib/listings/queries";
+import { loadPublicSellerDisplays } from "@/lib/organisations/queries";
 import {
   formatAudPerUnit,
   openListingCountsByFisheryName,
@@ -37,6 +38,7 @@ export default async function Home() {
     (listing) => new Date(listing.expires_at).getTime() > now,
   );
   const featuredListings = openListings.slice(0, 6);
+  const sellerDisplays = await loadPublicSellerDisplays(featuredListings);
   const listingCounts = openListingCountsByFisheryName(listings);
   const lastSale = latestSalePriceMap(prices);
   const featuredFisheries = [...fisheries]
@@ -183,6 +185,7 @@ export default async function Home() {
             listings={featuredListings}
             empty="No live listings at the moment."
             fisheriesByName={fisheriesByName}
+            sellerDisplays={sellerDisplays}
           />
         </div>
       </section>

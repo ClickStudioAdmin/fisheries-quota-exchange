@@ -19,6 +19,7 @@ import {
   listOpenListingsForFishery,
 } from "@/lib/market/queries";
 import type { Fishery } from "@/lib/fisheries/types";
+import { loadPublicSellerDisplays } from "@/lib/organisations/queries";
 
 const OTHER_LISTING_LIMIT = 6;
 const RECENT_TRADE_LIMIT = 8;
@@ -51,6 +52,7 @@ export async function ListingRelatedMarket({
   const tradeTitle =
     offering === "LEASE" ? "Recent leases" : "Recent sales";
   const fisheriesByName = new Map([[fishery.name, fishery]]);
+  const sellerDisplays = await loadPublicSellerDisplays(others);
 
   return (
     <div className="mt-12 space-y-12">
@@ -69,6 +71,7 @@ export async function ListingRelatedMarket({
             empty="No other live listings for this fishery."
             hideFishery
             fisheriesByName={fisheriesByName}
+            sellerDisplays={sellerDisplays}
           />
         </div>
       </section>

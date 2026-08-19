@@ -16,6 +16,7 @@ import {
   type ListingOffering,
   type ListingType,
 } from "@/lib/listings/types";
+import type { PublicSellerDisplay } from "@/lib/organisations/public-seller";
 
 const filterFieldClassName =
   "w-full min-w-0 border border-line bg-paper-raised px-3 py-2 text-sm text-ink outline-none focus:border-sea";
@@ -23,7 +24,13 @@ const filterFieldClassName =
 const filterLabelClassName =
   "flex min-w-[9rem] flex-1 flex-col gap-1 text-sm text-ink-muted";
 
-type SortOption = "PRICE_ASC" | "PRICE_DESC" | "QUANTITY_ASC" | "QUANTITY_DESC";
+type SortOption =
+  | "PRICE_ASC"
+  | "PRICE_DESC"
+  | "QUANTITY_ASC"
+  | "QUANTITY_DESC"
+  | "ENDS_ASC"
+  | "ENDS_DESC";
 
 function listingPrice(listing: Listing) {
   const price = Number(listing.unit_price_aud);
@@ -35,14 +42,31 @@ function listingQuantity(listing: Listing) {
   return Number.isFinite(quantity) ? quantity : 0;
 }
 
+function listingEndsAt(listing: Listing) {
+  const time = Date.parse(listing.expires_at);
+  return Number.isFinite(time) ? time : 0;
+}
+
+function listingSortValue(listing: Listing, sort: SortOption) {
+  if (sort.startsWith("QUANTITY")) {
+    return listingQuantity(listing);
+  }
+  if (sort.startsWith("ENDS")) {
+    return listingEndsAt(listing);
+  }
+  return listingPrice(listing);
+}
+
 export function MarketplaceList({
   listings,
   fisheries,
   jurisdictions,
+  sellerDisplays,
 }: {
   listings: Listing[];
   fisheries: Fishery[];
   jurisdictions: Jurisdiction[];
+  sellerDisplays?: Record<number, PublicSellerDisplay>;
 }) {
   const [listingType, setListingType] = useState<"ALL" | ListingType>("ALL");
   const [offering, setOffering] = useState<"ALL" | ListingOffering>("ALL");
@@ -97,10 +121,8 @@ export function MarketplaceList({
       return true;
     });
     const direction = sort.endsWith("_ASC") ? 1 : -1;
-    const value =
-      sort.startsWith("QUANTITY") ? listingQuantity : listingPrice;
     return [...filtered].sort(
-      (a, b) => direction * (value(a) - value(b)),
+      (a, b) => direction * (listingSortValue(a, sort) - listingSortValue(b, sort)),
     );
   }, [
     fisheriesByName,
@@ -196,7 +218,7 @@ export function MarketplaceList({
             <option value="AUCTION">{listingTypeLabel("AUCTION")}</option>
           </select>
         </label>
-        <label className={`${filterLabelClassName} min-w-[11rem]`}>
+        <label className={`${filterLabelClassName} min-w-[14rem]`}>
           <span className="whitespace-nowrap">Sort</span>
           <select
             value={sort}
@@ -207,6 +229,8 @@ export function MarketplaceList({
             <option value="PRICE_DESC">Price (High to Low)</option>
             <option value="QUANTITY_ASC">Quantity (Low to High)</option>
             <option value="QUANTITY_DESC">Quantity (High to Low)</option>
+            <option value="ENDS_ASC">End Date (least time first)</option>
+            <option value="ENDS_DESC">End Date (most time first)</option>
           </select>
         </label>
       </div>
@@ -217,6 +241,7 @@ export function MarketplaceList({
         listings={paged}
         empty="No listings match these filters."
         fisheriesByName={fisheriesByName}
+        sellerDisplays={sellerDisplays}
       />
       <ListPager
         page={currentPage}

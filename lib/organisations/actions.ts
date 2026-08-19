@@ -110,6 +110,7 @@ export async function updateOrganisationDetailsAction(
   const organisationId = Number(formData.get("organisation_id"));
   const legalName = readText(formData, "legal_name");
   const tradingName = readText(formData, "trading_name");
+  const hideIdentity = formData.get("hide_identity") === "on";
   const abnResult = readAbn(readText(formData, "abn"));
 
   if (!supabase || !Number.isInteger(organisationId)) {
@@ -142,6 +143,7 @@ export async function updateOrganisationDetailsAction(
       legal_name: legalName,
       trading_name: tradingName || null,
       abn: abnResult.abn,
+      hide_identity: hideIdentity,
     })
     .eq("id", organisationId);
 
@@ -151,6 +153,10 @@ export async function updateOrganisationDetailsAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/account");
+  revalidatePath("/");
+  revalidatePath("/marketplace", "layout");
+  revalidatePath("/fisheries", "layout");
+  revalidatePath("/auctions", "layout");
   return { message: "Business details saved." };
 }
 

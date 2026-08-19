@@ -4,6 +4,7 @@ import { PageIntro } from "@/components/page-intro";
 import { pageWidthClassName } from "@/components/surface";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { listMarketplaceListings } from "@/lib/listings/queries";
+import { loadPublicSellerDisplays } from "@/lib/organisations/queries";
 
 export const metadata: Metadata = {
   title: "Marketplace",
@@ -15,6 +16,7 @@ export default async function MarketplacePage() {
     listFisheries(),
     listJurisdictions(),
   ]);
+  const sellerDisplays = await loadPublicSellerDisplays(listings);
 
   return (
     <>
@@ -33,6 +35,7 @@ export default async function MarketplacePage() {
             listings={listings}
             fisheries={fisheries}
             jurisdictions={jurisdictions}
+            sellerDisplays={sellerDisplays}
           />
         )}
       </div>

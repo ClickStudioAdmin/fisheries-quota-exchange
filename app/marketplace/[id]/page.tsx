@@ -22,12 +22,14 @@ import {
   canCancelOpenListing,
   canEditListingPrice,
   formatAudPerUnit,
+  formatListingTotal,
   listingEditMaxQuantity,
   listingStatusLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
-import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
+import { listMyOrganisations, getMyRole, loadPublicSellerDisplays } from "@/lib/organisations/queries";
+import { PublicSellerName } from "@/components/public-seller-name";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getUser } from "@/lib/supabase/server";
 import { isPaymentsConfigured } from "@/lib/payments/env";
@@ -90,6 +92,11 @@ export default async function ListingPage({
     ? await organisationAcceptsCardPayments(listing.organisation_id)
     : true;
   const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
+  const sellerDisplays = await loadPublicSellerDisplays([listing]);
+  const sellerDisplay = sellerDisplays[listing.id] ?? {
+    label: listing.seller_name,
+    tooltip: null,
+  };
   const canPurchase =
     listing.status === "PUBLISHED" &&
     !expired &&
@@ -201,6 +208,7 @@ export default async function ListingPage({
             groups={[
               {
                 title: "Offer",
+                columns: 3,
                 items: [
                   {
                     label: "Quantity",
@@ -213,10 +221,22 @@ export default async function ListingPage({
                       listing.unit_label,
                     ),
                   },
+                  {
+                    label: "Total",
+                    value: formatListingTotal(
+                      listing.quantity,
+                      listing.unit_price_aud,
+                    ),
+                  },
                 ],
               },
               {
-                items: [{ label: "Seller", value: listing.seller_name }],
+                items: [
+                  {
+                    label: "Seller",
+                    value: <PublicSellerName display={sellerDisplay} />,
+                  },
+                ],
               },
               {
                 title: "Status",

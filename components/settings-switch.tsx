@@ -4,12 +4,14 @@ function SwitchTrack({
   defaultChecked,
   checked,
   onCheckedChange,
+  disabled,
 }: {
   name?: string;
   value?: string;
   defaultChecked?: boolean;
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
+  disabled?: boolean;
 }) {
   const controlled = checked !== undefined;
 
@@ -21,6 +23,7 @@ function SwitchTrack({
         value={value}
         checked={controlled ? checked : undefined}
         defaultChecked={controlled ? undefined : defaultChecked}
+        disabled={disabled}
         onChange={
           onCheckedChange
             ? (event) => onCheckedChange(event.target.checked)
@@ -30,7 +33,7 @@ function SwitchTrack({
       />
       <span
         aria-hidden
-        className="relative h-6 w-11 shrink-0 rounded-full bg-ink-muted/20 transition-colors after:absolute after:top-0.5 after:left-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-paper-raised after:shadow-sm after:transition-transform after:content-[''] peer-checked:bg-sea peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-sea peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-paper"
+        className="relative h-6 w-11 shrink-0 rounded-full bg-ink-muted/20 transition-colors after:absolute after:top-0.5 after:left-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-paper-raised after:shadow-sm after:transition-transform after:content-[''] peer-checked:bg-sea peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-sea peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-paper peer-disabled:opacity-60"
       />
     </>
   );
@@ -71,16 +74,20 @@ export function SettingsSwitchRow({
   title,
   description,
   className,
+  disabled,
 }: {
   name: string;
   defaultChecked?: boolean;
   title: string;
   description: string;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-center justify-between gap-4 px-3 py-3 ${className ?? ""}`.trim()}
+      className={`flex items-center justify-between gap-4 px-3 py-3 ${
+        disabled ? "cursor-default" : "cursor-pointer"
+      } ${className ?? ""}`.trim()}
     >
       <span>
         <span className="block text-sm text-ink">{title}</span>
@@ -88,7 +95,11 @@ export function SettingsSwitchRow({
           {description}
         </span>
       </span>
-      <SwitchTrack name={name} defaultChecked={defaultChecked} />
+      <SwitchTrack
+        name={name}
+        defaultChecked={defaultChecked}
+        disabled={disabled}
+      />
     </label>
   );
 }

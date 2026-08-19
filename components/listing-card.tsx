@@ -16,6 +16,7 @@ import {
   type Listing,
   type ListingType,
 } from "@/lib/listings/types";
+import type { PublicSellerDisplay } from "@/lib/organisations/public-seller";
 
 type ListingCardProps = {
   listing: Listing;
@@ -23,6 +24,7 @@ type ListingCardProps = {
   hideOffering?: boolean;
   fisheryId?: number | null;
   fishery?: Pick<Fishery, "name" | "logo_path"> | null;
+  sellerDisplay?: PublicSellerDisplay;
 };
 
 export function ListingCard({
@@ -31,6 +33,7 @@ export function ListingCard({
   hideOffering,
   fisheryId,
   fishery,
+  sellerDisplay,
 }: ListingCardProps) {
   return (
     <OfferCard
@@ -40,9 +43,9 @@ export function ListingCard({
       hideOffering={hideOffering}
       fisheryId={fisheryId}
       fishery={fishery}
-      extraFields={[
-        { label: "Expires", value: formatTableDate(listing.expires_at) },
-      ]}
+      sellerDisplay={sellerDisplay}
+      metaLabel="Expires"
+      metaValue={formatTableDate(listing.expires_at)}
     />
   );
 }
@@ -53,6 +56,7 @@ export function MarketplaceListingCard({
   hideOffering,
   fisheryId,
   fishery,
+  sellerDisplay,
 }: ListingCardProps) {
   if (listing.listing_type === "AUCTION") {
     return (
@@ -62,6 +66,7 @@ export function MarketplaceListingCard({
         hideOffering={hideOffering}
         fisheryId={fisheryId}
         fishery={fishery}
+        sellerDisplay={sellerDisplay}
       />
     );
   }
@@ -73,6 +78,7 @@ export function MarketplaceListingCard({
       hideOffering={hideOffering}
       fisheryId={fisheryId}
       fishery={fishery}
+      sellerDisplay={sellerDisplay}
     />
   );
 }
@@ -83,6 +89,7 @@ export function ListingCards({
   hideFishery,
   hideOffering,
   fisheriesByName,
+  sellerDisplays,
   columns = 2,
 }: {
   listings: Listing[];
@@ -90,6 +97,7 @@ export function ListingCards({
   hideFishery?: boolean;
   hideOffering?: boolean;
   fisheriesByName?: Map<string, Pick<Fishery, "id" | "name" | "logo_path">>;
+  sellerDisplays?: Record<number, PublicSellerDisplay>;
   columns?: 1 | 2;
 }) {
   if (listings.length === 0) {
@@ -115,6 +123,7 @@ export function ListingCards({
             hideOffering={hideOffering}
             fisheryId={fishery?.id ?? null}
             fishery={fishery}
+            sellerDisplay={sellerDisplays?.[listing.id]}
           />
         );
       })}
@@ -126,10 +135,12 @@ export function FisheryOfferingSection({
   title,
   kind,
   listings,
+  sellerDisplays,
 }: {
   title: string;
   kind: "sale" | "lease";
   listings: Listing[];
+  sellerDisplays?: Record<number, PublicSellerDisplay>;
 }) {
   const [listingType, setListingType] = useState<"ALL" | ListingType>("ALL");
   const { page, setPage, pageSize, setPageSize } = useListPagination();
@@ -191,6 +202,7 @@ export function FisheryOfferingSection({
           listings={paged}
           empty={empty}
           hideFishery
+          sellerDisplays={sellerDisplays}
         />
         <ListPager
           page={currentPage}
@@ -206,18 +218,26 @@ export function FisheryOfferingSection({
   );
 }
 
-export function FisheryOfferings({ listings }: { listings: Listing[] }) {
+export function FisheryOfferings({
+  listings,
+  sellerDisplays,
+}: {
+  listings: Listing[];
+  sellerDisplays?: Record<number, PublicSellerDisplay>;
+}) {
   return (
     <div className="mt-12 space-y-12">
       <FisheryOfferingSection
         title="Current sale listings"
         kind="sale"
         listings={listings.filter((listing) => listing.offering === "SALE")}
+        sellerDisplays={sellerDisplays}
       />
       <FisheryOfferingSection
         title="Current lease listings"
         kind="lease"
         listings={listings.filter((listing) => listing.offering === "LEASE")}
+        sellerDisplays={sellerDisplays}
       />
     </div>
   );

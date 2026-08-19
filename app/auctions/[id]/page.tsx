@@ -25,11 +25,13 @@ import {
   canCancelOpenListing,
   formatAud,
   formatAudPerUnit,
+  formatListingTotal,
   listingStatusLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
-import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
+import { listMyOrganisations, getMyRole, loadPublicSellerDisplays } from "@/lib/organisations/queries";
+import { PublicSellerName } from "@/components/public-seller-name";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
@@ -73,6 +75,11 @@ export default async function AuctionPage({
   const canSwitch = organisations.length > 1;
   const operatingAsSeller = active?.id === listing.organisation_id;
   const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
+  const sellerDisplays = await loadPublicSellerDisplays([listing]);
+  const sellerDisplay = sellerDisplays[listing.id] ?? {
+    label: listing.seller_name,
+    tooltip: null,
+  };
   const ended = auctionHasEnded(listing);
   const started = auctionHasStarted(listing);
   const live = auctionIsLive(listing);
@@ -209,6 +216,7 @@ export default async function AuctionPage({
             groups={[
               {
                 title: "Offer",
+                columns: 3,
                 items: [
                   {
                     label: "Quantity",
@@ -219,6 +227,13 @@ export default async function AuctionPage({
                     value: formatAudPerUnit(
                       listing.unit_price_aud,
                       listing.unit_label,
+                    ),
+                  },
+                  {
+                    label: "Indicative price",
+                    value: formatListingTotal(
+                      listing.quantity,
+                      listing.unit_price_aud,
                     ),
                   },
                 ],
@@ -246,7 +261,12 @@ export default async function AuctionPage({
                 ],
               },
               {
-                items: [{ label: "Seller", value: listing.seller_name }],
+                items: [
+                  {
+                    label: "Seller",
+                    value: <PublicSellerName display={sellerDisplay} />,
+                  },
+                ],
               },
               {
                 title: "Schedule",

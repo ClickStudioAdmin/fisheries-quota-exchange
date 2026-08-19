@@ -113,7 +113,8 @@ export async function AccountBusinessSection({
   return (
     <div className="max-w-md space-y-4">
       <p className="text-sm text-ink-muted">
-        Business details for this business.
+        Business details for this business. Hide my identity if you do not
+        want this name on public listings.
       </p>
       <OrganisationDetailsForm
         organisation={result.organisation}

@@ -9,6 +9,7 @@ export type Organisation = {
   legal_name: string;
   trading_name: string | null;
   abn: string | null;
+  hide_identity: boolean;
   notification_roles: OrganisationRole[];
   disabled_notification_emails: ProductEmailId[];
   disabled_notification_in_app: ProductEmailId[];
