@@ -4,6 +4,8 @@ import { listHoldingsForOrganisation } from "@/lib/fisheries/queries";
 import { holdingIsVerified } from "@/lib/fisheries/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
 import { listingIsOpen } from "@/lib/listings/types";
+import { listMyListingAlerts } from "@/lib/alerts/queries";
+import { listMyInAppNotifications } from "@/lib/notifications/queries";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { accountPath } from "@/lib/organisations/paths";
@@ -11,6 +13,7 @@ import { getOrganisation } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
+import { OverviewNotifications } from "@/components/overview-notifications";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { StatusBadge } from "@/components/status-badge";
 import {
@@ -37,19 +40,21 @@ export async function AccountOverviewSection({
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
   const acceptedTerms = await hasAcceptedCurrentTerms();
-  const [holdings, listings, orders, sellError] = organisationId
-    ? await Promise.all([
-        listHoldingsForOrganisation(organisationId),
-        listOrganisationListings(organisationId),
-        listOrganisationOrders(organisationId),
-        organisationCanSellError(organisationId),
-      ])
-    : [
-        [] as Awaited<ReturnType<typeof listHoldingsForOrganisation>>,
-        [] as Awaited<ReturnType<typeof listOrganisationListings>>,
-        [] as Awaited<ReturnType<typeof listOrganisationOrders>>,
-        null,
-      ];
+  const [holdings, listings, orders, sellError, notifications, alerts] =
+    await Promise.all([
+      organisationId
+        ? listHoldingsForOrganisation(organisationId)
+        : Promise.resolve([] as Awaited<ReturnType<typeof listHoldingsForOrganisation>>),
+      organisationId
+        ? listOrganisationListings(organisationId)
+        : Promise.resolve([] as Awaited<ReturnType<typeof listOrganisationListings>>),
+      organisationId
+        ? listOrganisationOrders(organisationId)
+        : Promise.resolve([] as Awaited<ReturnType<typeof listOrganisationOrders>>),
+      organisationId ? organisationCanSellError(organisationId) : Promise.resolve(null),
+      listMyInAppNotifications(10),
+      listMyListingAlerts(),
+    ]);
   const hasAccount = Boolean(result);
   const canBuy = acceptedTerms && hasAccount;
   const canSell = canBuy && !sellError;
@@ -69,6 +74,10 @@ export async function AccountOverviewSection({
     OPEN_ORDER_STATUSES.has(order.status),
   );
   const payOrders = orders.filter((order) => order.status === "AWAITING_PAYMENT");
+  const activeAlerts = alerts.filter(
+    (alert) => alert.sales || alert.leases,
+  ).length;
+  const cardLinkClassName = `${statClassName} transition-colors hover:border-sea`;
 
   return (
     <div className="space-y-8">
@@ -134,8 +143,8 @@ export async function AccountOverviewSection({
           )}
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Link href={href("/dashboard/holdings")} className={statClassName}>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Link href={href("/dashboard/holdings")} className={cardLinkClassName}>
           <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
             Holdings
           </p>
@@ -146,7 +155,7 @@ export async function AccountOverviewSection({
               : "All verified"}
           </p>
         </Link>
-        <Link href={href("/dashboard/listings")} className={statClassName}>
+        <Link href={href("/dashboard/listings")} className={cardLinkClassName}>
           <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
             Listings
           </p>
@@ -157,7 +166,7 @@ export async function AccountOverviewSection({
               : `${liveListings} live on the marketplace`}
           </p>
         </Link>
-        <Link href={href("/dashboard/orders")} className={statClassName}>
+        <Link href={href("/dashboard/orders")} className={cardLinkClassName}>
           <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
             Open orders
           </p>
@@ -170,7 +179,21 @@ export async function AccountOverviewSection({
               : "None awaiting payment"}
           </p>
         </Link>
+        <Link href="/dashboard/alerts" className={cardLinkClassName}>
+          <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+            Alerts
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-ink">{activeAlerts}</p>
+          <p className="mt-1 text-sm text-ink-muted">
+            {activeAlerts === 0
+              ? "None switched on"
+              : activeAlerts === 1
+                ? "1 fishery watched"
+                : `${activeAlerts} fisheries watched`}
+          </p>
+        </Link>
       </div>
+      <OverviewNotifications notifications={notifications} />
       {openOrders.length > 0 ? (
         <section className="space-y-3">
           <h2 className="text-xl font-semibold text-ink">Needs attention</h2>

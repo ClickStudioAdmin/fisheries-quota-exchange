@@ -51,7 +51,7 @@ export async function insertInAppNotification(input: {
   }
 }
 
-export async function listMyInAppNotifications() {
+export async function listMyInAppNotifications(limit = 50) {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -62,7 +62,7 @@ export async function listMyInAppNotifications() {
     .from("user_notifications")
     .select("id, template, title, body, href, read_at, created_at")
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(limit);
 
   if (error) {
     console.error("listMyInAppNotifications failed", error.message);

@@ -40,7 +40,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/how-it-works` | Buyer and seller steps from account through payment and settlement |
 | `/privacy` | Privacy policy for this development site |
 | `/terms` | Terms of service: buyers, sellers, and platform commission if a committed trade does not complete |
-| `/admin` | Overview: queues, platform fees, Stripe test mode |
+| `/dashboard` | Overview: onboarding, holdings/listings/orders/alerts counts, latest 10 in-app notices |
 | `/dashboard/notifications` | Signed-in user inbox (default) and Channels tab for per-event email and in-app switches |
 | `/dashboard/alerts` | Signed-in user switches sale and/or lease alerts per fishery |
 | `/dashboard/payments` | Embedded Connect onboarding and account management |
