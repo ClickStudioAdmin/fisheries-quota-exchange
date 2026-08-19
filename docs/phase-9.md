@@ -59,7 +59,9 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 
 ## Database
 
-Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`, `20260819120000_organisation_notification_roles.sql`, `20260819130000_organisation_notification_preferences.sql`
+Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`, `20260819120000_organisation_notification_roles.sql`, `20260819130000_organisation_notification_preferences.sql`, `20260819140000_bid_created_by_email.sql`, `20260819150000_drop_bid_created_by_email.sql`
+
+`20260819140000` added `bids.created_by_email` and was applied on development. Deleting that file broke `supabase db push`. Keep it in git. `20260819150000` drops the column and restores `place_bid` so outbid mail stays organisation-based.
 
 Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts eight in-app notices for `click.studio.admin@gmail.com` when that membership exists (mix of read and unread). Links use real holdings, listings, and orders when they are present.
 
