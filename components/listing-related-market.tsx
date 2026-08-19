@@ -55,8 +55,8 @@ export async function ListingRelatedMarket({
   const sellerDisplays = await loadPublicSellerDisplays(others);
 
   return (
-    <div className="mt-12 space-y-12">
-      <section>
+    <div className="mt-12 grid items-start gap-8 lg:grid-cols-2">
+      <section className="min-w-0">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-xl font-semibold text-ink">
             Other live listings
@@ -70,12 +70,13 @@ export async function ListingRelatedMarket({
             listings={others}
             empty="No other live listings for this fishery."
             hideFishery
+            columns={1}
             fisheriesByName={fisheriesByName}
             sellerDisplays={sellerDisplays}
           />
         </div>
       </section>
-      <section>
+      <section className="min-w-0">
         <h2 className="text-xl font-semibold text-ink">{tradeTitle}</h2>
         {recent.length === 0 ? (
           <p className="mt-4 text-sm text-ink-muted">
@@ -87,7 +88,6 @@ export async function ListingRelatedMarket({
             <table className={tableClassName}>
               <thead className={tableHeadClassName}>
                 <tr>
-                  <th className={tableHeaderCellClassName}>Date</th>
                   <th className={`${tableHeaderCellClassName} text-right`}>
                     Quantity
                   </th>
@@ -97,6 +97,7 @@ export async function ListingRelatedMarket({
                   <th className={`${tableHeaderCellClassName} text-right`}>
                     Amount
                   </th>
+                  <th className={tableHeaderCellClassName}>Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -105,9 +106,6 @@ export async function ListingRelatedMarket({
                     key={`${trade.created_at}-${trade.unit_price_aud}-${index}`}
                     className={tableRowClassName(index)}
                   >
-                    <td className={tableBodyCellClassName}>
-                      {formatTableDate(trade.created_at)}
-                    </td>
                     <td
                       className={`${tableBodyCellClassName} text-right tabular-nums`}
                     >
@@ -122,6 +120,9 @@ export async function ListingRelatedMarket({
                       className={`${tableBodyCellClassName} text-right tabular-nums`}
                     >
                       {formatAud(trade.amount_aud)}
+                    </td>
+                    <td className={tableBodyCellClassName}>
+                      {formatTableDate(trade.created_at)}
                     </td>
                   </tr>
                 ))}

@@ -6,11 +6,11 @@ import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { ListingKindBadges } from "@/components/listing-kind-badges";
+import { OfferCard } from "@/components/offer-card";
 import { OfferDetailLayout } from "@/components/offer-detail-layout";
 import { ListingRelatedMarket } from "@/components/listing-related-market";
-import { LabeledFieldGroups, pageWidthClassName, panelClassName } from "@/components/surface";
-import { formatTableDateTime } from "@/lib/format";
+import { pageWidthClassName } from "@/components/surface";
+import { formatTableDate } from "@/lib/format";
 import { cancelListingAction } from "@/lib/listings/actions";
 import {
   getHolding,
@@ -21,15 +21,12 @@ import { getListing } from "@/lib/listings/queries";
 import {
   canCancelOpenListing,
   canEditListingPrice,
-  formatAudPerUnit,
-  formatListingTotal,
   listingEditMaxQuantity,
   listingStatusLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listMyOrganisations, getMyRole, loadPublicSellerDisplays } from "@/lib/organisations/queries";
-import { PublicSellerName } from "@/components/public-seller-name";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getUser } from "@/lib/supabase/server";
 import { isPaymentsConfigured } from "@/lib/payments/env";
@@ -112,19 +109,6 @@ export default async function ListingPage({
           Marketplace
         </Link>
       </p>
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          {listing.fishery_name}
-        </h1>
-        <ListingKindBadges listing={listing} />
-      </div>
-      {fishery ? (
-        <p className="mt-2 text-ink-muted">
-          <Link href={`/fisheries/${fishery.id}`} className="underline">
-            View fishery
-          </Link>
-        </p>
-      ) : null}
       <OfferDetailLayout
         actionTitle="Buy"
         action={
@@ -203,59 +187,21 @@ export default async function ListingPage({
           ) : null
         }
       >
-        <div className={panelClassName}>
-          <LabeledFieldGroups
-            groups={[
-              {
-                title: "Offer",
-                columns: 3,
-                items: [
-                  {
-                    label: "Quantity",
-                    value: `${listing.quantity} ${listing.unit_label}`,
-                  },
-                  {
-                    label: "Price",
-                    value: formatAudPerUnit(
-                      listing.unit_price_aud,
-                      listing.unit_label,
-                    ),
-                  },
-                  {
-                    label: "Total",
-                    value: formatListingTotal(
-                      listing.quantity,
-                      listing.unit_price_aud,
-                    ),
-                  },
-                ],
-              },
-              {
-                items: [
-                  {
-                    label: "Seller",
-                    value: <PublicSellerName display={sellerDisplay} />,
-                  },
-                ],
-              },
-              {
-                title: "Status",
-                items: [
-                  {
-                    label: "Listing",
-                    value: expired
-                      ? "Expired"
-                      : listingStatusLabel(listing.status),
-                  },
-                  {
-                    label: "Expires",
-                    value: formatTableDateTime(listing.expires_at),
-                  },
-                ],
-              },
-            ]}
-          />
-        </div>
+        <OfferCard
+          listing={listing}
+          fishery={fishery ?? { name: listing.fishery_name, logo_path: null }}
+          fisheryId={fishery?.id ?? null}
+          sellerDisplay={sellerDisplay}
+          badge={
+            expired && listing.status === "PUBLISHED"
+              ? "Expired"
+              : listing.status === "PUBLISHED"
+                ? undefined
+                : listingStatusLabel(listing.status)
+          }
+          metaLabel="Expires"
+          metaValue={formatTableDate(listing.expires_at)}
+        />
         {showEdit || showCancel ? (
           <div className="flex flex-wrap items-center gap-3">
             {showEdit ? (

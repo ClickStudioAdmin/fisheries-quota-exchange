@@ -5,11 +5,12 @@ import { SwitchAccountLink } from "@/components/switch-account-notice";
 import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { ListingKindBadges } from "@/components/listing-kind-badges";
+import { AuctionCountdown } from "@/components/auction-countdown";
+import { OfferCard } from "@/components/offer-card";
 import { OfferDetailLayout } from "@/components/offer-detail-layout";
 import { ListingRelatedMarket } from "@/components/listing-related-market";
-import { LabeledFieldGroups, LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
-import { formatTableDateTime } from "@/lib/format";
+import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
+import { formatTableDate } from "@/lib/format";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
 import {
@@ -24,13 +25,11 @@ import { getListing } from "@/lib/listings/queries";
 import {
   canCancelOpenListing,
   formatAud,
-  formatAudPerUnit,
-  formatListingTotal,
   listingStatusLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
-import { listMyOrganisations, getMyRole, loadPublicSellerDisplays } from "@/lib/organisations/queries";
+import { listMyOrganisations, getMyRole, loadPublicBuyerDisplays, loadPublicSellerDisplays } from "@/lib/organisations/queries";
 import { PublicSellerName } from "@/components/public-seller-name";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getOrderForListing } from "@/lib/orders/queries";
@@ -80,6 +79,7 @@ export default async function AuctionPage({
     label: listing.seller_name,
     tooltip: null,
   };
+  const bidderDisplays = await loadPublicBuyerDisplays(bids);
   const ended = auctionHasEnded(listing);
   const started = auctionHasStarted(listing);
   const live = auctionIsLive(listing);
@@ -99,19 +99,6 @@ export default async function AuctionPage({
           Marketplace
         </Link>
       </p>
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          {listing.fishery_name}
-        </h1>
-        <ListingKindBadges listing={listing} />
-      </div>
-      {fishery ? (
-        <p className="mt-2 text-ink-muted">
-          <Link href={`/fisheries/${fishery.id}`} className="underline">
-            View fishery
-          </Link>
-        </p>
-      ) : null}
       <OfferDetailLayout
         actionTitle="Bid"
         action={
@@ -211,86 +198,57 @@ export default async function AuctionPage({
           ) : null
         }
       >
-        <div className={panelClassName}>
-          <LabeledFieldGroups
-            groups={[
-              {
-                title: "Offer",
-                columns: 3,
-                items: [
-                  {
-                    label: "Quantity",
-                    value: `${listing.quantity} ${listing.unit_label}`,
-                  },
-                  {
-                    label: "Current bid",
-                    value: formatAudPerUnit(
-                      listing.unit_price_aud,
-                      listing.unit_label,
-                    ),
-                  },
-                  {
-                    label: "Indicative price",
-                    value: formatListingTotal(
-                      listing.quantity,
-                      listing.unit_price_aud,
-                    ),
-                  },
-                ],
-              },
-              {
-                title: "Auction",
-                columns: 3,
-                items: [
-                  {
-                    label: "Starting price",
-                    value: formatAud(
-                      listing.starting_price_aud ?? listing.unit_price_aud,
-                    ),
-                  },
-                  {
-                    label: "Increment",
-                    value: formatAud(listing.bid_increment_aud ?? 0),
-                  },
-                  {
-                    label: "Reserve",
-                    value: listing.reserve_price_aud
-                      ? formatAud(listing.reserve_price_aud)
-                      : "None",
-                  },
-                ],
-              },
-              {
-                items: [
-                  {
-                    label: "Seller",
-                    value: <PublicSellerName display={sellerDisplay} />,
-                  },
-                ],
-              },
-              {
-                title: "Schedule",
-                columns: 3,
-                items: [
-                  {
-                    label: "Status",
-                    value: listingStatusLabel(listing.status),
-                  },
-                  {
-                    label: "Starts",
-                    value: listing.starts_at
-                      ? formatTableDateTime(listing.starts_at)
-                      : "—",
-                  },
-                  {
-                    label: "Ends",
-                    value: formatTableDateTime(listing.expires_at),
-                  },
-                ],
-              },
-            ]}
-          />
-        </div>
+        <OfferCard
+          listing={listing}
+          fishery={fishery ?? { name: listing.fishery_name, logo_path: null }}
+          fisheryId={fishery?.id ?? null}
+          sellerDisplay={sellerDisplay}
+          priceLabel="Current bid"
+          totalLabel="Indicative price"
+          badge={
+            ended
+              ? listing.status === "PUBLISHED"
+                ? "Ended — waiting to close"
+                : listingStatusLabel(listing.status)
+              : started
+                ? listing.status === "PUBLISHED"
+                  ? undefined
+                  : listingStatusLabel(listing.status)
+                : "Scheduled"
+          }
+          extraStats={[
+            {
+              label: "Starting price",
+              value: formatAud(
+                listing.starting_price_aud ?? listing.unit_price_aud,
+              ),
+            },
+            {
+              label: "Increment",
+              value: formatAud(listing.bid_increment_aud ?? 0),
+            },
+            {
+              label: "Reserve",
+              value: listing.reserve_price_aud
+                ? formatAud(listing.reserve_price_aud)
+                : "None",
+            },
+          ]}
+          metaLabel={ended ? "Ended" : started ? "Time left" : "Starts in"}
+          metaValue={
+            ended ? (
+              formatTableDate(listing.expires_at)
+            ) : (
+              <AuctionCountdown
+                at={
+                  started
+                    ? listing.expires_at
+                    : (listing.starts_at ?? listing.expires_at)
+                }
+              />
+            )
+          }
+        />
         {canClose ? (
           <form action={closeAuctionAction}>
             <input type="hidden" name="listing_id" value={listing.id} />
@@ -340,7 +298,19 @@ export default async function AuctionPage({
                   <LabeledFields
                     items={[
                       { label: "Bid", value: formatAud(bid.amount_aud) },
-                      { label: "Bidder", value: bid.bidder_name },
+                      {
+                        label: "Bidder",
+                        value: (
+                          <PublicSellerName
+                            display={
+                              bidderDisplays[bid.id] ?? {
+                                label: bid.bidder_name,
+                                tooltip: null,
+                              }
+                            }
+                          />
+                        ),
+                      },
                       {
                         label: "Time",
                         value: new Date(bid.created_at).toLocaleString("en-AU"),

@@ -27,6 +27,9 @@ const WARNING = new Set([
   "held until settlement",
   "not yet",
   "unread",
+  "scheduled",
+  "ended",
+  "ended waiting to close",
 ]);
 
 const DANGER = new Set([
@@ -42,10 +45,15 @@ const DANGER = new Set([
 const INFO = new Set(["platform admin"]);
 
 function normalizeStatus(value: string) {
-  return value.trim().toLowerCase().replace(/_/g, " ");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/[—–-]+/g, " ")
+    .replace(/\s+/g, " ");
 }
 
-function toneClass(value: string) {
+export function statusToneClass(value: string) {
   const key = normalizeStatus(value);
 
   if (SUCCESS.has(key)) {
@@ -53,15 +61,15 @@ function toneClass(value: string) {
   }
 
   if (WARNING.has(key)) {
-    return "bg-amber-100 text-amber-900";
+    return "bg-line text-ink";
   }
 
   if (DANGER.has(key)) {
-    return "bg-red-100 text-red-800";
+    return "bg-ink text-paper";
   }
 
   if (INFO.has(key)) {
-    return "bg-sky-100 text-sky-900";
+    return "bg-paper-stripe text-sea";
   }
 
   return "bg-paper-stripe text-ink-muted";
@@ -96,7 +104,7 @@ export function StatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${toneClass(
+      className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${statusToneClass(
         String(code ?? text),
       )}`}
     >

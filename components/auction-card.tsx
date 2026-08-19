@@ -3,7 +3,7 @@ import { OfferCard } from "@/components/offer-card";
 import { formatTableDate } from "@/lib/format";
 import { auctionHasEnded, auctionHasStarted } from "@/lib/auctions/types";
 import type { Fishery } from "@/lib/fisheries/types";
-import type { Listing } from "@/lib/listings/types";
+import { listingStatusLabel, type Listing } from "@/lib/listings/types";
 import type { PublicSellerDisplay } from "@/lib/organisations/public-seller";
 
 type AuctionCardProps = {
@@ -28,7 +28,7 @@ export function AuctionCard({
   const badge = ended
     ? listing.status === "PUBLISHED"
       ? "Ended — waiting to close"
-      : listing.status
+      : listingStatusLabel(listing.status)
     : started
       ? undefined
       : "Scheduled";

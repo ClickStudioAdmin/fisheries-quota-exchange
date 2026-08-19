@@ -14,14 +14,21 @@ import {
 } from "@/lib/listings/types";
 import type { PublicSellerDisplay } from "@/lib/organisations/public-seller";
 
+type OfferStatProps = {
+  label: string;
+  value: string;
+  detail?: string;
+};
+
 type OfferCardProps = {
   listing: Listing;
-  href: string;
+  href?: string;
   priceLabel?: string;
   totalLabel?: string;
   badge?: string;
   metaLabel?: string;
   metaValue?: ReactNode;
+  extraStats?: OfferStatProps[];
   hideFishery?: boolean;
   hideOffering?: boolean;
   fisheryId?: number | null;
@@ -40,15 +47,7 @@ function formatQuantity(value: string | number) {
   );
 }
 
-function OfferStat({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail?: string;
-}) {
+export function OfferStat({ label, value, detail }: OfferStatProps) {
   return (
     <div className="min-w-0">
       <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
@@ -64,6 +63,35 @@ function OfferStat({
   );
 }
 
+function MetaBlock({
+  href,
+  label,
+  value,
+}: {
+  href?: string;
+  label: string;
+  value: ReactNode;
+}) {
+  const body = (
+    <>
+      <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+        {label}
+      </p>
+      <p className="mt-0.5 text-sm tabular-nums text-ink">{value}</p>
+    </>
+  );
+
+  if (!href) {
+    return <div className="min-w-0">{body}</div>;
+  }
+
+  return (
+    <Link href={href} className="min-w-0">
+      {body}
+    </Link>
+  );
+}
+
 export function OfferCard({
   listing,
   href,
@@ -72,6 +100,7 @@ export function OfferCard({
   badge,
   metaLabel,
   metaValue,
+  extraStats,
   hideFishery = false,
   hideOffering = false,
   fisheryId = null,
@@ -87,64 +116,104 @@ export function OfferCard({
     fishery ??
     (hideFishery ? null : { name: listing.fishery_name, logo_path: null });
   const showMeta = Boolean(metaLabel && metaValue != null) || showFisheryLink;
+  const TitleTag = href ? "p" : "h1";
+  const titleClassName = href
+    ? "min-w-0 text-lg font-semibold tracking-tight text-ink sm:text-xl"
+    : "min-w-0 text-2xl font-semibold tracking-tight text-ink sm:text-3xl";
+
+  const logo = logoFishery ? (
+    <FisheryLogo fishery={logoFishery} size={href ? "md" : "lg"} />
+  ) : null;
+  const title = hideFishery ? (
+    <PublicSellerName display={seller} />
+  ) : (
+    <span className="block truncate">{listing.fishery_name}</span>
+  );
+  const sellerLine = hideFishery ? null : (
+    <p className="mt-1 min-w-0 text-sm text-ink-muted">
+      <PublicSellerName display={seller} />
+    </p>
+  );
+  const badges = (
+    <ListingKindBadges
+      listing={listing}
+      hideOffering={hideOffering}
+      badge={badge}
+    />
+  );
+
+  const headerAndStats = (
+    <>
+      {href ? (
+        <div className="flex min-w-0 items-start gap-4">
+          {logo}
+          <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+            <div className="min-w-0">
+              <TitleTag className={titleClassName}>{title}</TitleTag>
+              {sellerLine}
+            </div>
+            {badges}
+          </div>
+        </div>
+      ) : (
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-3">
+              <TitleTag className={titleClassName}>{title}</TitleTag>
+              {logo}
+            </div>
+            {sellerLine}
+          </div>
+          {badges}
+        </div>
+      )}
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <OfferStat
+          label="Quantity"
+          value={formatQuantity(listing.quantity)}
+          detail={listing.unit_label}
+        />
+        <OfferStat
+          label={priceLabel}
+          value={formatAud(listing.unit_price_aud)}
+          detail={`/ ${unitPriceSuffix(listing.unit_label)}`}
+        />
+        <OfferStat
+          label={totalLabel}
+          value={formatListingTotal(
+            listing.quantity,
+            listing.unit_price_aud,
+          )}
+        />
+      </div>
+      {extraStats && extraStats.length > 0 ? (
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {extraStats.map((stat) => (
+            <OfferStat key={stat.label} {...stat} />
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
 
   return (
-    <article className="flex h-full min-w-0 flex-col border border-line bg-paper-raised transition-colors hover:border-sea">
+    <article
+      className={`flex h-full min-w-0 flex-col border border-line bg-paper-raised${
+        href ? " transition-colors hover:border-sea" : ""
+      }`}
+    >
       <div className="flex min-w-0 flex-1 flex-col p-5">
-        <Link href={href} className="flex min-w-0 flex-1 flex-col">
-          <div className="flex min-w-0 items-start gap-4">
-            {logoFishery ? <FisheryLogo fishery={logoFishery} size="md" /> : null}
-            <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="min-w-0 text-lg font-semibold tracking-tight text-ink sm:text-xl">
-                  {hideFishery ? (
-                    <PublicSellerName display={seller} />
-                  ) : (
-                    <span className="block truncate">{listing.fishery_name}</span>
-                  )}
-                </p>
-                {hideFishery ? null : (
-                  <p className="mt-1 min-w-0 text-sm text-ink-muted">
-                    <PublicSellerName display={seller} />
-                  </p>
-                )}
-              </div>
-              <ListingKindBadges
-                listing={listing}
-                hideOffering={hideOffering}
-                badge={badge}
-              />
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <OfferStat
-              label="Quantity"
-              value={formatQuantity(listing.quantity)}
-              detail={listing.unit_label}
-            />
-            <OfferStat
-              label={priceLabel}
-              value={formatAud(listing.unit_price_aud)}
-              detail={`/ ${unitPriceSuffix(listing.unit_label)}`}
-            />
-            <OfferStat
-              label={totalLabel}
-              value={formatListingTotal(
-                listing.quantity,
-                listing.unit_price_aud,
-              )}
-            />
-          </div>
-        </Link>
+        {href ? (
+          <Link href={href} className="flex min-w-0 flex-1 flex-col">
+            {headerAndStats}
+          </Link>
+        ) : (
+          headerAndStats
+        )}
         {showMeta ? (
           <div className="mt-4 flex items-end justify-between gap-3">
             {metaLabel && metaValue != null ? (
-              <Link href={href} className="min-w-0">
-                <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-                  {metaLabel}
-                </p>
-                <p className="mt-0.5 text-sm tabular-nums text-ink">{metaValue}</p>
-              </Link>
+              <MetaBlock href={href} label={metaLabel} value={metaValue} />
             ) : (
               <span />
             )}

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  PRIVATE_BUYER_LABEL,
   PRIVATE_SELLER_LABEL,
+  publicBuyerDisplay,
   publicSellerDisplay,
 } from "./public-seller.ts";
 
@@ -61,5 +63,31 @@ test("publicSellerDisplay shows the real name to the selling business", () => {
       isPlatformAdmin: true,
     }),
     { label: sellerName, tooltip: null },
+  );
+});
+
+const buyerName = "Coastal Catch Pty Ltd";
+
+test("publicBuyerDisplay uses Private Buyer on public auction bids", () => {
+  assert.deepEqual(
+    publicBuyerDisplay({
+      buyerName,
+      hideIdentity: true,
+      viewerIsBuyerMember: false,
+      isPlatformAdmin: false,
+    }),
+    { label: PRIVATE_BUYER_LABEL, tooltip: null },
+  );
+});
+
+test("publicBuyerDisplay shows the real name to the bidding business", () => {
+  assert.deepEqual(
+    publicBuyerDisplay({
+      buyerName,
+      hideIdentity: true,
+      viewerIsBuyerMember: true,
+      isPlatformAdmin: false,
+    }),
+    { label: buyerName, tooltip: null },
   );
 });

@@ -80,7 +80,7 @@ export function OrganisationDetailsForm({
           defaultChecked={organisation.hide_identity}
           disabled={!canEdit}
           title="Hide my Identity"
-          description='Marketplace, fishery, and auction pages show “Private Seller” instead of this business name. Orders, invoices, and admin records still use the real name.'
+          description='Marketplace, fishery, and auction pages show “Private Seller” for listings and “Private Buyer” for bids instead of this business name. Orders, invoices, and admin records still use the real name.'
         />
       </div>
       {canEdit ? (

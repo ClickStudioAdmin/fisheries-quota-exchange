@@ -12,7 +12,9 @@ import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
+  publicBuyerDisplay,
   publicSellerDisplay,
+  type PublicIdentityDisplay,
   type PublicSellerDisplay,
 } from "@/lib/organisations/public-seller";
 
@@ -201,18 +203,24 @@ export async function listOrganisationHideIdentity(
   return hidden;
 }
 
-export async function loadPublicSellerDisplays(
-  listings: readonly {
+async function loadPublicIdentityDisplays(
+  parties: readonly {
     id: number;
     organisation_id: number;
-    seller_name: string;
+    name: string;
   }[],
-): Promise<Record<number, PublicSellerDisplay>> {
-  const visible = (): Record<number, PublicSellerDisplay> => {
-    const displays: Record<number, PublicSellerDisplay> = {};
-    for (const listing of listings) {
-      displays[listing.id] = {
-        label: listing.seller_name,
+  display: (input: {
+    name: string;
+    hideIdentity: boolean;
+    viewerIsMember: boolean;
+    isPlatformAdmin: boolean;
+  }) => PublicIdentityDisplay,
+): Promise<Record<number, PublicIdentityDisplay>> {
+  const visible = (): Record<number, PublicIdentityDisplay> => {
+    const displays: Record<number, PublicIdentityDisplay> = {};
+    for (const party of parties) {
+      displays[party.id] = {
+        label: party.name,
         tooltip: null,
       };
     }
@@ -221,7 +229,7 @@ export async function loadPublicSellerDisplays(
 
   try {
     const organisationIds = [
-      ...new Set(listings.map((listing) => listing.organisation_id)),
+      ...new Set(parties.map((party) => party.organisation_id)),
     ];
     const [hideMap, organisations, admin] = await Promise.all([
       listOrganisationHideIdentity(organisationIds),
@@ -229,22 +237,68 @@ export async function loadPublicSellerDisplays(
       isPlatformAdmin(),
     ]);
     const memberIds = new Set(organisations.map((organisation) => organisation.id));
-    const displays: Record<number, PublicSellerDisplay> = {};
+    const displays: Record<number, PublicIdentityDisplay> = {};
 
-    for (const listing of listings) {
-      displays[listing.id] = publicSellerDisplay({
-        sellerName: listing.seller_name,
-        hideIdentity: hideMap.get(listing.organisation_id) === true,
-        viewerIsSellerMember: memberIds.has(listing.organisation_id),
+    for (const party of parties) {
+      displays[party.id] = display({
+        name: party.name,
+        hideIdentity: hideMap.get(party.organisation_id) === true,
+        viewerIsMember: memberIds.has(party.organisation_id),
         isPlatformAdmin: admin,
       });
     }
 
     return displays;
   } catch (error) {
-    console.error("loadPublicSellerDisplays failed", error);
+    console.error("loadPublicIdentityDisplays failed", error);
     return visible();
   }
+}
+
+export async function loadPublicSellerDisplays(
+  listings: readonly {
+    id: number;
+    organisation_id: number;
+    seller_name: string;
+  }[],
+): Promise<Record<number, PublicSellerDisplay>> {
+  return loadPublicIdentityDisplays(
+    listings.map((listing) => ({
+      id: listing.id,
+      organisation_id: listing.organisation_id,
+      name: listing.seller_name,
+    })),
+    ({ name, hideIdentity, viewerIsMember, isPlatformAdmin }) =>
+      publicSellerDisplay({
+        sellerName: name,
+        hideIdentity,
+        viewerIsSellerMember: viewerIsMember,
+        isPlatformAdmin,
+      }),
+  );
+}
+
+export async function loadPublicBuyerDisplays(
+  bids: readonly {
+    id: number;
+    organisation_id: number;
+    bidder_name: string;
+  }[],
+): Promise<Record<number, PublicIdentityDisplay>> {
+  return loadPublicIdentityDisplays(
+    bids.map((bid) => ({
+      id: bid.id,
+      organisation_id: bid.organisation_id,
+      name: bid.bidder_name,
+    })),
+    ({ name, hideIdentity, viewerIsMember, isPlatformAdmin }) =>
+      publicBuyerDisplay({
+        buyerName: name,
+        hideIdentity,
+        viewerIsBuyerMember: viewerIsMember,
+        isPlatformAdmin,
+      }),
+  );
 }
 
 export async function listMembers(
