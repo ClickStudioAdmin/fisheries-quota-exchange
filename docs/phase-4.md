@@ -12,8 +12,8 @@ There is no quota, marketplace, or listing functionality in this phase.
 | --- | --- |
 | `/register` | Creates the Auth user (name, email, phone). Business details are added later on Profile |
 | `/dashboard` | Overview |
-| `/dashboard/profile` | Profile details (person, password, business) |
-| `/dashboard/members` | Account members |
+| `/dashboard/profile` | Account details: Profile (person, password, business) and Members tabs |
+| `/dashboard/members` | Redirects to `/dashboard/profile?tab=members` |
 | `/organisations/new` | Redirects to the dashboard |
 | `/organisations/[id]` | Redirects to `/dashboard?account=[id]` |
 

@@ -72,16 +72,6 @@ export async function AccountProfileSection({
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Profile details
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          {result
-            ? `${result.organisation.legal_name} · Your role: ${result.role}`
-            : "Add your business details before you can buy or list quota."}
-        </p>
-      </div>
       <section className="max-w-md space-y-4">
         <h2 className="text-xl font-semibold text-ink">Details</h2>
         <PersonProfileForm
@@ -125,15 +115,10 @@ export async function AccountMembersSection({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Account members
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          Add people to this account with a role. They sign in with that email.
-          No invitation email is sent yet.
-        </p>
-      </div>
+      <p className="text-sm text-ink-muted">
+        Add people to this account with a role. They sign in with that email.
+        No invitation email is sent yet.
+      </p>
       <MemberList
         organisationId={organisationId}
         members={members}

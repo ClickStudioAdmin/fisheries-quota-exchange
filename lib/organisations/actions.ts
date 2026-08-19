@@ -123,6 +123,7 @@ export async function addMemberAction(
   }
 
   revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
 
   const siteUrl = await getSiteUrl();
@@ -214,6 +215,7 @@ export async function updateMemberRoleAction(
   }
 
   revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
 
   const siteUrl = await siteUrlOrEmpty();
@@ -301,6 +303,7 @@ export async function removeMemberAction(
   }
 
   revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
 
   if (isSelf) {

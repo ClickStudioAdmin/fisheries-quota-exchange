@@ -1,25 +1,93 @@
-import { AccountProfileSection } from "@/components/account-sections";
+import Link from "next/link";
+import {
+  AccountMembersSection,
+  AccountProfileSection,
+} from "@/components/account-sections";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
+import { accountPath } from "@/lib/organisations/paths";
+import { organisationRoleLabel } from "@/lib/organisations/types";
 
 export const metadata = {
-  title: "Profile details",
+  title: "Account details",
 };
+
+function tabClassName(active: boolean) {
+  return active
+    ? "-mb-px inline-flex items-center gap-1.5 border-b-2 border-sea pb-2 font-medium text-ink"
+    : "inline-flex items-center gap-1.5 pb-2 text-ink-muted hover:text-ink";
+}
 
 export default async function DashboardProfilePage({
   searchParams,
 }: {
-  searchParams: Promise<{ account?: string }>;
+  searchParams: Promise<{ account?: string; tab?: string }>;
 }) {
   const params = await searchParams;
   const account = await resolveDashboardAccount(
     params.account,
     "/dashboard/profile",
   );
+  const tab = params.tab === "members" ? "members" : "profile";
+  const organisationId = account.selected?.id ?? null;
+  const profileHref = organisationId
+    ? accountPath(organisationId, "/dashboard/profile")
+    : "/dashboard/profile";
+  const membersHref = organisationId
+    ? accountPath(organisationId, "/dashboard/profile", { tab: "members" })
+    : "/dashboard/profile?tab=members";
 
   return (
-    <AccountProfileSection
-      organisationId={account.selected?.id ?? null}
-      user={account.user}
-    />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          Account details
+        </h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          {account.selected
+            ? `${account.selected.legal_name} · Your role: ${organisationRoleLabel(account.selected.role)}`
+            : "Add your business details before you can buy or list quota."}
+        </p>
+      </div>
+      <nav aria-label="Account details sections">
+        <ul className="flex flex-wrap gap-x-6 border-b border-line">
+          <li>
+            <Link
+              href={profileHref}
+              className={tabClassName(tab === "profile")}
+              aria-current={tab === "profile" ? "page" : undefined}
+            >
+              Profile
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={membersHref}
+              className={tabClassName(tab === "members")}
+              aria-current={tab === "members" ? "page" : undefined}
+            >
+              Members
+            </Link>
+          </li>
+        </ul>
+      </nav>
+      {tab === "members" ? (
+        organisationId ? (
+          <AccountMembersSection
+            organisationId={organisationId}
+            userEmail={account.user.email ?? ""}
+          />
+        ) : (
+          <p className="text-sm text-ink-muted">
+            Add your business details on the Profile tab before you can manage
+            members.
+          </p>
+        )
+      ) : (
+        <AccountProfileSection
+          organisationId={organisationId}
+          user={account.user}
+        />
+      )}
+    </div>
   );
 }

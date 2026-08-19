@@ -34,8 +34,7 @@ export async function MemberArea({ children }: { children: ReactNode }) {
       label: "Notifications",
       badge: unreadNotifications,
     },
-    { href: "/dashboard/profile", label: "Profile details" },
-    { href: "/dashboard/members", label: "Account members" },
+    { href: "/dashboard/profile", label: "Account Details" },
     {
       href: "/dashboard/holdings",
       label: "Quota holdings",
