@@ -17,7 +17,10 @@ import {
 } from "@/lib/alerts/actions";
 import { updateOrganisationNotificationPreferencesAction } from "@/lib/organisations/actions";
 import {
+  ACCOUNT_NOTIFICATION_GROUPS,
   PRODUCT_EMAIL_LABELS,
+  PROFILE_NOTIFICATION_GROUPS,
+  groupedNotificationIds,
   notificationAudienceLabel,
   notificationAudiences,
   type ProductEmailId,
@@ -48,9 +51,15 @@ export function NotificationSettingsForm({
       : updateNotificationPreferencesAction,
     initialState,
   );
+  const groups = groupedNotificationIds(
+    scope === "account"
+      ? ACCOUNT_NOTIFICATION_GROUPS
+      : PROFILE_NOTIFICATION_GROUPS,
+    emailIds,
+  );
 
   return (
-    <form action={formAction} className="max-w-4xl space-y-6">
+    <form action={formAction} className="max-w-4xl space-y-8">
       {organisationId ? (
         <input type="hidden" name="organisation_id" value={organisationId} />
       ) : null}
@@ -65,52 +74,57 @@ export function NotificationSettingsForm({
         </p>
       ) : null}
       <p className="text-sm text-ink-muted">{description}</p>
-      <fieldset disabled={!canEdit} className="space-y-6">
-        <div className={tableWrapClassName}>
-          <table className={tableClassName}>
-            <thead className={tableHeadClassName}>
-              <tr>
-                <th className={tableHeaderCellClassName}>Message</th>
-                <th className={tableHeaderCellClassName}>Sent to</th>
-                <th className={`w-24 ${tableHeaderCellClassName}`}>Email</th>
-                <th className={`w-24 ${tableHeaderCellClassName}`}>In-app</th>
-              </tr>
-            </thead>
-            <tbody>
-              {emailIds.map((id, index) => (
-                <tr key={id} className={tableRowClassName(index)}>
-                  <td className={tableBodyCellClassName}>
-                    {PRODUCT_EMAIL_LABELS[id]}
-                    <span className="mt-0.5 block font-mono text-xs text-ink-muted">
-                      {id}
-                    </span>
-                  </td>
-                  <td className={tableBodyCellClassName}>
-                    {notificationAudiences(id)
-                      .map(notificationAudienceLabel)
-                      .join(", ")}
-                  </td>
-                  <td className={tableBodyCellClassName}>
-                    <SettingsSwitch
-                      name="email_enabled"
-                      value={id}
-                      defaultChecked={!disabledEmails.includes(id)}
-                      label={`Email ${PRODUCT_EMAIL_LABELS[id]}`}
-                    />
-                  </td>
-                  <td className={tableBodyCellClassName}>
-                    <SettingsSwitch
-                      name="in_app_enabled"
-                      value={id}
-                      defaultChecked={!disabledInApp.includes(id)}
-                      label={`In-app ${PRODUCT_EMAIL_LABELS[id]}`}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <fieldset disabled={!canEdit} className="space-y-8">
+        {groups.map((group) => (
+          <section key={group.label} className="space-y-3">
+            <h2 className="text-sm font-medium text-ink">{group.label}</h2>
+            <div className={tableWrapClassName}>
+              <table className={tableClassName}>
+                <thead className={tableHeadClassName}>
+                  <tr>
+                    <th className={tableHeaderCellClassName}>Message</th>
+                    <th className={tableHeaderCellClassName}>Sent to</th>
+                    <th className={`w-24 ${tableHeaderCellClassName}`}>Email</th>
+                    <th className={`w-24 ${tableHeaderCellClassName}`}>In-app</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.ids.map((id, index) => (
+                    <tr key={id} className={tableRowClassName(index)}>
+                      <td className={tableBodyCellClassName}>
+                        {PRODUCT_EMAIL_LABELS[id]}
+                        <span className="mt-0.5 block font-mono text-xs text-ink-muted">
+                          {id}
+                        </span>
+                      </td>
+                      <td className={tableBodyCellClassName}>
+                        {notificationAudiences(id, scope)
+                          .map(notificationAudienceLabel)
+                          .join(", ")}
+                      </td>
+                      <td className={tableBodyCellClassName}>
+                        <SettingsSwitch
+                          name="email_enabled"
+                          value={id}
+                          defaultChecked={!disabledEmails.includes(id)}
+                          label={`Email ${PRODUCT_EMAIL_LABELS[id]}`}
+                        />
+                      </td>
+                      <td className={tableBodyCellClassName}>
+                        <SettingsSwitch
+                          name="in_app_enabled"
+                          value={id}
+                          defaultChecked={!disabledInApp.includes(id)}
+                          label={`In-app ${PRODUCT_EMAIL_LABELS[id]}`}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ))}
         {emailIds.length === 0 ? (
           <p className="text-sm text-ink-muted">
             No notifications are available here yet.

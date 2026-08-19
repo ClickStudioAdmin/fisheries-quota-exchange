@@ -40,9 +40,9 @@ export function AccountNotificationForm({
         </p>
       ) : null}
       <p className="text-sm text-ink-muted">
-        Business email and in-app notices for listings, holdings, payments, and
-        settlement go to these roles. Personal mail such as invitations, your
-        bids, and your purchases is on Profile → Notifications.
+        Business email and in-app notices for this organisation go to these
+        roles. Bid, purchase, and payment receipts also have a personal copy on
+        Profile → Notifications, with a separate switch.
       </p>
       <fieldset className="space-y-2" disabled={!canEdit}>
         <legend className="text-sm text-ink">Roles that receive business email</legend>

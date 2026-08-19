@@ -116,12 +116,125 @@ const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
   "order_settled",
 ];
 
-export const ACCOUNT_NOTIFICATION_EMAIL_IDS = SELLER_MANAGER_EMAIL_IDS;
+const SHARED_BUYER_EMAIL_IDS: ProductEmailId[] = [
+  "bid_placed",
+  "auction_won",
+  "purchase_received",
+  "bank_debit_submitted",
+  "checkout_expired",
+  "payment_reminder",
+];
+
+export type NotificationListGroup = {
+  label: string;
+  ids: readonly ProductEmailId[];
+};
+
+export const PROFILE_NOTIFICATION_GROUPS: NotificationListGroup[] = [
+  {
+    label: "Membership",
+    ids: [
+      "member_added",
+      "member_role_changed",
+      "member_removed",
+      "ownership_transferred",
+    ],
+  },
+  { label: "Listing alerts", ids: ["listing_alert"] },
+  { label: "Bids", ids: ["bid_placed", "auction_won"] },
+  { label: "Purchases", ids: ["purchase_received"] },
+  {
+    label: "Payments",
+    ids: ["bank_debit_submitted", "checkout_expired", "payment_reminder"],
+  },
+];
+
+export const ACCOUNT_NOTIFICATION_GROUPS: NotificationListGroup[] = [
+  { label: "Payments setup", ids: ["payments_setup_complete"] },
+  { label: "Holdings", ids: ["holding_verified", "holding_needs_changes"] },
+  {
+    label: "Listings",
+    ids: [
+      "listing_submitted",
+      "listing_published",
+      "listing_rejected",
+      "listing_expired",
+      "listing_cancelled",
+      "listing_purchased",
+    ],
+  },
+  {
+    label: "Auctions",
+    ids: [
+      "auction_published",
+      "auction_new_bid",
+      "auction_unsold",
+      "auction_cancelled",
+      "auction_ending_soon",
+    ],
+  },
+  {
+    label: "Bids",
+    ids: ["bid_placed", "bid_outbid", "auction_won", "auction_not_won"],
+  },
+  { label: "Purchases", ids: ["purchase_received"] },
+  {
+    label: "Payments and settlement",
+    ids: [
+      "bank_debit_submitted",
+      "checkout_expired",
+      "payment_reminder",
+      "payment_received",
+      "settlement_failed",
+      "transfer_in_progress",
+      "transfer_complete",
+      "order_settled",
+    ],
+  },
+];
+
+function uniqueGroupedIds(groups: readonly NotificationListGroup[]) {
+  const ids: ProductEmailId[] = [];
+  const seen = new Set<ProductEmailId>();
+
+  for (const group of groups) {
+    for (const id of group.ids) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        ids.push(id);
+      }
+    }
+  }
+
+  return ids;
+}
+
+export const ACCOUNT_NOTIFICATION_EMAIL_IDS = uniqueGroupedIds(
+  ACCOUNT_NOTIFICATION_GROUPS,
+);
+
+export function groupedNotificationIds(
+  groups: readonly NotificationListGroup[],
+  emailIds: readonly ProductEmailId[],
+) {
+  const allowed = new Set(emailIds);
+
+  return groups
+    .map((group) => ({
+      label: group.label,
+      ids: group.ids.filter((id) => allowed.has(id)),
+    }))
+    .filter((group) => group.ids.length > 0);
+}
 
 export function isAccountNotificationEmailId(id: ProductEmailId) {
   return (ACCOUNT_NOTIFICATION_EMAIL_IDS as readonly ProductEmailId[]).includes(
     id,
   );
+}
+
+export function isSharedBuyerNotificationEmailId(id: ProductEmailId) {
+  return (SHARED_BUYER_EMAIL_IDS as readonly ProductEmailId[]).includes(id);
 }
 
 export function parseDisabledProductEmails(value: unknown): ProductEmailId[] {
@@ -144,26 +257,41 @@ const SENT_TO_YOU_AND_ACCOUNT_ROLES = new Set<ProductEmailId>([
   "order_settled",
 ]);
 
-const SENT_TO_ACCOUNT_ROLES = new Set<ProductEmailId>([
-  ...SELLER_MANAGER_EMAIL_IDS.filter((id) => !SENT_TO_YOU_AND_ACCOUNT_ROLES.has(id)),
-  "bid_outbid",
-  "auction_not_won",
-]);
+export function notificationAudiences(
+  id: ProductEmailId,
+  scope: "profile" | "account" = "profile",
+): NotificationAudience[] {
+  if (scope === "profile") {
+    return ["you"];
+  }
 
-export function notificationAudiences(id: ProductEmailId): NotificationAudience[] {
   if (SENT_TO_YOU_AND_ACCOUNT_ROLES.has(id)) {
     return ["you", "account_roles"];
   }
 
-  if (SENT_TO_ACCOUNT_ROLES.has(id)) {
-    return ["account_roles"];
-  }
-
-  return ["you"];
+  return ["account_roles"];
 }
 
 export function notificationAudienceLabel(audience: NotificationAudience) {
   return audience === "you" ? "You" : "Business roles";
+}
+
+export function actorAndAccountChannelEnabled(input: {
+  email: string;
+  actorEmail?: string | null;
+  roleEmails: readonly string[];
+  orgDisabled: boolean;
+  userDisabled: boolean;
+}) {
+  const email = input.email.trim().toLowerCase();
+  const actor = input.actorEmail?.trim().toLowerCase() ?? "";
+  const roles = new Set(
+    input.roleEmails.map((value) => value.trim().toLowerCase()),
+  );
+  const asRole = roles.has(email);
+  const asActor = Boolean(actor) && actor === email;
+
+  return (asRole && !input.orgDisabled) || (asActor && !input.userDisabled);
 }
 
 export function personalNotificationEmailIds(input: {
@@ -191,16 +319,24 @@ export function profileNotificationEmailIds(input: {
   isOrgMember: boolean;
   isOrgManager: boolean;
 }): ProductEmailId[] {
-  return personalNotificationEmailIds(input).filter(
-    (id) => !isAccountNotificationEmailId(id),
-  );
+  const ids = uniqueGroupedIds(PROFILE_NOTIFICATION_GROUPS);
+
+  if (input.isOrgMember) {
+    return ids;
+  }
+
+  return ids.filter((id) => !isSharedBuyerNotificationEmailId(id));
 }
 
 export function accountNotificationEmailIds(input: {
   isOrgMember: boolean;
   isOrgManager: boolean;
 }): ProductEmailId[] {
-  return personalNotificationEmailIds(input).filter(isAccountNotificationEmailId);
+  if (!input.isOrgMember) {
+    return [];
+  }
+
+  return ACCOUNT_NOTIFICATION_EMAIL_IDS;
 }
 
 export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {

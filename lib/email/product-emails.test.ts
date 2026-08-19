@@ -4,13 +4,16 @@ import {
   MEMBER_EMAIL_IDS,
   PRODUCT_EMAIL_IDS,
   accountNotificationEmailIds,
+  actorAndAccountChannelEnabled,
   disabledProductEmails,
   emailIsDisabled,
+  groupedNotificationIds,
   isAccountNotificationEmailId,
   notificationAudienceLabel,
   notificationAudiences,
   parseDisabledProductEmails,
   personalNotificationEmailIds,
+  PROFILE_NOTIFICATION_GROUPS,
   profileNotificationEmailIds,
 } from "./product-emails.ts";
 import { emailCopy } from "./copy.ts";
@@ -70,9 +73,21 @@ test("profile and account lists split personal mail from org mail", () => {
   const accountMember = accountNotificationEmailIds(member);
   assert.equal(profileMember.includes("listing_alert"), true);
   assert.equal(profileMember.includes("purchase_received"), true);
+  assert.equal(profileMember.includes("bid_placed"), true);
+  assert.equal(profileMember.includes("bid_outbid"), false);
   assert.equal(profileMember.includes("holding_verified"), false);
-  assert.equal(accountMember.includes("holding_verified"), false);
+  assert.equal(accountMember.includes("holding_verified"), true);
   assert.equal(accountMember.includes("payment_received"), true);
+  assert.equal(accountMember.includes("purchase_received"), true);
+  assert.equal(accountMember.includes("bid_outbid"), true);
+  assert.equal(accountMember.includes("listing_alert"), false);
+
+  const none = profileNotificationEmailIds({
+    isOrgMember: false,
+    isOrgManager: false,
+  });
+  assert.equal(none.includes("listing_alert"), true);
+  assert.equal(none.includes("purchase_received"), false);
 
   const manager = profileNotificationEmailIds({
     isOrgMember: true,
@@ -99,38 +114,132 @@ test("parseDisabledProductEmails keeps known product ids", () => {
   );
 });
 
-test("isAccountNotificationEmailId is listing and settlement org mail, not personal mail", () => {
+test("isAccountNotificationEmailId includes shared buyer trade mail and seller mail", () => {
   assert.equal(isAccountNotificationEmailId("holding_verified"), true);
   assert.equal(isAccountNotificationEmailId("listing_purchased"), true);
   assert.equal(isAccountNotificationEmailId("order_settled"), true);
+  assert.equal(isAccountNotificationEmailId("purchase_received"), true);
+  assert.equal(isAccountNotificationEmailId("bid_placed"), true);
+  assert.equal(isAccountNotificationEmailId("bid_outbid"), true);
   assert.equal(isAccountNotificationEmailId("listing_alert"), false);
-  assert.equal(isAccountNotificationEmailId("purchase_received"), false);
   assert.equal(isAccountNotificationEmailId("member_added"), false);
-  assert.equal(isAccountNotificationEmailId("bid_placed"), false);
 });
 
-test("notificationAudiences matches send routing", () => {
-  assert.deepEqual(notificationAudiences("member_added"), ["you"]);
-  assert.deepEqual(notificationAudiences("listing_alert"), ["you"]);
-  assert.deepEqual(notificationAudiences("purchase_received"), ["you"]);
-  assert.deepEqual(notificationAudiences("bid_placed"), ["you"]);
-  assert.deepEqual(notificationAudiences("bid_outbid"), ["account_roles"]);
-  assert.deepEqual(notificationAudiences("auction_not_won"), ["account_roles"]);
-  assert.deepEqual(notificationAudiences("holding_verified"), ["account_roles"]);
-  assert.deepEqual(notificationAudiences("listing_published"), ["account_roles"]);
-  assert.deepEqual(notificationAudiences("auction_ending_soon"), [
+test("notificationAudiences depends on which list the row sits on", () => {
+  assert.deepEqual(notificationAudiences("member_added", "profile"), ["you"]);
+  assert.deepEqual(notificationAudiences("listing_alert", "profile"), ["you"]);
+  assert.deepEqual(notificationAudiences("purchase_received", "profile"), [
+    "you",
+  ]);
+  assert.deepEqual(notificationAudiences("bid_placed", "profile"), ["you"]);
+  assert.deepEqual(notificationAudiences("purchase_received", "account"), [
     "account_roles",
   ]);
-  assert.deepEqual(notificationAudiences("payment_received"), [
+  assert.deepEqual(notificationAudiences("bid_placed", "account"), [
+    "account_roles",
+  ]);
+  assert.deepEqual(notificationAudiences("bid_outbid", "account"), [
+    "account_roles",
+  ]);
+  assert.deepEqual(notificationAudiences("holding_verified", "account"), [
+    "account_roles",
+  ]);
+  assert.deepEqual(notificationAudiences("auction_ending_soon", "account"), [
+    "account_roles",
+  ]);
+  assert.deepEqual(notificationAudiences("payment_received", "account"), [
     "you",
     "account_roles",
   ]);
-  assert.deepEqual(notificationAudiences("order_settled"), [
+  assert.deepEqual(notificationAudiences("order_settled", "account"), [
     "you",
     "account_roles",
   ]);
   assert.equal(notificationAudienceLabel("you"), "You");
   assert.equal(notificationAudienceLabel("account_roles"), "Business roles");
+});
+
+test("groupedNotificationIds keeps related sections and drops empty ones", () => {
+  const groups = groupedNotificationIds(PROFILE_NOTIFICATION_GROUPS, [
+    "member_added",
+    "listing_alert",
+    "bid_placed",
+  ]);
+  assert.deepEqual(
+    groups.map((group) => group.label),
+    ["Membership", "Listing alerts", "Bids"],
+  );
+  assert.deepEqual(groups[0]?.ids, ["member_added"]);
+  assert.equal(
+    groupedNotificationIds(PROFILE_NOTIFICATION_GROUPS, []).length,
+    0,
+  );
+});
+
+test("actorAndAccountChannelEnabled unions role and actor mutes independently", () => {
+  const role = "owner@example.test";
+  const actor = "buyer@example.test";
+
+  assert.equal(
+    actorAndAccountChannelEnabled({
+      email: actor,
+      actorEmail: actor,
+      roleEmails: [role],
+      orgDisabled: true,
+      userDisabled: false,
+    }),
+    true,
+  );
+  assert.equal(
+    actorAndAccountChannelEnabled({
+      email: actor,
+      actorEmail: actor,
+      roleEmails: [role],
+      orgDisabled: false,
+      userDisabled: true,
+    }),
+    false,
+  );
+  assert.equal(
+    actorAndAccountChannelEnabled({
+      email: role,
+      actorEmail: actor,
+      roleEmails: [role],
+      orgDisabled: false,
+      userDisabled: true,
+    }),
+    true,
+  );
+  assert.equal(
+    actorAndAccountChannelEnabled({
+      email: role,
+      actorEmail: actor,
+      roleEmails: [role],
+      orgDisabled: true,
+      userDisabled: false,
+    }),
+    false,
+  );
+  assert.equal(
+    actorAndAccountChannelEnabled({
+      email: actor,
+      actorEmail: actor,
+      roleEmails: [actor],
+      orgDisabled: false,
+      userDisabled: true,
+    }),
+    true,
+  );
+  assert.equal(
+    actorAndAccountChannelEnabled({
+      email: actor,
+      actorEmail: actor,
+      roleEmails: [actor],
+      orgDisabled: true,
+      userDisabled: true,
+    }),
+    false,
+  );
 });
 
 test("settlement copy differs for buyer and seller", () => {

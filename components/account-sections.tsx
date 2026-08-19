@@ -158,7 +158,7 @@ export async function AccountProfileNotificationsSection() {
       disabledEmails={prefs.disabledEmails}
       disabledInApp={prefs.disabledInApp}
       emailIds={emailIds}
-      description="Invitations, your bids, your purchases, and listing alerts. These stay with you when you switch business. Sent to You is this login. Business roles are the people chosen on Business Settings for the business that event belongs to. Fishery watches are on Alerts. Notices you have received are in Inbox."
+      description="Invitations, listing alerts, and a personal copy of your bids, purchases, and payment messages. These stay with you when you switch business. The same trade messages can also go to Business Settings for this business’s roles. Fishery watches are on Alerts. Notices you have received are in Inbox."
     />
   );
 }
@@ -196,8 +196,8 @@ export async function AccountNotificationsSection({
         emailIds={ACCOUNT_NOTIFICATION_EMAIL_IDS}
         description={
           showRoles
-            ? "Listings, holdings, payments, and settlement for this business. These switches belong to the business, not to you. They change when you switch business. Sent to shows Business roles for the people chosen above, and You when the buyer or listing owner also gets a personal copy. Personal messages are on Profile → Notifications."
-            : "Listings, holdings, payments, and settlement for this business. These switches belong to the business, not to you. They change when you switch business. Personal messages are on Profile → Notifications."
+            ? "Selling, buying, bidding, and settlement for this business. These switches belong to the business. They change when you switch business. Bid, purchase, and payment receipts also have a personal copy on Profile → Notifications. Sent to You on mixed settlement rows is the buyer who placed the order."
+            : "Selling, buying, bidding, and settlement for this business. These switches belong to the business. They change when you switch business. Bid, purchase, and payment receipts also have a personal copy on Profile → Notifications."
         }
       />
     </div>
