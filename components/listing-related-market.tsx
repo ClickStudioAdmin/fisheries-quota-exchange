@@ -88,14 +88,12 @@ export async function ListingRelatedMarket({
             <table className={tableClassName}>
               <thead className={tableHeadClassName}>
                 <tr>
-                  <th className={`${tableHeaderCellClassName} text-right`}>
-                    Quantity
-                  </th>
+                  <th className={tableHeaderCellClassName}>Quantity</th>
                   <th className={`${tableHeaderCellClassName} text-right`}>
                     Price
                   </th>
                   <th className={`${tableHeaderCellClassName} text-right`}>
-                    Amount
+                    Total
                   </th>
                   <th className={tableHeaderCellClassName}>Date</th>
                 </tr>
@@ -106,9 +104,7 @@ export async function ListingRelatedMarket({
                     key={`${trade.created_at}-${trade.unit_price_aud}-${index}`}
                     className={tableRowClassName(index)}
                   >
-                    <td
-                      className={`${tableBodyCellClassName} text-right tabular-nums`}
-                    >
+                    <td className={`${tableBodyCellClassName} tabular-nums`}>
                       {trade.quantity} {trade.unit_label}
                     </td>
                     <td

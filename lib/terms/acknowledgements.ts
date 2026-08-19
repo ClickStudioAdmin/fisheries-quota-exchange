@@ -35,26 +35,6 @@ export const SELLER_ACKNOWLEDGEMENTS = [
 
 export const BUYER_PURCHASE_ACKNOWLEDGEMENTS = [
   {
-    name: "ack_buyer_binding",
-    label:
-      "Purchase Now is a binding agreement to complete this trade. Quota is reserved immediately.",
-  },
-  {
-    name: "ack_buyer_pay",
-    label:
-      "I will pay FQX the listed amount, plus Stripe card processing if I pay by Australian-issued card.",
-  },
-  {
-    name: "ack_buyer_server",
-    label:
-      "I will not treat the browser, a return URL, or unpaid checkout as proof that the trade is finished.",
-  },
-  {
-    name: "ack_buyer_commission_abort",
-    label:
-      "If I do not proceed, I may be liable to pay FQX the platform commission that would have applied to this trade.",
-  },
-  {
     name: "ack_buyer_terms",
     label: "I have read and agree to the buyer terms of service.",
   },

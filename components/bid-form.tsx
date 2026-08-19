@@ -22,7 +22,7 @@ export function BidForm({ listingId, minimumBid }: BidFormProps) {
   );
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="flex h-full flex-col space-y-4">
       <input type="hidden" name="listing_id" value={listingId} />
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
@@ -47,7 +47,7 @@ export function BidForm({ listingId, minimumBid }: BidFormProps) {
         title="Bidder acknowledgements"
         items={BUYER_BID_ACKNOWLEDGEMENTS}
       />
-      <button type="submit" className={buttonClassName} disabled={pending}>
+      <button type="submit" className={`${buttonClassName} mt-auto`} disabled={pending}>
         {pending ? "Bidding…" : "Place bid"}
       </button>
     </form>

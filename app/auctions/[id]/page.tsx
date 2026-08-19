@@ -188,6 +188,85 @@ export default async function AuctionPage({
             </p>
           )
         }
+        extra={
+          <>
+            {canClose ? (
+              <form action={closeAuctionAction}>
+                <input type="hidden" name="listing_id" value={listing.id} />
+                <PendingSubmitButton
+                  className={buttonClassName}
+                  pendingLabel="Closing…"
+                >
+                  Close auction
+                </PendingSubmitButton>
+              </form>
+            ) : null}
+            {canCancel ? (
+              <form action={cancelListingAction}>
+                <input type="hidden" name="listing_id" value={listing.id} />
+                <input
+                  type="hidden"
+                  name="next"
+                  value={`/auctions/${listing.id}`}
+                />
+                <PendingSubmitButton
+                  className={buttonClassName}
+                  pendingLabel="Cancelling…"
+                >
+                  Cancel auction
+                </PendingSubmitButton>
+              </form>
+            ) : canManage &&
+              (listing.status === "PENDING_APPROVAL" ||
+                listing.status === "PUBLISHED") &&
+              bids.length > 0 ? (
+              <p className="text-sm text-ink-muted">
+                This auction cannot be edited or cancelled because a bid has been
+                placed.
+              </p>
+            ) : null}
+            <section>
+              <h2 className="text-xl font-semibold text-ink">Bids</h2>
+              {bids.length === 0 ? (
+                <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
+              ) : (
+                <div className={`mt-3 space-y-3 ${panelClassName}`}>
+                  {bids.map((bid) => (
+                    <div
+                      key={bid.id}
+                      className="border-b border-line pb-3 last:border-b-0 last:pb-0"
+                    >
+                      <LabeledFields
+                        items={[
+                          { label: "Bid", value: formatAud(bid.amount_aud) },
+                          {
+                            label: "Bidder",
+                            value: (
+                              <PublicSellerName
+                                display={
+                                  bidderDisplays[bid.id] ?? {
+                                    label: bid.bidder_name,
+                                    tooltip: null,
+                                  }
+                                }
+                              />
+                            ),
+                          },
+                          {
+                            label: "Time",
+                            value: new Date(bid.created_at).toLocaleString(
+                              "en-AU",
+                            ),
+                          },
+                        ]}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        }
         related={
           fishery ? (
             <ListingRelatedMarket
@@ -249,79 +328,6 @@ export default async function AuctionPage({
             )
           }
         />
-        {canClose ? (
-          <form action={closeAuctionAction}>
-            <input type="hidden" name="listing_id" value={listing.id} />
-            <PendingSubmitButton
-              className={buttonClassName}
-              pendingLabel="Closing…"
-            >
-              Close auction
-            </PendingSubmitButton>
-          </form>
-        ) : null}
-        {canCancel ? (
-          <form action={cancelListingAction}>
-            <input type="hidden" name="listing_id" value={listing.id} />
-            <input
-              type="hidden"
-              name="next"
-              value={`/auctions/${listing.id}`}
-            />
-            <PendingSubmitButton
-              className={buttonClassName}
-              pendingLabel="Cancelling…"
-            >
-              Cancel auction
-            </PendingSubmitButton>
-          </form>
-        ) : canManage &&
-          (listing.status === "PENDING_APPROVAL" ||
-            listing.status === "PUBLISHED") &&
-          bids.length > 0 ? (
-          <p className="text-sm text-ink-muted">
-            This auction cannot be edited or cancelled because a bid has been
-            placed.
-          </p>
-        ) : null}
-        <section>
-          <h2 className="text-xl font-semibold text-ink">Bids</h2>
-          {bids.length === 0 ? (
-            <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
-          ) : (
-            <div className={`mt-3 space-y-3 ${panelClassName}`}>
-              {bids.map((bid) => (
-                <div
-                  key={bid.id}
-                  className="border-b border-line pb-3 last:border-b-0 last:pb-0"
-                >
-                  <LabeledFields
-                    items={[
-                      { label: "Bid", value: formatAud(bid.amount_aud) },
-                      {
-                        label: "Bidder",
-                        value: (
-                          <PublicSellerName
-                            display={
-                              bidderDisplays[bid.id] ?? {
-                                label: bid.bidder_name,
-                                tooltip: null,
-                              }
-                            }
-                          />
-                        ),
-                      },
-                      {
-                        label: "Time",
-                        value: new Date(bid.created_at).toLocaleString("en-AU"),
-                      },
-                    ]}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
       </OfferDetailLayout>
     </div>
   );

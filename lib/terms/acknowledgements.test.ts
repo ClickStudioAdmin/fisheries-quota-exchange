@@ -20,7 +20,8 @@ test("seller and buyer acknowledgements each have distinct names", () => {
   }
 
   assert.ok(SELLER_ACKNOWLEDGEMENTS.length >= 4);
-  assert.ok(BUYER_PURCHASE_ACKNOWLEDGEMENTS.length >= 4);
+  assert.equal(BUYER_PURCHASE_ACKNOWLEDGEMENTS.length, 1);
+  assert.equal(BUYER_PURCHASE_ACKNOWLEDGEMENTS[0].name, "ack_buyer_terms");
   assert.equal(BUYER_BID_ACKNOWLEDGEMENTS.length, 1);
   assert.equal(BUYER_BID_ACKNOWLEDGEMENTS[0].name, "ack_bid_terms");
 });

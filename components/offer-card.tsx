@@ -111,7 +111,7 @@ export function OfferCard({
     label: listing.seller_name,
     tooltip: null,
   };
-  const showFisheryLink = !hideFishery && fisheryId != null;
+  const showFisheryLink = Boolean(href) && !hideFishery && fisheryId != null;
   const logoFishery =
     fishery ??
     (hideFishery ? null : { name: listing.fishery_name, logo_path: null });

@@ -177,6 +177,39 @@ export default async function ListingPage({
             </p>
           )
         }
+        extra={
+          showEdit || showCancel ? (
+            <div className="flex flex-wrap items-center gap-3">
+              {showEdit ? (
+                <EditListingPriceButton
+                  title="Edit listing"
+                  label="Edit listing"
+                  listingId={listing.id}
+                  unitLabel={listing.unit_label}
+                  currentQuantity={listing.quantity}
+                  maxQuantity={maxQuantity}
+                  currentPrice={listing.unit_price_aud}
+                />
+              ) : null}
+              {showCancel ? (
+                <form action={cancelListingAction}>
+                  <input type="hidden" name="listing_id" value={listing.id} />
+                  <input
+                    type="hidden"
+                    name="next"
+                    value={`/marketplace/${listing.id}`}
+                  />
+                  <PendingSubmitButton
+                    className={buttonClassName}
+                    pendingLabel="Cancelling…"
+                  >
+                    Cancel listing
+                  </PendingSubmitButton>
+                </form>
+              ) : null}
+            </div>
+          ) : null
+        }
         related={
           fishery ? (
             <ListingRelatedMarket
@@ -202,37 +235,6 @@ export default async function ListingPage({
           metaLabel="Expires"
           metaValue={formatTableDate(listing.expires_at)}
         />
-        {showEdit || showCancel ? (
-          <div className="flex flex-wrap items-center gap-3">
-            {showEdit ? (
-              <EditListingPriceButton
-                title="Edit listing"
-                label="Edit listing"
-                listingId={listing.id}
-                unitLabel={listing.unit_label}
-                currentQuantity={listing.quantity}
-                maxQuantity={maxQuantity}
-                currentPrice={listing.unit_price_aud}
-              />
-            ) : null}
-            {showCancel ? (
-              <form action={cancelListingAction}>
-                <input type="hidden" name="listing_id" value={listing.id} />
-                <input
-                  type="hidden"
-                  name="next"
-                  value={`/marketplace/${listing.id}`}
-                />
-                <PendingSubmitButton
-                  className={buttonClassName}
-                  pendingLabel="Cancelling…"
-                >
-                  Cancel listing
-                </PendingSubmitButton>
-              </form>
-            ) : null}
-          </div>
-        ) : null}
       </OfferDetailLayout>
     </div>
   );
