@@ -64,7 +64,7 @@ import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissio
 import { getOrganisation, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
-import { SuccessNotice } from "@/components/surface";
+import { SuccessNotice } from "@/components/notices";
 
 type AccountSectionProps = {
   organisationId: number;

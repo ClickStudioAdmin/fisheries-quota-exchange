@@ -16,8 +16,8 @@ import { AcceptTermsForm } from "@/components/accept-terms-form";
 import { OverviewNotifications } from "@/components/overview-notifications";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { StatusBadge } from "@/components/status-badge";
+import { ActionNotice } from "@/components/notices";
 import {
-  ActionNotice,
   LabeledFields,
   panelClassName,
   statClassName,

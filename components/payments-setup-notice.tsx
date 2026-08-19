@@ -1,5 +1,5 @@
 import { StripeLogo } from "@/components/stripe-logo";
-import { ActionNotice } from "@/components/surface";
+import { ActionNotice } from "@/components/notices";
 
 export function PaymentsSetupNotice({
   href,

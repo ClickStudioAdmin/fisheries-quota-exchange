@@ -79,7 +79,7 @@ export default async function Home() {
         openLabel: `${counts.sale} sale · ${counts.lease} lease`,
       };
     });
-  const fisheriesByName = new Map(
+  const fisheriesByName = Object.fromEntries(
     fisheries.map((fishery) => [fishery.name, fishery]),
   );
   const openAuctions = openListings.filter(

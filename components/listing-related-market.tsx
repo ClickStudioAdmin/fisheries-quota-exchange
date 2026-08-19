@@ -7,7 +7,7 @@ import {
   tableHeaderCellClassName,
   tableRowClassName,
   tableWrapClassName,
-} from "@/components/data-table";
+} from "@/components/table-styles";
 import { formatTableDate } from "@/lib/format";
 import {
   formatAud,
@@ -51,7 +51,7 @@ export async function ListingRelatedMarket({
     .reverse();
   const tradeTitle =
     offering === "LEASE" ? "Recent leases" : "Recent sales";
-  const fisheriesByName = new Map([[fishery.name, fishery]]);
+  const fisheriesByName = { [fishery.name]: fishery };
   const sellerDisplays = await loadPublicSellerDisplays(others);
 
   return (

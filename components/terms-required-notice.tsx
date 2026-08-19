@@ -1,4 +1,4 @@
-import { ActionNotice } from "@/components/surface";
+import { ActionNotice } from "@/components/notices";
 
 export function TermsRequiredNotice({
   action,

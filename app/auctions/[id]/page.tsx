@@ -5,7 +5,7 @@ import { SwitchAccountLink } from "@/components/switch-account-notice";
 import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { ListingKindBadges } from "@/components/offer-card";
+import { ListingKindBadges } from "@/components/listing-kind-badges";
 import { OfferDetailLayout } from "@/components/offer-detail-layout";
 import { ListingRelatedMarket } from "@/components/listing-related-market";
 import { LabeledFieldGroups, LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";

@@ -6,7 +6,7 @@ import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { ListingKindBadges } from "@/components/offer-card";
+import { ListingKindBadges } from "@/components/listing-kind-badges";
 import { OfferDetailLayout } from "@/components/offer-detail-layout";
 import { ListingRelatedMarket } from "@/components/listing-related-market";
 import { LabeledFieldGroups, pageWidthClassName, panelClassName } from "@/components/surface";

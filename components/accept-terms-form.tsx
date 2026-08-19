@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { buttonClassName } from "@/components/auth-card";
-import { ActionNotice } from "@/components/surface";
+import { ActionNotice } from "@/components/notices";
 import { acceptTermsAction, type TermsFormState } from "@/lib/terms/actions";
 import { TERMS_VERSION } from "@/lib/terms/version";
 

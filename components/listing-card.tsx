@@ -96,7 +96,7 @@ export function ListingCards({
   empty: string;
   hideFishery?: boolean;
   hideOffering?: boolean;
-  fisheriesByName?: Map<string, Pick<Fishery, "id" | "name" | "logo_path">>;
+  fisheriesByName?: Record<string, Pick<Fishery, "id" | "name" | "logo_path">>;
   sellerDisplays?: Record<number, PublicSellerDisplay>;
   columns?: 1 | 2;
 }) {
@@ -113,7 +113,7 @@ export function ListingCards({
       }
     >
       {listings.map((listing) => {
-        const fishery = fisheriesByName?.get(listing.fishery_name) ?? null;
+        const fishery = fisheriesByName?.[listing.fishery_name] ?? null;
 
         return (
           <MarketplaceListingCard

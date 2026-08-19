@@ -240,7 +240,7 @@ export function MarketplaceList({
       <ListingCards
         listings={paged}
         empty="No listings match these filters."
-        fisheriesByName={fisheriesByName}
+        fisheriesByName={Object.fromEntries(fisheriesByName)}
         sellerDisplays={sellerDisplays}
       />
       <ListPager
