@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { listMyOrganisations } from "@/lib/organisations/queries";
-import { accountPath } from "@/lib/organisations/paths";
+import { resolveActiveOrganisation, selectAccountPath } from "@/lib/organisations/active-account";
+import { readActiveOrganisationCookie } from "@/lib/organisations/active-session";
 import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 import type { OrganisationSummary } from "@/lib/organisations/types";
@@ -31,7 +32,6 @@ export async function requireDashboardUser(currentPath: string) {
 }
 
 export async function resolveDashboardAccount(
-  accountParam: string | undefined,
   currentPath: string,
 ): Promise<DashboardAccount> {
   const user = await getUser();
@@ -41,16 +41,18 @@ export async function resolveDashboardAccount(
   }
 
   const organisations = await listMyOrganisations();
-  const requestedId = Number(accountParam);
-  const defaultAccount =
-    organisations.find((organisation) => organisation.role === "OWNER") ??
-    organisations[0];
+  const cookieId = await readActiveOrganisationCookie();
+  const resolved = resolveActiveOrganisation(
+    organisations.map((organisation) => organisation.id),
+    cookieId,
+  );
 
-  if (!defaultAccount) {
-    if (
-      currentPath !== "/dashboard" &&
-      currentPath !== "/dashboard/profile"
-    ) {
+  if (!resolved.selectedId) {
+    if (resolved.needsSelection) {
+      redirect(selectAccountPath(currentPath));
+    }
+
+    if (currentPath !== "/dashboard" && currentPath !== "/dashboard/profile") {
       redirect("/dashboard");
     }
 
@@ -62,15 +64,12 @@ export async function resolveDashboardAccount(
     };
   }
 
-  const selected =
-    organisations.find((organisation) => organisation.id === requestedId) ??
-    defaultAccount;
+  const selected = organisations.find(
+    (organisation) => organisation.id === resolved.selectedId,
+  );
 
-  if (
-    organisations.length > 1 &&
-    (!Number.isInteger(requestedId) || selected.id !== requestedId)
-  ) {
-    redirect(accountPath(selected.id, currentPath));
+  if (!selected) {
+    redirect(selectAccountPath(currentPath));
   }
 
   return {

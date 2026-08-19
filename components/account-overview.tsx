@@ -7,8 +7,10 @@ import { listingIsOpen } from "@/lib/listings/types";
 import { listMyListingAlerts } from "@/lib/alerts/queries";
 import { listMyInAppNotifications } from "@/lib/notifications/queries";
 import { listOrganisationOrders } from "@/lib/orders/queries";
-import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
+import { accountPaymentsPath } from "@/lib/organisations/paths";
+import { selectAccountPath } from "@/lib/organisations/active-account";
 import { getOrganisation } from "@/lib/organisations/queries";
+import type { OrganisationSummary } from "@/lib/organisations/types";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
@@ -32,9 +34,11 @@ const OPEN_ORDER_STATUSES = new Set([
 
 export async function AccountOverviewSection({
   organisationId,
+  organisations = [],
   user,
 }: {
   organisationId: number | null;
+  organisations?: OrganisationSummary[];
   user: User;
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
@@ -57,8 +61,8 @@ export async function AccountOverviewSection({
   const hasAccount = Boolean(result);
   const canBuy = acceptedTerms && hasAccount;
   const canSell = canBuy && !sellError;
-  const href = (path: string) =>
-    organisationId ? accountPath(organisationId, path) : path;
+  const href = (path: string) => path;
+  const canSwitch = organisations.length > 1;
   const pendingHoldings = holdings.filter(
     (holding) => !holdingIsVerified(holding),
   ).length;
@@ -94,6 +98,24 @@ export async function AccountOverviewSection({
           Welcome back, {displayName(user)}.
         </p>
       </div>
+      {canSwitch && result ? (
+        <div className={panelClassName}>
+          <h2 className="text-lg font-semibold text-ink">Switch account</h2>
+          <p className="mt-2 text-sm text-ink-muted">
+            You are using {result.organisation.legal_name}. Holdings, listings,
+            orders, members, and payments on this dashboard are for that
+            organisation.
+          </p>
+          <p className="mt-3">
+            <Link
+              href={selectAccountPath("/dashboard")}
+              className="text-sm font-medium text-sea underline"
+            >
+              Switch account
+            </Link>
+          </p>
+        </div>
+      ) : null}
       <div className={panelClassName}>
         <h2 className="text-lg font-semibold text-ink">Onboarding</h2>
         <div className="mt-4">

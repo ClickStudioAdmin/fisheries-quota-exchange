@@ -16,6 +16,7 @@ import {
   notifyHoldingVerified,
 } from "@/lib/email/events";
 import { userFacingError } from "@/lib/errors/user-message";
+import { requireActiveOrganisationMatch } from "@/lib/organisations/active-session";
 import {
   FISHERY_LOGO_BUCKET,
   fisheryLogoExtension,
@@ -264,6 +265,14 @@ export async function createHoldingAction(
     !Number.isFinite(quantity)
   ) {
     return { error: "Organisation, fishery and quantity are required." };
+  }
+
+  if (!(await isPlatformAdmin())) {
+    const activeError = await requireActiveOrganisationMatch(organisationId);
+
+    if (activeError) {
+      return { error: activeError };
+    }
   }
 
   const { data, error } = await supabase.rpc("create_quota_holding", {

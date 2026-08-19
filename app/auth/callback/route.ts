@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { isPlatformAdmin } from "@/lib/admin/access";
-import { postLoginPath } from "@/lib/auth/paths";
+import { continueAfterAuthentication } from "@/lib/organisations/active-session";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 
@@ -31,7 +30,7 @@ export async function GET(request: Request) {
     await ensureOwnedAccount(supabase, user);
   }
 
-  const destination = postLoginPath(next, user ? await isPlatformAdmin() : false);
+  const destination = await continueAfterAuthentication(next);
 
   return NextResponse.redirect(`${origin}${destination}`);
 }

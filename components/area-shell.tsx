@@ -4,15 +4,29 @@ import { pageWidthClassName } from "@/components/surface";
 
 type AreaShellProps = {
   title: string;
+  operatingAs?: string | null;
   items: SideNavItem[];
   children: ReactNode;
 };
 
-export function AreaShell({ title, items, children }: AreaShellProps) {
+export function AreaShell({
+  title,
+  operatingAs,
+  items,
+  children,
+}: AreaShellProps) {
   return (
     <div className={`${pageWidthClassName} flex flex-col gap-8 py-8 lg:flex-row lg:py-12`}>
       <aside className="lg:w-56 lg:shrink-0">
-        <div className="lg:sticky lg:top-6">
+        <div className="lg:sticky lg:top-6 space-y-4">
+          {operatingAs ? (
+            <div className="border border-line bg-paper-raised p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-ink-muted">
+                Operating as
+              </p>
+              <p className="mt-2 text-sm font-medium text-ink">{operatingAs}</p>
+            </div>
+          ) : null}
           <Suspense
             fallback={
               <nav className="border border-line bg-paper-raised p-4">

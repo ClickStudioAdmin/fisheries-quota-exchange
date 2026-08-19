@@ -3,23 +3,20 @@
 import { useActionState, useEffect, useId, useState } from "react";
 import {
   buttonClassName,
-  fieldClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
 import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { createOrderAction } from "@/lib/orders/actions";
 import type { OrderFormState } from "@/lib/orders/types";
-import type { OrganisationSummary } from "@/lib/organisations/types";
 import { BUYER_PURCHASE_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: OrderFormState = {};
 
 type PurchaseFormProps = {
   listingId: number;
-  organisations: OrganisationSummary[];
 };
 
-export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
+export function PurchaseForm({ listingId }: PurchaseFormProps) {
   const [state, formAction, pending] = useActionState(
     createOrderAction,
     initialState,
@@ -42,21 +39,6 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [confirming, pending]);
 
-  function openConfirm() {
-    if (organisations.length > 1) {
-      const select = document.getElementById(
-        "buyer_organisation_id",
-      ) as HTMLSelectElement | null;
-
-      if (!select?.value) {
-        select?.reportValidity();
-        return;
-      }
-    }
-
-    setConfirming(true);
-  }
-
   return (
     <form action={formAction} className="mt-6 max-w-md space-y-4">
       <input type="hidden" name="listing_id" value={listingId} />
@@ -65,40 +47,11 @@ export function PurchaseForm({ listingId, organisations }: PurchaseFormProps) {
           {state.error}
         </p>
       ) : null}
-      {organisations.length === 1 ? (
-        <input
-          type="hidden"
-          name="buyer_organisation_id"
-          value={organisations[0].id}
-        />
-      ) : (
-        <div>
-          <label htmlFor="buyer_organisation_id" className="block text-sm text-ink">
-            Buy as
-          </label>
-          <select
-            id="buyer_organisation_id"
-            name="buyer_organisation_id"
-            required
-            className={fieldClassName}
-            defaultValue=""
-          >
-            <option value="" disabled>
-              Choose organisation
-            </option>
-            {organisations.map((organisation) => (
-              <option key={organisation.id} value={organisation.id}>
-                {organisation.legal_name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
       <button
         type="button"
         className={buttonClassName}
         disabled={pending}
-        onClick={openConfirm}
+        onClick={() => setConfirming(true)}
       >
         Purchase Now
       </button>

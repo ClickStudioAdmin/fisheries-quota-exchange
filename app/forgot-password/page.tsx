@@ -2,8 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
 import { ForgotPasswordForm } from "@/components/forgot-password-form";
-import { isPlatformAdmin } from "@/lib/admin/access";
-import { postLoginPath } from "@/lib/auth/paths";
+import { pathForSignedInUser } from "@/lib/organisations/active-session";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -14,7 +13,7 @@ export default async function ForgotPasswordPage() {
   const user = await getUser();
 
   if (user) {
-    redirect(postLoginPath(null, await isPlatformAdmin()));
+    redirect(await pathForSignedInUser());
   }
 
   return (

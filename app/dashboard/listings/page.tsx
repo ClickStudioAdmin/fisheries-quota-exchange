@@ -5,16 +5,8 @@ export const metadata = {
   title: "Listings",
 };
 
-export default async function DashboardListingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ account?: string }>;
-}) {
-  const params = await searchParams;
-  const account = await resolveDashboardAccount(
-    params.account,
-    "/dashboard/listings",
-  );
+export default async function DashboardListingsPage() {
+  const account = await resolveDashboardAccount("/dashboard/listings");
 
   if (account.needsSetup) {
     return null;

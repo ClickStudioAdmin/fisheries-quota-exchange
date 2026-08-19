@@ -40,7 +40,8 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/how-it-works` | Buyer and seller steps from account through payment and settlement |
 | `/privacy` | Privacy policy for this development site |
 | `/terms` | Terms of service: buyers, sellers, and platform commission if a committed trade does not complete |
-| `/dashboard` | Overview: onboarding, holdings/listings/orders/alerts counts, latest 10 in-app notices |
+| `/dashboard` | Overview: onboarding, Switch account (if more than one membership), holdings/listings/orders/alerts counts, latest 10 in-app notices |
+| `/select-account` | Choose the active organisation after login, or when switching |
 | `/dashboard/notifications` | Signed-in user inbox (default) and Channels tab for per-event email and in-app switches |
 | `/dashboard/alerts` | Signed-in user switches sale and/or lease alerts per fishery |
 | `/dashboard/payments` | Redirects to `/dashboard/profile?tab=payments` |
@@ -64,6 +65,8 @@ Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts
 - `terms_acceptances` (email + version; required before buy, bid, or list)
 
 Every signed-in user must agree to the current terms on Overview and add business details on Account details before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase shows the buyer acknowledgements as a confirmation step after Purchase Now; bid requires ticking them on the auction page. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms may make them liable to pay the platform commission. This phase does not auto-invoice that abort commission.
+
+Buy, bid, list, holdings, members, and payments use the active organisation from the session cookie. The browser is not trusted to choose a different organisation on the listing.
 
 Functions:
 

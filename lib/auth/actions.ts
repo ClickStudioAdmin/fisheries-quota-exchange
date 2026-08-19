@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { isPlatformAdmin } from "@/lib/admin/access";
-import { postLoginPath } from "@/lib/auth/paths";
+import { continueAfterAuthentication } from "@/lib/organisations/active-session";
+import { clearActiveOrganisationCookie } from "@/lib/organisations/active-session";
 import { userFacingError } from "@/lib/errors/user-message";
 import { getSiteUrl } from "@/lib/site-url";
 import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
@@ -123,7 +123,7 @@ export async function registerAction(
     await ensureOwnedAccount(supabase, data.user);
   }
 
-  redirect("/dashboard");
+  redirect(await continueAfterAuthentication());
 }
 
 export async function loginAction(
@@ -159,9 +159,7 @@ export async function loginAction(
     await ensureOwnedAccount(supabase, user);
   }
 
-  redirect(
-    postLoginPath(String(formData.get("next") ?? ""), await isPlatformAdmin()),
-  );
+  redirect(await continueAfterAuthentication(String(formData.get("next") ?? "")));
 }
 
 export async function forgotPasswordAction(
@@ -221,7 +219,7 @@ export async function updatePasswordAction(
     return { error: userFacingError(error) };
   }
 
-  redirect("/dashboard");
+  redirect(await continueAfterAuthentication());
 }
 
 export async function updatePersonAction(
@@ -378,6 +376,7 @@ export async function updateProfilePasswordAction(
 }
 
 export async function logoutAction() {
+  await clearActiveOrganisationCookie();
   const supabase = await createClient();
 
   if (supabase) {

@@ -1,17 +1,11 @@
 export function accountPath(
-  organisationId: number,
+  _organisationId?: number | null,
   path = "/dashboard",
   query?: Record<string, string>,
 ) {
-  const params = new URLSearchParams({ account: String(organisationId) });
-
-  if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      params.set(key, value);
-    }
-  }
-
-  return `${path}?${params.toString()}`;
+  const params = new URLSearchParams(query);
+  const search = params.toString();
+  return search ? `${path}?${search}` : path;
 }
 
 export function adminUserPath(email: string) {
@@ -22,15 +16,11 @@ export function adminHoldingPath(id: number) {
   return `/admin/holdings/${id}`;
 }
 
-export function dashboardHoldingPath(holdingId: number, organisationId: number) {
-  return accountPath(organisationId, `/dashboard/holdings/${holdingId}`);
+export function dashboardHoldingPath(holdingId: number, _organisationId?: number) {
+  return `/dashboard/holdings/${holdingId}`;
 }
 
-export function accountPaymentsPath(organisationId?: number | null) {
-  if (organisationId) {
-    return accountPath(organisationId, "/dashboard/profile", { tab: "payments" });
-  }
-
+export function accountPaymentsPath(_organisationId?: number | null) {
   return "/dashboard/profile?tab=payments";
 }
 

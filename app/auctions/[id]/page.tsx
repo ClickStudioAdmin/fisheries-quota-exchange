@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
+import { SwitchAccountLink } from "@/components/switch-account-notice";
 import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -25,6 +26,7 @@ import {
   listingStatusLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
@@ -66,19 +68,22 @@ export default async function AuctionPage({
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
   const organisations = user ? await listMyOrganisations() : [];
+  const active = user ? await getActiveOrganisation() : null;
+  const auctionPath = `/auctions/${listing.id}`;
+  const canSwitch = organisations.length > 1;
+  const operatingAsSeller = active?.id === listing.organisation_id;
   const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
-  const bidderOrganisations = organisations.filter(
-    (organisation) => organisation.id !== listing.organisation_id,
-  );
   const ended = auctionHasEnded(listing);
   const started = auctionHasStarted(listing);
   const live = auctionIsLive(listing);
-  const canManage = admin || role === "OWNER" || role === "ADMIN";
+  const canManage =
+    admin ||
+    (operatingAsSeller && (role === "OWNER" || role === "ADMIN"));
   const canCancel = canManage && canCancelOpenListing(listing, bids.length);
   const canClose =
     listing.status === "PUBLISHED" && ended && Boolean(user);
   const minBid = minimumBid(listing, bids.length);
-  const isSeller = role !== null;
+  const isSeller = operatingAsSeller;
   const feeLabel = platformFeeLabel(settings, listing.offering);
 
   return (
@@ -168,20 +173,30 @@ export default async function AuctionPage({
               </Link>{" "}
               before you can bid.
             </p>
-          ) : isSeller && bidderOrganisations.length === 0 ? (
+          ) : !active ? (
             <p className="text-sm text-ink-muted">
-              You cannot bid on your organisation&apos;s auction. Use a
-              different organisation to test a bid.
+              <SwitchAccountLink next={auctionPath}>
+                Choose an account
+              </SwitchAccountLink>{" "}
+              before you can bid.
+            </p>
+          ) : isSeller ? (
+            <p className="text-sm text-ink-muted">
+              You cannot bid on this auction while using the seller&apos;s
+              account.
+              {canSwitch ? (
+                <>
+                  {" "}
+                  <SwitchAccountLink next={auctionPath} /> to bid as another
+                  organisation.
+                </>
+              ) : null}
             </p>
           ) : !acceptedTerms ? (
             <TermsRequiredNotice action="bid" />
-          ) : bidderOrganisations.length > 0 ? (
-            <BidForm
-              listingId={listing.id}
-              minimumBid={minBid}
-              organisations={bidderOrganisations}
-            />
-          ) : null}
+          ) : (
+            <BidForm listingId={listing.id} minimumBid={minBid} />
+          )}
         </div>
       ) : listing.status === "PUBLISHED" && !started ? (
         <p className="mt-8 text-sm text-ink-muted">

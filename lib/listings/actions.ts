@@ -14,6 +14,7 @@ import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import { requireActiveOrganisationMatch } from "@/lib/organisations/active-session";
 import {
   SELLER_ACKNOWLEDGEMENTS,
   requireAcknowledgements,
@@ -51,6 +52,12 @@ export async function createListingAction(
 
   if (!Number.isInteger(holdingId) || !Number.isInteger(organisationId)) {
     return { error: "Choose a holding." };
+  }
+
+  const activeError = await requireActiveOrganisationMatch(organisationId);
+
+  if (activeError) {
+    return { error: activeError };
   }
 
   if (!LISTING_OFFERINGS.includes(offering as (typeof LISTING_OFFERINGS)[number])) {

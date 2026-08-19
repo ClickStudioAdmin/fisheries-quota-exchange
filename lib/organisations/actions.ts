@@ -12,6 +12,7 @@ import {
 } from "@/lib/organisations/permissions";
 import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
 import { accountPath } from "@/lib/organisations/paths";
+import { setActiveOrganisationCookie } from "@/lib/organisations/active-session";
 import {
   isOrganisationRole,
   organisationRoleLabel,
@@ -78,7 +79,13 @@ export async function createOrganisationAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
-  redirect(accountPath(Number(data)));
+  const organisationId = Number(data);
+
+  if (Number.isInteger(organisationId) && organisationId > 0) {
+    await setActiveOrganisationCookie(organisationId);
+  }
+
+  redirect("/dashboard");
 }
 
 export async function addMemberAction(

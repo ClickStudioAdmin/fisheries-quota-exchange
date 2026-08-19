@@ -1,5 +1,8 @@
-import { notFound, redirect } from "next/navigation";
-import { accountPath } from "@/lib/organisations/paths";
+import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
+import { SwitchAccountNotice } from "@/components/switch-account-notice";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
 
 export default async function OrganisationPage({
   params,
@@ -13,5 +16,25 @@ export default async function OrganisationPage({
     notFound();
   }
 
-  redirect(accountPath(organisationId));
+  const role = await getMyRole(organisationId);
+
+  if (!role) {
+    notFound();
+  }
+
+  const active = await getActiveOrganisation();
+
+  if (active?.id === organisationId) {
+    redirect("/dashboard");
+  }
+
+  const name = (await getOrganisationLegalName(organisationId)) ?? "that account";
+
+  return (
+    <SwitchAccountNotice
+      organisationId={organisationId}
+      organisationName={name}
+      next="/dashboard"
+    />
+  );
 }

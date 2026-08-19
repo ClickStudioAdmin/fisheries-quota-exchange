@@ -19,7 +19,9 @@ import { LabeledFields, panelClassName } from "@/components/surface";
 import { StatusBadge } from "@/components/status-badge";
 import { OrderProgress } from "@/components/order-progress";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { getMyRole } from "@/lib/organisations/queries";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
+import { SwitchAccountNotice } from "@/components/switch-account-notice";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
 import {
@@ -74,7 +76,7 @@ export default async function OrderPage({
     order = (await getOrder(orderId)) ?? order;
   }
 
-  const [reservation, transaction, events, buyerRole, sellerRole, admin, payment] =
+  const [reservation, transaction, events, buyerRole, sellerRole, admin, payment, active] =
     await Promise.all([
       getReservationForOrder(order.id),
       getTransactionForOrder(order.id),
@@ -83,10 +85,37 @@ export default async function OrderPage({
       getMyRole(order.seller_organisation_id),
       isPlatformAdmin(),
       getPaymentForOrder(order.id),
+      getActiveOrganisation(),
     ]);
 
-  const isBuyer = buyerRole !== null;
-  const isSeller = sellerRole !== null;
+  const isBuyer = Boolean(active) && active?.id === order.buyer_organisation_id;
+  const isSeller = Boolean(active) && active?.id === order.seller_organisation_id;
+  const involvedIds = [
+    buyerRole ? order.buyer_organisation_id : null,
+    sellerRole ? order.seller_organisation_id : null,
+  ].filter((id): id is number => id != null);
+
+  if (!admin && involvedIds.length === 0) {
+    notFound();
+  }
+
+  if (
+    !admin &&
+    active &&
+    active.id !== order.buyer_organisation_id &&
+    active.id !== order.seller_organisation_id
+  ) {
+    const switchId = involvedIds[0];
+    const switchName =
+      (await getOrganisationLegalName(switchId)) ?? "that account";
+    return (
+      <SwitchAccountNotice
+        organisationId={switchId}
+        organisationName={switchName}
+        next={`/orders/${order.id}`}
+      />
+    );
+  }
   const showCommission = isSeller || (Boolean(admin) && !isBuyer);
   const hasPaymentReceivedEvent = events.some(
     (event) => event.event_type === "PAYMENT_RECEIVED",
@@ -99,7 +128,7 @@ export default async function OrderPage({
   const canCancel =
     (order.status === "AWAITING_COMPLIANCE" ||
       order.status === "AWAITING_PAYMENT") &&
-    (admin || buyerRole !== null);
+    (admin || isBuyer);
   const payPanel = orderPayPanel({
     orderStatus: order.status,
     isBuyer,

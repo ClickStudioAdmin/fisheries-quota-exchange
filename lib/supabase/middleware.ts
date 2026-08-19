@@ -1,6 +1,43 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  ACTIVE_ORGANISATION_COOKIE,
+  activeOrganisationCookieOptions,
+  parseActiveOrganisationId,
+  pathRequiresActiveOrganisation,
+  resolveActiveOrganisation,
+  selectAccountPath,
+} from "@/lib/organisations/active-account";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
+
+function copyCookies(from: NextResponse, to: NextResponse) {
+  from.cookies.getAll().forEach((cookie) => {
+    to.cookies.set(cookie);
+  });
+  return to;
+}
+
+function applyActiveOrganisationCookie(
+  response: NextResponse,
+  resolved: ReturnType<typeof resolveActiveOrganisation>,
+) {
+  const options = activeOrganisationCookieOptions();
+
+  if (resolved.clearCookie) {
+    response.cookies.set(ACTIVE_ORGANISATION_COOKIE, "", {
+      ...options,
+      maxAge: 0,
+    });
+  } else if (resolved.bindId != null) {
+    response.cookies.set(
+      ACTIVE_ORGANISATION_COOKIE,
+      String(resolved.bindId),
+      options,
+    );
+  }
+
+  return response;
+}
 
 export async function updateSession(request: NextRequest) {
   const env = getSupabasePublicEnv();
@@ -10,7 +47,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/update-password") ||
     pathname.startsWith("/organisations") ||
     pathname.startsWith("/orders") ||
-    pathname.startsWith("/admin");
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/select-account");
 
   if (!env) {
     if (isProtected) {
@@ -18,7 +56,9 @@ export async function updateSession(request: NextRequest) {
       const next = `${pathname}${request.nextUrl.search}`;
       url.pathname = "/login";
       url.search = "";
-      url.searchParams.set("next", next);
+      if (!pathname.startsWith("/select-account")) {
+        url.searchParams.set("next", next);
+      }
       return NextResponse.redirect(url);
     }
 
@@ -53,8 +93,39 @@ export async function updateSession(request: NextRequest) {
     const next = `${pathname}${request.nextUrl.search}`;
     url.pathname = "/login";
     url.search = "";
-    url.searchParams.set("next", next);
-    return NextResponse.redirect(url);
+    if (!pathname.startsWith("/select-account")) {
+      url.searchParams.set("next", next);
+    }
+    return copyCookies(supabaseResponse, NextResponse.redirect(url));
+  }
+
+  if (user?.email && pathRequiresActiveOrganisation(pathname)) {
+    const { data } = await supabase
+      .from("organisation_users")
+      .select("organisation_id")
+      .eq("email", user.email.toLowerCase());
+    const organisationIds = (data ?? [])
+      .map((row) => Number(row.organisation_id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+    const cookieId = parseActiveOrganisationId(
+      request.cookies.get(ACTIVE_ORGANISATION_COOKIE)?.value,
+    );
+    const resolved = resolveActiveOrganisation(organisationIds, cookieId);
+
+    if (resolved.needsSelection) {
+      const next = `${pathname}${request.nextUrl.search}`;
+      const url = request.nextUrl.clone();
+      const destination = new URL(selectAccountPath(next), request.nextUrl.origin);
+      url.pathname = destination.pathname;
+      url.search = destination.search;
+      const redirectResponse = copyCookies(
+        supabaseResponse,
+        NextResponse.redirect(url),
+      );
+      return applyActiveOrganisationCookie(redirectResponse, resolved);
+    }
+
+    return applyActiveOrganisationCookie(supabaseResponse, resolved);
   }
 
   return supabaseResponse;

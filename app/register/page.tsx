@@ -2,8 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
 import { RegisterForm } from "@/components/register-form";
-import { isPlatformAdmin } from "@/lib/admin/access";
-import { postLoginPath } from "@/lib/auth/paths";
+import { pathForSignedInUser } from "@/lib/organisations/active-session";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { getUser } from "@/lib/supabase/server";
 import { registrationsAllowed } from "@/lib/settings/queries";
@@ -16,7 +15,7 @@ export default async function RegisterPage() {
   const user = await getUser();
 
   if (user) {
-    redirect(postLoginPath(null, await isPlatformAdmin()));
+    redirect(await pathForSignedInUser());
   }
 
   const configured = getSupabasePublicEnv() !== null;

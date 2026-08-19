@@ -26,6 +26,10 @@ import {
 import { userFacingError } from "@/lib/errors/user-message";
 import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
 import {
+  ACTIVE_ORGANISATION_REQUIRED_MESSAGE,
+  getActiveOrganisation,
+} from "@/lib/organisations/active-session";
+import {
   BUYER_PURCHASE_ACKNOWLEDGEMENTS,
   requireAcknowledgements,
 } from "@/lib/terms/acknowledgements";
@@ -67,16 +71,29 @@ export async function createOrderAction(
   }
 
   const listingId = Number(formData.get("listing_id"));
-  const buyerOrganisationId = Number(formData.get("buyer_organisation_id"));
+  const active = await getActiveOrganisation();
 
-  if (!Number.isInteger(listingId) || !Number.isInteger(buyerOrganisationId)) {
-    return { error: "Choose an organisation to buy with." };
+  if (!Number.isInteger(listingId)) {
+    return { error: "Listing not found." };
   }
+
+  if (!active) {
+    return { error: ACTIVE_ORGANISATION_REQUIRED_MESSAGE };
+  }
+
+  const buyerOrganisationId = active.id;
 
   const listing = await getListing(listingId);
 
   if (!listing) {
     return { error: "Listing not found." };
+  }
+
+  if (listing.organisation_id === buyerOrganisationId) {
+    return {
+      error:
+        "You cannot purchase this listing while using the seller’s account. Switch account to buy as another organisation.",
+    };
   }
 
   const termsError = await requireTermsError();

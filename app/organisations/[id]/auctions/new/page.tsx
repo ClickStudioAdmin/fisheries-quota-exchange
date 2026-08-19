@@ -7,7 +7,9 @@ import {
   listHoldingCommitments,
   listHoldingsForOrganisation,
 } from "@/lib/fisheries/queries";
-import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
+import { accountPaymentsPath } from "@/lib/organisations/paths";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { SwitchAccountNotice } from "@/components/switch-account-notice";
 import { loginPath } from "@/lib/auth/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
@@ -54,6 +56,19 @@ export default async function NewAuctionPage({
     notFound();
   }
 
+  const active = await getActiveOrganisation();
+  const auctionNext = `/organisations/${organisationId}/auctions/new?holding_id=${holdingId}`;
+
+  if (!active || active.id !== organisationId) {
+    return (
+      <SwitchAccountNotice
+        organisationId={organisationId}
+        organisationName={result.organisation.legal_name}
+        next={auctionNext}
+      />
+    );
+  }
+
   const [holdings, fisheries, settings, verified, sellError, acceptedTerms] =
     await Promise.all([
       listHoldingsForOrganisation(organisationId),
@@ -70,14 +85,14 @@ export default async function NewAuctionPage({
   }
 
   if (!holdingIsVerified(holding)) {
-    redirect(accountPath(organisationId, "/dashboard/holdings"));
+    redirect("/dashboard/holdings");
   }
 
   const commitments = await listHoldingCommitments([holding.id]);
   const available = Number(holding.quantity) - (commitments.get(holding.id) ?? 0);
 
   if (!(available > 0)) {
-    redirect(accountPath(organisationId, "/dashboard/holdings"));
+    redirect("/dashboard/holdings");
   }
 
   const fishery = fisheries.find((item) => item.id === holding.fishery_id);
@@ -91,7 +106,7 @@ export default async function NewAuctionPage({
   return (
     <div>
       <p className="text-sm text-ink-muted">
-        <Link href={accountPath(organisationId, "/dashboard/holdings")} className="underline">
+        <Link href="/dashboard/holdings" className="underline">
           {result.organisation.legal_name}
         </Link>
       </p>

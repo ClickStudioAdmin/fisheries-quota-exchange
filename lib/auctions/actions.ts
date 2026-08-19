@@ -7,6 +7,11 @@ import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
 import {
+  ACTIVE_ORGANISATION_REQUIRED_MESSAGE,
+  getActiveOrganisation,
+  requireActiveOrganisationMatch,
+} from "@/lib/organisations/active-session";
+import {
   BUYER_BID_ACKNOWLEDGEMENTS,
   SELLER_ACKNOWLEDGEMENTS,
   requireAcknowledgements,
@@ -50,6 +55,12 @@ export async function createAuctionAction(
 
   if (!Number.isInteger(holdingId) || !Number.isInteger(organisationId)) {
     return { error: "Choose a holding." };
+  }
+
+  const activeError = await requireActiveOrganisationMatch(organisationId);
+
+  if (activeError) {
+    return { error: activeError };
   }
 
   if (!LISTING_OFFERINGS.includes(offering as (typeof LISTING_OFFERINGS)[number])) {
@@ -143,12 +154,18 @@ export async function placeBidAction(
   }
 
   const listingId = Number(formData.get("listing_id"));
-  const organisationId = Number(formData.get("bidder_organisation_id"));
+  const active = await getActiveOrganisation();
   const amount = Number(read(formData, "amount_aud"));
 
-  if (!Number.isInteger(listingId) || !Number.isInteger(organisationId)) {
-    return { error: "Choose an organisation to bid with." };
+  if (!Number.isInteger(listingId)) {
+    return { error: "Listing not found." };
   }
+
+  if (!active) {
+    return { error: ACTIVE_ORGANISATION_REQUIRED_MESSAGE };
+  }
+
+  const organisationId = active.id;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Bid must be greater than zero." };
@@ -174,6 +191,13 @@ export async function placeBidAction(
 
   const listing = await getListing(listingId);
   const previous = (await listBids(listingId))[0] ?? null;
+
+  if (listing?.organisation_id === organisationId) {
+    return {
+      error:
+        "You cannot bid on this auction while using the seller’s account. Switch account to bid as another organisation.",
+    };
+  }
   const { error } = await supabase.rpc("place_bid", {
     p_listing_id: listingId,
     p_bidder_organisation_id: organisationId,

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HoldingRecord } from "@/components/holding-record";
+import { SwitchAccountNotice } from "@/components/switch-account-notice";
 import { getHolding } from "@/lib/fisheries/queries";
-import { accountPath } from "@/lib/organisations/paths";
-import { getMyRole } from "@/lib/organisations/queries";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
 
 type DashboardHoldingPageProps = {
   params: Promise<{ id: string }>;
@@ -38,10 +39,25 @@ export default async function DashboardHoldingPage({
     notFound();
   }
 
+  const active = await getActiveOrganisation();
+
+  if (!active || active.id !== holding.organisation_id) {
+    const name =
+      (await getOrganisationLegalName(holding.organisation_id)) ??
+      "that account";
+    return (
+      <SwitchAccountNotice
+        organisationId={holding.organisation_id}
+        organisationName={name}
+        next={`/dashboard/holdings/${holding.id}`}
+      />
+    );
+  }
+
   return (
     <HoldingRecord
       holding={holding}
-      backHref={accountPath(holding.organisation_id, "/dashboard/holdings")}
+      backHref="/dashboard/holdings"
       backLabel="Quota Holdings"
       variant="account"
     />

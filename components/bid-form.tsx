@@ -6,7 +6,6 @@ import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { placeBidAction } from "@/lib/auctions/actions";
 import type { BidFormState } from "@/lib/auctions/types";
 import { formatAud } from "@/lib/listings/types";
-import type { OrganisationSummary } from "@/lib/organisations/types";
 import { BUYER_BID_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: BidFormState = {};
@@ -14,10 +13,9 @@ const initialState: BidFormState = {};
 type BidFormProps = {
   listingId: number;
   minimumBid: number;
-  organisations: OrganisationSummary[];
 };
 
-export function BidForm({ listingId, minimumBid, organisations }: BidFormProps) {
+export function BidForm({ listingId, minimumBid }: BidFormProps) {
   const [state, formAction, pending] = useActionState(
     placeBidAction,
     initialState,
@@ -31,35 +29,6 @@ export function BidForm({ listingId, minimumBid, organisations }: BidFormProps) 
           {state.error}
         </p>
       ) : null}
-      {organisations.length === 1 ? (
-        <input
-          type="hidden"
-          name="bidder_organisation_id"
-          value={organisations[0].id}
-        />
-      ) : (
-        <div>
-          <label htmlFor="bidder_organisation_id" className="block text-sm text-ink">
-            Bid as
-          </label>
-          <select
-            id="bidder_organisation_id"
-            name="bidder_organisation_id"
-            required
-            className={fieldClassName}
-            defaultValue=""
-          >
-            <option value="" disabled>
-              Choose organisation
-            </option>
-            {organisations.map((organisation) => (
-              <option key={organisation.id} value={organisation.id}>
-                {organisation.legal_name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
       <div>
         <label htmlFor="amount_aud" className="block text-sm text-ink">
           Bid per unit (AUD), minimum {formatAud(minimumBid)}

@@ -6,7 +6,6 @@ import {
   AccountSecuritySection,
 } from "@/components/account-sections";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
-import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
 
 export const metadata = {
   title: "Account details",
@@ -21,13 +20,10 @@ function tabClassName(active: boolean) {
 export default async function DashboardProfilePage({
   searchParams,
 }: {
-  searchParams: Promise<{ account?: string; tab?: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const params = await searchParams;
-  const account = await resolveDashboardAccount(
-    params.account,
-    "/dashboard/profile",
-  );
+  const account = await resolveDashboardAccount("/dashboard/profile");
   const tab =
     params.tab === "security" ||
     params.tab === "members" ||
@@ -35,16 +31,10 @@ export default async function DashboardProfilePage({
       ? params.tab
       : "profile";
   const organisationId = account.selected?.id ?? null;
-  const profileHref = organisationId
-    ? accountPath(organisationId, "/dashboard/profile")
-    : "/dashboard/profile";
-  const securityHref = organisationId
-    ? accountPath(organisationId, "/dashboard/profile", { tab: "security" })
-    : "/dashboard/profile?tab=security";
-  const membersHref = organisationId
-    ? accountPath(organisationId, "/dashboard/profile", { tab: "members" })
-    : "/dashboard/profile?tab=members";
-  const paymentsHref = accountPaymentsPath(organisationId);
+  const profileHref = "/dashboard/profile";
+  const securityHref = "/dashboard/profile?tab=security";
+  const membersHref = "/dashboard/profile?tab=members";
+  const paymentsHref = "/dashboard/profile?tab=payments";
 
   return (
     <div className="space-y-6">

@@ -11,15 +11,18 @@ There is no quota, marketplace, or listing functionality in this phase.
 | Path | Access |
 | --- | --- |
 | `/register` | Creates the Auth user (name, email, phone). Business details are added later on Account details |
-| `/dashboard` | Overview |
+| `/select-account` | After login, choose which organisation to use when the person belongs to more than one |
+| `/dashboard` | Overview. Switch account is here when the person has more than one membership |
 | `/dashboard/profile` | Account details: Profile, Password and security, Members, and Payments (Stripe Connect) tabs |
 | `/dashboard/members` | Redirects to `/dashboard/profile?tab=members` |
 | `/organisations/new` | Redirects to the dashboard |
-| `/organisations/[id]` | Redirects to `/dashboard?account=[id]` |
-
-Signed-out users are redirected to `/login`.
+| `/organisations/[id]` | If that organisation is already active, redirects to Overview. Otherwise offers Switch account |
 
 Registration collects the user’s name, email, phone, and password. After email confirm they add legal name, trading name, and ABN on `/dashboard/profile`. That creates the organisation and makes the user `OWNER`. They must complete those business details, and agree to the terms, before they can buy or list. A user may own only one account. They can still be added to someone else’s account.
+
+Login is personal (email and password). If the person belongs to two or more organisations, they choose which account to use on `/select-account` after login. That choice is stored in an httpOnly session cookie and is the source of truth for holdings, listings, orders, members, payments, buying, and bidding. There is no Buy as / Bid as picker. Overview shows **Switch account** when they have more than one membership. The dashboard chrome shows **Operating as** the active organisation. Notifications, Listing Alerts, and Password and security stay personal. Deep links that belong to another membership prompt a switch; they do not change account silently.
+
+Signed-out users are redirected to `/login`.
 
 ## Roles
 

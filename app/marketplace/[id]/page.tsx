@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
+import { SwitchAccountLink } from "@/components/switch-account-notice";
 import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
@@ -23,6 +24,7 @@ import {
   listingStatusLabel,
 } from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { getUser } from "@/lib/supabase/server";
 import { isPaymentsConfigured } from "@/lib/payments/env";
@@ -68,10 +70,13 @@ export default async function ListingPage({
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
   const organisations = user ? await listMyOrganisations() : [];
-  const buyerOrganisations = organisations.filter(
-    (organisation) => organisation.id !== listing.organisation_id,
-  );
-  const canManage = admin || role === "OWNER" || role === "ADMIN";
+  const active = user ? await getActiveOrganisation() : null;
+  const listingPath = `/marketplace/${listing.id}`;
+  const canSwitch = organisations.length > 1;
+  const operatingAsSeller = active?.id === listing.organisation_id;
+  const canManage =
+    admin ||
+    (operatingAsSeller && (role === "OWNER" || role === "ADMIN"));
   const showEdit = canManage && canEditListingPrice(listing);
   const showCancel = canManage && canCancelOpenListing(listing);
   const maxQuantity = listingEditMaxQuantity(
@@ -88,9 +93,9 @@ export default async function ListingPage({
   const canPurchase =
     listing.status === "PUBLISHED" &&
     !expired &&
-    buyerOrganisations.length > 0 &&
+    Boolean(active) &&
+    !operatingAsSeller &&
     sellerAcceptsCards;
-  const isSeller = role !== null;
   const feeLabel = platformFeeLabel(settings, listing.offering);
 
   return (
@@ -165,10 +170,24 @@ export default async function ListingPage({
               </Link>{" "}
               before you can buy.
             </p>
-          ) : isSeller && buyerOrganisations.length === 0 ? (
+          ) : !active ? (
             <p className="text-sm text-ink-muted">
-              You cannot purchase your organisation&apos;s listing. Use a
-              different organisation to test a buy.
+              <SwitchAccountLink next={listingPath}>
+                Choose an account
+              </SwitchAccountLink>{" "}
+              before you can buy.
+            </p>
+          ) : operatingAsSeller ? (
+            <p className="text-sm text-ink-muted">
+              You cannot purchase this listing while using the seller&apos;s
+              account.
+              {canSwitch ? (
+                <>
+                  {" "}
+                  <SwitchAccountLink next={listingPath} /> to buy as another
+                  organisation.
+                </>
+              ) : null}
             </p>
           ) : !acceptedTerms ? (
             <TermsRequiredNotice action="buy" />
@@ -178,10 +197,7 @@ export default async function ListingPage({
               cannot be purchased yet.
             </p>
           ) : canPurchase ? (
-            <PurchaseForm
-              listingId={listing.id}
-              organisations={buyerOrganisations}
-            />
+            <PurchaseForm listingId={listing.id} />
           ) : null}
         </div>
       ) : (

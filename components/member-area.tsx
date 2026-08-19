@@ -3,29 +3,24 @@ import { AreaShell } from "@/components/area-shell";
 import type { SideNavLink } from "@/components/side-nav";
 import { getMemberActionCounts } from "@/lib/nav/action-counts";
 import { getMyUnreadNotificationCount } from "@/lib/notifications/queries";
-import { accountPath } from "@/lib/organisations/paths";
+import { resolveActiveOrganisation } from "@/lib/organisations/active-account";
+import { readActiveOrganisationCookie } from "@/lib/organisations/active-session";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 
 export async function MemberArea({ children }: { children: ReactNode }) {
-  const [organisations, counts, unreadNotifications] = await Promise.all([
+  const [organisations, counts, unreadNotifications, cookieId] = await Promise.all([
     listMyOrganisations(),
     getMemberActionCounts(),
     getMyUnreadNotificationCount(),
+    readActiveOrganisationCookie(),
   ]);
-  const defaultAccount =
-    organisations.find((organisation) => organisation.role === "OWNER") ??
-    organisations[0];
-
-  const accountItems: SideNavLink[] =
-    organisations.length > 1
-      ? organisations.map((organisation) => ({
-          href: accountPath(organisation.id),
-          label: organisation.legal_name,
-          accountId: organisation.id,
-          isDefault: organisation.id === defaultAccount?.id,
-          badge: counts.byOrganisation[organisation.id] ?? 0,
-        }))
-      : [];
+  const resolved = resolveActiveOrganisation(
+    organisations.map((organisation) => organisation.id),
+    cookieId,
+  );
+  const active = organisations.find(
+    (organisation) => organisation.id === resolved.selectedId,
+  );
 
   const sectionItems: SideNavLink[] = [
     { href: "/dashboard", label: "Overview" },
@@ -58,7 +53,11 @@ export async function MemberArea({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <AreaShell title="Account" items={[...accountItems, ...sectionItems]}>
+    <AreaShell
+      title="Account"
+      operatingAs={active?.legal_name ?? null}
+      items={sectionItems}
+    >
       {children}
     </AreaShell>
   );

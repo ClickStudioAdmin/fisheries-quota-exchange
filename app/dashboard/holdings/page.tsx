@@ -8,13 +8,10 @@ export const metadata = {
 export default async function DashboardHoldingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ account?: string; created?: string; listing?: string }>;
+  searchParams: Promise<{ created?: string; listing?: string }>;
 }) {
   const params = await searchParams;
-  const account = await resolveDashboardAccount(
-    params.account,
-    "/dashboard/holdings",
-  );
+  const account = await resolveDashboardAccount("/dashboard/holdings");
 
   if (account.needsSetup) {
     return null;
