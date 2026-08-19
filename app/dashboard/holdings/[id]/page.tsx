@@ -42,7 +42,7 @@ export default async function DashboardHoldingPage({
     <HoldingRecord
       holding={holding}
       backHref={accountPath(holding.organisation_id, "/dashboard/holdings")}
-      backLabel="Quota holdings"
+      backLabel="Quota Holdings"
       variant="account"
     />
   );

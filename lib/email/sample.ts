@@ -11,7 +11,7 @@ export function sampleEmailData(
   const orderUrl = `${siteUrl}/orders/1001`;
   const holdingUrl = `${siteUrl}/dashboard/holdings/1`;
   const accountUrl = `${siteUrl}/organisations/1`;
-  const paymentsUrl = `${siteUrl}/dashboard/payments?account=1`;
+  const paymentsUrl = `${siteUrl}/dashboard/profile?tab=payments&account=1`;
   const adminHoldings = `${siteUrl}/admin/holdings`;
   const adminListings = `${siteUrl}/admin/listings`;
   const adminOrders = `${siteUrl}/admin/orders`;

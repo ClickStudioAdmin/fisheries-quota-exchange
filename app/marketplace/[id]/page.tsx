@@ -161,7 +161,7 @@ export default async function ListingPage({
             <p className="text-sm text-ink-muted">
               Add your business details on{" "}
               <Link href="/dashboard/profile" className="underline">
-                Profile
+                Account details
               </Link>{" "}
               before you can buy.
             </p>

@@ -62,7 +62,7 @@ export default async function HoldingsAdminPage({
     <div className="space-y-10">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Quota holdings
+          Quota Holdings
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           Users create and update their own holdings. Unverified holdings must
@@ -72,7 +72,7 @@ export default async function HoldingsAdminPage({
         </p>
       </div>
       <DataTable
-        caption="Quota holdings"
+        caption="Quota Holdings"
         empty="No holdings yet."
         searchPlaceholder="Filter holdings…"
         defaultSort={{ key: "id", direction: "desc" }}

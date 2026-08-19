@@ -52,7 +52,7 @@ export const emailCopy = {
     notice(
       `You are now an owner of ${input.accountName}`,
       [
-        `Your role on ${input.accountName} is now Owner. You can manage members, listings, and payments for this account.`,
+        `Your role on ${input.accountName} is now Owner. You can manage members and payments on Account details, and listings for this account.`,
       ],
       { label: "Open account", url: input.accountUrl },
     ),
@@ -63,9 +63,9 @@ export const emailCopy = {
     notice(
       `Payments setup is complete for ${input.accountName}`,
       [
-        "This account can receive settlement transfers on FQX. You can list quota for sale or lease when holdings are verified.",
+        "This account can receive settlement transfers on FQX. You can list quota for sale or lease when holdings are verified. Review payments setup on the Payments tab of Account details.",
       ],
-      { label: "Payments", url: input.paymentsUrl },
+      { label: "Account details", url: input.paymentsUrl },
     ),
   holding_verified: (input: {
     fisheryName: string;
@@ -73,7 +73,9 @@ export const emailCopy = {
   }) =>
     notice(
       `Holding verified: ${input.fisheryName}`,
-      ["This holding is verified. You can list quota from it when payments setup is complete."],
+      [
+        "This holding is verified. You can list quota from it when payments setup is complete on the Payments tab of Account details.",
+      ],
       { label: "View holding", url: input.holdingUrl },
     ),
   holding_needs_changes: (input: {

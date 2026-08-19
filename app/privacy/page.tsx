@@ -34,7 +34,7 @@ export default function PrivacyPage() {
             Membership and role information for accounts you belong to
           </li>
           <li>
-            Quota holdings, listings, bids, orders, and related audit records
+            Quota Holdings, listings, bids, orders, and related audit records
           </li>
           <li>
             Payment records needed to take test payments and settle trades

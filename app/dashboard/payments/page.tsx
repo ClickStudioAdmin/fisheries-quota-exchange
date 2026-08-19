@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Payments",
+  title: "Account details",
 };
 
 export default async function DashboardPaymentsPage({

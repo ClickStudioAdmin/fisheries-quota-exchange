@@ -80,7 +80,7 @@ const EMAIL_CATALOG: Record<
   },
   holding_verified: {
     summary: "After a holding is verified",
-    description: "Tells managers the holding can be listed when payments setup is complete.",
+    description: "Tells managers the holding can be listed when payments setup is complete on the Payments tab of Account details.",
     sentWhen: "After verify_quota_holding, or when create_quota_holding auto-verifies.",
     trigger: "verifyHoldingAction or createHoldingAction when status is VERIFIED.",
     recipient: "Account Owner and Admin emails.",

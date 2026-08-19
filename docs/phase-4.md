@@ -10,9 +10,9 @@ There is no quota, marketplace, or listing functionality in this phase.
 
 | Path | Access |
 | --- | --- |
-| `/register` | Creates the Auth user (name, email, phone). Business details are added later on Profile |
+| `/register` | Creates the Auth user (name, email, phone). Business details are added later on Account details |
 | `/dashboard` | Overview |
-| `/dashboard/profile` | Account details: Profile, Members, and Payments (Stripe Connect) tabs |
+| `/dashboard/profile` | Account details: Profile, Password and security, Members, and Payments (Stripe Connect) tabs |
 | `/dashboard/members` | Redirects to `/dashboard/profile?tab=members` |
 | `/organisations/new` | Redirects to the dashboard |
 | `/organisations/[id]` | Redirects to `/dashboard?account=[id]` |

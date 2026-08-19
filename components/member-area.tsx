@@ -38,7 +38,7 @@ export async function MemberArea({ children }: { children: ReactNode }) {
     { href: "/dashboard/profile", label: "Account Details" },
     {
       href: "/dashboard/holdings",
-      label: "Quota holdings",
+      label: "Quota Holdings",
       match: "prefix",
       alsoMatch: ["auctions"],
       badge: counts.holdings,

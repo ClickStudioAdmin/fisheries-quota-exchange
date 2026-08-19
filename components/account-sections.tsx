@@ -92,10 +92,17 @@ export async function AccountProfileSection({
           <BusinessDetailsForm />
         </section>
       )}
-      <section className="max-w-md space-y-4">
-        <h2 className="text-xl font-semibold text-ink">Password</h2>
-        <ProfilePasswordForm />
-      </section>
+    </div>
+  );
+}
+
+export function AccountSecuritySection() {
+  return (
+    <div className="max-w-md space-y-4">
+      <p className="text-sm text-ink-muted">
+        Change the password you use to sign in to FQX.
+      </p>
+      <ProfilePasswordForm />
     </div>
   );
 }
@@ -186,7 +193,7 @@ export async function AccountHoldingsSection({
     <div className="space-y-10">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Quota holdings
+          Quota Holdings
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           {canManage
@@ -237,7 +244,7 @@ export async function AccountHoldingsSection({
         ) : null}
       </div>
       <DataTable
-        caption="Quota holdings"
+        caption="Quota Holdings"
         empty="No holdings yet."
         searchPlaceholder="Filter holdings…"
         defaultSort={{ key: "fishery", direction: "asc" }}

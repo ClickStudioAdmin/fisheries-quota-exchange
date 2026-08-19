@@ -18,6 +18,7 @@ import {
 } from "@/lib/listings/types";
 import type { Order } from "@/lib/orders/types";
 import { orderStatusLabel } from "@/lib/orders/types";
+import { accountPaymentsPath } from "@/lib/organisations/paths";
 import type { Bid } from "@/lib/auctions/types";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -502,7 +503,7 @@ export async function notifyPaymentsSetupComplete(organisationId: number, accoun
     await organisationManagerEmails(organisationId),
     emailCopy.payments_setup_complete({
       accountName,
-      paymentsUrl: `${siteUrl}/dashboard/payments?account=${organisationId}`,
+      paymentsUrl: `${siteUrl}${accountPaymentsPath(organisationId)}`,
     }),
   );
 }

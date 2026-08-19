@@ -2,7 +2,7 @@ import { AccountHoldingsSection } from "@/components/account-sections";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 
 export const metadata = {
-  title: "Quota holdings",
+  title: "Quota Holdings",
 };
 
 export default async function DashboardHoldingsPage({

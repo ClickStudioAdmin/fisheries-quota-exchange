@@ -3,10 +3,10 @@ import { AccountPaymentsSection } from "@/components/account-payments";
 import {
   AccountMembersSection,
   AccountProfileSection,
+  AccountSecuritySection,
 } from "@/components/account-sections";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
-import { organisationRoleLabel } from "@/lib/organisations/types";
 
 export const metadata = {
   title: "Account details",
@@ -29,13 +29,18 @@ export default async function DashboardProfilePage({
     "/dashboard/profile",
   );
   const tab =
-    params.tab === "members" || params.tab === "payments"
+    params.tab === "security" ||
+    params.tab === "members" ||
+    params.tab === "payments"
       ? params.tab
       : "profile";
   const organisationId = account.selected?.id ?? null;
   const profileHref = organisationId
     ? accountPath(organisationId, "/dashboard/profile")
     : "/dashboard/profile";
+  const securityHref = organisationId
+    ? accountPath(organisationId, "/dashboard/profile", { tab: "security" })
+    : "/dashboard/profile?tab=security";
   const membersHref = organisationId
     ? accountPath(organisationId, "/dashboard/profile", { tab: "members" })
     : "/dashboard/profile?tab=members";
@@ -43,16 +48,9 @@ export default async function DashboardProfilePage({
 
   return (
     <div className="space-y-6">
-      <div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
           Account details
         </h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          {account.selected
-            ? `${account.selected.legal_name} · Your role: ${organisationRoleLabel(account.selected.role)}`
-            : "Add your business details before you can buy or list quota."}
-        </p>
-      </div>
       <nav aria-label="Account details sections">
         <ul className="flex flex-wrap gap-x-6 border-b border-line">
           <li>
@@ -62,6 +60,15 @@ export default async function DashboardProfilePage({
               aria-current={tab === "profile" ? "page" : undefined}
             >
               Profile
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={securityHref}
+              className={tabClassName(tab === "security")}
+              aria-current={tab === "security" ? "page" : undefined}
+            >
+              Password and security
             </Link>
           </li>
           <li>
@@ -84,7 +91,9 @@ export default async function DashboardProfilePage({
           </li>
         </ul>
       </nav>
-      {tab === "members" ? (
+      {tab === "security" ? (
+        <AccountSecuritySection />
+      ) : tab === "members" ? (
         organisationId ? (
           <AccountMembersSection
             organisationId={organisationId}
