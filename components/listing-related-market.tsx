@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ListingCards } from "@/components/listing-card";
+import { PublicSellerName } from "@/components/public-seller-name";
 import {
   tableBodyCellClassName,
   tableClassName,
@@ -12,6 +12,10 @@ import { formatTableDate } from "@/lib/format";
 import {
   formatAud,
   formatAudPerUnit,
+  formatListingTotal,
+  listingHref,
+  listingOfferingLabel,
+  listingTypeLabel,
   type ListingOffering,
 } from "@/lib/listings/types";
 import {
@@ -51,7 +55,6 @@ export async function ListingRelatedMarket({
     .reverse();
   const tradeTitle =
     offering === "LEASE" ? "Recent leases" : "Recent sales";
-  const fisheriesByName = { [fishery.name]: fishery };
   const sellerDisplays = await loadPublicSellerDisplays(others);
 
   return (
@@ -65,16 +68,74 @@ export async function ListingRelatedMarket({
             View fishery
           </Link>
         </div>
-        <div className="mt-4">
-          <ListingCards
-            listings={others}
-            empty="No other live listings for this fishery."
-            hideFishery
-            columns={1}
-            fisheriesByName={fisheriesByName}
-            sellerDisplays={sellerDisplays}
-          />
-        </div>
+        {others.length === 0 ? (
+          <p className="mt-4 text-sm text-ink-muted">
+            No other live listings for this fishery.
+          </p>
+        ) : (
+          <div className={`mt-4 ${tableWrapClassName}`}>
+            <table className={tableClassName}>
+              <thead className={tableHeadClassName}>
+                <tr>
+                  <th className={tableHeaderCellClassName}>Seller</th>
+                  <th className={tableHeaderCellClassName}>Type</th>
+                  <th className={tableHeaderCellClassName}>Quantity</th>
+                  <th className={`${tableHeaderCellClassName} text-right`}>
+                    Price
+                  </th>
+                  <th className={`${tableHeaderCellClassName} text-right`}>
+                    Total
+                  </th>
+                  <th className={tableHeaderCellClassName}>Expires</th>
+                </tr>
+              </thead>
+              <tbody>
+                {others.map((listing, index) => {
+                  const seller = sellerDisplays[listing.id] ?? {
+                    label: listing.seller_name,
+                    tooltip: null,
+                  };
+
+                  return (
+                    <tr key={listing.id} className={tableRowClassName(index)}>
+                      <td className={tableBodyCellClassName}>
+                        <Link href={listingHref(listing)} className="underline">
+                          <PublicSellerName display={seller} />
+                        </Link>
+                      </td>
+                      <td className={tableBodyCellClassName}>
+                        {listingOfferingLabel(listing.offering)} ·{" "}
+                        {listingTypeLabel(listing.listing_type)}
+                      </td>
+                      <td className={`${tableBodyCellClassName} tabular-nums`}>
+                        {listing.quantity} {listing.unit_label}
+                      </td>
+                      <td
+                        className={`${tableBodyCellClassName} text-right tabular-nums`}
+                      >
+                        {formatAudPerUnit(
+                          listing.unit_price_aud,
+                          listing.unit_label,
+                        )}
+                      </td>
+                      <td
+                        className={`${tableBodyCellClassName} text-right tabular-nums`}
+                      >
+                        {formatListingTotal(
+                          listing.quantity,
+                          listing.unit_price_aud,
+                        )}
+                      </td>
+                      <td className={tableBodyCellClassName}>
+                        {formatTableDate(listing.expires_at)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
       <section className="min-w-0">
         <h2 className="text-xl font-semibold text-ink">{tradeTitle}</h2>
