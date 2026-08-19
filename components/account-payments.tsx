@@ -39,7 +39,7 @@ export async function AccountPaymentsSection({
         <div className={`max-w-2xl space-y-4 ${panelClassName}`}>
           {status?.chargesEnabled ? (
             <p className="text-sm text-ink">
-              This account can receive settlement transfers.
+              This business can receive settlement transfers.
             </p>
           ) : status?.detailsSubmitted ? (
             <p className="text-sm text-ink">
@@ -55,7 +55,7 @@ export async function AccountPaymentsSection({
             />
           ) : (
             <p className="text-sm text-ink-muted">
-              Only an owner or admin can connect Stripe for this account.
+              Only an owner or admin can connect Stripe for this business.
             </p>
           )}
         </div>

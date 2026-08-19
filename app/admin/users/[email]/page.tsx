@@ -183,14 +183,14 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-ink">Accounts</h2>
+        <h2 className="text-xl font-semibold text-ink">Businesses</h2>
         <DataTable
-          caption="Accounts"
-        empty="No account memberships."
-        searchPlaceholder="Filter accounts…"
+          caption="Businesses"
+        empty="No business memberships."
+        searchPlaceholder="Filter businesses…"
         defaultSort={{ key: "account", direction: "asc" }}
         columns={[
-          { key: "account", header: "Account", sortable: true },
+          { key: "account", header: "Business", sortable: true },
           {
             key: "role",
             header: "Role",
@@ -225,14 +225,14 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         <h2 className="text-xl font-semibold text-ink">Holdings</h2>
         <DataTable
           caption="Holdings"
-        empty="No holdings in this person’s accounts."
+        empty="No holdings in this person’s businesses."
         searchPlaceholder="Filter holdings…"
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[
           { key: "id", header: "ID", sortable: true },
           {
             key: "organisation",
-            header: "Account",
+            header: "Business",
             sortable: true,
             filter: "select",
           },
@@ -259,7 +259,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             values: {
               id: holding.id,
               organisation:
-                organisations.get(holding.organisation_id) ?? "Account",
+                organisations.get(holding.organisation_id) ?? "Business",
               fishery: fishery
                 ? fisherySelectLabel(fishery, jurisdictions)
                 : "Fishery",

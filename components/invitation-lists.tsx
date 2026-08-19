@@ -109,7 +109,7 @@ export function MyInvitationList({
     <div className={panelClassName}>
       <h2 className="text-lg font-semibold text-ink">Pending invitations</h2>
       <p className="mt-2 text-sm text-ink-muted">
-        You are not a member of these accounts until you accept.
+        You are not a member of these businesses until you accept.
       </p>
       <ul className="mt-4 space-y-4">
         {invitations.map((invitation) => {

@@ -34,7 +34,7 @@ export function AreaShell({
                     href={switchAccountHref}
                     className="text-sm font-medium text-sea underline"
                   >
-                    Switch account
+                    Switch business
                   </Link>
                 </p>
               ) : null}

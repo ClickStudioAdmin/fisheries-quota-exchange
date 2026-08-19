@@ -28,7 +28,7 @@ export default async function OrganisationPage({
     redirect("/dashboard");
   }
 
-  const name = (await getOrganisationLegalName(organisationId)) ?? "that account";
+  const name = (await getOrganisationLegalName(organisationId)) ?? "that business";
 
   return (
     <SwitchAccountNotice

@@ -28,10 +28,10 @@ export default function PrivacyPage() {
         <ul className="list-disc space-y-1 pl-5">
           <li>Your name, email address, and login credentials</li>
           <li>
-            Organisation details: legal name, trading name, and ABN
+            Business details: legal name, trading name, and ABN
           </li>
           <li>
-            Membership and role information for accounts you belong to
+            Membership and role information for businesses you belong to
           </li>
           <li>
             Quota Holdings, listings, bids, orders, and related audit records
@@ -47,11 +47,11 @@ export default function PrivacyPage() {
       <LegalSection title="How we use it">
         <p>We use this information to:</p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>Create and administer accounts</li>
+          <li>Create and administer user accounts and businesses</li>
           <li>Operate the marketplace, auctions, and settlement workflows</li>
           <li>Take test-mode payments and record payment status from Stripe</li>
           <li>Send transactional email (for example when a person is added to
-            an account, or when an order settles)</li>
+            a business, or when an order settles)</li>
           <li>Let platform administrators review holdings, listings, and orders</li>
           <li>Keep the site secure and investigate misuse</li>
         </ul>
@@ -70,9 +70,9 @@ export default function PrivacyPage() {
           <li>Vercel — application hosting</li>
         </ul>
         <p>
-          Platform administrators can see account, holding, listing, and order
+          Platform administrators can see business, holding, listing, and order
           information as part of operating this environment. Other members of
-          an organisation can see information for that account according to
+          a business can see information for that business according to
           their role.
         </p>
       </LegalSection>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
 
       <LegalSection title="Retention">
         <p>
-          Account, quota, order, and payment records are kept so the marketplace
+          Your account, business, quota, order, and payment records are kept so the marketplace
           and ledger can function. Quota ledger rows are not deleted. Dummy tax
           invoices are generated when requested and are not stored as files.
         </p>

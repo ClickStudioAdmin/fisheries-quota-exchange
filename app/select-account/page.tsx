@@ -11,7 +11,7 @@ import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Choose an account",
+  title: "Choose a business",
 };
 
 export default async function SelectAccountPage({
@@ -40,10 +40,10 @@ export default async function SelectAccountPage({
   const activeId = await readActiveOrganisationCookie();
 
   return (
-    <AuthCard title="Choose an account">
+    <AuthCard title="Choose a business">
       <p className="mb-6 text-sm text-ink-muted">
-        You belong to more than one organisation. Everything you do on FQX uses
-        the account you choose here until you switch.
+        You belong to more than one business. Everything you do on FQX uses
+        the business you choose here until you switch.
       </p>
       <ul className="space-y-3">
         {organisations.map((organisation) => (

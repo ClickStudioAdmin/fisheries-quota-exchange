@@ -35,46 +35,46 @@ export type MessageTemplate = {
 };
 
 const skipWhen =
-  "The email is disabled on /admin/settings, the recipient turned a personal channel off on Profile → Notifications, the organisation turned that account message off on Account Settings → Notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write unless that channel is off. The triggering action still succeeds.";
+  "The email is disabled on /admin/settings, the recipient turned a personal channel off on Profile → Notifications, the organisation turned that business message off on Business Settings → Notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write unless that channel is off. The triggering action still succeeds.";
 
 const accountRolesRecipient =
-  "Roles selected on Account Settings → Notifications (default Owner and Admin). Falls back to owners if those roles have no members.";
+  "Roles selected on Business Settings → Notifications (default Owner and Admin). Falls back to owners if those roles have no members.";
 const accountRolesAndCreatorRecipient = `${accountRolesRecipient} Also the listing creator.`;
 const buyerPersonRecipient = "The person who placed the order.";
 const bidderAccountRolesRecipient =
-  "Notification roles on that bidding account (default Owner and Admin).";
+  "Notification roles on that bidding business (default Owner and Admin).";
 const buyerAndSellerRolesRecipient =
-  "The person who placed the order, plus seller roles selected on Account Settings → Notifications (default Owner and Admin).";
+  "The person who placed the order, plus seller roles selected on Business Settings → Notifications (default Owner and Admin).";
 
 const EMAIL_CATALOG: Record<
   ProductEmailId,
   Pick<MessageTemplate, "description" | "summary" | "sentWhen" | "trigger" | "recipient">
 > = {
   member_added: {
-    summary: "When a person is invited to an account",
+    summary: "When a person is invited to a business",
     description:
-      "Tells a person they have been invited to an FQX account and how to accept. They are not a member until they accept while signed in with that email.",
+      "Tells a person they have been invited to an FQX business and how to accept. They are not a member until they accept while signed in with that email.",
     sentWhen: "Immediately after a pending invitation is created or resent.",
-    trigger: "Account Owner or Admin submits Send invitation. inviteMemberAction then sendEmail(member_added).",
+    trigger: "Business Owner or Admin submits Send invitation. inviteMemberAction then sendEmail(member_added).",
     recipient: "The invited person’s email.",
   },
   member_role_changed: {
     summary: "After a non-owner role change",
-    description: "Tells the member their role on the account changed.",
+    description: "Tells the member their role on the business changed.",
     sentWhen: "After organisation_users.role is updated to Admin or Member.",
     trigger: "updateMemberRoleAction when the new role is not Owner.",
     recipient: "The member whose role changed.",
   },
   member_removed: {
-    summary: "After someone is removed from an account",
-    description: "Tells the person they are no longer a member of the account.",
+    summary: "After someone is removed from a business",
+    description: "Tells the person they are no longer a member of the business.",
     sentWhen: "After the membership row is deleted by another member.",
     trigger: "removeMemberAction when the actor is not leaving themselves.",
     recipient: "The removed member’s email.",
   },
   ownership_transferred: {
     summary: "After a member is made Owner",
-    description: "Tells the member they are now an owner of the account.",
+    description: "Tells the member they are now an owner of the business.",
     sentWhen: "After organisation_users.role is set to Owner.",
     trigger: "updateMemberRoleAction when the new role is Owner.",
     recipient: "The new Owner.",
@@ -82,14 +82,14 @@ const EMAIL_CATALOG: Record<
   payments_setup_complete: {
     summary: "When Stripe charges are enabled",
     description:
-      "Tells account managers that Connect onboarding can accept charges and settlement transfers.",
+      "Tells business managers that Connect onboarding can accept charges and settlement transfers.",
     sentWhen: "Once per organisation, when Stripe account.updated reports charges_enabled.",
     trigger: "handleStripeWebhook account.updated, then claim_email_dispatch(payments_setup_complete).",
     recipient: accountRolesRecipient,
   },
   holding_verified: {
     summary: "After a holding is verified",
-    description: "Tells managers the holding can be listed when payments setup is complete on the Payments tab of Account Settings.",
+    description: "Tells managers the holding can be listed when payments setup is complete on the Payments tab of Business Settings.",
     sentWhen: "After verify_quota_holding, or when create_quota_holding auto-verifies.",
     trigger: "verifyHoldingAction or createHoldingAction when status is VERIFIED.",
     recipient: accountRolesRecipient,
@@ -220,7 +220,7 @@ const EMAIL_CATALOG: Record<
     description: "Reminds seller and bidders the auction is ending. Bid times use the server clock.",
     sentWhen: "Hourly cron, once per auction, while published and ending within 24 hours.",
     trigger: "runScheduledEmails via /api/cron/emails.",
-    recipient: `${accountRolesAndCreatorRecipient} Plus notification roles on bidding accounts.`,
+    recipient: `${accountRolesAndCreatorRecipient} Plus notification roles on bidding businesses.`,
   },
   payment_received: {
     summary: "When FQX records payment",

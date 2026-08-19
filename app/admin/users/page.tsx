@@ -46,7 +46,7 @@ export default async function AdminUsersPage() {
           Verified users can skip holding and listing approval when those
           platform settings are on. Everyone else needs each holding verified
           before they can list or auction quota. Select users to mark as
-          verified, revoke verification, or remove them from all accounts.
+          verified, revoke verification, or remove them from all businesses.
         </p>
       </div>
       <DataTable
@@ -76,7 +76,7 @@ export default async function AdminUsersPage() {
             action: deleteUsersAction,
             fieldName: "emails",
             confirm:
-              "Delete the selected users? They will be removed from all accounts. Organisations and quota records stay in place.",
+              "Delete the selected users? They will be removed from all businesses. Businesses and quota records stay in place.",
           },
         ]}
         columns={[
@@ -122,7 +122,7 @@ export default async function AdminUsersPage() {
                 ? [{ label: "Access", value: "Platform admin" }]
                 : []),
               {
-                label: "Accounts",
+                label: "Businesses",
                 value: accountLines.length > 0 ? accountLines.join("\n") : "—",
               },
               {

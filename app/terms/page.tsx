@@ -116,7 +116,7 @@ export default function TermsPage() {
       <LegalSection title="How trading works">
         <p>
           Holdings must be verified before they can be listed. Listings wait
-          for approval unless the account is set to auto-publish. A purchase
+          for approval unless the business is set to auto-publish. A purchase
           reserves quota so it cannot be sold twice.
         </p>
         <p>
@@ -138,16 +138,16 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="Accounts">
+      <LegalSection title="Your account and businesses">
         <p>
-          Provide accurate details for yourself. Add your organisation on
-          Account Settings (legal name, and trading name and ABN where collected)
-          before you buy, bid, or list. You may own one organisation. Others may
-          add you to their organisation with a role they assign.
+          Provide accurate details for yourself. Add your business on
+          Business Settings (legal name, and trading name and ABN where collected)
+          before you buy, bid, or list. You may own one business. Others may
+          add you to their business with a role they assign.
         </p>
         <p>
           You are responsible for activity under your login and for people you
-          add to your account. Every person who buys, bids, or lists must
+          add to your business. Every person who buys, bids, or lists must
           agree to these terms themselves. An owner’s agreement does not cover
           a member.
         </p>

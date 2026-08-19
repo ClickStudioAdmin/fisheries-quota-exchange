@@ -8,7 +8,7 @@ import { organisationRoleLabel } from "@/lib/organisations/types";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Account invitation",
+  title: "Business invitation",
 };
 
 export default async function InvitationPage({

@@ -85,7 +85,7 @@ export function RegisterForm({ next }: { next?: string }) {
             {pending ? "Creating account…" : "Create account"}
           </button>
           <p className="text-sm text-ink-muted">
-            You can add business details on Account Settings after you confirm
+            You can add business details on Business Settings after you confirm
             your email.
             You need those details before you can buy or list quota.
           </p>

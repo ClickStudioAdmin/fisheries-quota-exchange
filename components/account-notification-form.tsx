@@ -40,12 +40,12 @@ export function AccountNotificationForm({
         </p>
       ) : null}
       <p className="text-sm text-ink-muted">
-        Account email and in-app notices for listings, holdings, payments, and
+        Business email and in-app notices for listings, holdings, payments, and
         settlement go to these roles. Personal mail such as invitations, your
         bids, and your purchases is on Profile → Notifications.
       </p>
       <fieldset className="space-y-2" disabled={!canEdit}>
-        <legend className="text-sm text-ink">Roles that receive account email</legend>
+        <legend className="text-sm text-ink">Roles that receive business email</legend>
         {ROLE_OPTIONS.map((role) => (
           <label key={role} className="flex items-center gap-2 text-sm text-ink">
             <input
@@ -64,7 +64,7 @@ export function AccountNotificationForm({
         </button>
       ) : (
         <p className="text-sm text-ink-muted">
-          Only owners and admins can change who receives account email.
+          Only owners and admins can change who receives business email.
         </p>
       )}
     </form>

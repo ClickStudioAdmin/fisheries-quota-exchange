@@ -46,13 +46,13 @@ export async function createAccountSessionAction(
   const role = await getMyRole(organisationId);
 
   if (!role || !canEditOrganisation(role)) {
-    return { error: "You cannot connect payments for that account." };
+    return { error: "You cannot connect payments for that business." };
   }
 
   const result = await getOrganisation(organisationId);
 
   if (!result) {
-    return { error: "Account not found." };
+    return { error: "Business not found." };
   }
 
   const status = await getOrganisationPaymentStatus(organisationId);

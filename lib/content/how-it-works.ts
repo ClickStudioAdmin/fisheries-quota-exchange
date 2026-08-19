@@ -1,7 +1,7 @@
 export const HOW_IT_WORKS_BUYER_STEPS = [
   {
     title: "Create an account",
-    body: "Register with your name, email, and phone. Confirm your email. If you are invited to an organisation, accept the invitation while signed in with that email. If you belong to more than one organisation, choose which account to use after you log in. Then agree to the terms on Overview and add business details on Account Settings. Buying or winning an auction is a binding agreement to complete the trade. If you do not proceed, you may be liable to pay the platform commission.",
+    body: "Register with your name, email, and phone. Confirm your email. If you are invited to a business, accept the invitation while signed in with that email. If you belong to more than one business, choose which business to use after you log in. Then agree to the terms on Overview and add business details on Business Settings. Buying or winning an auction is a binding agreement to complete the trade. If you do not proceed, you may be liable to pay the platform commission.",
   },
   {
     title: "Find quota",
@@ -24,7 +24,7 @@ export const HOW_IT_WORKS_BUYER_STEPS = [
 export const HOW_IT_WORKS_SELLER_STEPS = [
   {
     title: "Create an account",
-    body: "Register with your name, email, and phone. Confirm your email. If you are invited to an organisation, accept the invitation while signed in with that email. If you belong to more than one organisation, choose which account to use after you log in. Agree to the terms, add business details on Account Settings, then complete payments setup on the Payments tab of Account Settings so FQX can pay you at settlement. Listing quota is a binding offer. If a buyer commits and you do not proceed, you may be liable to pay the platform commission.",
+    body: "Register with your name, email, and phone. Confirm your email. If you are invited to a business, accept the invitation while signed in with that email. If you belong to more than one business, choose which business to use after you log in. Agree to the terms, add business details on Business Settings, then complete payments setup on the Payments tab of Business Settings so FQX can pay you at settlement. Listing quota is a binding offer. If a buyer commits and you do not proceed, you may be liable to pay the platform commission.",
   },
   {
     title: "Record holdings",
@@ -32,7 +32,7 @@ export const HOW_IT_WORKS_SELLER_STEPS = [
   },
   {
     title: "List quota",
-    body: "Publish a fixed-price sale or lease, or run an English auction. Listings wait for approval unless your account is set to auto-publish.",
+    body: "Publish a fixed-price sale or lease, or run an English auction. Listings wait for approval unless your business is set to auto-publish.",
   },
   {
     title: "Buyer pays FQX",

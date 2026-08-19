@@ -169,26 +169,26 @@ export default async function AuctionPage({
             <p className="text-sm text-ink-muted">
               Add your business details on{" "}
               <Link href="/dashboard/account" className="underline">
-                Account Settings
+                Business Settings
               </Link>{" "}
               before you can bid.
             </p>
           ) : !active ? (
             <p className="text-sm text-ink-muted">
               <SwitchAccountLink next={auctionPath}>
-                Choose an account
+                Choose a business
               </SwitchAccountLink>{" "}
               before you can bid.
             </p>
           ) : isSeller ? (
             <p className="text-sm text-ink-muted">
               You cannot bid on this auction while using the seller&apos;s
-              account.
+              business.
               {canSwitch ? (
                 <>
                   {" "}
                   <SwitchAccountLink next={auctionPath} /> to bid as another
-                  organisation.
+                  business.
                 </>
               ) : null}
             </p>

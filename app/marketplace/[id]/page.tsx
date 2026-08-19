@@ -166,26 +166,26 @@ export default async function ListingPage({
             <p className="text-sm text-ink-muted">
               Add your business details on{" "}
               <Link href="/dashboard/account" className="underline">
-                Account Settings
+                Business Settings
               </Link>{" "}
               before you can buy.
             </p>
           ) : !active ? (
             <p className="text-sm text-ink-muted">
               <SwitchAccountLink next={listingPath}>
-                Choose an account
+                Choose a business
               </SwitchAccountLink>{" "}
               before you can buy.
             </p>
           ) : operatingAsSeller ? (
             <p className="text-sm text-ink-muted">
               You cannot purchase this listing while using the seller&apos;s
-              account.
+              business.
               {canSwitch ? (
                 <>
                   {" "}
                   <SwitchAccountLink next={listingPath} /> to buy as another
-                  organisation.
+                  business.
                 </>
               ) : null}
             </p>

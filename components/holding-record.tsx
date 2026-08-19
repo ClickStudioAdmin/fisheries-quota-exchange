@@ -140,8 +140,8 @@ export async function HoldingRecord({
             columns={5}
             items={[
               {
-                label: "Account",
-                value: organisationName ?? "Account",
+                label: "Business",
+                value: organisationName ?? "Business",
               },
               {
                 label: "Fishery",

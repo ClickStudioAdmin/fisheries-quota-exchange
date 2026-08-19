@@ -131,7 +131,7 @@ export function PlatformSettingsForm({
         <p className="text-sm text-ink-muted">
           Turn off a message to stop sending it for everyone. Members can turn
           email or in-app off for personal messages on Profile → Notifications.
-          Account mail uses the roles and channel switches on Account Settings →
+          Business mail uses the roles and channel switches on Business Settings →
           Notifications. Operator mail is only listed here. Auth confirm and
           password reset stay on Supabase and are not listed. Actions still
           complete if mail is skipped.

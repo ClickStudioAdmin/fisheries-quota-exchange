@@ -144,7 +144,7 @@ export async function AdminOverviewSection() {
                 value: String(fisheries.length),
               },
               {
-                label: "Accounts",
+                label: "Businesses",
                 value: String(organisations.length),
               },
             ]}

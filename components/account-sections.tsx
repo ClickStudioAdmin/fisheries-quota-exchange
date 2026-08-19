@@ -79,7 +79,7 @@ export async function AccountProfileSection({
   return (
     <div className="max-w-md space-y-4">
       <p className="text-sm text-ink-muted">
-        These details are yours. They do not change when you switch account.
+        These details are yours. They do not change when you switch business.
       </p>
       <PersonProfileForm
         fullName={userFullName(user)}
@@ -103,7 +103,7 @@ export async function AccountBusinessSection({
       <div className="max-w-md space-y-4">
         <p className="text-sm text-ink-muted">
           Legal name is required. Trading name and ABN are optional. This
-          creates your organisation. You can own one account.
+          creates your business. You can own one business.
         </p>
         <BusinessDetailsForm />
       </div>
@@ -113,7 +113,7 @@ export async function AccountBusinessSection({
   return (
     <div className="max-w-md space-y-4">
       <p className="text-sm text-ink-muted">
-        Business details for this organisation.
+        Business details for this business.
       </p>
       <OrganisationDetailsForm
         organisation={result.organisation}
@@ -135,7 +135,7 @@ export async function AccountAlertsSection() {
       <p className="max-w-2xl text-sm text-ink-muted">
         Choose which fisheries to watch. A published sale or lease listing
         (including auctions) notifies you when that switch is on. These alerts
-        are yours and apply across every account you belong to.
+        are yours and apply across every business you belong to.
       </p>
       <ListingAlertsForm
         fisheries={fisheries}
@@ -158,7 +158,7 @@ export async function AccountProfileNotificationsSection() {
       disabledEmails={prefs.disabledEmails}
       disabledInApp={prefs.disabledInApp}
       emailIds={emailIds}
-      description="Invitations, your bids, your purchases, and listing alerts. These are yours and do not change when you switch account. Fishery watches are on Alerts. Notices you have received are in Inbox."
+      description="Invitations, your bids, your purchases, and listing alerts. These stay with you when you switch business. Sent to You is this login. Business roles are the people chosen on Business Settings for the business that event belongs to. Fishery watches are on Alerts. Notices you have received are in Inbox."
     />
   );
 }
@@ -171,26 +171,18 @@ export async function AccountNotificationsSection({
   const result = await getOrganisation(organisationId);
 
   if (!result) {
-    return <p>Account not found.</p>;
+    return <p>Business not found.</p>;
   }
 
-  const members = await listMembers(organisationId);
   const canEdit = canEditOrganisation(result.role);
 
   return (
     <div className="space-y-10">
-      {members.length <= 1 ? (
-        <p className="max-w-2xl text-sm text-ink-muted">
-          This account has one member, so account email goes to them. Role
-          choices appear here when there is more than one member.
-        </p>
-      ) : (
-        <AccountNotificationForm
-          organisationId={organisationId}
-          selectedRoles={result.organisation.notification_roles}
-          canEdit={canEdit}
-        />
-      )}
+      <AccountNotificationForm
+        organisationId={organisationId}
+        selectedRoles={result.organisation.notification_roles}
+        canEdit={canEdit}
+      />
       <NotificationSettingsForm
         scope="account"
         organisationId={organisationId}
@@ -198,7 +190,7 @@ export async function AccountNotificationsSection({
         disabledEmails={result.organisation.disabled_notification_emails}
         disabledInApp={result.organisation.disabled_notification_in_app}
         emailIds={ACCOUNT_NOTIFICATION_EMAIL_IDS}
-        description="Listings, holdings, payments, and settlement for this account. These switches belong to the account, not to you. They change when you switch account. Who receives them is chosen above. Personal messages are on Profile → Notifications."
+        description="Listings, holdings, payments, and settlement for this business. These switches belong to the business, not to you. They change when you switch business. Sent to shows Business roles for the people chosen above, and You when the buyer or listing owner also gets a personal copy. Personal messages are on Profile → Notifications."
       />
     </div>
   );
@@ -222,7 +214,7 @@ export async function AccountMembersSection({
   const result = await getOrganisation(organisationId);
 
   if (!result) {
-    return <p>Account not found.</p>;
+    return <p>Business not found.</p>;
   }
 
   const members = await listMembers(organisationId);
@@ -234,7 +226,7 @@ export async function AccountMembersSection({
   return (
     <div className="space-y-8">
       <p className="text-sm text-ink-muted">
-        Invite people to this account with a role. They must accept from the
+        Invite people to this business with a role. They must accept from the
         email, while signed in with that address, before they become members.
         Inviting the same email again replaces the pending invitation.
       </p>
@@ -285,7 +277,7 @@ export async function AccountHoldingsSection({
   const result = await getOrganisation(organisationId);
 
   if (!result) {
-    return <p>Account not found.</p>;
+    return <p>Business not found.</p>;
   }
 
   const canManage = canEditOrganisation(result.role);
@@ -324,7 +316,7 @@ export async function AccountHoldingsSection({
         <p className="mt-2 text-sm text-ink-muted">
           {canManage
             ? "Create or update a holding here. Unverified holdings must be approved by a platform admin before you can list or auction them. Changing quantity records an ADJUSTMENT on the ledger."
-            : "Owners and admins can create and update holdings for this account."}
+            : "Owners and admins can create and update holdings for this business."}
         </p>
         {created === "pending" || created === "listing" ? (
           <SuccessNotice
@@ -539,7 +531,7 @@ export async function AccountListingsSection({
   const result = await getOrganisation(organisationId);
 
   if (!result) {
-    return <p>Account not found.</p>;
+    return <p>Business not found.</p>;
   }
 
   const listings = await listOrganisationListings(organisationId);
@@ -720,7 +712,7 @@ export async function AccountOrdersSection({
   const result = await getOrganisation(organisationId);
 
   if (!result) {
-    return <p>Account not found.</p>;
+    return <p>Business not found.</p>;
   }
 
   const [orders, fisheries, jurisdictions] = await Promise.all([
@@ -734,7 +726,7 @@ export async function AccountOrdersSection({
       <h1 className="text-3xl font-semibold tracking-tight text-ink">Orders</h1>
       <DataTable
         caption="Orders"
-        empty="No buys or sells for this account yet."
+        empty="No buys or sells for this business yet."
         searchPlaceholder="Filter orders…"
         defaultSort={{ key: "id", direction: "desc" }}
         columns={[

@@ -15,10 +15,10 @@ import { listMyOrganisations } from "@/lib/organisations/queries";
 import type { OrganisationSummary } from "@/lib/organisations/types";
 
 export const ACTIVE_ORGANISATION_REQUIRED_MESSAGE =
-  "Choose an account before you continue.";
+  "Choose a business before you continue.";
 
 export const ACTIVE_ORGANISATION_MISMATCH_MESSAGE =
-  "Switch account before you continue with this organisation.";
+  "Switch business before you continue with this business.";
 
 export async function readActiveOrganisationCookie() {
   const store = await cookies();

@@ -134,6 +134,38 @@ export function parseDisabledProductEmails(value: unknown): ProductEmailId[] {
     .filter((id): id is ProductEmailId => isProductEmailId(id) && !isOperatorEmailId(id));
 }
 
+export type NotificationAudience = "you" | "account_roles";
+
+const SENT_TO_YOU_AND_ACCOUNT_ROLES = new Set<ProductEmailId>([
+  "payment_received",
+  "settlement_failed",
+  "transfer_in_progress",
+  "transfer_complete",
+  "order_settled",
+]);
+
+const SENT_TO_ACCOUNT_ROLES = new Set<ProductEmailId>([
+  ...SELLER_MANAGER_EMAIL_IDS.filter((id) => !SENT_TO_YOU_AND_ACCOUNT_ROLES.has(id)),
+  "bid_outbid",
+  "auction_not_won",
+]);
+
+export function notificationAudiences(id: ProductEmailId): NotificationAudience[] {
+  if (SENT_TO_YOU_AND_ACCOUNT_ROLES.has(id)) {
+    return ["you", "account_roles"];
+  }
+
+  if (SENT_TO_ACCOUNT_ROLES.has(id)) {
+    return ["account_roles"];
+  }
+
+  return ["you"];
+}
+
+export function notificationAudienceLabel(audience: NotificationAudience) {
+  return audience === "you" ? "You" : "Business roles";
+}
+
 export function personalNotificationEmailIds(input: {
   isOrgMember: boolean;
   isOrgManager: boolean;

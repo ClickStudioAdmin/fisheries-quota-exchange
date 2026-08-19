@@ -18,8 +18,9 @@ export default async function DashboardNotificationsPage() {
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">
           Notices sent to you. Turn messages on or off on Profile →
-          Notifications and Account Settings → Notifications. Fishery watches
-          are on Profile → Alerts.
+          Notifications. If this business has more than one member, roles and
+          business message switches are on Business Settings → Notifications.
+          Fishery watches are on Profile → Alerts.
         </p>
       </div>
       <InAppNotificationList notifications={notifications} />

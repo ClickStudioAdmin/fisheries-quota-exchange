@@ -2,9 +2,9 @@ const FALLBACK = "Something went wrong. Try again.";
 
 const CONSTRAINT_MESSAGES: Record<string, string> = {
   organisations_abn_unique:
-    "This ABN is already registered to another account.",
+    "This ABN is already registered to another business.",
   organisation_users_organisation_email_unique:
-    "That email is already a member of this account.",
+    "That email is already a member of this business.",
   organisations_stripe_account_id_unique:
     "This payment account is already connected.",
   quota_holdings_unique:
@@ -27,7 +27,7 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
 };
 
 const COLUMN_MESSAGES: Record<string, string> = {
-  abn: "This ABN is already registered to another account.",
+  abn: "This ABN is already registered to another business.",
   email: "That email is already in use.",
   code: "That code is already in use.",
   stripe_account_id: "This payment account is already connected.",
@@ -71,13 +71,13 @@ const EXCEPTION_MESSAGES: Record<string, string> = {
   "not authenticated": "You must be signed in.",
   "not a platform admin": "You do not have permission to do that.",
   "terms version is required": "Refresh the page and agree to the current terms.",
-  "you already have an account": "You already have a business account.",
+  "you already have an account": "You already have a business.",
   "legal name is required": "Legal name is required.",
   "you do not have permission to invite members":
     "You do not have permission to invite members.",
   "you cannot invite yourself": "You cannot invite yourself.",
   "that email is already a member of this account":
-    "That email is already a member of this account.",
+    "That email is already a member of this business.",
   "invitation not found": "Invitation not found.",
   "this invitation has expired": "This invitation has expired.",
   "this invitation was sent to a different email":

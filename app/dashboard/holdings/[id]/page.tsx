@@ -44,7 +44,7 @@ export default async function DashboardHoldingPage({
   if (!active || active.id !== holding.organisation_id) {
     const name =
       (await getOrganisationLegalName(holding.organisation_id)) ??
-      "that account";
+      "that business";
     return (
       <SwitchAccountNotice
         organisationId={holding.organisation_id}

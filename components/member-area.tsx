@@ -35,10 +35,10 @@ export async function MemberArea({ children }: { children: ReactNode }) {
       ],
     },
     {
-      heading: "This account",
+      heading: "This business",
       items: [
         { href: "/dashboard", label: "Overview" },
-        { href: "/dashboard/account", label: "Account Settings" },
+        { href: "/dashboard/account", label: "Business Settings" },
         {
           href: "/dashboard/holdings",
           label: "Quota Holdings",

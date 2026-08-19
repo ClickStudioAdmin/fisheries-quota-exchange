@@ -107,7 +107,7 @@ export default async function OrderPage({
   ) {
     const switchId = involvedIds[0];
     const switchName =
-      (await getOrganisationLegalName(switchId)) ?? "that account";
+      (await getOrganisationLegalName(switchId)) ?? "that business";
     return (
       <SwitchAccountNotice
         organisationId={switchId}

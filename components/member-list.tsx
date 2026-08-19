@@ -33,7 +33,7 @@ export function MemberList({
 
   return (
     <DataTable
-      caption="Account members"
+      caption="Business members"
       empty="No members yet."
       searchPlaceholder="Filter members…"
       defaultSort={{ key: "name", direction: "asc" }}

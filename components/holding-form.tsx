@@ -58,7 +58,7 @@ export function HoldingForm({
       {organisations ? (
         <div>
           <label htmlFor="organisation_id" className="block text-sm text-ink">
-            Organisation
+            Business
           </label>
           <select
             id="organisation_id"

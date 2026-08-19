@@ -39,7 +39,7 @@ export const emailCopy = {
     notice(
       `Your role on ${input.accountName} is now ${input.role}`,
       [`Your FQX role for ${input.accountName} is now ${input.role}.`],
-      { label: "Open account", url: input.accountUrl },
+      { label: "Open business", url: input.accountUrl },
     ),
   member_removed: (input: { accountName: string; siteUrl: string }) =>
     notice(`You were removed from ${input.accountName} on FQX`, [
@@ -52,9 +52,9 @@ export const emailCopy = {
     notice(
       `You are now an owner of ${input.accountName}`,
       [
-        `Your role on ${input.accountName} is now Owner. You can manage members and payments on Account Settings, and listings for this account.`,
+        `Your role on ${input.accountName} is now Owner. You can manage members and payments on Business Settings, and listings for this business.`,
       ],
-      { label: "Open account", url: input.accountUrl },
+      { label: "Open business", url: input.accountUrl },
     ),
   payments_setup_complete: (input: {
     accountName: string;
@@ -63,9 +63,9 @@ export const emailCopy = {
     notice(
       `Payments setup is complete for ${input.accountName}`,
       [
-        "This account can receive settlement transfers on FQX. You can list quota for sale or lease when holdings are verified. Review payments setup on the Payments tab of Account Settings.",
+        "This business can receive settlement transfers on FQX. You can list quota for sale or lease when holdings are verified. Review payments setup on the Payments tab of Business Settings.",
       ],
-      { label: "Account Settings", url: input.paymentsUrl },
+      { label: "Business Settings", url: input.paymentsUrl },
     ),
   holding_verified: (input: {
     fisheryName: string;
@@ -74,7 +74,7 @@ export const emailCopy = {
     notice(
       `Holding verified: ${input.fisheryName}`,
       [
-        "This holding is verified. You can list quota from it when payments setup is complete on the Payments tab of Account Settings.",
+        "This holding is verified. You can list quota from it when payments setup is complete on the Payments tab of Business Settings.",
       ],
       { label: "View holding", url: input.holdingUrl },
     ),

@@ -7,6 +7,8 @@ import {
   disabledProductEmails,
   emailIsDisabled,
   isAccountNotificationEmailId,
+  notificationAudienceLabel,
+  notificationAudiences,
   parseDisabledProductEmails,
   personalNotificationEmailIds,
   profileNotificationEmailIds,
@@ -105,6 +107,30 @@ test("isAccountNotificationEmailId is listing and settlement org mail, not perso
   assert.equal(isAccountNotificationEmailId("purchase_received"), false);
   assert.equal(isAccountNotificationEmailId("member_added"), false);
   assert.equal(isAccountNotificationEmailId("bid_placed"), false);
+});
+
+test("notificationAudiences matches send routing", () => {
+  assert.deepEqual(notificationAudiences("member_added"), ["you"]);
+  assert.deepEqual(notificationAudiences("listing_alert"), ["you"]);
+  assert.deepEqual(notificationAudiences("purchase_received"), ["you"]);
+  assert.deepEqual(notificationAudiences("bid_placed"), ["you"]);
+  assert.deepEqual(notificationAudiences("bid_outbid"), ["account_roles"]);
+  assert.deepEqual(notificationAudiences("auction_not_won"), ["account_roles"]);
+  assert.deepEqual(notificationAudiences("holding_verified"), ["account_roles"]);
+  assert.deepEqual(notificationAudiences("listing_published"), ["account_roles"]);
+  assert.deepEqual(notificationAudiences("auction_ending_soon"), [
+    "account_roles",
+  ]);
+  assert.deepEqual(notificationAudiences("payment_received"), [
+    "you",
+    "account_roles",
+  ]);
+  assert.deepEqual(notificationAudiences("order_settled"), [
+    "you",
+    "account_roles",
+  ]);
+  assert.equal(notificationAudienceLabel("you"), "You");
+  assert.equal(notificationAudienceLabel("account_roles"), "Business roles");
 });
 
 test("settlement copy differs for buyer and seller", () => {

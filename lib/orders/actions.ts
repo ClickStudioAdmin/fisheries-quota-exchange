@@ -92,7 +92,7 @@ export async function createOrderAction(
   if (listing.organisation_id === buyerOrganisationId) {
     return {
       error:
-        "You cannot purchase this listing while using the seller’s account. Switch account to buy as another organisation.",
+        "You cannot purchase this listing while using the seller’s business. Switch business to buy as another business.",
     };
   }
 

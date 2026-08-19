@@ -195,7 +195,7 @@ export async function placeBidAction(
   if (listing?.organisation_id === organisationId) {
     return {
       error:
-        "You cannot bid on this auction while using the seller’s account. Switch account to bid as another organisation.",
+        "You cannot bid on this auction while using the seller’s business. Switch business to bid as another business.",
     };
   }
   const { error } = await supabase.rpc("place_bid", {

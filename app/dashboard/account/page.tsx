@@ -7,9 +7,10 @@ import {
 import { DashboardTabs } from "@/components/dashboard-tabs";
 import { accountSettingsPath } from "@/lib/organisations/paths";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
+import { listMembers } from "@/lib/organisations/queries";
 
 export const metadata = {
-  title: "Account Settings",
+  title: "Business Settings",
 };
 
 export default async function DashboardAccountPage({
@@ -19,21 +20,25 @@ export default async function DashboardAccountPage({
 }) {
   const params = await searchParams;
   const account = await resolveDashboardAccount("/dashboard/account");
+  const organisationId = account.selected?.id ?? null;
+  const memberCount = organisationId
+    ? (await listMembers(organisationId)).length
+    : 0;
+  const showNotifications = memberCount > 1;
   const tab =
-    params.tab === "members" ||
-    params.tab === "payments" ||
-    params.tab === "notifications"
+    (params.tab === "members" ||
+      params.tab === "payments" ||
+      (params.tab === "notifications" && showNotifications))
       ? params.tab
       : "details";
-  const organisationId = account.selected?.id ?? null;
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Account Settings
+        Business Settings
       </h1>
       <DashboardTabs
-        label="Account settings sections"
+        label="Business settings sections"
         active={tab}
         items={[
           { id: "details", href: accountSettingsPath(), label: "Details" },
@@ -43,11 +48,15 @@ export default async function DashboardAccountPage({
             href: accountSettingsPath("payments"),
             label: "Payments",
           },
-          {
-            id: "notifications",
-            href: accountSettingsPath("notifications"),
-            label: "Notifications",
-          },
+          ...(showNotifications
+            ? [
+                {
+                  id: "notifications",
+                  href: accountSettingsPath("notifications"),
+                  label: "Notifications",
+                },
+              ]
+            : []),
         ]}
       />
       {tab === "members" ? (
@@ -80,7 +89,7 @@ export default async function DashboardAccountPage({
         ) : (
           <p className="text-sm text-ink-muted">
             Add your business details on the Details tab before you can choose
-            who receives account email.
+            who receives business email.
           </p>
         )
       ) : (

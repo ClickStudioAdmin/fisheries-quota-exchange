@@ -11,7 +11,7 @@ test("isInvitationToken requires 64 hex characters", () => {
   assert.equal(invitationPath(` ${token} `), `/invitations/${token}`);
 });
 
-test("accountSettingsPath uses Account Settings tabs", () => {
+test("accountSettingsPath uses Business Settings tabs", () => {
   assert.equal(accountSettingsPath(), "/dashboard/account");
   assert.equal(accountSettingsPath("details"), "/dashboard/account");
   assert.equal(accountSettingsPath("members"), "/dashboard/account?tab=members");

@@ -91,7 +91,7 @@ export default async function HoldingsAdminPage({
           { key: "id", header: "ID", sortable: true },
           {
             key: "organisation",
-            header: "Organisation",
+            header: "Business",
             sortable: true,
             filter: "select",
           },
@@ -120,7 +120,7 @@ export default async function HoldingsAdminPage({
             needsAction: !holdingIsVerified(holding),
             values: {
               id: holding.id,
-              organisation: organisation?.legal_name ?? "Organisation",
+              organisation: organisation?.legal_name ?? "Business",
               fishery: fishery
                 ? fisherySelectLabel(fishery, jurisdictions)
                 : "Fishery",
@@ -178,7 +178,7 @@ export default async function HoldingsAdminPage({
                   </p>
                   <h3 className="mt-1 text-lg font-semibold text-ink">
                     Holding {holding.id} ·{" "}
-                    {organisation?.legal_name ?? "Organisation"}
+                    {organisation?.legal_name ?? "Business"}
                   </h3>
                   <p className="mt-1 text-sm text-ink-muted">
                     {fishery

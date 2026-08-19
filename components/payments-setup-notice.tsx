@@ -3,7 +3,7 @@ import { ActionNotice } from "@/components/surface";
 
 export function PaymentsSetupNotice({
   href,
-  children = "Complete payments setup on the Payments tab of Account Settings before you can list quota for sale or lease.",
+  children = "Complete payments setup on the Payments tab of Business Settings before you can list quota for sale or lease.",
 }: {
   href: string;
   children?: string;
@@ -12,7 +12,7 @@ export function PaymentsSetupNotice({
     <ActionNotice
       title="Set up payments"
       href={href}
-      actionLabel="Go to Account Settings"
+      actionLabel="Go to Business Settings"
       icon={<StripeLogo className="h-6 w-auto" linked={false} />}
     >
       {children}

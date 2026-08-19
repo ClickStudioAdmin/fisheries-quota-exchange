@@ -87,7 +87,7 @@ export async function handleStripeWebhook(payload: string, signature: string) {
         if (organisation) {
           await notifyPaymentsSetupComplete(
             Number(organisation.id),
-            String(organisation.legal_name ?? "your account"),
+            String(organisation.legal_name ?? "your business"),
           );
         }
       }

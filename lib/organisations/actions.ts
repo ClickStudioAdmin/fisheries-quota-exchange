@@ -584,7 +584,7 @@ export async function removeMemberAction(
   revalidatePath("/dashboard");
 
   if (isSelf) {
-    return { left: true, message: "You left the account." };
+    return { left: true, message: "You left the business." };
   }
 
   const siteUrl = await siteUrlOrEmpty();

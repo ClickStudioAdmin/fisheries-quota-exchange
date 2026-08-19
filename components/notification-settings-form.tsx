@@ -18,6 +18,8 @@ import {
 import { updateOrganisationNotificationPreferencesAction } from "@/lib/organisations/actions";
 import {
   PRODUCT_EMAIL_LABELS,
+  notificationAudienceLabel,
+  notificationAudiences,
   type ProductEmailId,
 } from "@/lib/email/product-emails";
 
@@ -48,7 +50,7 @@ export function NotificationSettingsForm({
   );
 
   return (
-    <form action={formAction} className="max-w-3xl space-y-6">
+    <form action={formAction} className="max-w-4xl space-y-6">
       {organisationId ? (
         <input type="hidden" name="organisation_id" value={organisationId} />
       ) : null}
@@ -69,6 +71,7 @@ export function NotificationSettingsForm({
             <thead className={tableHeadClassName}>
               <tr>
                 <th className={tableHeaderCellClassName}>Message</th>
+                <th className={tableHeaderCellClassName}>Sent to</th>
                 <th className={`w-24 ${tableHeaderCellClassName}`}>Email</th>
                 <th className={`w-24 ${tableHeaderCellClassName}`}>In-app</th>
               </tr>
@@ -81,6 +84,18 @@ export function NotificationSettingsForm({
                     <span className="mt-0.5 block font-mono text-xs text-ink-muted">
                       {id}
                     </span>
+                  </td>
+                  <td className={tableBodyCellClassName}>
+                    <div className="flex flex-wrap gap-1">
+                      {notificationAudiences(id).map((audience) => (
+                        <span
+                          key={audience}
+                          className="inline-flex items-center whitespace-nowrap rounded-full bg-paper-stripe px-2 py-0.5 text-xs font-medium text-ink"
+                        >
+                          {notificationAudienceLabel(audience)}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td className={tableBodyCellClassName}>
                     <SettingsSwitch
@@ -114,7 +129,7 @@ export function NotificationSettingsForm({
           </button>
         ) : (
           <p className="text-sm text-ink-muted">
-            Only owners and admins can change account notification settings.
+            Only owners and admins can change business notification settings.
           </p>
         )}
       </fieldset>

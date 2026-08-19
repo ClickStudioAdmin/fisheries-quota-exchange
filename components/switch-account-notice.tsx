@@ -15,8 +15,8 @@ export function SwitchAccountNotice({
   return (
     <div className="max-w-lg space-y-4">
       <p className="text-sm text-ink-muted">
-        This belongs to {organisationName}. Switch to that account to continue.
-        FQX does not change account automatically.
+        This belongs to {organisationName}. Switch to that business to continue.
+        FQX does not change business automatically.
       </p>
       <form action={selectAccountAction}>
         <input type="hidden" name="organisation_id" value={organisationId} />
@@ -31,7 +31,7 @@ export function SwitchAccountNotice({
 
 export function SwitchAccountLink({
   next,
-  children = "Switch account",
+  children = "Switch business",
 }: {
   next: string;
   children?: string;
