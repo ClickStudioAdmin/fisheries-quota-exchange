@@ -5,7 +5,6 @@ import { getEmailEnv } from "@/lib/email/env";
 import { emailSubject, renderEmailTemplate } from "@/lib/email/render";
 import {
   emailIsDisabled,
-  isAccountNotificationEmailId,
   isOperatorEmailId,
   type ProductEmailId,
 } from "@/lib/email/product-emails";
@@ -36,7 +35,7 @@ export async function sendEmail<K extends ProductEmailId>(options: {
     return { sent: false, error: "Invalid recipient." };
   }
 
-  if (!isOperatorEmailId(options.template) && !isAccountNotificationEmailId(options.template)) {
+  if (!isOperatorEmailId(options.template)) {
     const userDisabled = await getUserDisabledEmails(to);
 
     if (emailIsDisabled(userDisabled, options.template)) {

@@ -35,7 +35,7 @@ export type MessageTemplate = {
 };
 
 const skipWhen =
-  "The email is disabled on /admin/settings, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write. The triggering action still succeeds.";
+  "The email is disabled on /admin/settings, the recipient turned that channel off on Profile → Notifications or Account Settings → Notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write unless the recipient turned that channel off. The triggering action still succeeds.";
 
 const accountRolesRecipient =
   "Roles selected on Account Settings → Notifications (default Owner and Admin). Falls back to owners if those roles have no members.";

@@ -141,6 +141,22 @@ export function personalNotificationEmailIds(input: {
   return PRODUCT_EMAIL_IDS.filter((id) => allowed.has(id));
 }
 
+export function profileNotificationEmailIds(input: {
+  isOrgMember: boolean;
+  isOrgManager: boolean;
+}): ProductEmailId[] {
+  return personalNotificationEmailIds(input).filter(
+    (id) => !isAccountNotificationEmailId(id),
+  );
+}
+
+export function accountNotificationEmailIds(input: {
+  isOrgMember: boolean;
+  isOrgManager: boolean;
+}): ProductEmailId[] {
+  return personalNotificationEmailIds(input).filter(isAccountNotificationEmailId);
+}
+
 export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   member_added: "Member invitation",
   member_role_changed: "Member role changed",

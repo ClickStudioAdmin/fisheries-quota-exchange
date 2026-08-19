@@ -1,6 +1,7 @@
 import { DashboardTabs } from "@/components/dashboard-tabs";
 import {
   AccountAlertsSection,
+  AccountProfileNotificationsSection,
   AccountProfileSection,
   AccountSecuritySection,
 } from "@/components/account-sections";
@@ -18,7 +19,9 @@ export default async function DashboardProfilePage({
   const params = await searchParams;
   const account = await resolveDashboardAccount("/dashboard/profile");
   const tab =
-    params.tab === "security" || params.tab === "alerts"
+    params.tab === "security" ||
+    params.tab === "notifications" ||
+    params.tab === "alerts"
       ? params.tab
       : "details";
 
@@ -37,11 +40,18 @@ export default async function DashboardProfilePage({
             href: "/dashboard/profile?tab=security",
             label: "Password and Security",
           },
+          {
+            id: "notifications",
+            href: "/dashboard/profile?tab=notifications",
+            label: "Notifications",
+          },
           { id: "alerts", href: "/dashboard/profile?tab=alerts", label: "Alerts" },
         ]}
       />
       {tab === "security" ? (
         <AccountSecuritySection />
+      ) : tab === "notifications" ? (
+        <AccountProfileNotificationsSection />
       ) : tab === "alerts" ? (
         <AccountAlertsSection />
       ) : (

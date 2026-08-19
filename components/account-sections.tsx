@@ -6,6 +6,7 @@ import { BusinessDetailsForm } from "@/components/business-details-form";
 import { OrganisationDetailsForm } from "@/components/organisation-details-form";
 import { AccountNotificationForm } from "@/components/account-notification-form";
 import { ListingAlertsForm } from "@/components/listing-alerts-form";
+import { NotificationSettingsForm } from "@/components/notification-settings-form";
 import {
   PersonProfileForm,
   ProfilePasswordForm,
@@ -53,7 +54,12 @@ import { tableButtonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { formatTableDate } from "@/lib/format";
 import { accountPath, accountPaymentsPath, dashboardHoldingPath } from "@/lib/organisations/paths";
-import { listMyListingAlerts } from "@/lib/alerts/queries";
+import {
+  getMyNotificationPreferences,
+  listMyListingAlerts,
+  myAccountNotificationEmailIds,
+  myProfileNotificationEmailIds,
+} from "@/lib/alerts/queries";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -140,6 +146,23 @@ export async function AccountAlertsSection() {
   );
 }
 
+export async function AccountProfileNotificationsSection() {
+  const [prefs, emailIds] = await Promise.all([
+    getMyNotificationPreferences(),
+    myProfileNotificationEmailIds(),
+  ]);
+
+  return (
+    <NotificationSettingsForm
+      scope="profile"
+      disabledEmails={prefs.disabledEmails}
+      disabledInApp={prefs.disabledInApp}
+      emailIds={emailIds}
+      description="Invitations, your bids, your purchases, and listing alerts. These are yours and do not change when you switch account. Fishery watches are on Alerts. Notices you have received are in Inbox."
+    />
+  );
+}
+
 export async function AccountNotificationsSection({
   organisationId,
 }: {
@@ -151,24 +174,35 @@ export async function AccountNotificationsSection({
     return <p>Account not found.</p>;
   }
 
-  const members = await listMembers(organisationId);
+  const [members, prefs, emailIds] = await Promise.all([
+    listMembers(organisationId),
+    getMyNotificationPreferences(),
+    myAccountNotificationEmailIds(),
+  ]);
   const canEdit = canEditOrganisation(result.role);
 
-  if (members.length <= 1) {
-    return (
-      <p className="max-w-md text-sm text-ink-muted">
-        This account has one member, so account email goes to them. Role
-        choices appear here when there is more than one member.
-      </p>
-    );
-  }
-
   return (
-    <AccountNotificationForm
-      organisationId={organisationId}
-      selectedRoles={result.organisation.notification_roles}
-      canEdit={canEdit}
-    />
+    <div className="space-y-10">
+      {members.length <= 1 ? (
+        <p className="max-w-2xl text-sm text-ink-muted">
+          This account has one member, so account email goes to them. Role
+          choices appear here when there is more than one member.
+        </p>
+      ) : (
+        <AccountNotificationForm
+          organisationId={organisationId}
+          selectedRoles={result.organisation.notification_roles}
+          canEdit={canEdit}
+        />
+      )}
+      <NotificationSettingsForm
+        scope="account"
+        disabledEmails={prefs.disabledEmails}
+        disabledInApp={prefs.disabledInApp}
+        emailIds={emailIds}
+        description="Listings, holdings, payments, and settlement for this account. Who receives them is chosen above. You can still turn email or in-app off for yourself. Personal messages are on Profile → Notifications."
+      />
+    </div>
   );
 }
 

@@ -14,8 +14,8 @@ There is no quota, marketplace, or listing functionality in this phase.
 | `/select-account` | After login, choose which organisation to use when the person belongs to more than one |
 | `/invitations/[token]` | Signed-in invitee accepts or declines. Login is required; an active organisation cookie is not. |
 | `/dashboard` | Overview. Pending invitations to this person are listed here. |
-| `/dashboard/profile` | Profile: Details, Password and Security, and Alerts |
-| `/dashboard/account` | Account Settings: Details, Members, Payments, and Notifications (role routing) |
+| `/dashboard/profile` | Profile: Details, Password and Security, Notifications, and Alerts |
+| `/dashboard/account` | Account Settings: Details, Members, Payments, and Notifications (role routing and account message list) |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
 | `/dashboard/payments` | Redirects to `/dashboard/account?tab=payments` |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
@@ -25,7 +25,7 @@ There is no quota, marketplace, or listing functionality in this phase.
 
 Registration collects the user’s name, email, phone, and password. After email confirm they add legal name, trading name, and ABN on `/dashboard/account`. That creates the organisation and makes the user `OWNER`. They must complete those business details, and agree to the terms, before they can buy or list. A user may own only one account. They can still be invited to someone else’s account.
 
-Login is personal (email and password). If the person belongs to two or more organisations, they choose which account to use on `/select-account` after login. That choice is stored in an httpOnly session cookie and is the source of truth for holdings, listings, orders, members, payments, buying, and bidding. There is no Buy as / Bid as picker. The dashboard chrome shows **Operating as** the active organisation, with **Switch account** under that name when they have more than one membership. Profile (including Alerts and Password and Security) and Inbox stay personal. Account Settings follows the active organisation. Deep links that belong to another membership prompt a switch; they do not change account silently.
+Login is personal (email and password). If the person belongs to two or more organisations, they choose which account to use on `/select-account` after login. That choice is stored in an httpOnly session cookie and is the source of truth for holdings, listings, orders, members, payments, buying, and bidding. There is no Buy as / Bid as picker. The dashboard chrome shows **Operating as** the active organisation, with **Switch account** under that name when they have more than one membership. Profile (including Notifications, Alerts, and Password and Security) and Inbox stay personal. Account Settings follows the active organisation. Deep links that belong to another membership prompt a switch; they do not change account silently.
 
 Signed-out users are redirected to `/login`.
 

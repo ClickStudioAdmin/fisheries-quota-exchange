@@ -26,10 +26,14 @@ export function NotificationSettingsForm({
   disabledEmails,
   disabledInApp,
   emailIds,
+  scope,
+  description,
 }: {
   disabledEmails: string[];
   disabledInApp: string[];
   emailIds: ProductEmailId[];
+  scope: "profile" | "account";
+  description: string;
 }) {
   const [state, formAction, pending] = useActionState(
     updateNotificationPreferencesAction,
@@ -38,6 +42,7 @@ export function NotificationSettingsForm({
 
   return (
     <form action={formAction} className="max-w-3xl space-y-6">
+      <input type="hidden" name="notification_scope" value={scope} />
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
@@ -48,12 +53,7 @@ export function NotificationSettingsForm({
           {state.message}
         </p>
       ) : null}
-      <p className="text-sm text-ink-muted">
-        Choose email, in-app, or both for each message. Only messages that can
-        go to you are listed. Auth confirm and password reset stay on Supabase.
-        Actions still complete if a channel is off. Listing alerts also need a
-        fishery switched on Profile → Alerts.
-      </p>
+      <p className="text-sm text-ink-muted">{description}</p>
       <div className={tableWrapClassName}>
         <table className={tableClassName}>
           <thead className={tableHeadClassName}>
@@ -95,7 +95,7 @@ export function NotificationSettingsForm({
       </div>
       {emailIds.length === 0 ? (
         <p className="text-sm text-ink-muted">
-          No notifications are available for this account yet.
+          No notifications are available here yet.
         </p>
       ) : null}
       <button type="submit" className={buttonClassName} disabled={pending}>

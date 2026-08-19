@@ -6,7 +6,11 @@ import type { ListingAlert } from "@/lib/alerts/types";
 import { listingAlertMatches } from "@/lib/alerts/types";
 import type { ListingOffering } from "@/lib/listings/types";
 import { uniqueEmails } from "@/lib/email/recipients";
-import { personalNotificationEmailIds } from "@/lib/email/product-emails";
+import {
+  accountNotificationEmailIds,
+  personalNotificationEmailIds,
+  profileNotificationEmailIds,
+} from "@/lib/email/product-emails";
 import type { NotificationPreferences } from "@/lib/notifications/types";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { listMyOrganisations } from "@/lib/organisations/queries";
@@ -129,13 +133,25 @@ export async function listingAlertEmails(
   );
 }
 
-export async function myPersonalNotificationEmailIds() {
+async function myNotificationAudience() {
   const organisations = await listMyOrganisations();
 
-  return personalNotificationEmailIds({
+  return {
     isOrgMember: organisations.length > 0,
     isOrgManager: organisations.some((organisation) =>
       canEditOrganisation(organisation.role),
     ),
-  });
+  };
+}
+
+export async function myPersonalNotificationEmailIds() {
+  return personalNotificationEmailIds(await myNotificationAudience());
+}
+
+export async function myProfileNotificationEmailIds() {
+  return profileNotificationEmailIds(await myNotificationAudience());
+}
+
+export async function myAccountNotificationEmailIds() {
+  return accountNotificationEmailIds(await myNotificationAudience());
 }

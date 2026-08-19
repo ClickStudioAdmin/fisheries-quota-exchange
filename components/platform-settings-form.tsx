@@ -129,11 +129,12 @@ export function PlatformSettingsForm({
           Transactional email
         </legend>
         <p className="text-sm text-ink-muted">
-          Turn off a message to stop sending it for everyone. Account mail
-          goes to the roles chosen on Account Settings → Notifications.
-          Operator mail is only listed here. Auth confirm and password reset
-          stay on Supabase and are not listed. Actions still complete if mail
-          is skipped.
+          Turn off a message to stop sending it for everyone. Members can turn
+          email or in-app off for themselves on Profile → Notifications and
+          Account Settings → Notifications. Account mail still only goes to the
+          roles chosen on Account Settings. Operator mail is only listed here.
+          Auth confirm and password reset stay on Supabase and are not listed.
+          Actions still complete if mail is skipped.
         </p>
         <div className={tableWrapClassName}>
           <table className={tableClassName}>

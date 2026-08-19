@@ -17,8 +17,9 @@ export default async function DashboardNotificationsPage() {
           Inbox
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">
-          Notices sent to you. Account email routing is on Account Settings.
-          Fishery watches are on Profile → Alerts.
+          Notices sent to you. Turn messages on or off on Profile →
+          Notifications and Account Settings → Notifications. Fishery watches
+          are on Profile → Alerts.
         </p>
       </div>
       <InAppNotificationList notifications={notifications} />

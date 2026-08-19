@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import {
   getMyNotificationPreferences,
-  myPersonalNotificationEmailIds,
+  myAccountNotificationEmailIds,
+  myProfileNotificationEmailIds,
 } from "@/lib/alerts/queries";
 import { parseFisheryIds } from "@/lib/alerts/types";
 import {
@@ -30,7 +31,10 @@ export async function updateNotificationPreferencesAction(
     return { error: "You must be signed in." };
   }
 
-  const visibleIds = await myPersonalNotificationEmailIds();
+  const visibleIds =
+    String(formData.get("notification_scope") ?? "") === "account"
+      ? await myAccountNotificationEmailIds()
+      : await myProfileNotificationEmailIds();
   const visible = new Set(visibleIds);
   const prefs = await getMyNotificationPreferences();
   const formDisabledEmails = disabledProductEmails(
@@ -59,6 +63,8 @@ export async function updateNotificationPreferencesAction(
     return { error: userFacingError(error) };
   }
 
+  revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/account");
   revalidatePath("/dashboard/notifications");
   return { message: "Notification preferences saved." };
 }

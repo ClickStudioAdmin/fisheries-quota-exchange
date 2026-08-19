@@ -3,11 +3,12 @@ import test from "node:test";
 import {
   MEMBER_EMAIL_IDS,
   PRODUCT_EMAIL_IDS,
+  accountNotificationEmailIds,
   disabledProductEmails,
   emailIsDisabled,
   isAccountNotificationEmailId,
-  isProductEmailId,
   personalNotificationEmailIds,
+  profileNotificationEmailIds,
 } from "./product-emails.ts";
 import { emailCopy } from "./copy.ts";
 
@@ -55,6 +56,33 @@ test("personalNotificationEmailIds omits mail the person would not receive", () 
   assert.equal(manager.includes("purchase_received"), true);
   assert.equal(manager.includes("operator_listing_pending"), false);
   assert.equal(manager.length, MEMBER_EMAIL_IDS.length);
+});
+
+test("profile and account lists split personal mail from org mail", () => {
+  const member = {
+    isOrgMember: true,
+    isOrgManager: false,
+  };
+  const profileMember = profileNotificationEmailIds(member);
+  const accountMember = accountNotificationEmailIds(member);
+  assert.equal(profileMember.includes("listing_alert"), true);
+  assert.equal(profileMember.includes("purchase_received"), true);
+  assert.equal(profileMember.includes("holding_verified"), false);
+  assert.equal(accountMember.includes("holding_verified"), false);
+  assert.equal(accountMember.includes("payment_received"), true);
+
+  const manager = profileNotificationEmailIds({
+    isOrgMember: true,
+    isOrgManager: true,
+  });
+  const accountManager = accountNotificationEmailIds({
+    isOrgMember: true,
+    isOrgManager: true,
+  });
+  assert.equal(manager.includes("listing_purchased"), false);
+  assert.equal(accountManager.includes("listing_purchased"), true);
+  assert.equal(accountManager.includes("holding_verified"), true);
+  assert.equal(accountManager.includes("listing_alert"), false);
 });
 
 test("isAccountNotificationEmailId is listing and settlement org mail, not personal mail", () => {

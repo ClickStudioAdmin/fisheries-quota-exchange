@@ -43,8 +43,8 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/dashboard` | Overview: onboarding, pending invitations to this person, holdings/listings/orders/alerts counts, latest 10 in-app notices |
 | `/select-account` | Choose the active organisation after login, or when switching |
 | `/invitations/[token]` | Accept or decline an account invitation. Signed in required; active organisation cookie is not |
-| `/dashboard/profile` | Personal details, Password and Security, and Alerts (fishery watches) |
-| `/dashboard/account` | Account Settings for the active organisation: Details, Members, Payments, and Notifications (which roles receive account email) |
+| `/dashboard/profile` | Personal details, Password and Security, Notifications (personal message switches), and Alerts (fishery watches) |
+| `/dashboard/account` | Account Settings for the active organisation: Details, Members, Payments, and Notifications (role routing and account message switches) |
 | `/dashboard/notifications` | Signed-in user inbox |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
@@ -126,7 +126,7 @@ Test card (AU Visa): `4000 0003 6000 0006`. Test BECS debit: BSB `000-000`, acco
 
 Mail is sent from the server after the database write. Auth confirm and password reset stay on Supabase Auth. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; the action still succeeds. The same events also write an in-app notice. Platform admins can disable each product **email** on `/admin/settings`. Previews are on `/admin/templates`.
 
-Account mail (listings, holdings, payments, and settlement for that organisation) goes to the roles chosen on Account Settings → Notifications. Default is Owner and Admin. The picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Personal mail (invitations, your bid, your purchase, listing alerts) is not role-routed.
+Account mail (listings, holdings, payments, and settlement for that organisation) goes to the roles chosen on Account Settings → Notifications. Default is Owner and Admin. The picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Personal mail (invitations, your bid, your purchase, listing alerts) is not role-routed. Each person can turn email or in-app off for personal messages on Profile → Notifications, and for account messages on Account Settings → Notifications.
 
 Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. The buyer copy goes to the person who placed the order. The seller copy goes to the account notification roles.
 
