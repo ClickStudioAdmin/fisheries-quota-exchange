@@ -37,7 +37,7 @@ export const ORGANISATION_PRIVILEGE_GROUPS: readonly PrivilegeGroup[] = [
     rows: [
       {
         id: "view",
-        task: "View business, people, holdings, listings, and orders",
+        task: "View this business (all pages)",
         cells: YES,
       },
       {

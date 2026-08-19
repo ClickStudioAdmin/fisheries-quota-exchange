@@ -33,7 +33,7 @@ Signed-out users are redirected to `/login`.
 
 | Action | OWNER | ADMIN | MEMBER |
 | --- | --- | --- | --- |
-| View business, people, holdings, listings, and orders | Yes | Yes | Yes |
+| View this business (all pages) | Yes | Yes | Yes |
 | Edit business details | Yes | Yes | No |
 | Change who receives business email | Yes | Yes | No |
 | Set up Stripe payments | Yes | Yes | No |
