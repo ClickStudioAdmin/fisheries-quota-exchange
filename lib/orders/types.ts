@@ -55,15 +55,7 @@ export type SimulatedTransaction = {
   completed_at: string | null;
 };
 
-export type AuditEvent = {
-  id: number;
-  event_type: string;
-  entity_type: string;
-  entity_id: number;
-  actor_email: string | null;
-  payload: Record<string, unknown>;
-  created_at: string;
-};
+export type { AuditEvent } from "../audit/types";
 
 export type OrderFormState = {
   error?: string;
@@ -135,40 +127,5 @@ export function orderStatusLabel(status: OrderStatus) {
       return "Rejected";
     case "CANCELLED":
       return "Cancelled";
-  }
-}
-
-export function auditEventLabel(eventType: string) {
-  switch (eventType) {
-    case "ORDER_CREATED":
-      return "Order created";
-    case "QUOTA_RESERVED":
-      return "Quota reserved";
-    case "ORDER_CANCELLED":
-      return "Order cancelled";
-    case "PAYMENT_RECEIVED":
-      return "Payment received";
-    case "PAYMENT_FAILED":
-      return "Payment failed";
-    case "COMPLIANCE_APPROVED":
-      return "Compliance approved";
-    case "COMPLIANCE_REJECTED":
-      return "Compliance rejected";
-    case "TRANSFER_SIMULATED":
-      return "Transfer recorded";
-    case "SETTLEMENT_SIMULATED":
-      return "Settlement completed";
-    case "BID_PLACED":
-      return "Bid placed";
-    case "AUCTION_CLOSED":
-      return "Auction closed";
-    case "AUCTION_UNSOLD":
-      return "Auction unsold";
-    default:
-      return eventType
-        .toLowerCase()
-        .split("_")
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ");
   }
 }

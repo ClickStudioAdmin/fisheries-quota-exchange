@@ -57,6 +57,7 @@ export default async function AdminLayout({
       match: "prefix",
       badge: counts.orders,
     },
+    { href: "/admin/activity", label: "Activity" },
     {
       label: "Reference data",
       children: [

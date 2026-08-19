@@ -58,6 +58,7 @@ export async function MemberArea({ children }: { children: ReactNode }) {
           alsoMatch: ["/orders"],
           badge: counts.orders,
         },
+        { href: "/dashboard/activity", label: "Activity" },
       ],
     },
   ];

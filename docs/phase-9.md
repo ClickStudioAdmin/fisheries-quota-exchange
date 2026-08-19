@@ -45,6 +45,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/invitations/[token]` | Accept or decline an account invitation. Signed in required; active organisation cookie is not |
 | `/dashboard/profile` | Account Settings: Profile, Password and Security, Notifications (personal message switches), and Alerts (fishery watches) |
 | `/dashboard/account` | Business Settings for the active business: Details, Members, Privileges, Payments, and Notifications (role routing and business message switches) |
+| `/dashboard/activity` | Activity log for the active business |
 | `/dashboard/notifications` | Signed-in user inbox |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
@@ -53,15 +54,16 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the quota and fee tax invoices. Return URL is not authoritative |
 | `/orders/[id]/invoice/quota` | Quota tax invoice PDF (seller to buyer) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. `/orders/[id]/invoice` redirects here |
 | `/orders/[id]/invoice/fee` | Platform fee tax invoice PDF (FQX to seller) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored |
+| `/admin/activity` | Platform activity log (all businesses plus platform admin actions) |
 | `/api/stripe/webhook` | Signed Stripe events |
 | `/api/stripe/account-session` | Account Session client secret for embedded components |
 | `/api/cron/emails` | Scheduled mail (listing expired, auction ending soon, payment reminder). Requires `CRON_SECRET`. Hobby plans only allow once per day (`0 0 * * *` UTC). Hourly cron skips Git deploys on Hobby |
 
 ## Database
 
-Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`, `20260819120000_organisation_notification_roles.sql`, `20260819130000_organisation_notification_preferences.sql`, `20260819140000_bid_created_by_email.sql`, `20260819150000_drop_bid_created_by_email.sql`, `20260819160000_buyer_owner_admin_only.sql`, `20260819170000_mark_notifications_unread.sql`
+Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`, `20260819120000_organisation_notification_roles.sql`, `20260819130000_organisation_notification_preferences.sql`, `20260819140000_bid_created_by_email.sql`, `20260819150000_drop_bid_created_by_email.sql`, `20260819160000_buyer_owner_admin_only.sql`, `20260819170000_mark_notifications_unread.sql`, `20260819180000_organisation_activity_log.sql`
 
-`20260819140000` added `bids.created_by_email` and was applied on development. Deleting that file broke `supabase db push`. Keep it in git. `20260819150000` drops the column and restores `place_bid` so outbid mail stays organisation-based. `20260819160000` restricts `create_order`, `place_bid`, `upsert_order_payment`, and `cancel_order` to Owner and Admin of the buying business. `20260819170000` lets a signed-in user mark their inbox notices unread.
+`20260819140000` added `bids.created_by_email` and was applied on development. Deleting that file broke `supabase db push`. Keep it in git. `20260819150000` drops the column and restores `place_bid` so outbid mail stays organisation-based. `20260819160000` restricts `create_order`, `place_bid`, `upsert_order_payment`, and `cancel_order` to Owner and Admin of the buying business. `20260819170000` lets a signed-in user mark their inbox notices unread. `20260819180000` adds `organisation_id` and `related_organisation_id` on `audit_events`, backfills order and listing rows, and records business and platform activity (people, holdings, listings, payments setup, settings, and user verification) as well as the existing order workflow.
 
 Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts eight in-app notices for `click.studio.admin@gmail.com` when that membership exists (mix of read and unread). Links use real holdings, listings, and orders when they are present.
 
@@ -72,10 +74,11 @@ Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts
 - `organisation_invitations` (pending invites; membership starts only after accept)
 - `organisations.notification_roles` (which membership roles receive business email; default Owner and Admin)
 - `organisations.disabled_notification_emails` and `disabled_notification_in_app` (business-level channel mutes)
+- `audit_events.organisation_id` and `related_organisation_id` (business and platform activity logs)
 
 Every signed-in user must agree to the current terms on Overview and add business details on Business Settings before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase shows the buyer acknowledgements as a confirmation step after Purchase Now; bid requires ticking them on the auction page. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms may make them liable to pay the platform commission. This phase does not auto-invoice that abort commission.
 
-Buy, bid, list, holdings, members, and payments use the active organisation from the session cookie. The browser is not trusted to choose a different organisation on the listing. Buy, bid, pay, and cancel unpaid orders are Owner and Admin only, same as listing. Members can view. Owners and admins invite people from Business Settings → Members. The invitee must accept from the email (or Overview) while signed in as that address. They are not added automatically. Business Settings → Privileges shows what each role can do. Roles are fixed.
+Buy, bid, list, holdings, members, payments, and activity use the active organisation from the session cookie. The browser is not trusted to choose a different organisation on the listing. Buy, bid, pay, and cancel unpaid orders are Owner and Admin only, same as listing. Members can view, including the Activity log. Owners and admins invite people from Business Settings → Members. The invitee must accept from the email (or Overview) while signed in as that address. They are not added automatically. Business Settings → Privileges shows what each role can do. Roles are fixed.
 
 Functions:
 

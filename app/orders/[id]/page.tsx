@@ -12,7 +12,8 @@ import {
   getTransactionForOrder,
   listOrderAuditEvents,
 } from "@/lib/orders/queries";
-import { auditEventLabel, orderStatusLabel } from "@/lib/orders/types";
+import { auditEventLabel } from "@/lib/audit/types";
+import { orderStatusLabel } from "@/lib/orders/types";
 import { buildOrderSteps } from "@/lib/orders/progress";
 import { formatAud, formatAudPerUnit, listingOfferingLabel } from "@/lib/listings/types";
 import { LabeledFields, panelClassName } from "@/components/surface";
@@ -390,6 +391,12 @@ export default async function OrderPage({
               >
                 <span className="text-sm text-ink">
                   {auditEventLabel(event.event_type)}
+                  {event.actor_email ? (
+                    <span className="text-ink-muted">
+                      {" "}
+                      · {event.actor_email}
+                    </span>
+                  ) : null}
                 </span>
                 <time
                   className="shrink-0 text-xs text-ink-muted"

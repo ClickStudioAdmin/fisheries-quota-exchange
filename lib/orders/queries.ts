@@ -173,7 +173,7 @@ export async function listOrderAuditEvents(orderId: number) {
 
   const { data } = await supabase
     .from("audit_events")
-    .select("id, event_type, entity_type, entity_id, actor_email, payload, created_at")
+    .select("id, event_type, entity_type, entity_id, actor_email, payload, created_at, organisation_id, related_organisation_id")
     .eq("entity_type", "order")
     .eq("entity_id", orderId)
     .order("created_at", { ascending: false })
