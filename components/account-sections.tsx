@@ -158,7 +158,7 @@ export async function AccountProfileNotificationsSection() {
       disabledEmails={prefs.disabledEmails}
       disabledInApp={prefs.disabledInApp}
       emailIds={emailIds}
-      description="Invitations, listing alerts, and a personal copy of your bids, purchases, payments, and settlement messages. These stay with you when you switch business. The same trade messages can also go to Business Settings for this business’s roles. Fishery watches are on Alerts. Notices you have received are in Inbox."
+      description="Invitations and listing-alert channel switches for this login. They stay with you when you switch business. Bids, purchases, payments, and settlement are on Business Settings → Notifications. Fishery watches are on Alerts. Notices you have received are in Inbox."
     />
   );
 }
@@ -194,7 +194,7 @@ export async function AccountNotificationsSection({
         disabledEmails={result.organisation.disabled_notification_emails}
         disabledInApp={result.organisation.disabled_notification_in_app}
         emailIds={ACCOUNT_NOTIFICATION_EMAIL_IDS}
-        description="Selling, buying, bidding, and settlement for this business. These switches belong to the business. They change when you switch business. Bid, purchase, payment, and settlement receipts also have a personal copy on Account Settings → Notifications."
+        description="Selling, buying, bidding, and settlement for this business. These switches belong to the business. They change when you switch business. Invitations and listing-alert channels are on Account Settings → Notifications."
       />
     </div>
   );

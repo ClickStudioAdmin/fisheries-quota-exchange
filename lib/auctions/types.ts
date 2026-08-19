@@ -7,7 +7,6 @@ export type Bid = {
   bidder_name: string;
   amount_aud: string;
   created_at: string;
-  created_by_email?: string | null;
 };
 
 export type BidFormState = {

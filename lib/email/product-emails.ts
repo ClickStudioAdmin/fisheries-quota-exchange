@@ -116,22 +116,6 @@ const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
   "order_settled",
 ];
 
-const SHARED_BUYER_EMAIL_IDS: ProductEmailId[] = [
-  "bid_placed",
-  "auction_won",
-  "bid_outbid",
-  "auction_not_won",
-  "purchase_received",
-  "bank_debit_submitted",
-  "checkout_expired",
-  "payment_reminder",
-  "payment_received",
-  "settlement_failed",
-  "transfer_in_progress",
-  "transfer_complete",
-  "order_settled",
-];
-
 export type NotificationListGroup = {
   label: string;
   ids: readonly ProductEmailId[];
@@ -148,21 +132,6 @@ export const PROFILE_NOTIFICATION_GROUPS: NotificationListGroup[] = [
     ],
   },
   { label: "Listing alerts", ids: ["listing_alert"] },
-  { label: "Bids", ids: ["bid_placed", "bid_outbid", "auction_won", "auction_not_won"] },
-  { label: "Purchases", ids: ["purchase_received"] },
-  {
-    label: "Payments and settlement",
-    ids: [
-      "bank_debit_submitted",
-      "checkout_expired",
-      "payment_reminder",
-      "payment_received",
-      "settlement_failed",
-      "transfer_in_progress",
-      "transfer_complete",
-      "order_settled",
-    ],
-  },
 ];
 
 export const ACCOUNT_NOTIFICATION_GROUPS: NotificationListGroup[] = [
@@ -249,10 +218,6 @@ export function isAccountNotificationEmailId(id: ProductEmailId) {
   );
 }
 
-export function isSharedBuyerNotificationEmailId(id: ProductEmailId) {
-  return (SHARED_BUYER_EMAIL_IDS as readonly ProductEmailId[]).includes(id);
-}
-
 export function parseDisabledProductEmails(value: unknown): ProductEmailId[] {
   if (!Array.isArray(value)) {
     return [];
@@ -276,24 +241,6 @@ export function notificationAudienceLabel(audience: NotificationAudience) {
   return audience === "you" ? "You" : "Business roles";
 }
 
-export function actorAndAccountChannelEnabled(input: {
-  email: string;
-  actorEmail?: string | null;
-  roleEmails: readonly string[];
-  orgDisabled: boolean;
-  userDisabled: boolean;
-}) {
-  const email = input.email.trim().toLowerCase();
-  const actor = input.actorEmail?.trim().toLowerCase() ?? "";
-  const roles = new Set(
-    input.roleEmails.map((value) => value.trim().toLowerCase()),
-  );
-  const asRole = roles.has(email);
-  const asActor = Boolean(actor) && actor === email;
-
-  return (asRole && !input.orgDisabled) || (asActor && !input.userDisabled);
-}
-
 export function personalNotificationEmailIds(input: {
   isOrgMember: boolean;
   isOrgManager: boolean;
@@ -315,17 +262,11 @@ export function personalNotificationEmailIds(input: {
   return PRODUCT_EMAIL_IDS.filter((id) => allowed.has(id));
 }
 
-export function profileNotificationEmailIds(input: {
+export function profileNotificationEmailIds(_: {
   isOrgMember: boolean;
   isOrgManager: boolean;
 }): ProductEmailId[] {
-  const ids = uniqueGroupedIds(PROFILE_NOTIFICATION_GROUPS);
-
-  if (input.isOrgMember) {
-    return ids;
-  }
-
-  return ids.filter((id) => !isSharedBuyerNotificationEmailId(id));
+  return uniqueGroupedIds(PROFILE_NOTIFICATION_GROUPS);
 }
 
 export function accountNotificationEmailIds(input: {

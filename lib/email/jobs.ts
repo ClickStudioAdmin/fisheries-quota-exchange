@@ -1,7 +1,7 @@
 import "server-only";
 
 import { emailCopy } from "@/lib/email/copy";
-import { claimEmailDispatch, notifyAccountEmail, notifyActorAndAccountEmail, siteUrlOrEmpty } from "@/lib/email/notify";
+import { claimEmailDispatch, notifyAccountEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import { listingHref, type Listing } from "@/lib/listings/types";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -92,7 +92,7 @@ export async function runScheduledEmails() {
 
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, created_by_email, buyer_organisation_id, created_at")
+    .select("id, buyer_organisation_id, created_at")
     .eq("status", "AWAITING_PAYMENT");
 
   for (const row of orders ?? []) {
@@ -111,10 +111,9 @@ export async function runScheduledEmails() {
       continue;
     }
 
-    await notifyActorAndAccountEmail(
+    await notifyAccountEmail(
       "payment_reminder",
       organisationId,
-      String(row.created_by_email),
       emailCopy.payment_reminder({
         orderId: Number(row.id),
         orderUrl: `${siteUrl}/orders/${row.id}`,

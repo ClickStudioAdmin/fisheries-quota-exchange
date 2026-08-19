@@ -1,7 +1,7 @@
 import "server-only";
 
 import { emailCopy } from "@/lib/email/copy";
-import { notifyAccountEmail, notifyActorAndAccountEmail, siteUrlOrEmpty } from "@/lib/email/notify";
+import { notifyAccountEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import { getSettledOrderInvoices } from "@/lib/invoices/for-order";
 import { listingOfferingLabel } from "@/lib/listings/types";
 import { getOrder } from "@/lib/orders/queries";
@@ -29,10 +29,9 @@ export async function sendSettledOrderInvoice(orderId: number) {
     },
   ];
 
-  await notifyActorAndAccountEmail(
+  await notifyAccountEmail(
     "order_settled",
     order.buyer_organisation_id,
-    order.created_by_email,
     emailCopy.order_settled({
       orderId: order.id,
       offeringLabel,
@@ -40,6 +39,7 @@ export async function sendSettledOrderInvoice(orderId: number) {
       orderUrl,
       forSeller: false,
     }),
+    undefined,
     attachments,
   );
   await notifyAccountEmail(

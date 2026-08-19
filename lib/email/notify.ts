@@ -1,12 +1,7 @@
 import "server-only";
 
 import { sendEmail, type EmailAttachment } from "@/lib/email/send";
-import {
-  actorAndAccountChannelEnabled,
-  emailIsDisabled,
-  type ProductEmailId,
-} from "@/lib/email/product-emails";
-import { getUserNotificationPreferences } from "@/lib/alerts/queries";
+import { type ProductEmailId } from "@/lib/email/product-emails";
 import { getSiteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -82,77 +77,6 @@ export async function notifyAccountEmail(
   ]);
 
   return notifyEmail(template, to, data, { attachments, organisationId });
-}
-
-export async function notifyActorAndAccountEmail(
-  template: ProductEmailId,
-  organisationId: number,
-  actorEmail: string | null | undefined,
-  data: NoticeEmailData,
-  attachments?: EmailAttachment[],
-) {
-  const roleEmails = await organisationNotificationEmails(organisationId);
-  const actors = uniqueEmails(
-    Array.isArray(actorEmail) ? actorEmail : [actorEmail],
-  );
-  const recipients = uniqueEmails([...roleEmails, ...actors]);
-
-  if (recipients.length === 0) {
-    return { sent: false, skipped: true };
-  }
-
-  const orgPrefs = await organisationNotificationPreferences(organisationId);
-  let result: SendEmailResult = { sent: false, skipped: true };
-
-  for (const email of recipients) {
-    const userPrefs = await getUserNotificationPreferences(email);
-    const sendEmailChannel = actorAndAccountChannelEnabled({
-      email,
-      actorEmail: actor[0],
-      roleEmails,
-      orgDisabled: emailIsDisabled(orgPrefs.disabledEmails, template),
-      userDisabled: emailIsDisabled(userPrefs.disabledEmails, template),
-    });
-    const sendInAppChannel = actorAndAccountChannelEnabled({
-      email,
-      actorEmail: actor[0],
-      roleEmails,
-      orgDisabled: emailIsDisabled(orgPrefs.disabledInApp, template),
-      userDisabled: emailIsDisabled(userPrefs.disabledInApp, template),
-    });
-
-    if (sendEmailChannel) {
-      try {
-        result = await sendEmail({
-          to: email,
-          template,
-          data,
-          attachments,
-          accountDisabledEmails: [],
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Email failed.";
-        console.error("notifyActorAndAccountEmail failed", template, message);
-        result = { sent: false, error: message };
-      }
-    }
-
-    if (sendInAppChannel) {
-      try {
-        await insertInAppNotification({
-          email,
-          template,
-          data,
-          accountDisabledInApp: [],
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "In-app failed.";
-        console.error("notifyActorAndAccountEmail in-app failed", template, message);
-      }
-    }
-  }
-
-  return result;
 }
 
 export async function siteUrlOrEmpty() {

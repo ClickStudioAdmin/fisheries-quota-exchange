@@ -4,7 +4,6 @@ import {
   MEMBER_EMAIL_IDS,
   PRODUCT_EMAIL_IDS,
   accountNotificationEmailIds,
-  actorAndAccountChannelEnabled,
   disabledProductEmails,
   emailIsDisabled,
   groupedNotificationIds,
@@ -72,10 +71,11 @@ test("profile and account lists split personal mail from org mail", () => {
   const profileMember = profileNotificationEmailIds(member);
   const accountMember = accountNotificationEmailIds(member);
   assert.equal(profileMember.includes("listing_alert"), true);
-  assert.equal(profileMember.includes("purchase_received"), true);
-  assert.equal(profileMember.includes("payment_received"), true);
-  assert.equal(profileMember.includes("order_settled"), true);
-  assert.equal(profileMember.includes("bid_placed"), true);
+  assert.equal(profileMember.includes("member_added"), true);
+  assert.equal(profileMember.includes("purchase_received"), false);
+  assert.equal(profileMember.includes("payment_received"), false);
+  assert.equal(profileMember.includes("order_settled"), false);
+  assert.equal(profileMember.includes("bid_placed"), false);
   assert.equal(profileMember.includes("bid_outbid"), false);
   assert.equal(profileMember.includes("holding_verified"), false);
   assert.equal(accountMember.includes("holding_verified"), true);
@@ -171,78 +171,12 @@ test("groupedNotificationIds keeps related sections and drops empty ones", () =>
   ]);
   assert.deepEqual(
     groups.map((group) => group.label),
-    ["Membership", "Listing alerts", "Bids"],
+    ["Membership", "Listing alerts"],
   );
   assert.deepEqual(groups[0]?.ids, ["member_added"]);
   assert.equal(
     groupedNotificationIds(PROFILE_NOTIFICATION_GROUPS, []).length,
     0,
-  );
-});
-
-test("actorAndAccountChannelEnabled unions role and actor mutes independently", () => {
-  const role = "owner@example.test";
-  const actor = "buyer@example.test";
-
-  assert.equal(
-    actorAndAccountChannelEnabled({
-      email: actor,
-      actorEmail: actor,
-      roleEmails: [role],
-      orgDisabled: true,
-      userDisabled: false,
-    }),
-    true,
-  );
-  assert.equal(
-    actorAndAccountChannelEnabled({
-      email: actor,
-      actorEmail: actor,
-      roleEmails: [role],
-      orgDisabled: false,
-      userDisabled: true,
-    }),
-    false,
-  );
-  assert.equal(
-    actorAndAccountChannelEnabled({
-      email: role,
-      actorEmail: actor,
-      roleEmails: [role],
-      orgDisabled: false,
-      userDisabled: true,
-    }),
-    true,
-  );
-  assert.equal(
-    actorAndAccountChannelEnabled({
-      email: role,
-      actorEmail: actor,
-      roleEmails: [role],
-      orgDisabled: true,
-      userDisabled: false,
-    }),
-    false,
-  );
-  assert.equal(
-    actorAndAccountChannelEnabled({
-      email: actor,
-      actorEmail: actor,
-      roleEmails: [actor],
-      orgDisabled: false,
-      userDisabled: true,
-    }),
-    true,
-  );
-  assert.equal(
-    actorAndAccountChannelEnabled({
-      email: actor,
-      actorEmail: actor,
-      roleEmails: [actor],
-      orgDisabled: true,
-      userDisabled: true,
-    }),
-    false,
   );
 });
 

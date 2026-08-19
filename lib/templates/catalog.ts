@@ -40,12 +40,10 @@ const skipWhen =
 const accountRolesRecipient =
   "Roles selected on Business Settings → Notifications (default Owner and Admin). Falls back to owners if those roles have no members.";
 const accountRolesAndCreatorRecipient = `${accountRolesRecipient} Also the listing creator.`;
-const actorAndBuyingRolesRecipient =
-  "The person who placed the bid or order, plus notification roles on that buying business (default Owner and Admin). One email per address. Account Settings and Business Settings channel switches apply independently.";
 const bidderAccountRolesRecipient =
   "Notification roles on that bidding business (default Owner and Admin).";
 const buyerAndSellerRolesRecipient =
-  "The person who placed the order, plus notification roles on the buying business and the selling business (default Owner and Admin). One email per address. Account Settings and Business Settings channel switches apply independently.";
+  "Notification roles on the buying business and the selling business (default Owner and Admin).";
 
 const EMAIL_CATALOG: Record<
   ProductEmailId,
@@ -158,7 +156,7 @@ const EMAIL_CATALOG: Record<
     description: "Tells the buyer to pay FQX from the order page.",
     sentWhen: "After create_order for a fixed-price purchase.",
     trigger: "notifyOrderCreated.",
-    recipient: actorAndBuyingRolesRecipient,
+    recipient: accountRolesRecipient,
   },
   auction_published: {
     summary: "When an auction is published",
@@ -172,7 +170,7 @@ const EMAIL_CATALOG: Record<
     description: "Confirms the bid using server time.",
     sentWhen: "After place_bid succeeds.",
     trigger: "placeBidAction then notifyBidPlaced.",
-    recipient: actorAndBuyingRolesRecipient,
+    recipient: accountRolesRecipient,
   },
   bid_outbid: {
     summary: "When a later bid takes the lead",
@@ -193,7 +191,7 @@ const EMAIL_CATALOG: Record<
     description: "Tells the winner an order was created.",
     sentWhen: "When ensureAuctionClosed / closeAuction creates an order.",
     trigger: "notifyAuctionClosed.",
-    recipient: actorAndBuyingRolesRecipient,
+    recipient: accountRolesRecipient,
   },
   auction_not_won: {
     summary: "Other bidders after a sale",
@@ -235,7 +233,7 @@ const EMAIL_CATALOG: Record<
     description: "Tells the buyer the bank debit was submitted and may show Incoming until it clears.",
     sentWhen: "Once per order on checkout.session.completed with payment_status unpaid.",
     trigger: "handleStripeWebhook then claim_email_dispatch(bank_debit_submitted).",
-    recipient: actorAndBuyingRolesRecipient,
+    recipient: accountRolesRecipient,
   },
   settlement_failed: {
     summary: "When the seller settlement transfer fails",
@@ -250,14 +248,14 @@ const EMAIL_CATALOG: Record<
     description: "Tells the buyer the order was cancelled and quota released.",
     sentWhen: "Once per order on checkout.session.expired after fail_unpaid_order.",
     trigger: "handleStripeWebhook then claim_email_dispatch(checkout_expired).",
-    recipient: actorAndBuyingRolesRecipient,
+    recipient: accountRolesRecipient,
   },
   payment_reminder: {
     summary: "Unpaid order still awaiting payment after 24 hours",
     description: "Reminds the buyer to pay FQX to keep the reservation.",
     sentWhen: "Hourly cron, once per order, when status is AWAITING_PAYMENT for more than 24 hours.",
     trigger: "runScheduledEmails via /api/cron/emails.",
-    recipient: actorAndBuyingRolesRecipient,
+    recipient: accountRolesRecipient,
   },
   transfer_in_progress: {
     summary: "After compliance is approved",

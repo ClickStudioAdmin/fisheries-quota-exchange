@@ -2,7 +2,7 @@ import "server-only";
 
 import { listingAlertEmails } from "@/lib/alerts/queries";
 import { emailCopy } from "@/lib/email/copy";
-import { claimEmailDispatch, notifyAccountEmail, notifyActorAndAccountEmail, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
+import { claimEmailDispatch, notifyAccountEmail, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import type { ProductEmailId } from "@/lib/email/product-emails";
 import {
   organisationMemberEmails,
@@ -33,12 +33,7 @@ async function notifyBuyerAndSeller(
   order: Order,
   data: NoticeEmailData,
 ) {
-  await notifyActorAndAccountEmail(
-    template,
-    order.buyer_organisation_id,
-    order.created_by_email,
-    data,
-  );
+  await notifyAccountEmail(template, order.buyer_organisation_id, data);
   await notifyAccountEmail(template, order.seller_organisation_id, data);
 }
 
@@ -222,10 +217,9 @@ export async function notifyOrderCreated(order: Order, listing: Listing) {
     }),
     [listing.created_by_email],
   );
-  await notifyActorAndAccountEmail(
+  await notifyAccountEmail(
     "purchase_received",
     order.buyer_organisation_id,
-    order.created_by_email,
     emailCopy.purchase_received({
       fisheryName: listing.fishery_name,
       orderUrl,
@@ -240,7 +234,6 @@ export async function notifyOrderCreated(order: Order, listing: Listing) {
 export async function notifyBidPlaced(input: {
   listing: Listing;
   amount: number;
-  bidderEmail: string;
   bidderOrganisationId: number;
   previous: Bid | null;
 }) {
@@ -248,10 +241,9 @@ export async function notifyBidPlaced(input: {
   const auctionUrl = listingUrl(siteUrl, input.listing);
   const amount = formatAud(input.amount);
 
-  await notifyActorAndAccountEmail(
+  await notifyAccountEmail(
     "bid_placed",
     input.bidderOrganisationId,
-    input.bidderEmail,
     emailCopy.bid_placed({
       fisheryName: input.listing.fishery_name,
       amount,
@@ -304,10 +296,9 @@ export async function notifyAuctionClosed(input: {
   }
 
   const winnerOrg = input.order.buyer_organisation_id;
-  await notifyActorAndAccountEmail(
+  await notifyAccountEmail(
     "auction_won",
     winnerOrg,
-    input.order.created_by_email,
     emailCopy.auction_won({
       fisheryName: input.listing.fishery_name,
       orderUrl: `${siteUrl}/orders/${input.order.id}`,
@@ -366,10 +357,9 @@ export async function notifyBankDebitSubmitted(order: Order) {
   }
 
   const siteUrl = await siteUrlOrEmpty();
-  await notifyActorAndAccountEmail(
+  await notifyAccountEmail(
     "bank_debit_submitted",
     order.buyer_organisation_id,
-    order.created_by_email,
     emailCopy.bank_debit_submitted({
       orderId: order.id,
       orderUrl: `${siteUrl}/orders/${order.id}`,
@@ -383,10 +373,9 @@ export async function notifyCheckoutExpired(order: Order) {
   }
 
   const siteUrl = await siteUrlOrEmpty();
-  await notifyActorAndAccountEmail(
+  await notifyAccountEmail(
     "checkout_expired",
     order.buyer_organisation_id,
-    order.created_by_email,
     emailCopy.checkout_expired({
       orderId: order.id,
       orderUrl: `${siteUrl}/orders/${order.id}`,

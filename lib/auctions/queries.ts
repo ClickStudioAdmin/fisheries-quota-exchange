@@ -10,7 +10,7 @@ export async function listBids(listingId: number) {
 
   const { data } = await supabase
     .from("bids")
-    .select("id, listing_id, organisation_id, bidder_name, amount_aud, created_at, created_by_email")
+    .select("id, listing_id, organisation_id, bidder_name, amount_aud, created_at")
     .eq("listing_id", listingId)
     .order("created_at", { ascending: false });
 

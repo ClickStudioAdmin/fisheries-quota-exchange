@@ -129,11 +129,11 @@ Mail is sent from the server after the database write. Auth confirm and password
 
 Business mail (listings, holdings, selling, buying, bidding, payments, and settlement for that organisation) goes to the roles chosen on Business Settings → Notifications. Default is Owner and Admin. The role picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Email and in-app switches for those business messages are stored on the organisation (`disabled_notification_emails`, `disabled_notification_in_app`). They do not follow the signed-in person when they switch business.
 
-Account Settings → Notifications is this login. Membership and listing alerts stay there only. Bid, purchase, payment, and settlement receipts (`bid_placed`, `auction_won`, `purchase_received`, `bank_debit_submitted`, `checkout_expired`, `payment_reminder`, `payment_received`, `settlement_failed`, `transfer_in_progress`, `transfer_complete`, `order_settled`) appear on both lists with independent switches. A recipient gets that channel if they are in that organisation’s roles and the business switch is on, or they are the person who acted and the Account Settings switch is on. One email per address. Payment and settlement also go to the selling business’s roles. `bid_outbid` and `auction_not_won` sit on Business Settings only.
+Account Settings → Notifications is this login. Membership and listing-alert channels stay there only. Bid, purchase, payment, and settlement mail goes to Business Settings → Notifications for that organisation’s roles. Payment and settlement also go to the other party’s business roles. `bid_outbid` and `auction_not_won` go to the bidding business’s roles.
 
 Both lists group related messages. Sent to is You on Account Settings and Business roles on Business Settings.
 
-Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. The buyer copy goes to the person who placed the order and that buying business’s notification roles. The seller copy goes to the selling business’s notification roles.
+Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. The buyer copy goes to the buying business’s notification roles. The seller copy goes to the selling business’s notification roles.
 
 Users switch sale and/or lease per fishery on Account Settings → Alerts. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert.
 

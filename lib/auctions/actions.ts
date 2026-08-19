@@ -208,11 +208,10 @@ export async function placeBidAction(
     return { error: userFacingError(error) };
   }
 
-  if (listing && user.email) {
+  if (listing) {
     await notifyBidPlaced({
       listing,
       amount,
-      bidderEmail: user.email,
       bidderOrganisationId: organisationId,
       previous,
     });
