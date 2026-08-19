@@ -74,19 +74,27 @@ export async function ListingRelatedMarket({
           </p>
         ) : (
           <div className={`mt-4 ${tableWrapClassName}`}>
-            <table className={tableClassName}>
+            <table className={`${tableClassName} table-fixed`}>
               <thead className={tableHeadClassName}>
                 <tr>
-                  <th className={tableHeaderCellClassName}>Seller</th>
-                  <th className={tableHeaderCellClassName}>Type</th>
-                  <th className={tableHeaderCellClassName}>Quantity</th>
-                  <th className={`${tableHeaderCellClassName} text-right`}>
+                  <th className={`${tableHeaderCellClassName} w-[22%] pl-4`}>
+                    Seller
+                  </th>
+                  <th className={`${tableHeaderCellClassName} w-[18%]`}>
+                    Type
+                  </th>
+                  <th className={`${tableHeaderCellClassName} w-[15%]`}>
+                    Quantity
+                  </th>
+                  <th className={`${tableHeaderCellClassName} w-[15%]`}>
                     Price
                   </th>
-                  <th className={`${tableHeaderCellClassName} text-right`}>
+                  <th className={`${tableHeaderCellClassName} w-[15%]`}>
                     Total
                   </th>
-                  <th className={tableHeaderCellClassName}>Expires</th>
+                  <th className={`${tableHeaderCellClassName} w-[15%] pr-4`}>
+                    Expires
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -98,7 +106,7 @@ export async function ListingRelatedMarket({
 
                   return (
                     <tr key={listing.id} className={tableRowClassName(index)}>
-                      <td className={tableBodyCellClassName}>
+                      <td className={`${tableBodyCellClassName} pl-4`}>
                         <Link href={listingHref(listing)} className="underline">
                           <PublicSellerName display={seller} />
                         </Link>
@@ -110,23 +118,19 @@ export async function ListingRelatedMarket({
                       <td className={`${tableBodyCellClassName} tabular-nums`}>
                         {listing.quantity} {listing.unit_label}
                       </td>
-                      <td
-                        className={`${tableBodyCellClassName} text-right tabular-nums`}
-                      >
+                      <td className={`${tableBodyCellClassName} tabular-nums`}>
                         {formatAudPerUnit(
                           listing.unit_price_aud,
                           listing.unit_label,
                         )}
                       </td>
-                      <td
-                        className={`${tableBodyCellClassName} text-right tabular-nums`}
-                      >
+                      <td className={`${tableBodyCellClassName} tabular-nums`}>
                         {formatListingTotal(
                           listing.quantity,
                           listing.unit_price_aud,
                         )}
                       </td>
-                      <td className={tableBodyCellClassName}>
+                      <td className={`${tableBodyCellClassName} pr-4`}>
                         {formatTableDate(listing.expires_at)}
                       </td>
                     </tr>
@@ -146,17 +150,17 @@ export async function ListingRelatedMarket({
           </p>
         ) : (
           <div className={`mt-4 ${tableWrapClassName}`}>
-            <table className={tableClassName}>
+            <table className={`${tableClassName} table-fixed`}>
               <thead className={tableHeadClassName}>
                 <tr>
-                  <th className={tableHeaderCellClassName}>Quantity</th>
-                  <th className={`${tableHeaderCellClassName} text-right`}>
-                    Price
+                  <th className={`${tableHeaderCellClassName} w-1/4 pl-4`}>
+                    Quantity
                   </th>
-                  <th className={`${tableHeaderCellClassName} text-right`}>
-                    Total
+                  <th className={`${tableHeaderCellClassName} w-1/4`}>Price</th>
+                  <th className={`${tableHeaderCellClassName} w-1/4`}>Total</th>
+                  <th className={`${tableHeaderCellClassName} w-1/4 pr-4`}>
+                    Date
                   </th>
-                  <th className={tableHeaderCellClassName}>Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -165,20 +169,18 @@ export async function ListingRelatedMarket({
                     key={`${trade.created_at}-${trade.unit_price_aud}-${index}`}
                     className={tableRowClassName(index)}
                   >
-                    <td className={`${tableBodyCellClassName} tabular-nums`}>
+                    <td
+                      className={`${tableBodyCellClassName} pl-4 tabular-nums`}
+                    >
                       {trade.quantity} {trade.unit_label}
                     </td>
-                    <td
-                      className={`${tableBodyCellClassName} text-right tabular-nums`}
-                    >
+                    <td className={`${tableBodyCellClassName} tabular-nums`}>
                       {formatAudPerUnit(trade.unit_price_aud, trade.unit_label)}
                     </td>
-                    <td
-                      className={`${tableBodyCellClassName} text-right tabular-nums`}
-                    >
+                    <td className={`${tableBodyCellClassName} tabular-nums`}>
                       {formatAud(trade.amount_aud)}
                     </td>
-                    <td className={tableBodyCellClassName}>
+                    <td className={`${tableBodyCellClassName} pr-4`}>
                       {formatTableDate(trade.created_at)}
                     </td>
                   </tr>
