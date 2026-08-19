@@ -11,7 +11,6 @@ export default async function DashboardPage() {
   return (
     <AccountOverviewSection
       organisationId={account.selected?.id ?? null}
-      organisations={account.organisations}
       user={account.user}
     />
   );

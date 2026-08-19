@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { SideNav, type SideNavItem } from "@/components/side-nav";
 import { pageWidthClassName } from "@/components/surface";
@@ -5,6 +6,7 @@ import { pageWidthClassName } from "@/components/surface";
 type AreaShellProps = {
   title: string;
   operatingAs?: string | null;
+  switchAccountHref?: string | null;
   items: SideNavItem[];
   children: ReactNode;
 };
@@ -12,6 +14,7 @@ type AreaShellProps = {
 export function AreaShell({
   title,
   operatingAs,
+  switchAccountHref,
   items,
   children,
 }: AreaShellProps) {
@@ -25,6 +28,16 @@ export function AreaShell({
                 Operating as
               </p>
               <p className="mt-2 text-sm font-medium text-ink">{operatingAs}</p>
+              {switchAccountHref ? (
+                <p className="mt-2">
+                  <Link
+                    href={switchAccountHref}
+                    className="text-sm font-medium text-sea underline"
+                  >
+                    Switch account
+                  </Link>
+                </p>
+              ) : null}
             </div>
           ) : null}
           <Suspense

@@ -3,7 +3,7 @@ import { AreaShell } from "@/components/area-shell";
 import type { SideNavLink } from "@/components/side-nav";
 import { getMemberActionCounts } from "@/lib/nav/action-counts";
 import { getMyUnreadNotificationCount } from "@/lib/notifications/queries";
-import { resolveActiveOrganisation } from "@/lib/organisations/active-account";
+import { selectAccountPath, resolveActiveOrganisation } from "@/lib/organisations/active-account";
 import { readActiveOrganisationCookie } from "@/lib/organisations/active-session";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 
@@ -56,6 +56,9 @@ export async function MemberArea({ children }: { children: ReactNode }) {
     <AreaShell
       title="Account"
       operatingAs={active?.legal_name ?? null}
+      switchAccountHref={
+        organisations.length > 1 ? selectAccountPath() : null
+      }
       items={sectionItems}
     >
       {children}

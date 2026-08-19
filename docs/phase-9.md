@@ -40,7 +40,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/how-it-works` | Buyer and seller steps from account through payment and settlement |
 | `/privacy` | Privacy policy for this development site |
 | `/terms` | Terms of service: buyers, sellers, and platform commission if a committed trade does not complete |
-| `/dashboard` | Overview: onboarding, Switch account (if more than one membership), pending invitations to this person, holdings/listings/orders/alerts counts, latest 10 in-app notices |
+| `/dashboard` | Overview: onboarding, pending invitations to this person, holdings/listings/orders/alerts counts, latest 10 in-app notices |
 | `/select-account` | Choose the active organisation after login, or when switching |
 | `/invitations/[token]` | Accept or decline an account invitation. Signed in required; active organisation cookie is not |
 | `/dashboard/notifications` | Signed-in user inbox (default) and Channels tab for per-event email and in-app switches |
