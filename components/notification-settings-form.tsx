@@ -86,16 +86,9 @@ export function NotificationSettingsForm({
                     </span>
                   </td>
                   <td className={tableBodyCellClassName}>
-                    <div className="flex flex-wrap gap-1">
-                      {notificationAudiences(id).map((audience) => (
-                        <span
-                          key={audience}
-                          className="inline-flex items-center whitespace-nowrap rounded-full bg-paper-stripe px-2 py-0.5 text-xs font-medium text-ink"
-                        >
-                          {notificationAudienceLabel(audience)}
-                        </span>
-                      ))}
-                    </div>
+                    {notificationAudiences(id)
+                      .map(notificationAudienceLabel)
+                      .join(", ")}
                   </td>
                   <td className={tableBodyCellClassName}>
                     <SettingsSwitch
