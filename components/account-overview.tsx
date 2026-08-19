@@ -5,7 +5,6 @@ import { listHoldingsForOrganisation } from "@/lib/fisheries/queries";
 import { holdingIsVerified } from "@/lib/fisheries/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
 import { listingIsOpen } from "@/lib/listings/types";
-import { listMyListingAlerts } from "@/lib/alerts/queries";
 import { listMyInAppNotifications } from "@/lib/notifications/queries";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { accountPaymentsPath } from "@/lib/organisations/paths";
@@ -41,7 +40,7 @@ export async function AccountOverviewSection({
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
   const acceptedTerms = await hasAcceptedCurrentTerms();
-  const [holdings, listings, orders, sellError, notifications, alerts, invitations] =
+  const [holdings, listings, orders, sellError, notifications, invitations] =
     await Promise.all([
       organisationId
         ? listHoldingsForOrganisation(organisationId)
@@ -54,7 +53,6 @@ export async function AccountOverviewSection({
         : Promise.resolve([] as Awaited<ReturnType<typeof listOrganisationOrders>>),
       organisationId ? organisationCanSellError(organisationId) : Promise.resolve(null),
       listMyInAppNotifications(10),
-      listMyListingAlerts(),
       listMyPendingInvitations(),
     ]);
   const hasAccount = Boolean(result);
@@ -83,9 +81,6 @@ export async function AccountOverviewSection({
       organisationId != null &&
       order.buyer_organisation_id === organisationId,
   );
-  const activeAlerts = alerts.filter(
-    (alert) => alert.sales || alert.leases,
-  ).length;
   const cardLinkClassName = `${statClassName} transition-colors hover:border-sea`;
 
   return (
@@ -153,7 +148,7 @@ export async function AccountOverviewSection({
           )}
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Link href={href("/dashboard/holdings")} className={cardLinkClassName}>
           <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
             Holdings
@@ -187,19 +182,6 @@ export async function AccountOverviewSection({
             {payOrders.length > 0
               ? `${payOrders.length} awaiting payment`
               : "None awaiting payment"}
-          </p>
-        </Link>
-        <Link href="/dashboard/profile?tab=alerts" className={cardLinkClassName}>
-          <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-            Alerts
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-ink">{activeAlerts}</p>
-          <p className="mt-1 text-sm text-ink-muted">
-            {activeAlerts === 0
-              ? "None switched on"
-              : activeAlerts === 1
-                ? "1 fishery watched"
-                : `${activeAlerts} fisheries watched`}
           </p>
         </Link>
       </div>
