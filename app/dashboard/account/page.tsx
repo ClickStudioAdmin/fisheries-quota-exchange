@@ -7,7 +7,6 @@ import {
 import { DashboardTabs } from "@/components/dashboard-tabs";
 import { accountSettingsPath } from "@/lib/organisations/paths";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
-import { listMembers } from "@/lib/organisations/queries";
 
 export const metadata = {
   title: "Business Settings",
@@ -20,17 +19,13 @@ export default async function DashboardAccountPage({
 }) {
   const params = await searchParams;
   const account = await resolveDashboardAccount("/dashboard/account");
-  const organisationId = account.selected?.id ?? null;
-  const memberCount = organisationId
-    ? (await listMembers(organisationId)).length
-    : 0;
-  const showNotifications = memberCount > 1;
   const tab =
-    (params.tab === "members" ||
-      params.tab === "payments" ||
-      (params.tab === "notifications" && showNotifications))
+    params.tab === "members" ||
+    params.tab === "payments" ||
+    params.tab === "notifications"
       ? params.tab
       : "details";
+  const organisationId = account.selected?.id ?? null;
 
   return (
     <div className="space-y-6">
@@ -48,15 +43,11 @@ export default async function DashboardAccountPage({
             href: accountSettingsPath("payments"),
             label: "Payments",
           },
-          ...(showNotifications
-            ? [
-                {
-                  id: "notifications",
-                  href: accountSettingsPath("notifications"),
-                  label: "Notifications",
-                },
-              ]
-            : []),
+          {
+            id: "notifications",
+            href: accountSettingsPath("notifications"),
+            label: "Notifications",
+          },
         ]}
       />
       {tab === "members" ? (

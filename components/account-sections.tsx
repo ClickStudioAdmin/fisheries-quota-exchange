@@ -174,15 +174,19 @@ export async function AccountNotificationsSection({
     return <p>Business not found.</p>;
   }
 
+  const members = await listMembers(organisationId);
   const canEdit = canEditOrganisation(result.role);
+  const showRoles = members.length > 1;
 
   return (
     <div className="space-y-10">
-      <AccountNotificationForm
-        organisationId={organisationId}
-        selectedRoles={result.organisation.notification_roles}
-        canEdit={canEdit}
-      />
+      {showRoles ? (
+        <AccountNotificationForm
+          organisationId={organisationId}
+          selectedRoles={result.organisation.notification_roles}
+          canEdit={canEdit}
+        />
+      ) : null}
       <NotificationSettingsForm
         scope="account"
         organisationId={organisationId}
@@ -190,7 +194,11 @@ export async function AccountNotificationsSection({
         disabledEmails={result.organisation.disabled_notification_emails}
         disabledInApp={result.organisation.disabled_notification_in_app}
         emailIds={ACCOUNT_NOTIFICATION_EMAIL_IDS}
-        description="Listings, holdings, payments, and settlement for this business. These switches belong to the business, not to you. They change when you switch business. Sent to shows Business roles for the people chosen above, and You when the buyer or listing owner also gets a personal copy. Personal messages are on Profile → Notifications."
+        description={
+          showRoles
+            ? "Listings, holdings, payments, and settlement for this business. These switches belong to the business, not to you. They change when you switch business. Sent to shows Business roles for the people chosen above, and You when the buyer or listing owner also gets a personal copy. Personal messages are on Profile → Notifications."
+            : "Listings, holdings, payments, and settlement for this business. These switches belong to the business, not to you. They change when you switch business. Personal messages are on Profile → Notifications."
+        }
       />
     </div>
   );
