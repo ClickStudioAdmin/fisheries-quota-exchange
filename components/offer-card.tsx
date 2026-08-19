@@ -136,14 +136,14 @@ export function OfferCard({
     <span className="block truncate">{listing.fishery_name}</span>
   );
   const sellerLine = hideFishery ? null : (
-    <div className="mt-1 min-w-0">
-      <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+    <p className="mt-1 flex min-w-0 items-baseline gap-2 text-sm text-ink">
+      <span className="text-xs uppercase tracking-[0.12em] text-ink-muted">
         Seller
-      </p>
-      <p className="mt-0.5 min-w-0 text-sm text-ink">
+      </span>
+      <span className="min-w-0 truncate">
         <PublicSellerName display={seller} />
-      </p>
-    </div>
+      </span>
+    </p>
   );
   const badges = (
     <ListingKindBadges
