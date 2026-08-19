@@ -3,6 +3,7 @@ import "server-only";
 import { listingAlertEmails } from "@/lib/alerts/queries";
 import { emailCopy } from "@/lib/email/copy";
 import { claimEmailDispatch, notifyAccountEmail, notifyActorAndAccountEmail, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
+import type { ProductEmailId } from "@/lib/email/product-emails";
 import {
   organisationMemberEmails,
   platformAdminEmails,
@@ -15,6 +16,7 @@ import {
   listingTypeLabel,
   type Listing,
 } from "@/lib/listings/types";
+import type { NoticeEmailData } from "@/lib/email/types";
 import type { Order } from "@/lib/orders/types";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { accountPaymentsPath } from "@/lib/organisations/paths";
@@ -24,6 +26,20 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 function listingUrl(siteUrl: string, listing: Pick<Listing, "id" | "listing_type">) {
   return `${siteUrl}${listingHref(listing)}`;
+}
+
+async function notifyBuyerAndSeller(
+  template: ProductEmailId,
+  order: Order,
+  data: NoticeEmailData,
+) {
+  await notifyActorAndAccountEmail(
+    template,
+    order.buyer_organisation_id,
+    order.created_by_email,
+    data,
+  );
+  await notifyAccountEmail(template, order.seller_organisation_id, data);
 }
 
 export async function notifyListingCreated(listing: Listing) {
@@ -340,16 +356,7 @@ export async function notifyPaymentReceived(order: Order) {
     orderId: order.id,
     orderUrl: `${siteUrl}/orders/${order.id}`,
   });
-  await notifyAccountEmail(
-    "payment_received",
-    order.seller_organisation_id,
-    data,
-  );
-  await notifyEmail(
-    "payment_received",
-    uniqueEmails([order.created_by_email]),
-    data,
-  );
+  await notifyBuyerAndSeller("payment_received", order, data);
   await notifyOperatorOrderPending(order, siteUrl);
 }
 
@@ -415,16 +422,7 @@ export async function notifySettlementFailed(order: Order) {
     orderId: order.id,
     orderUrl: `${siteUrl}/orders/${order.id}`,
   });
-  await notifyAccountEmail(
-    "settlement_failed",
-    order.seller_organisation_id,
-    data,
-  );
-  await notifyEmail(
-    "settlement_failed",
-    uniqueEmails([order.created_by_email]),
-    data,
-  );
+  await notifyBuyerAndSeller("settlement_failed", order, data);
   await notifyEmail(
     "operator_payment_exception",
     await platformAdminEmails(),
@@ -442,16 +440,7 @@ export async function notifyTransferInProgress(order: Order) {
     orderId: order.id,
     orderUrl: `${siteUrl}/orders/${order.id}`,
   });
-  await notifyAccountEmail(
-    "transfer_in_progress",
-    order.seller_organisation_id,
-    data,
-  );
-  await notifyEmail(
-    "transfer_in_progress",
-    uniqueEmails([order.created_by_email]),
-    data,
-  );
+  await notifyBuyerAndSeller("transfer_in_progress", order, data);
   await notifyOperatorOrderPending(order, siteUrl);
 }
 
@@ -461,16 +450,7 @@ export async function notifyTransferComplete(order: Order) {
     orderId: order.id,
     orderUrl: `${siteUrl}/orders/${order.id}`,
   });
-  await notifyAccountEmail(
-    "transfer_complete",
-    order.seller_organisation_id,
-    data,
-  );
-  await notifyEmail(
-    "transfer_complete",
-    uniqueEmails([order.created_by_email]),
-    data,
-  );
+  await notifyBuyerAndSeller("transfer_complete", order, data);
   await notifyOperatorOrderPending(order, siteUrl);
 }
 

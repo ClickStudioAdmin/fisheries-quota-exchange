@@ -8,7 +8,7 @@ import {
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 
 export const metadata = {
-  title: "Profile",
+  title: "Account Settings",
 };
 
 export default async function DashboardProfilePage({
@@ -28,13 +28,13 @@ export default async function DashboardProfilePage({
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Profile
+        Account Settings
       </h1>
       <DashboardTabs
-        label="Profile sections"
+        label="Account settings sections"
         active={tab}
         items={[
-          { id: "details", href: "/dashboard/profile", label: "Details" },
+          { id: "details", href: "/dashboard/profile", label: "Profile" },
           {
             id: "security",
             href: "/dashboard/profile?tab=security",

@@ -278,7 +278,7 @@ export async function updatePersonAction(
     };
   }
 
-  return { message: "Profile saved." };
+  return { message: "Account settings saved." };
 }
 
 export async function updateProfilePasswordAction(

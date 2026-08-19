@@ -73,6 +73,8 @@ test("profile and account lists split personal mail from org mail", () => {
   const accountMember = accountNotificationEmailIds(member);
   assert.equal(profileMember.includes("listing_alert"), true);
   assert.equal(profileMember.includes("purchase_received"), true);
+  assert.equal(profileMember.includes("payment_received"), true);
+  assert.equal(profileMember.includes("order_settled"), true);
   assert.equal(profileMember.includes("bid_placed"), true);
   assert.equal(profileMember.includes("bid_outbid"), false);
   assert.equal(profileMember.includes("holding_verified"), false);
@@ -148,13 +150,15 @@ test("notificationAudiences depends on which list the row sits on", () => {
     "account_roles",
   ]);
   assert.deepEqual(notificationAudiences("payment_received", "account"), [
-    "you",
     "account_roles",
   ]);
   assert.deepEqual(notificationAudiences("order_settled", "account"), [
-    "you",
     "account_roles",
   ]);
+  assert.deepEqual(notificationAudiences("payment_received", "profile"), [
+    "you",
+  ]);
+  assert.deepEqual(notificationAudiences("order_settled", "profile"), ["you"]);
   assert.equal(notificationAudienceLabel("you"), "You");
   assert.equal(notificationAudienceLabel("account_roles"), "Business roles");
 });

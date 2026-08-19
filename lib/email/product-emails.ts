@@ -119,10 +119,17 @@ const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
 const SHARED_BUYER_EMAIL_IDS: ProductEmailId[] = [
   "bid_placed",
   "auction_won",
+  "bid_outbid",
+  "auction_not_won",
   "purchase_received",
   "bank_debit_submitted",
   "checkout_expired",
   "payment_reminder",
+  "payment_received",
+  "settlement_failed",
+  "transfer_in_progress",
+  "transfer_complete",
+  "order_settled",
 ];
 
 export type NotificationListGroup = {
@@ -141,11 +148,20 @@ export const PROFILE_NOTIFICATION_GROUPS: NotificationListGroup[] = [
     ],
   },
   { label: "Listing alerts", ids: ["listing_alert"] },
-  { label: "Bids", ids: ["bid_placed", "auction_won"] },
+  { label: "Bids", ids: ["bid_placed", "bid_outbid", "auction_won", "auction_not_won"] },
   { label: "Purchases", ids: ["purchase_received"] },
   {
-    label: "Payments",
-    ids: ["bank_debit_submitted", "checkout_expired", "payment_reminder"],
+    label: "Payments and settlement",
+    ids: [
+      "bank_debit_submitted",
+      "checkout_expired",
+      "payment_reminder",
+      "payment_received",
+      "settlement_failed",
+      "transfer_in_progress",
+      "transfer_complete",
+      "order_settled",
+    ],
   },
 ];
 
@@ -249,27 +265,11 @@ export function parseDisabledProductEmails(value: unknown): ProductEmailId[] {
 
 export type NotificationAudience = "you" | "account_roles";
 
-const SENT_TO_YOU_AND_ACCOUNT_ROLES = new Set<ProductEmailId>([
-  "payment_received",
-  "settlement_failed",
-  "transfer_in_progress",
-  "transfer_complete",
-  "order_settled",
-]);
-
 export function notificationAudiences(
-  id: ProductEmailId,
+  _id: ProductEmailId,
   scope: "profile" | "account" = "profile",
 ): NotificationAudience[] {
-  if (scope === "profile") {
-    return ["you"];
-  }
-
-  if (SENT_TO_YOU_AND_ACCOUNT_ROLES.has(id)) {
-    return ["you", "account_roles"];
-  }
-
-  return ["account_roles"];
+  return scope === "profile" ? ["you"] : ["account_roles"];
 }
 
 export function notificationAudienceLabel(audience: NotificationAudience) {

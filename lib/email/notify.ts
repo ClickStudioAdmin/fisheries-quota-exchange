@@ -89,10 +89,13 @@ export async function notifyActorAndAccountEmail(
   organisationId: number,
   actorEmail: string | null | undefined,
   data: NoticeEmailData,
+  attachments?: EmailAttachment[],
 ) {
   const roleEmails = await organisationNotificationEmails(organisationId);
-  const actor = uniqueEmails([actorEmail]);
-  const recipients = uniqueEmails([...roleEmails, ...actor]);
+  const actors = uniqueEmails(
+    Array.isArray(actorEmail) ? actorEmail : [actorEmail],
+  );
+  const recipients = uniqueEmails([...roleEmails, ...actors]);
 
   if (recipients.length === 0) {
     return { sent: false, skipped: true };
@@ -124,6 +127,7 @@ export async function notifyActorAndAccountEmail(
           to: email,
           template,
           data,
+          attachments,
           accountDisabledEmails: [],
         });
       } catch (error) {

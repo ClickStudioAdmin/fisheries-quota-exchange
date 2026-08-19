@@ -17,9 +17,9 @@ export default async function DashboardNotificationsPage() {
           Inbox
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">
-          Notices sent to you. Turn messages on or off on Profile →
+          Notices sent to you. Turn messages on or off on Account Settings →
           Notifications and Business Settings → Notifications. Fishery watches
-          are on Profile → Alerts.
+          are on Account Settings → Alerts.
         </p>
       </div>
       <InAppNotificationList notifications={notifications} />

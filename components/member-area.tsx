@@ -26,7 +26,7 @@ export async function MemberArea({ children }: { children: ReactNode }) {
     {
       heading: "You",
       items: [
-        { href: "/dashboard/profile", label: "Profile" },
+        { href: "/dashboard/profile", label: "Account Settings" },
         {
           href: "/dashboard/notifications",
           label: "Inbox",

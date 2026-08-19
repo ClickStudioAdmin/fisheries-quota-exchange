@@ -35,17 +35,17 @@ export type MessageTemplate = {
 };
 
 const skipWhen =
-  "The email is disabled on /admin/settings, the recipient turned a personal channel off on Profile → Notifications, the organisation turned that business message off on Business Settings → Notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write unless that channel is off. The triggering action still succeeds.";
+  "The email is disabled on /admin/settings, the recipient turned a personal channel off on Account Settings → Notifications, the organisation turned that business message off on Business Settings → Notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write unless that channel is off. The triggering action still succeeds.";
 
 const accountRolesRecipient =
   "Roles selected on Business Settings → Notifications (default Owner and Admin). Falls back to owners if those roles have no members.";
 const accountRolesAndCreatorRecipient = `${accountRolesRecipient} Also the listing creator.`;
 const actorAndBuyingRolesRecipient =
-  "The person who placed the bid or order, plus notification roles on that buying business (default Owner and Admin). One email per address. Profile and Business Settings channel switches apply independently.";
+  "The person who placed the bid or order, plus notification roles on that buying business (default Owner and Admin). One email per address. Account Settings and Business Settings channel switches apply independently.";
 const bidderAccountRolesRecipient =
   "Notification roles on that bidding business (default Owner and Admin).";
 const buyerAndSellerRolesRecipient =
-  "The person who placed the order, plus seller roles selected on Business Settings → Notifications (default Owner and Admin).";
+  "The person who placed the order, plus notification roles on the buying business and the selling business (default Owner and Admin). One email per address. Account Settings and Business Settings channel switches apply independently.";
 
 const EMAIL_CATALOG: Record<
   ProductEmailId,
@@ -120,10 +120,10 @@ const EMAIL_CATALOG: Record<
   listing_alert: {
     summary: "When a subscribed fishery gets a new listing",
     description:
-      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Profile → Alerts.",
+      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Account Settings → Alerts.",
     sentWhen: "When a listing or auction is published, matching sale or lease alerts for that fishery.",
     trigger: "notifyListingCreated or notifyListingPublished then notifyNewListingAlert.",
-    recipient: "Users with a matching fishery alert on Profile → Alerts, excluding the seller’s organisation.",
+    recipient: "Users with a matching fishery alert on Account Settings → Alerts, excluding the seller’s organisation.",
   },
   listing_rejected: {
     summary: "When a listing is rejected",

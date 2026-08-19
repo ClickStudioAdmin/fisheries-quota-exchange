@@ -43,7 +43,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/dashboard` | Overview: onboarding, pending invitations to this person, holdings/listings/orders/alerts counts, latest 10 in-app notices |
 | `/select-account` | Choose the active organisation after login, or when switching |
 | `/invitations/[token]` | Accept or decline an account invitation. Signed in required; active organisation cookie is not |
-| `/dashboard/profile` | Personal details, Password and Security, Notifications (personal message switches), and Alerts (fishery watches) |
+| `/dashboard/profile` | Account Settings: Profile, Password and Security, Notifications (personal message switches), and Alerts (fishery watches) |
 | `/dashboard/account` | Business Settings for the active business: Details, Members, Payments, and Notifications (role routing and business message switches) |
 | `/dashboard/notifications` | Signed-in user inbox |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
@@ -129,13 +129,13 @@ Mail is sent from the server after the database write. Auth confirm and password
 
 Business mail (listings, holdings, selling, buying, bidding, payments, and settlement for that organisation) goes to the roles chosen on Business Settings → Notifications. Default is Owner and Admin. The role picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Email and in-app switches for those business messages are stored on the organisation (`disabled_notification_emails`, `disabled_notification_in_app`). They do not follow the signed-in person when they switch business.
 
-Profile → Notifications is this login. Membership and listing alerts stay there only. Bid, purchase, and buyer payment receipts (`bid_placed`, `auction_won`, `purchase_received`, `bank_debit_submitted`, `checkout_expired`, `payment_reminder`) appear on both lists with independent switches. A recipient gets that channel if they are in the buying business’s roles and the business switch is on, or they are the person who acted and the Profile switch is on. One email per address. `bid_outbid` and `auction_not_won` sit on Business Settings only. Payment and settlement after funds are held (`payment_received`, `settlement_failed`, `transfer_in_progress`, `transfer_complete`, `order_settled`) stay mixed on the business list: You is the buyer who placed the order; Business roles are the seller organisation.
+Account Settings → Notifications is this login. Membership and listing alerts stay there only. Bid, purchase, payment, and settlement receipts (`bid_placed`, `auction_won`, `purchase_received`, `bank_debit_submitted`, `checkout_expired`, `payment_reminder`, `payment_received`, `settlement_failed`, `transfer_in_progress`, `transfer_complete`, `order_settled`) appear on both lists with independent switches. A recipient gets that channel if they are in that organisation’s roles and the business switch is on, or they are the person who acted and the Account Settings switch is on. One email per address. Payment and settlement also go to the selling business’s roles. `bid_outbid` and `auction_not_won` sit on Business Settings only.
 
-Both lists group related messages. Sent to is You on Profile. On Business Settings it is Business roles, or You and Business roles for mixed settlement.
+Both lists group related messages. Sent to is You on Account Settings and Business roles on Business Settings.
 
-Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. The buyer copy goes to the person who placed the order. The seller copy goes to the business notification roles.
+Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. The buyer copy goes to the person who placed the order and that buying business’s notification roles. The seller copy goes to the selling business’s notification roles.
 
-Users switch sale and/or lease per fishery on Profile → Alerts. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert.
+Users switch sale and/or lease per fishery on Account Settings → Alerts. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert.
 
 One-shot mail uses `email_dispatches` via `claim_email_dispatch` so payment, checkout, listing expiry, auction ending soon, payment reminder, and payments-setup messages are not resent.
 

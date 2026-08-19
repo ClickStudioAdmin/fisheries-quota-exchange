@@ -14,7 +14,7 @@ There is no quota, marketplace, or listing functionality in this phase.
 | `/select-account` | After login, choose which business to use when the person belongs to more than one |
 | `/invitations/[token]` | Signed-in invitee accepts or declines. Login is required; an active organisation cookie is not. |
 | `/dashboard` | Overview. Pending invitations to this person are listed here. |
-| `/dashboard/profile` | Profile: Details, Password and Security, Notifications, and Alerts |
+| `/dashboard/profile` | Account Settings: Profile, Password and Security, Notifications, and Alerts |
 | `/dashboard/account` | Business Settings: Details, Members, Payments, and Notifications (role routing and business message list) |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
 | `/dashboard/payments` | Redirects to `/dashboard/account?tab=payments` |
@@ -25,7 +25,7 @@ There is no quota, marketplace, or listing functionality in this phase.
 
 Registration collects the user’s name, email, phone, and password. After email confirm they add legal name, trading name, and ABN on `/dashboard/account`. That creates the organisation and makes the user `OWNER`. They must complete those business details, and agree to the terms, before they can buy or list. A user may own only one business. They can still be invited to someone else’s business.
 
-Login is personal (email and password). If the person belongs to two or more businesses, they choose which business to use on `/select-account` after login. That choice is stored in an httpOnly session cookie and is the source of truth for holdings, listings, orders, members, payments, buying, and bidding. There is no Buy as / Bid as picker. The dashboard chrome shows **Operating as** the active business, with **Switch business** under that name when they have more than one membership. The sidebar is two sections: **You** (Profile, Inbox) and **This business** (Overview, Business Settings, Quota Holdings, Listings, Orders). Profile and Inbox stay personal. Business Settings and the rest follow the active business. Deep links that belong to another membership prompt a switch; they do not change business silently.
+Login is personal (email and password). If the person belongs to two or more businesses, they choose which business to use on `/select-account` after login. That choice is stored in an httpOnly session cookie and is the source of truth for holdings, listings, orders, members, payments, buying, and bidding. There is no Buy as / Bid as picker. The dashboard chrome shows **Operating as** the active business, with **Switch business** under that name when they have more than one membership. The sidebar is two sections: **You** (Account Settings, Inbox) and **This business** (Overview, Business Settings, Quota Holdings, Listings, Orders). Account Settings and Inbox stay personal. Business Settings and the rest follow the active business. Deep links that belong to another membership prompt a switch; they do not change business silently.
 
 Signed-out users are redirected to `/login`.
 
