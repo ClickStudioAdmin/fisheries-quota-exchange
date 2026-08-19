@@ -51,7 +51,7 @@ Creating or changing a holding sets `VERIFIED` only if the actor is in `verified
 
 Anonymous visitors can read `fisheries` and `jurisdictions`. Sale and lease prices for `/fisheries/[id]` come from `list_market_sales` (quantity, unit price, and offering only). Holding valuation uses `latest_sale_prices` and SALE prices only. Fishery logos are public files in the `fishery-logos` bucket; only platform admins can upload, replace, or remove them.
 
-Development fixtures may include extra fisheries, organisations, users, completed trades, and in-app notices for local and development display. They are not official regulatory or market data. Seed catalogue rows that were still `PUBLISHED` or `PENDING_APPROVAL` after Stripe Connect became required are cancelled so the marketplace does not show listings that cannot be purchased.
+Development fixtures may include extra fisheries, organisations, users, completed trades, and in-app notices for local and development display. They are not official regulatory or market data. Seed catalogue rows that were still `PUBLISHED` or `PENDING_APPROVAL` after Stripe Connect became required are cancelled so the marketplace does not show listings that cannot be purchased. `20260819210000` adds published sale and lease listings (fixed price and auction) for the development business named Test Org when that organisation can accept charges.
 
 See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md), [phase-7.md](phase-7.md), [phase-8.md](phase-8.md) and [phase-9.md](phase-9.md).
 
