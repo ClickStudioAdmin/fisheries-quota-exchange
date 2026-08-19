@@ -198,24 +198,34 @@ export async function AccountOverviewSection({
           </p>
         </Link>
       </div>
-      <OverviewNotifications notifications={notifications} />
-      {needsAttention.length > 0 ? (
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <OverviewNotifications notifications={notifications} />
+        </div>
         <section className="space-y-3">
           <h2 className="text-xl font-semibold text-ink">Needs attention</h2>
-          <ul className="space-y-2">
-            {needsAttention.slice(0, 5).map((order) => (
-              <li key={order.id}>
-                <Link
-                  href={`/orders/${order.id}`}
-                  className="text-sm underline"
-                >
-                  Pay order {order.id} · {order.fishery_name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className={panelClassName}>
+            {needsAttention.length === 0 ? (
+              <p className="text-sm text-ink-muted">
+                Nothing needs your action right now.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {needsAttention.slice(0, 5).map((order) => (
+                  <li key={order.id}>
+                    <Link
+                      href={`/orders/${order.id}`}
+                      className="text-sm underline"
+                    >
+                      Pay order {order.id} · {order.fishery_name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
-      ) : null}
+      </div>
     </div>
   );
 }
