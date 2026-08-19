@@ -7,7 +7,6 @@ import { listingIsOpen } from "@/lib/listings/types";
 import { listMyListingAlerts } from "@/lib/alerts/queries";
 import { listMyInAppNotifications } from "@/lib/notifications/queries";
 import { listOrganisationOrders } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
 import { accountPath } from "@/lib/organisations/paths";
 import { getOrganisation } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -74,6 +73,12 @@ export async function AccountOverviewSection({
     OPEN_ORDER_STATUSES.has(order.status),
   );
   const payOrders = orders.filter((order) => order.status === "AWAITING_PAYMENT");
+  const needsAttention = orders.filter(
+    (order) =>
+      order.status === "AWAITING_PAYMENT" &&
+      organisationId != null &&
+      order.buyer_organisation_id === organisationId,
+  );
   const activeAlerts = alerts.filter(
     (alert) => alert.sales || alert.leases,
   ).length;
@@ -194,18 +199,17 @@ export async function AccountOverviewSection({
         </Link>
       </div>
       <OverviewNotifications notifications={notifications} />
-      {openOrders.length > 0 ? (
+      {needsAttention.length > 0 ? (
         <section className="space-y-3">
           <h2 className="text-xl font-semibold text-ink">Needs attention</h2>
           <ul className="space-y-2">
-            {openOrders.slice(0, 5).map((order) => (
+            {needsAttention.slice(0, 5).map((order) => (
               <li key={order.id}>
                 <Link
                   href={`/orders/${order.id}`}
                   className="text-sm underline"
                 >
-                  Order {order.id} · {order.fishery_name} ·{" "}
-                  {orderStatusLabel(order.status)}
+                  Pay order {order.id} · {order.fishery_name}
                 </Link>
               </li>
             ))}
