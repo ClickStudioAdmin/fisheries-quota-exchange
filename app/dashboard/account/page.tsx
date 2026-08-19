@@ -5,6 +5,7 @@ import {
   AccountNotificationsSection,
 } from "@/components/account-sections";
 import { DashboardTabs } from "@/components/dashboard-tabs";
+import { PrivilegesTable } from "@/components/privileges-table";
 import { accountSettingsPath } from "@/lib/organisations/paths";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 
@@ -21,6 +22,7 @@ export default async function DashboardAccountPage({
   const account = await resolveDashboardAccount("/dashboard/account");
   const tab =
     params.tab === "members" ||
+    params.tab === "privileges" ||
     params.tab === "payments" ||
     params.tab === "notifications"
       ? params.tab
@@ -38,6 +40,11 @@ export default async function DashboardAccountPage({
         items={[
           { id: "details", href: accountSettingsPath(), label: "Details" },
           { id: "members", href: accountSettingsPath("members"), label: "Members" },
+          {
+            id: "privileges",
+            href: accountSettingsPath("privileges"),
+            label: "Privileges",
+          },
           {
             id: "payments",
             href: accountSettingsPath("payments"),
@@ -60,6 +67,15 @@ export default async function DashboardAccountPage({
           <p className="text-sm text-ink-muted">
             Add your business details on the Details tab before you can manage
             members.
+          </p>
+        )
+      ) : tab === "privileges" ? (
+        organisationId ? (
+          <PrivilegesTable />
+        ) : (
+          <p className="text-sm text-ink-muted">
+            Add your business details on the Details tab before you can view
+            privileges.
           </p>
         )
       ) : tab === "payments" ? (

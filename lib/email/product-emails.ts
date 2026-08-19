@@ -27,8 +27,10 @@ export const PRODUCT_EMAIL_IDS = [
   "bank_debit_submitted",
   "settlement_failed",
   "checkout_expired",
+  "payment_failed",
   "payment_reminder",
   "transfer_in_progress",
+  "compliance_rejected",
   "transfer_complete",
   "order_settled",
   "operator_holding_pending",
@@ -86,8 +88,10 @@ const BUYER_EMAIL_IDS: ProductEmailId[] = [
   "auction_ending_soon",
   "bank_debit_submitted",
   "checkout_expired",
+  "payment_failed",
   "payment_reminder",
   "payment_received",
+  "compliance_rejected",
   "settlement_failed",
   "transfer_in_progress",
   "transfer_complete",
@@ -109,7 +113,10 @@ const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
   "auction_unsold",
   "auction_cancelled",
   "auction_ending_soon",
+  "checkout_expired",
+  "payment_failed",
   "payment_received",
+  "compliance_rejected",
   "settlement_failed",
   "transfer_in_progress",
   "transfer_complete",
@@ -168,8 +175,10 @@ export const ACCOUNT_NOTIFICATION_GROUPS: NotificationListGroup[] = [
     ids: [
       "bank_debit_submitted",
       "checkout_expired",
+      "payment_failed",
       "payment_reminder",
       "payment_received",
+      "compliance_rejected",
       "settlement_failed",
       "transfer_in_progress",
       "transfer_complete",
@@ -262,10 +271,7 @@ export function personalNotificationEmailIds(input: {
   return PRODUCT_EMAIL_IDS.filter((id) => allowed.has(id));
 }
 
-export function profileNotificationEmailIds(_: {
-  isOrgMember: boolean;
-  isOrgManager: boolean;
-}): ProductEmailId[] {
+export function profileNotificationEmailIds(): ProductEmailId[] {
   return uniqueGroupedIds(PROFILE_NOTIFICATION_GROUPS);
 }
 
@@ -305,11 +311,13 @@ export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   auction_unsold: "Auction unsold",
   auction_cancelled: "Auction cancelled",
   auction_ending_soon: "Auction ending soon",
-  payment_received: "Payment received",
   bank_debit_submitted: "Bank debit submitted",
-  settlement_failed: "Settlement delayed or failed",
   checkout_expired: "Checkout expired",
+  payment_failed: "Bank debit failed",
   payment_reminder: "Payment reminder",
+  payment_received: "Payment received",
+  compliance_rejected: "Compliance rejected",
+  settlement_failed: "Settlement delayed or failed",
   transfer_in_progress: "Transfer in progress",
   transfer_complete: "Transfer complete",
   order_settled: "Order settled",

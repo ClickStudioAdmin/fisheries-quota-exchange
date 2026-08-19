@@ -15,6 +15,7 @@ test("accountSettingsPath uses Business Settings tabs", () => {
   assert.equal(accountSettingsPath(), "/dashboard/account");
   assert.equal(accountSettingsPath("details"), "/dashboard/account");
   assert.equal(accountSettingsPath("members"), "/dashboard/account?tab=members");
+  assert.equal(accountSettingsPath("privileges"), "/dashboard/account?tab=privileges");
   assert.equal(accountSettingsPath("payments"), "/dashboard/account?tab=payments");
   assert.equal(accountSettingsPath("notifications"), "/dashboard/account?tab=notifications");
   assert.equal(accountPaymentsPath(1), "/dashboard/account?tab=payments");

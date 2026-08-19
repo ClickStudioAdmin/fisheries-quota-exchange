@@ -15,7 +15,7 @@ There is no quota, marketplace, or listing functionality in this phase.
 | `/invitations/[token]` | Signed-in invitee accepts or declines. Login is required; an active organisation cookie is not. |
 | `/dashboard` | Overview. Pending invitations to this person are listed here. |
 | `/dashboard/profile` | Account Settings: Profile, Password and Security, Notifications, and Alerts |
-| `/dashboard/account` | Business Settings: Details, Members, Payments, and Notifications (role routing and business message list) |
+| `/dashboard/account` | Business Settings: Details, Members, Privileges, Payments, and Notifications (role routing and business message list) |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
 | `/dashboard/payments` | Redirects to `/dashboard/account?tab=payments` |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
@@ -33,9 +33,10 @@ Signed-out users are redirected to `/login`.
 
 | Action | OWNER | ADMIN | MEMBER |
 | --- | --- | --- | --- |
-| View business and people | Yes | Yes | Yes |
+| View business, people, holdings, listings, and orders | Yes | Yes | Yes |
 | Edit business details | Yes | Yes | No |
 | Change who receives business email | Yes | Yes | No |
+| Set up Stripe payments | Yes | Yes | No |
 | Invite `ADMIN` or `MEMBER` | Yes | Yes | No |
 | Invite `OWNER` | Yes | No | No |
 | Cancel a pending invitation | Yes | Yes, except Owner invites | No |
@@ -43,6 +44,14 @@ Signed-out users are redirected to `/login`.
 | Remove a `MEMBER` | Yes | Yes | No |
 | Remove an `OWNER` or `ADMIN` | Yes | No | No |
 | Leave the business | Yes, unless last owner | Yes | Yes |
+| Add or adjust quota holdings | Yes | Yes | No |
+| Create, edit, or cancel listings and auctions | Yes | Yes | No |
+| Buy quota | Yes | Yes | Yes |
+| Bid on auctions | Yes | Yes | Yes |
+| Pay FQX for this business's orders | Yes | Yes | Yes |
+| Cancel an unpaid order | Yes | Yes | Yes |
+
+That list is shown on Business Settings → Privileges. Roles are fixed; the page is not a permission editor. Who receives business email is chosen on Notifications.
 
 The last owner cannot be removed. Membership is keyed by email and matches the signed-in Auth user. Each member has a `full_name`. The fill-name trigger is `security definer` (`20260817350000_organisation_users_fill_name_definer.sql`) so it can read Auth names when a member is added.
 

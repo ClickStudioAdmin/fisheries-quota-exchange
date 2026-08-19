@@ -228,6 +228,14 @@ const EMAIL_CATALOG: Record<
     trigger: "handleStripeWebhook or reconcileOrderPayment, then claim_email_dispatch(payment_received).",
     recipient: buyerAndSellerRolesRecipient,
   },
+  compliance_rejected: {
+    summary: "When admin does not approve compliance",
+    description:
+      "Tells buyer and seller the order was cancelled and the quota reservation was released.",
+    sentWhen: "After reject_compliance.",
+    trigger: "rejectComplianceAction then claim_email_dispatch(compliance_rejected).",
+    recipient: buyerAndSellerRolesRecipient,
+  },
   bank_debit_submitted: {
     summary: "When BECS checkout completes unpaid",
     description: "Tells the buyer the bank debit was submitted and may show Incoming until it clears.",
@@ -245,10 +253,19 @@ const EMAIL_CATALOG: Record<
   },
   checkout_expired: {
     summary: "When unpaid checkout expires",
-    description: "Tells the buyer the order was cancelled and quota released.",
+    description:
+      "Tells buyer and seller the order was cancelled and quota released.",
     sentWhen: "Once per order on checkout.session.expired after fail_unpaid_order.",
     trigger: "handleStripeWebhook then claim_email_dispatch(checkout_expired).",
-    recipient: accountRolesRecipient,
+    recipient: buyerAndSellerRolesRecipient,
+  },
+  payment_failed: {
+    summary: "When an unpaid bank debit fails",
+    description:
+      "Tells buyer and seller the unpaid order was cancelled and quota released.",
+    sentWhen: "Once per order on checkout.session.async_payment_failed after fail_unpaid_order.",
+    trigger: "handleStripeWebhook then claim_email_dispatch(payment_failed).",
+    recipient: buyerAndSellerRolesRecipient,
   },
   payment_reminder: {
     summary: "Unpaid order still awaiting payment after 24 hours",

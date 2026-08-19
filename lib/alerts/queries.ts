@@ -10,8 +10,6 @@ import {
   profileNotificationEmailIds,
 } from "@/lib/email/product-emails";
 import type { NotificationPreferences } from "@/lib/notifications/types";
-import { canEditOrganisation } from "@/lib/organisations/permissions";
-import { listMyOrganisations } from "@/lib/organisations/queries";
 
 async function db() {
   return createServiceClient() ?? (await createClient());
@@ -131,17 +129,6 @@ export async function listingAlertEmails(
   );
 }
 
-async function myNotificationAudience() {
-  const organisations = await listMyOrganisations();
-
-  return {
-    isOrgMember: organisations.length > 0,
-    isOrgManager: organisations.some((organisation) =>
-      canEditOrganisation(organisation.role),
-    ),
-  };
-}
-
 export async function myProfileNotificationEmailIds() {
-  return profileNotificationEmailIds(await myNotificationAudience());
+  return profileNotificationEmailIds();
 }

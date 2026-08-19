@@ -53,7 +53,7 @@ import { orderStatusLabel } from "@/lib/orders/types";
 import { tableButtonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { formatTableDate } from "@/lib/format";
-import { accountPath, accountPaymentsPath, dashboardHoldingPath } from "@/lib/organisations/paths";
+import { accountPath, accountPaymentsPath, accountSettingsPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import {
   getMyNotificationPreferences,
   listMyListingAlerts,
@@ -194,7 +194,7 @@ export async function AccountNotificationsSection({
         disabledEmails={result.organisation.disabled_notification_emails}
         disabledInApp={result.organisation.disabled_notification_in_app}
         emailIds={ACCOUNT_NOTIFICATION_EMAIL_IDS}
-        description="Selling, buying, bidding, and settlement for this business. These switches belong to the business. They change when you switch business. Invitations and listing-alert channels are on Account Settings → Notifications."
+        description="Selling, buying, bidding, and settlement for this business. These switches belong to the business. They change when you switch business. Who can buy, list, and manage people is on Privileges. Invitations and listing-alert channels are on Account Settings → Notifications."
       />
     </div>
   );
@@ -232,7 +232,12 @@ export async function AccountMembersSection({
       <p className="text-sm text-ink-muted">
         Invite people to this business with a role. They must accept from the
         email, while signed in with that address, before they become members.
-        Inviting the same email again replaces the pending invitation.
+        Inviting the same email again replaces the pending invitation. What
+        each role can do is on{" "}
+        <Link href={accountSettingsPath("privileges")} className="underline">
+          Privileges
+        </Link>
+        .
       </p>
       <MemberList
         organisationId={organisationId}

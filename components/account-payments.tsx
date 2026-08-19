@@ -1,6 +1,6 @@
 import { PaymentsConnect } from "@/components/payments-connect";
 import { StripeLogo } from "@/components/stripe-logo";
-import { panelClassName } from "@/components/surface";
+import { ActionNotice, panelClassName } from "@/components/surface";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import type { OrganisationRole } from "@/lib/organisations/types";
 import { isPaymentsConfigured, getStripePublishableKey } from "@/lib/payments/env";
@@ -36,29 +36,36 @@ export async function AccountPaymentsSection({
           until Stripe test keys are set.
         </p>
       ) : (
-        <div className={`max-w-2xl space-y-4 ${panelClassName}`}>
-          {status?.chargesEnabled ? (
-            <p className="text-sm text-ink">
-              This business can receive settlement transfers.
-            </p>
-          ) : status?.detailsSubmitted ? (
-            <p className="text-sm text-ink">
-              Stripe has your details and is reviewing them. Refresh this page
-              in a minute.
-            </p>
-          ) : null}
-          {canManage ? (
-            <PaymentsConnect
-              organisationId={organisationId}
-              publishableKey={publishableKey}
-              detailsSubmitted={Boolean(status?.detailsSubmitted)}
-            />
-          ) : (
-            <p className="text-sm text-ink-muted">
-              Only an owner or admin can connect Stripe for this business.
-            </p>
+        <>
+          {canManage ? null : (
+            <div className="max-w-2xl">
+              <ActionNotice title="Payments setup">
+                Only an owner or admin can connect Stripe for this business.
+              </ActionNotice>
+            </div>
           )}
-        </div>
+          {canManage || status?.chargesEnabled || status?.detailsSubmitted ? (
+            <div className={`max-w-2xl space-y-4 ${panelClassName}`}>
+              {status?.chargesEnabled ? (
+                <p className="text-sm text-ink">
+                  This business can receive settlement transfers.
+                </p>
+              ) : status?.detailsSubmitted ? (
+                <p className="text-sm text-ink">
+                  Stripe has your details and is reviewing them. Refresh this
+                  page in a minute.
+                </p>
+              ) : null}
+              {canManage ? (
+                <PaymentsConnect
+                  organisationId={organisationId}
+                  publishableKey={publishableKey}
+                  detailsSubmitted={Boolean(status?.detailsSubmitted)}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );

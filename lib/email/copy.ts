@@ -285,11 +285,31 @@ export const emailCopy = {
       ],
       { label: "View order", url: input.orderUrl },
     ),
-  checkout_expired: (input: { orderId: number; orderUrl: string }) =>
+  checkout_expired: (input: {
+    orderId: number;
+    orderUrl: string;
+    forSeller?: boolean;
+  }) =>
     notice(
       `Checkout expired for FQX order ${input.orderId}`,
       [
-        "The unpaid checkout expired. The order was cancelled and the quota reservation was released.",
+        input.forSeller
+          ? "The buyer did not complete unpaid checkout in time. The order was cancelled and the quota reservation was released."
+          : "The unpaid checkout expired. The order was cancelled and the quota reservation was released.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
+  payment_failed: (input: {
+    orderId: number;
+    orderUrl: string;
+    forSeller?: boolean;
+  }) =>
+    notice(
+      `Bank debit failed for FQX order ${input.orderId}`,
+      [
+        input.forSeller
+          ? "The buyer’s bank debit failed. The unpaid order was cancelled and the quota reservation was released."
+          : "The bank debit failed. The unpaid order was cancelled and the quota reservation was released.",
       ],
       { label: "View order", url: input.orderUrl },
     ),
@@ -303,6 +323,22 @@ export const emailCopy = {
     notice(
       `Quota transfer has started for FQX order ${input.orderId}`,
       ["Compliance passed. FQX is running the authority transfer for this order."],
+      { label: "View order", url: input.orderUrl },
+    ),
+  compliance_rejected: (input: {
+    orderId: number;
+    orderUrl: string;
+    note: string;
+    forSeller?: boolean;
+  }) =>
+    notice(
+      `Compliance was not approved for FQX order ${input.orderId}`,
+      [
+        input.forSeller
+          ? "FQX did not approve compliance. The order was cancelled and the quota reservation was released."
+          : "FQX did not approve compliance for this order. The order was cancelled and the quota reservation was released.",
+        input.note ? `Note: ${input.note}` : "No note was recorded.",
+      ],
       { label: "View order", url: input.orderUrl },
     ),
   transfer_complete: (input: { orderId: number; orderUrl: string }) =>

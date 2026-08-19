@@ -37,6 +37,23 @@ async function notifyBuyerAndSeller(
   await notifyAccountEmail(template, order.seller_organisation_id, data);
 }
 
+async function notifyBuyerAndSellerCopies(
+  template: ProductEmailId,
+  order: Order,
+  copyFor: (forSeller: boolean) => NoticeEmailData,
+) {
+  await notifyAccountEmail(
+    template,
+    order.buyer_organisation_id,
+    copyFor(false),
+  );
+  await notifyAccountEmail(
+    template,
+    order.seller_organisation_id,
+    copyFor(true),
+  );
+}
+
 export async function notifyListingCreated(listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
   const extra = [listing.created_by_email];
@@ -373,12 +390,12 @@ export async function notifyCheckoutExpired(order: Order) {
   }
 
   const siteUrl = await siteUrlOrEmpty();
-  await notifyAccountEmail(
-    "checkout_expired",
-    order.buyer_organisation_id,
+  const orderUrl = `${siteUrl}/orders/${order.id}`;
+  await notifyBuyerAndSellerCopies("checkout_expired", order, (forSeller) =>
     emailCopy.checkout_expired({
       orderId: order.id,
-      orderUrl: `${siteUrl}/orders/${order.id}`,
+      orderUrl,
+      forSeller,
     }),
   );
   await notifyEmail(
@@ -393,7 +410,19 @@ export async function notifyCheckoutExpired(order: Order) {
 }
 
 export async function notifyPaymentFailed(order: Order) {
+  if (!(await claimEmailDispatch("payment_failed", String(order.id)))) {
+    return;
+  }
+
   const siteUrl = await siteUrlOrEmpty();
+  const orderUrl = `${siteUrl}/orders/${order.id}`;
+  await notifyBuyerAndSellerCopies("payment_failed", order, (forSeller) =>
+    emailCopy.payment_failed({
+      orderId: order.id,
+      orderUrl,
+      forSeller,
+    }),
+  );
   await notifyEmail(
     "operator_payment_exception",
     await platformAdminEmails(),
@@ -401,6 +430,23 @@ export async function notifyPaymentFailed(order: Order) {
       orderId: order.id,
       detail: "Async bank debit failed. The unpaid order was cancelled.",
       adminUrl: `${siteUrl}/admin/orders`,
+    }),
+  );
+}
+
+export async function notifyComplianceRejected(order: Order, note: string) {
+  if (!(await claimEmailDispatch("compliance_rejected", String(order.id)))) {
+    return;
+  }
+
+  const siteUrl = await siteUrlOrEmpty();
+  const orderUrl = `${siteUrl}/orders/${order.id}`;
+  await notifyBuyerAndSellerCopies("compliance_rejected", order, (forSeller) =>
+    emailCopy.compliance_rejected({
+      orderId: order.id,
+      orderUrl,
+      note,
+      forSeller,
     }),
   );
 }

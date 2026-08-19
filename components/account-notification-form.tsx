@@ -41,8 +41,8 @@ export function AccountNotificationForm({
       ) : null}
       <p className="text-sm text-ink-muted">
         Business email and in-app notices for this organisation go to these
-        roles. Invitations and listing-alert channels are on Account Settings →
-        Notifications.
+        roles. Who can act is on Privileges. Invitations and listing-alert
+        channels are on Account Settings → Notifications.
       </p>
       <fieldset className="space-y-2" disabled={!canEdit}>
         <legend className="text-sm text-ink">Roles that receive business email</legend>

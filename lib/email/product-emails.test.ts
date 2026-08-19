@@ -68,7 +68,7 @@ test("profile and account lists split personal mail from org mail", () => {
     isOrgMember: true,
     isOrgManager: false,
   };
-  const profileMember = profileNotificationEmailIds(member);
+  const profileMember = profileNotificationEmailIds();
   const accountMember = accountNotificationEmailIds(member);
   assert.equal(profileMember.includes("listing_alert"), true);
   assert.equal(profileMember.includes("member_added"), true);
@@ -78,28 +78,17 @@ test("profile and account lists split personal mail from org mail", () => {
   assert.equal(profileMember.includes("bid_placed"), false);
   assert.equal(profileMember.includes("bid_outbid"), false);
   assert.equal(profileMember.includes("holding_verified"), false);
+  assert.equal(profileMember.includes("listing_purchased"), false);
   assert.equal(accountMember.includes("holding_verified"), true);
   assert.equal(accountMember.includes("payment_received"), true);
   assert.equal(accountMember.includes("purchase_received"), true);
   assert.equal(accountMember.includes("bid_outbid"), true);
   assert.equal(accountMember.includes("listing_alert"), false);
 
-  const none = profileNotificationEmailIds({
-    isOrgMember: false,
-    isOrgManager: false,
-  });
-  assert.equal(none.includes("listing_alert"), true);
-  assert.equal(none.includes("purchase_received"), false);
-
-  const manager = profileNotificationEmailIds({
-    isOrgMember: true,
-    isOrgManager: true,
-  });
   const accountManager = accountNotificationEmailIds({
     isOrgMember: true,
     isOrgManager: true,
   });
-  assert.equal(manager.includes("listing_purchased"), false);
   assert.equal(accountManager.includes("listing_purchased"), true);
   assert.equal(accountManager.includes("holding_verified"), true);
   assert.equal(accountManager.includes("listing_alert"), false);
@@ -123,6 +112,8 @@ test("isAccountNotificationEmailId includes shared buyer trade mail and seller m
   assert.equal(isAccountNotificationEmailId("purchase_received"), true);
   assert.equal(isAccountNotificationEmailId("bid_placed"), true);
   assert.equal(isAccountNotificationEmailId("bid_outbid"), true);
+  assert.equal(isAccountNotificationEmailId("payment_failed"), true);
+  assert.equal(isAccountNotificationEmailId("compliance_rejected"), true);
   assert.equal(isAccountNotificationEmailId("listing_alert"), false);
   assert.equal(isAccountNotificationEmailId("member_added"), false);
 });
@@ -192,4 +183,31 @@ test("settlement copy differs for buyer and seller", () => {
   const seller = emailCopy.order_settled({ ...input, forSeller: true });
   assert.notEqual(buyer.paragraphs[0], seller.paragraphs[0]);
   assert.match(seller.paragraphs[0] ?? "", /FQX to you/);
+});
+
+test("cancelled-order copy differs for buyer and seller", () => {
+  const input = {
+    orderId: 1001,
+    orderUrl: "https://example.test/orders/1001",
+  };
+  const expiredBuyer = emailCopy.checkout_expired(input);
+  const expiredSeller = emailCopy.checkout_expired({ ...input, forSeller: true });
+  assert.notEqual(expiredBuyer.paragraphs[0], expiredSeller.paragraphs[0]);
+  assert.match(expiredSeller.paragraphs[0] ?? "", /buyer did not complete/);
+
+  const failedBuyer = emailCopy.payment_failed(input);
+  const failedSeller = emailCopy.payment_failed({ ...input, forSeller: true });
+  assert.notEqual(failedBuyer.paragraphs[0], failedSeller.paragraphs[0]);
+
+  const rejectedBuyer = emailCopy.compliance_rejected({
+    ...input,
+    note: "Licence mismatch.",
+  });
+  const rejectedSeller = emailCopy.compliance_rejected({
+    ...input,
+    note: "Licence mismatch.",
+    forSeller: true,
+  });
+  assert.match(rejectedBuyer.paragraphs[1] ?? "", /Licence mismatch/);
+  assert.notEqual(rejectedBuyer.paragraphs[0], rejectedSeller.paragraphs[0]);
 });

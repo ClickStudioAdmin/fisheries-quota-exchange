@@ -154,10 +154,18 @@ export function sampleEmailData(
       return emailCopy.settlement_failed({ orderId: 1001, orderUrl });
     case "checkout_expired":
       return emailCopy.checkout_expired({ orderId: 1001, orderUrl });
+    case "payment_failed":
+      return emailCopy.payment_failed({ orderId: 1001, orderUrl });
     case "payment_reminder":
       return emailCopy.payment_reminder({ orderId: 1001, orderUrl });
     case "transfer_in_progress":
       return emailCopy.transfer_in_progress({ orderId: 1001, orderUrl });
+    case "compliance_rejected":
+      return emailCopy.compliance_rejected({
+        orderId: 1001,
+        orderUrl,
+        note: "Licence details do not match the holding.",
+      });
     case "transfer_complete":
       return emailCopy.transfer_complete({ orderId: 1001, orderUrl });
     case "order_settled":

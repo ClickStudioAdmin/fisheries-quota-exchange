@@ -44,7 +44,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/select-account` | Choose the active organisation after login, or when switching |
 | `/invitations/[token]` | Accept or decline an account invitation. Signed in required; active organisation cookie is not |
 | `/dashboard/profile` | Account Settings: Profile, Password and Security, Notifications (personal message switches), and Alerts (fishery watches) |
-| `/dashboard/account` | Business Settings for the active business: Details, Members, Payments, and Notifications (role routing and business message switches) |
+| `/dashboard/account` | Business Settings for the active business: Details, Members, Privileges, Payments, and Notifications (role routing and business message switches) |
 | `/dashboard/notifications` | Signed-in user inbox |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
@@ -73,7 +73,7 @@ Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts
 
 Every signed-in user must agree to the current terms on Overview and add business details on Business Settings before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase shows the buyer acknowledgements as a confirmation step after Purchase Now; bid requires ticking them on the auction page. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms may make them liable to pay the platform commission. This phase does not auto-invoice that abort commission.
 
-Buy, bid, list, holdings, members, and payments use the active organisation from the session cookie. The browser is not trusted to choose a different organisation on the listing. Owners and admins invite people from Business Settings → Members. The invitee must accept from the email (or Overview) while signed in as that address. They are not added automatically.
+Buy, bid, list, holdings, members, and payments use the active organisation from the session cookie. The browser is not trusted to choose a different organisation on the listing. Owners and admins invite people from Business Settings → Members. The invitee must accept from the email (or Overview) while signed in as that address. They are not added automatically. Business Settings → Privileges shows what each role can do. Roles are fixed.
 
 Functions:
 
@@ -129,7 +129,7 @@ Mail is sent from the server after the database write. Auth confirm and password
 
 Business mail (listings, holdings, selling, buying, bidding, payments, and settlement for that organisation) goes to the roles chosen on Business Settings → Notifications. Default is Owner and Admin. The role picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Email and in-app switches for those business messages are stored on the organisation (`disabled_notification_emails`, `disabled_notification_in_app`). They do not follow the signed-in person when they switch business.
 
-Account Settings → Notifications is this login. Membership and listing-alert channels stay there only. Bid, purchase, payment, and settlement mail goes to Business Settings → Notifications for that organisation’s roles. Payment and settlement also go to the other party’s business roles. `bid_outbid` and `auction_not_won` go to the bidding business’s roles.
+Account Settings → Notifications is this login. Membership and listing-alert channels stay there only. Bid, purchase, payment, and settlement mail goes to Business Settings → Notifications for that organisation’s roles. Payment and settlement also go to the other party’s business roles. `bid_outbid` and `auction_not_won` go to the bidding business’s roles. Checkout expiry, failed bank debit, and rejected compliance email both the buying and selling businesses.
 
 Both lists group related messages. Sent to is You on Account Settings and Business roles on Business Settings.
 
@@ -137,7 +137,7 @@ Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. 
 
 Users switch sale and/or lease per fishery on Account Settings → Alerts. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert.
 
-One-shot mail uses `email_dispatches` via `claim_email_dispatch` so payment, checkout, listing expiry, auction ending soon, payment reminder, and payments-setup messages are not resent.
+One-shot mail uses `email_dispatches` via `claim_email_dispatch` so payment, checkout, failed debit, rejected compliance, listing expiry, auction ending soon, payment reminder, and payments-setup messages are not resent.
 
 Scheduled cron (`vercel.json` → `/api/cron/emails`, once a day at 00:00 UTC) sends:
 

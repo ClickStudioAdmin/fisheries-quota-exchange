@@ -11,6 +11,7 @@ import { getOrder } from "@/lib/orders/queries";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 import {
   notifyOrderCreated,
+  notifyComplianceRejected,
   notifySettlementFailed,
   notifyTransferComplete,
   notifyTransferException,
@@ -218,10 +219,14 @@ export async function rejectComplianceAction(formData: FormData) {
   const note = read(formData, "review_note");
 
   if (order) {
-    await supabase.rpc("reject_compliance", {
+    const { error } = await supabase.rpc("reject_compliance", {
       p_order_id: order.id,
       p_note: note || null,
     });
+
+    if (!error) {
+      await notifyComplianceRejected(order, note);
+    }
   }
 
   redirectAfterOrderQueue(formData);
