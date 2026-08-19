@@ -34,6 +34,7 @@ export async function MemberArea({ children }: { children: ReactNode }) {
       label: "Notifications",
       badge: unreadNotifications,
     },
+    { href: "/dashboard/alerts", label: "Alerts" },
     { href: "/dashboard/profile", label: "Account Details" },
     {
       href: "/dashboard/holdings",
@@ -55,7 +56,6 @@ export async function MemberArea({ children }: { children: ReactNode }) {
       badge: counts.orders,
     },
     { href: "/dashboard/payments", label: "Payments" },
-    { href: "/dashboard/alerts", label: "Alerts" },
   ];
 
   return (
