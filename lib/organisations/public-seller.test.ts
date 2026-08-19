@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   PRIVATE_BUYER_LABEL,
   PRIVATE_SELLER_LABEL,
+  parseOrganisationHideIdentityRows,
   publicBuyerDisplay,
   publicSellerDisplay,
 } from "./public-seller.ts";
@@ -14,7 +15,6 @@ test("publicSellerDisplay keeps the business name when identity is visible", () 
     publicSellerDisplay({
       sellerName,
       hideIdentity: false,
-      viewerIsSellerMember: false,
       isPlatformAdmin: false,
     }),
     { label: sellerName, tooltip: null },
@@ -26,7 +26,6 @@ test("publicSellerDisplay uses Private Seller on public pages", () => {
     publicSellerDisplay({
       sellerName,
       hideIdentity: true,
-      viewerIsSellerMember: false,
       isPlatformAdmin: false,
     }),
     { label: PRIVATE_SELLER_LABEL, tooltip: null },
@@ -38,31 +37,9 @@ test("publicSellerDisplay adds the real name as an admin tooltip", () => {
     publicSellerDisplay({
       sellerName,
       hideIdentity: true,
-      viewerIsSellerMember: false,
       isPlatformAdmin: true,
     }),
     { label: PRIVATE_SELLER_LABEL, tooltip: sellerName },
-  );
-});
-
-test("publicSellerDisplay shows the real name to the selling business", () => {
-  assert.deepEqual(
-    publicSellerDisplay({
-      sellerName,
-      hideIdentity: true,
-      viewerIsSellerMember: true,
-      isPlatformAdmin: false,
-    }),
-    { label: sellerName, tooltip: null },
-  );
-  assert.deepEqual(
-    publicSellerDisplay({
-      sellerName,
-      hideIdentity: true,
-      viewerIsSellerMember: true,
-      isPlatformAdmin: true,
-    }),
-    { label: sellerName, tooltip: null },
   );
 });
 
@@ -73,21 +50,42 @@ test("publicBuyerDisplay uses Private Buyer on public auction bids", () => {
     publicBuyerDisplay({
       buyerName,
       hideIdentity: true,
-      viewerIsBuyerMember: false,
       isPlatformAdmin: false,
     }),
     { label: PRIVATE_BUYER_LABEL, tooltip: null },
   );
 });
 
-test("publicBuyerDisplay shows the real name to the bidding business", () => {
+test("publicBuyerDisplay adds the real name as an admin tooltip", () => {
   assert.deepEqual(
     publicBuyerDisplay({
       buyerName,
       hideIdentity: true,
-      viewerIsBuyerMember: true,
-      isPlatformAdmin: false,
+      isPlatformAdmin: true,
     }),
-    { label: buyerName, tooltip: null },
+    { label: PRIVATE_BUYER_LABEL, tooltip: buyerName },
+  );
+});
+
+test("parseOrganisationHideIdentityRows reads organisation_id or id", () => {
+  assert.deepEqual(
+    [...parseOrganisationHideIdentityRows([
+      { organisation_id: "12", hide_identity: true },
+      { id: 15, hide_identity: "t" },
+    ])],
+    [
+      [12, true],
+      [15, true],
+    ],
+  );
+});
+
+test("parseOrganisationHideIdentityRows accepts a single row object", () => {
+  assert.equal(
+    parseOrganisationHideIdentityRows({
+      organisation_id: 9,
+      hide_identity: true,
+    }).get(9),
+    true,
   );
 });

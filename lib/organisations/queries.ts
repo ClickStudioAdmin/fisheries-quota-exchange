@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { createClient, getUser } from "@/lib/supabase/server";
 import type {
   Organisation,
@@ -13,10 +12,7 @@ import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
-  ACTIVE_ORGANISATION_COOKIE,
-  parseActiveOrganisationId,
-} from "@/lib/organisations/active-account";
-import {
+  parseOrganisationHideIdentityRows,
   publicBuyerDisplay,
   publicSellerDisplay,
   type PublicIdentityDisplay,
@@ -26,10 +22,6 @@ import {
 function asIntegerId(value: unknown) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
-}
-
-function isHideIdentity(value: unknown) {
-  return value === true || value === "true" || value === "t";
 }
 
 export async function listMyOrganisations(): Promise<OrganisationSummary[]> {
@@ -185,42 +177,39 @@ export async function listOrganisationHideIdentity(
         .filter((id): id is number => id != null),
     ),
   ];
-  const hidden = new Map<number, boolean>();
-
   if (ids.length === 0) {
-    return hidden;
+    return new Map();
   }
 
   const supabase = await createClient();
 
   if (!supabase) {
-    return hidden;
+    return new Map();
   }
 
-  try {
-    const { data, error } = await supabase.rpc("organisations_hide_identity", {
-      p_ids: ids,
-    });
+  const fromView = await supabase
+    .from("organisation_public_identity")
+    .select("organisation_id, hide_identity")
+    .in("organisation_id", ids);
 
-    if (error) {
-      console.error("organisations_hide_identity failed", error.message);
-      return hidden;
-    }
-
-    for (const row of (data ?? []) as {
-      organisation_id?: unknown;
-      hide_identity?: unknown;
-    }[]) {
-      const id = asIntegerId(row.organisation_id);
-      if (id != null) {
-        hidden.set(id, isHideIdentity(row.hide_identity));
-      }
-    }
-  } catch (error) {
-    console.error("organisations_hide_identity failed", error);
+  if (!fromView.error) {
+    return parseOrganisationHideIdentityRows(fromView.data);
   }
 
-  return hidden;
+  const fromRpc = await supabase.rpc("organisations_hide_identity", {
+    p_ids: ids,
+  });
+
+  if (fromRpc.error) {
+    console.error(
+      "organisations_hide_identity failed",
+      fromView.error.message,
+      fromRpc.error.message,
+    );
+    return new Map();
+  }
+
+  return parseOrganisationHideIdentityRows(fromRpc.data);
 }
 
 async function loadPublicIdentityDisplays(
@@ -232,62 +221,33 @@ async function loadPublicIdentityDisplays(
   display: (input: {
     name: string;
     hideIdentity: boolean;
-    viewerIsMember: boolean;
     isPlatformAdmin: boolean;
   }) => PublicIdentityDisplay,
 ): Promise<Record<number, PublicIdentityDisplay>> {
-  const visible = (): Record<number, PublicIdentityDisplay> => {
-    const displays: Record<number, PublicIdentityDisplay> = {};
-    for (const party of parties) {
-      const id = asIntegerId(party.id);
-      if (id != null) {
-        displays[id] = {
-          label: party.name,
-          tooltip: null,
-        };
-      }
-    }
-    return displays;
-  };
+  const organisationIds = parties
+    .map((party) => asIntegerId(party.organisation_id))
+    .filter((id): id is number => id != null);
+  const [hideMap, admin] = await Promise.all([
+    listOrganisationHideIdentity(organisationIds),
+    isPlatformAdmin(),
+  ]);
+  const displays: Record<number, PublicIdentityDisplay> = {};
 
-  try {
-    const organisationIds = parties
-      .map((party) => asIntegerId(party.organisation_id))
-      .filter((id): id is number => id != null);
-    const store = await cookies();
-    const activeId = parseActiveOrganisationId(
-      store.get(ACTIVE_ORGANISATION_COOKIE)?.value,
-    );
-    const [hideMap, organisations, admin] = await Promise.all([
-      listOrganisationHideIdentity(organisationIds),
-      listMyOrganisations(),
-      isPlatformAdmin(),
-    ]);
-    const activeBelongsToUser = organisations.some(
-      (organisation) => asIntegerId(organisation.id) === activeId,
-    );
-    const displays: Record<number, PublicIdentityDisplay> = {};
-
-    for (const party of parties) {
-      const partyId = asIntegerId(party.id);
-      const orgId = asIntegerId(party.organisation_id);
-      if (partyId == null || orgId == null) {
-        continue;
-      }
-
-      displays[partyId] = display({
-        name: party.name,
-        hideIdentity: hideMap.get(orgId) === true,
-        viewerIsMember: activeBelongsToUser && activeId === orgId,
-        isPlatformAdmin: admin,
-      });
+  for (const party of parties) {
+    const partyId = asIntegerId(party.id);
+    if (partyId == null) {
+      continue;
     }
 
-    return displays;
-  } catch (error) {
-    console.error("loadPublicIdentityDisplays failed", error);
-    return visible();
+    const orgId = asIntegerId(party.organisation_id);
+    displays[partyId] = display({
+      name: party.name,
+      hideIdentity: orgId != null && hideMap.get(orgId) === true,
+      isPlatformAdmin: admin,
+    });
   }
+
+  return displays;
 }
 
 export async function loadPublicSellerDisplays(
@@ -303,11 +263,10 @@ export async function loadPublicSellerDisplays(
       organisation_id: Number(listing.organisation_id),
       name: listing.seller_name,
     })),
-    ({ name, hideIdentity, viewerIsMember, isPlatformAdmin }) =>
+    ({ name, hideIdentity, isPlatformAdmin }) =>
       publicSellerDisplay({
         sellerName: name,
         hideIdentity,
-        viewerIsSellerMember: viewerIsMember,
         isPlatformAdmin,
       }),
   );
@@ -326,11 +285,10 @@ export async function loadPublicBuyerDisplays(
       organisation_id: Number(bid.organisation_id),
       name: bid.bidder_name,
     })),
-    ({ name, hideIdentity, viewerIsMember, isPlatformAdmin }) =>
+    ({ name, hideIdentity, isPlatformAdmin }) =>
       publicBuyerDisplay({
         buyerName: name,
         hideIdentity,
-        viewerIsBuyerMember: viewerIsMember,
         isPlatformAdmin,
       }),
   );

@@ -8,20 +8,48 @@ export type PublicIdentityDisplay = {
 
 export type PublicSellerDisplay = PublicIdentityDisplay;
 
+function asIntegerId(value: unknown) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function isHideIdentityFlag(value: unknown) {
+  return value === true || value === "true" || value === "t";
+}
+
+export function parseOrganisationHideIdentityRows(
+  data: unknown,
+): Map<number, boolean> {
+  const hidden = new Map<number, boolean>();
+  const rows = Array.isArray(data) ? data : data == null ? [] : [data];
+
+  for (const row of rows) {
+    if (!row || typeof row !== "object") {
+      continue;
+    }
+
+    const record = row as Record<string, unknown>;
+    const id = asIntegerId(record.organisation_id ?? record.id);
+    if (id != null) {
+      hidden.set(id, isHideIdentityFlag(record.hide_identity));
+    }
+  }
+
+  return hidden;
+}
+
 export function publicIdentityDisplay({
   name,
   hideIdentity,
-  viewerIsMember,
   isPlatformAdmin: admin,
   hiddenLabel,
 }: {
   name: string;
   hideIdentity: boolean;
-  viewerIsMember: boolean;
   isPlatformAdmin: boolean;
   hiddenLabel: string;
 }): PublicIdentityDisplay {
-  if (!hideIdentity || viewerIsMember) {
+  if (!hideIdentity) {
     return { label: name, tooltip: null };
   }
 
@@ -34,18 +62,15 @@ export function publicIdentityDisplay({
 export function publicSellerDisplay({
   sellerName,
   hideIdentity,
-  viewerIsSellerMember,
   isPlatformAdmin,
 }: {
   sellerName: string;
   hideIdentity: boolean;
-  viewerIsSellerMember: boolean;
   isPlatformAdmin: boolean;
 }): PublicSellerDisplay {
   return publicIdentityDisplay({
     name: sellerName,
     hideIdentity,
-    viewerIsMember: viewerIsSellerMember,
     isPlatformAdmin,
     hiddenLabel: PRIVATE_SELLER_LABEL,
   });
@@ -54,18 +79,15 @@ export function publicSellerDisplay({
 export function publicBuyerDisplay({
   buyerName,
   hideIdentity,
-  viewerIsBuyerMember,
   isPlatformAdmin,
 }: {
   buyerName: string;
   hideIdentity: boolean;
-  viewerIsBuyerMember: boolean;
   isPlatformAdmin: boolean;
 }): PublicIdentityDisplay {
   return publicIdentityDisplay({
     name: buyerName,
     hideIdentity,
-    viewerIsMember: viewerIsBuyerMember,
     isPlatformAdmin,
     hiddenLabel: PRIVATE_BUYER_LABEL,
   });

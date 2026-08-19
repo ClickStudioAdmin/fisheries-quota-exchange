@@ -25,6 +25,7 @@ import {
   auctionHasEnded,
   auctionHasStarted,
   auctionIsLive,
+  auctionReserveLabel,
   minimumBid,
 } from "@/lib/auctions/types";
 import { cancelListingAction } from "@/lib/listings/actions";
@@ -39,6 +40,7 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listMyOrganisations, getMyRole, loadPublicBuyerDisplays, loadPublicSellerDisplays } from "@/lib/organisations/queries";
 import { PublicSellerName } from "@/components/public-seller-name";
+import { PRIVATE_BUYER_LABEL } from "@/lib/organisations/public-seller";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
@@ -265,7 +267,7 @@ export default async function AuctionPage({
                             <PublicSellerName
                               display={
                                 bidderDisplays[Number(bid.id)] ?? {
-                                  label: bid.bidder_name,
+                                  label: PRIVATE_BUYER_LABEL,
                                   tooltip: null,
                                 }
                               }
@@ -324,9 +326,14 @@ export default async function AuctionPage({
             },
             {
               label: "Reserve",
-              value: listing.reserve_price_aud
-                ? formatAud(listing.reserve_price_aud)
-                : "None",
+              value: auctionReserveLabel(
+                listing.reserve_price_aud,
+                bids.length > 0
+                  ? Math.max(
+                      ...bids.map((bid) => Number(bid.amount_aud)),
+                    )
+                  : null,
+              ),
             },
           ]}
           metaLabel={ended ? "Ended" : started ? "Time left" : "Starts in"}

@@ -45,3 +45,24 @@ export function auctionIsLive(listing: Listing, at = new Date()) {
     !auctionHasEnded(listing, at)
   );
 }
+
+export function auctionReserveLabel(
+  reservePriceAud: string | null | undefined,
+  highestBidAud: string | number | null | undefined,
+) {
+  if (reservePriceAud == null || reservePriceAud === "") {
+    return "None";
+  }
+
+  const reserve = Number(reservePriceAud);
+  if (!Number.isFinite(reserve) || reserve <= 0) {
+    return "None";
+  }
+
+  const highest = Number(highestBidAud);
+  if (Number.isFinite(highest) && highest >= reserve) {
+    return "Reached";
+  }
+
+  return "Not Reached";
+}
