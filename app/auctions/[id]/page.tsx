@@ -100,7 +100,7 @@ export default async function AuctionPage({
         </Link>
       </p>
       <OfferDetailLayout
-        actionTitle="Bid"
+        actionTitle="Place bid"
         action={
           listing.status === "PUBLISHED" && live ? (
             !user ? (

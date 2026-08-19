@@ -144,29 +144,16 @@ export function OfferCard({
 
   const headerAndStats = (
     <>
-      {href ? (
-        <div className="flex min-w-0 items-start gap-4">
-          {logo}
-          <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-            <div className="min-w-0">
-              <TitleTag className={titleClassName}>{title}</TitleTag>
-              {sellerLine}
-            </div>
-            {badges}
-          </div>
-        </div>
-      ) : (
-        <div className="flex min-w-0 items-start justify-between gap-3">
+      <div className="flex min-w-0 items-start gap-4">
+        {logo}
+        <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-3">
-              <TitleTag className={titleClassName}>{title}</TitleTag>
-              {logo}
-            </div>
+            <TitleTag className={titleClassName}>{title}</TitleTag>
             {sellerLine}
           </div>
           {badges}
         </div>
-      )}
+      </div>
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <OfferStat
           label="Quantity"
