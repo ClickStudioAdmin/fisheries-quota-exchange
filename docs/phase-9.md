@@ -45,7 +45,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/invitations/[token]` | Accept or decline an account invitation. Signed in required; active organisation cookie is not |
 | `/dashboard/profile` | Account Settings: Profile, Password and Security, Notifications (personal message switches), and Alerts (fishery watches) |
 | `/dashboard/account` | Business Settings for the active business: Details, Members, Privileges, Payments, and Notifications (role routing and business message switches) |
-| `/dashboard/activity` | Activity log for the active business |
+| `/dashboard/activity` | Activity log for the active business. Who is a member's name, FQX, the other business, or System — never an email |
 | `/dashboard/notifications` | Signed-in user inbox |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
@@ -54,7 +54,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the quota and fee tax invoices. Return URL is not authoritative |
 | `/orders/[id]/invoice/quota` | Quota tax invoice PDF (seller to buyer) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. `/orders/[id]/invoice` redirects here |
 | `/orders/[id]/invoice/fee` | Platform fee tax invoice PDF (FQX to seller) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored |
-| `/admin/activity` | Platform activity log (all businesses plus platform admin actions) |
+| `/admin/activity` | Platform activity log. Who is a person's name, FQX, a business name, or System — never an email |
 | `/api/stripe/webhook` | Signed Stripe events |
 | `/api/stripe/account-session` | Account Session client secret for embedded components |
 | `/api/cron/emails` | Scheduled mail (listing expired, auction ending soon, payment reminder). Requires `CRON_SECRET`. Hobby plans only allow once per day (`0 0 * * *` UTC). Hourly cron skips Git deploys on Hobby |

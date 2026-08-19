@@ -8,11 +8,13 @@ import {
 } from "@/components/data-table";
 import {
   auditCategoryOptions,
+  auditActorLabel,
   auditEventCategory,
   auditEventHref,
   auditEventLabel,
   auditEventLinkLabel,
   auditEventSummary,
+  type AuditActorContext,
   type AuditEvent,
   type AuditLogViewer,
 } from "@/lib/audit/types";
@@ -23,13 +25,25 @@ export function ActivityLog({
   viewer,
   caption,
   empty,
+  organisationId,
+  organisationName,
+  personNames,
 }: {
   events: AuditEvent[];
   viewer: AuditLogViewer;
   caption: string;
   empty: string;
+  organisationId?: number | null;
+  organisationName?: string | null;
+  personNames?: Record<string, string>;
 }) {
   const showBusiness = viewer === "admin";
+  const actorContext: AuditActorContext = {
+    viewer,
+    organisationId,
+    organisationName,
+    personNames,
+  };
 
   return (
     <DataTable
@@ -52,6 +66,7 @@ export function ActivityLog({
           sortable: true,
           filter: "select",
         },
+        { key: "summary", header: "Detail", sortable: true, details: true },
         { key: "who", header: "Who", sortable: true, filter: "select" },
         ...(showBusiness
           ? [
@@ -63,11 +78,10 @@ export function ActivityLog({
               },
             ]
           : []),
-        { key: "summary", header: "Detail", sortable: true, details: true },
       ]}
       rows={events.map((event) => {
         const eventLabel = auditEventLabel(event.event_type);
-        const who = event.actor_email?.trim() || "System";
+        const who = auditActorLabel(event, actorContext);
         const business =
           [event.organisation_name, event.related_organisation_name]
             .filter(Boolean)
@@ -81,7 +95,7 @@ export function ActivityLog({
             event: eventLabel,
             who,
             business,
-            summary: auditEventSummary(event) || "—",
+            summary: auditEventSummary(event, actorContext) || "—",
           },
           display: {
             when: formatTableDateTime(event.created_at),

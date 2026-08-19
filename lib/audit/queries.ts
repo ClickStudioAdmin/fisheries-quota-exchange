@@ -83,3 +83,49 @@ export async function listPlatformAuditEvents() {
 
   return withOrganisationNames(supabase, asAuditEvents(data));
 }
+
+export async function listAuditPersonNames(organisationId?: number | null) {
+  const supabase = await createClient();
+  if (!supabase) return {};
+
+  const names: Record<string, string> = {};
+
+  let membersQuery = supabase
+    .from("organisation_users")
+    .select("email, full_name");
+
+  if (organisationId != null) {
+    membersQuery = membersQuery.eq("organisation_id", organisationId);
+  }
+
+  const { data: members } = await membersQuery;
+
+  for (const row of members ?? []) {
+    const email = String(row.email ?? "").trim().toLowerCase();
+    const name = String(row.full_name ?? "").trim();
+    if (email.includes("@") && name && !name.includes("@")) {
+      names[email] = name;
+    }
+  }
+
+  if (organisationId == null) {
+    const { data: people } = await supabase.rpc("admin_auth_people");
+    const rows = Array.isArray(people) ? people : [];
+
+    for (const row of rows) {
+      if (!row || typeof row !== "object") {
+        continue;
+      }
+
+      const record = row as { email?: unknown; full_name?: unknown };
+      const email = String(record.email ?? "").trim().toLowerCase();
+      const name =
+        typeof record.full_name === "string" ? record.full_name.trim() : "";
+      if (email.includes("@") && name && !name.includes("@") && !names[email]) {
+        names[email] = name;
+      }
+    }
+  }
+
+  return names;
+}

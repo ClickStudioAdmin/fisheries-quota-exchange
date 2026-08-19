@@ -26,6 +26,26 @@ export type AuditEvent = {
 
 export type AuditLogViewer = "business" | "admin";
 
+export type AuditActorContext = {
+  viewer: AuditLogViewer;
+  organisationId?: number | null;
+  organisationName?: string | null;
+  personNames?: Record<string, string>;
+};
+
+const PLATFORM_ACTOR_EVENTS = new Set([
+  "COMPLIANCE_APPROVED",
+  "COMPLIANCE_REJECTED",
+  "TRANSFER_SIMULATED",
+  "SETTLEMENT_SIMULATED",
+  "LISTING_REJECTED",
+  "AUCTION_REJECTED",
+  "HOLDING_UNVERIFIED",
+  "USER_VERIFIED",
+  "USER_UNVERIFIED",
+  "PLATFORM_SETTINGS_UPDATED",
+]);
+
 function titleCaseEvent(eventType: string) {
   return eventType
     .toLowerCase()
@@ -34,8 +54,8 @@ function titleCaseEvent(eventType: string) {
     .join(" ");
 }
 
-function payloadString(payload: Record<string, unknown>, key: string) {
-  const value = payload[key];
+function payloadString(payload: Record<string, unknown> | undefined, key: string) {
+  const value = payload?.[key];
   return typeof value === "string" ? value : "";
 }
 
@@ -45,6 +65,118 @@ function payloadRole(payload: Record<string, unknown>, key = "role") {
   if (value === "ADMIN") return "Admin";
   if (value === "MEMBER") return "Member";
   return value;
+}
+
+function looksLikeEmail(value: string) {
+  return value.includes("@");
+}
+
+function personName(email: string, names?: Record<string, string>) {
+  if (!email) {
+    return "";
+  }
+
+  const name = names?.[email.toLowerCase()]?.trim() ?? "";
+  return looksLikeEmail(name) ? "" : name;
+}
+
+function safeLabel(...values: Array<string | null | undefined>) {
+  return (
+    values.find((value) => {
+      const text = value?.trim() ?? "";
+      return text.length > 0 && !looksLikeEmail(text);
+    })?.trim() ?? ""
+  );
+}
+
+function otherPartyName(
+  event: Pick<
+    AuditEvent,
+    | "payload"
+    | "organisation_id"
+    | "related_organisation_id"
+    | "organisation_name"
+    | "related_organisation_name"
+  >,
+  context: AuditActorContext,
+) {
+  const thisId = context.organisationId ?? null;
+  const thisName = (context.organisationName ?? "").trim();
+  const buyer = payloadString(event.payload, "buyer_name");
+  const seller = payloadString(event.payload, "seller_name");
+  const organisationName = event.organisation_name?.trim() ?? "";
+  const relatedName = event.related_organisation_name?.trim() ?? "";
+
+  const pick = (...values: string[]) =>
+    values.find(
+      (value) => value && value !== thisName && !looksLikeEmail(value),
+    ) ?? "";
+
+  if (thisId != null && event.organisation_id === thisId) {
+    return pick(relatedName, seller, buyer);
+  }
+
+  if (thisId != null && event.related_organisation_id === thisId) {
+    return pick(organisationName, buyer, seller);
+  }
+
+  return pick(relatedName, organisationName, buyer, seller);
+}
+
+export function auditActorLabel(
+  event: Pick<
+    AuditEvent,
+    | "event_type"
+    | "actor_email"
+    | "payload"
+    | "organisation_id"
+    | "related_organisation_id"
+    | "organisation_name"
+    | "related_organisation_name"
+  >,
+  context: AuditActorContext,
+) {
+  const email = event.actor_email?.trim().toLowerCase() ?? "";
+
+  if (!email) {
+    return "System";
+  }
+
+  const name = personName(email, context.personNames);
+  const knownPerson = Object.prototype.hasOwnProperty.call(
+    context.personNames ?? {},
+    email,
+  );
+
+  if (context.viewer === "admin") {
+    if (name) {
+      return name;
+    }
+
+    if (PLATFORM_ACTOR_EVENTS.has(event.event_type)) {
+      return "FQX";
+    }
+
+    return safeLabel(otherPartyName(event, context), "Someone");
+  }
+
+  if (PLATFORM_ACTOR_EVENTS.has(event.event_type)) {
+    return "FQX";
+  }
+
+  if (knownPerson) {
+    return safeLabel(name, "Member");
+  }
+
+  if (
+    event.event_type === "HOLDING_VERIFIED" ||
+    event.event_type === "LISTING_PUBLISHED" ||
+    event.event_type === "AUCTION_PUBLISHED"
+  ) {
+    return "FQX";
+  }
+
+  return safeLabel(otherPartyName(event, context), "Another business");
 }
 
 export function auditEventLabel(eventType: string) {
@@ -183,9 +315,28 @@ export function auditEventCategory(eventType: string): AuditCategory {
   return "Business";
 }
 
-export function auditEventSummary(event: Pick<AuditEvent, "event_type" | "payload" | "entity_id">) {
+export function auditEventSummary(
+  event: Pick<AuditEvent, "event_type" | "payload" | "entity_id">,
+  context: AuditActorContext = { viewer: "business" },
+) {
   const payload = event.payload ?? {};
-  const email = payloadString(payload, "email");
+  const subjectEmail = payloadString(payload, "email").toLowerCase();
+  const subjectName = personName(subjectEmail, context.personNames);
+  const knownSubject = Object.prototype.hasOwnProperty.call(
+    context.personNames ?? {},
+    subjectEmail,
+  );
+  const subject =
+    subjectName ||
+    (knownSubject ? "Member" : "") ||
+    (subjectEmail
+      ? context.viewer === "admin"
+        ? "Someone"
+        : event.event_type.startsWith("INVITATION_") ||
+            event.event_type === "MEMBER_INVITED"
+          ? "Invited person"
+          : "Someone"
+      : "");
   const fishery = payloadString(payload, "fishery_name");
   const role = payloadRole(payload);
   const legalName = payloadString(payload, "legal_name");
@@ -194,17 +345,19 @@ export function auditEventSummary(event: Pick<AuditEvent, "event_type" | "payloa
 
   if (event.event_type === "MEMBER_ROLE_CHANGED") {
     const previous = payloadRole(payload, "previous_role");
-    return [email, previous && role ? `${previous} → ${role}` : role]
-      .filter(Boolean)
-      .join(" · ");
+    return safeLabel(
+      [subject, previous && role ? `${previous} → ${role}` : role]
+        .filter(Boolean)
+        .join(" · "),
+    );
   }
 
   if (event.event_type.startsWith("MEMBER_") || event.event_type.startsWith("INVITATION_")) {
-    return [email, role].filter(Boolean).join(" as ");
+    return safeLabel([subject, role].filter(Boolean).join(" as "));
   }
 
   if (event.event_type === "USER_VERIFIED" || event.event_type === "USER_UNVERIFIED") {
-    return email;
+    return safeLabel(subjectName, "A user");
   }
 
   if (event.event_type === "PAYMENTS_SETUP_UPDATED") {
@@ -214,9 +367,11 @@ export function auditEventSummary(event: Pick<AuditEvent, "event_type" | "payloa
   }
 
   if (buyer || seller) {
-    return [fishery, buyer && seller ? `${buyer} / ${seller}` : buyer || seller]
-      .filter(Boolean)
-      .join(" · ");
+    return safeLabel(
+      [fishery, buyer && seller ? `${buyer} / ${seller}` : buyer || seller]
+        .filter(Boolean)
+        .join(" · "),
+    );
   }
 
   if (event.event_type.startsWith("ORDER_") || event.event_type === "QUOTA_RESERVED"
@@ -224,10 +379,12 @@ export function auditEventSummary(event: Pick<AuditEvent, "event_type" | "payloa
     || event.event_type.startsWith("COMPLIANCE_")
     || event.event_type === "TRANSFER_SIMULATED"
     || event.event_type === "SETTLEMENT_SIMULATED") {
-    return [`Order ${event.entity_id}`, fishery].filter(Boolean).join(" · ");
+    return safeLabel(
+      [`Order ${event.entity_id}`, fishery].filter(Boolean).join(" · "),
+    );
   }
 
-  return [legalName, fishery, email].filter(Boolean).join(" · ");
+  return safeLabel(legalName, fishery) || "—";
 }
 
 export function auditEventHref(

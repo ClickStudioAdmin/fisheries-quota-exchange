@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  auditActorLabel,
   auditEventCategory,
   auditEventHref,
   auditEventLabel,
@@ -26,26 +27,32 @@ test("auditEventCategory groups people, listings, orders, and platform", () => {
   assert.equal(auditEventCategory("ORGANISATION_CREATED"), "Business");
 });
 
-test("auditEventSummary names people and counterparties", () => {
+test("auditEventSummary names people without emails", () => {
   assert.equal(
     auditEventSummary({
       event_type: "MEMBER_INVITED",
       entity_id: 1,
       payload: { email: "sam@example.com", role: "ADMIN" },
     }),
-    "sam@example.com as Admin",
+    "Invited person as Admin",
   );
   assert.equal(
-    auditEventSummary({
-      event_type: "MEMBER_ROLE_CHANGED",
-      entity_id: 1,
-      payload: {
-        email: "sam@example.com",
-        previous_role: "MEMBER",
-        role: "ADMIN",
+    auditEventSummary(
+      {
+        event_type: "MEMBER_ROLE_CHANGED",
+        entity_id: 1,
+        payload: {
+          email: "sam@example.com",
+          previous_role: "MEMBER",
+          role: "ADMIN",
+        },
       },
-    }),
-    "sam@example.com · Member → Admin",
+      {
+        viewer: "admin",
+        personNames: { "sam@example.com": "Sam Fisher" },
+      },
+    ),
+    "Sam Fisher · Member → Admin",
   );
   assert.equal(
     auditEventSummary({
@@ -54,6 +61,57 @@ test("auditEventSummary names people and counterparties", () => {
       payload: { buyer_name: "Buyer Co", seller_name: "Seller Co" },
     }),
     "Buyer Co / Seller Co",
+  );
+  assert.equal(
+    auditEventSummary({
+      event_type: "USER_VERIFIED",
+      entity_id: 0,
+      payload: { email: "sam@example.com" },
+    }),
+    "A user",
+  );
+});
+
+test("auditActorLabel never returns emails", () => {
+  const order = {
+    event_type: "COMPLIANCE_APPROVED",
+    actor_email: "click.studio.admin@gmail.com",
+    payload: { buyer_name: "Buyer Co", seller_name: "Test Buyer" },
+    organisation_id: 1,
+    related_organisation_id: 2,
+    organisation_name: "Buyer Co",
+    related_organisation_name: "Test Buyer",
+  };
+  const business = {
+    viewer: "business" as const,
+    organisationId: 2,
+    organisationName: "Test Buyer",
+    personNames: { "pat@example.com": "Pat Buyer" },
+  };
+
+  assert.equal(auditActorLabel(order, business), "FQX");
+  assert.equal(
+    auditActorLabel({ ...order, event_type: "ORDER_CREATED" }, business),
+    "Buyer Co",
+  );
+  assert.equal(
+    auditActorLabel(
+      { ...order, event_type: "LISTING_CREATED", actor_email: "pat@example.com" },
+      business,
+    ),
+    "Pat Buyer",
+  );
+  assert.equal(
+    auditActorLabel({ ...order, actor_email: null }, business),
+    "System",
+  );
+  assert.equal(auditActorLabel(order, { viewer: "admin" }), "FQX");
+  assert.equal(
+    auditActorLabel(order, {
+      viewer: "admin",
+      personNames: { "click.studio.admin@gmail.com": "Click Admin" },
+    }),
+    "Click Admin",
   );
 });
 

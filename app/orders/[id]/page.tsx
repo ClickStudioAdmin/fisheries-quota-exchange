@@ -12,7 +12,7 @@ import {
   getTransactionForOrder,
   listOrderAuditEvents,
 } from "@/lib/orders/queries";
-import { auditEventLabel } from "@/lib/audit/types";
+import { auditActorLabel, auditEventLabel } from "@/lib/audit/types";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { buildOrderSteps } from "@/lib/orders/progress";
 import { formatAud, formatAudPerUnit, listingOfferingLabel } from "@/lib/listings/types";
@@ -21,6 +21,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { OrderProgress } from "@/components/order-progress";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { listAuditPersonNames } from "@/lib/audit/queries";
 import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { SwitchAccountNotice } from "@/components/switch-account-notice";
@@ -92,6 +93,18 @@ export default async function OrderPage({
 
   const isBuyer = Boolean(active) && active?.id === order.buyer_organisation_id;
   const isSeller = Boolean(active) && active?.id === order.seller_organisation_id;
+  const viewingOrgId = admin ? null : active?.id ?? null;
+  const personNames = await listAuditPersonNames(viewingOrgId);
+  const actorContext = {
+    viewer: admin ? ("admin" as const) : ("business" as const),
+    organisationId: viewingOrgId,
+    organisationName: isBuyer
+      ? order.buyer_name
+      : isSeller
+        ? order.seller_name
+        : null,
+    personNames,
+  };
   const canPayOrCancel =
     isBuyer && active != null && canBuyForOrganisation(active.role);
   const involvedIds = [
@@ -391,12 +404,10 @@ export default async function OrderPage({
               >
                 <span className="text-sm text-ink">
                   {auditEventLabel(event.event_type)}
-                  {event.actor_email ? (
-                    <span className="text-ink-muted">
-                      {" "}
-                      · {event.actor_email}
-                    </span>
-                  ) : null}
+                  <span className="text-ink-muted">
+                    {" "}
+                    · {auditActorLabel(event, actorContext)}
+                  </span>
                 </span>
                 <time
                   className="shrink-0 text-xs text-ink-muted"
