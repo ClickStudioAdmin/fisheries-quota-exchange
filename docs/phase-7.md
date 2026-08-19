@@ -10,7 +10,7 @@ Do not implement auctions, Stripe, real payouts, or authority adapters in this p
 
 ## Flow
 
-1. Buyer (any member of a different organisation) purchases a `PUBLISHED` listing.
+1. Buyer (owner or admin of a different organisation) purchases a `PUBLISHED` listing.
 2. `create_order` locks the listing and holding, checks unreserved quantity, creates the order, an `ACTIVE` reservation, and a `PENDING` simulated transaction, and sets the listing to `RESERVED`.
 3. Platform admin approves compliance (`AWAITING_TRANSFER`) or rejects it (reservation released, listing returns to `PUBLISHED` if it has not expired).
 4. Admin simulates transfer (`AWAITING_SETTLEMENT`).

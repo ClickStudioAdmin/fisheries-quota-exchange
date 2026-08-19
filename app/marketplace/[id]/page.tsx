@@ -26,6 +26,7 @@ import {
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getUser } from "@/lib/supabase/server";
 import { isPaymentsConfigured } from "@/lib/payments/env";
 import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
@@ -93,9 +94,10 @@ export default async function ListingPage({
   const canPurchase =
     listing.status === "PUBLISHED" &&
     !expired &&
-    Boolean(active) &&
+    active != null &&
     !operatingAsSeller &&
-    sellerAcceptsCards;
+    sellerAcceptsCards &&
+    canBuyForOrganisation(active.role);
   const feeLabel = platformFeeLabel(settings, listing.offering);
 
   return (
@@ -188,6 +190,10 @@ export default async function ListingPage({
                   business.
                 </>
               ) : null}
+            </p>
+          ) : !canBuyForOrganisation(active.role) ? (
+            <p className="text-sm text-ink-muted">
+              Only owners and admins can buy for this business.
             </p>
           ) : !acceptedTerms ? (
             <TermsRequiredNotice action="buy" />

@@ -46,10 +46,10 @@ Signed-out users are redirected to `/login`.
 | Leave the business | Yes, unless last owner | Yes | Yes |
 | Add or adjust quota holdings | Yes | Yes | No |
 | Create, edit, or cancel listings and auctions | Yes | Yes | No |
-| Buy quota | Yes | Yes | Yes |
-| Bid on auctions | Yes | Yes | Yes |
-| Pay FQX for this business's orders | Yes | Yes | Yes |
-| Cancel an unpaid order | Yes | Yes | Yes |
+| Buy quota | Yes | Yes | No |
+| Bid on auctions | Yes | Yes | No |
+| Pay FQX for this business's orders | Yes | Yes | No |
+| Cancel an unpaid order | Yes | Yes | No |
 
 That list is shown on Business Settings → Privileges. Roles are fixed; the page is not a permission editor. Who receives business email is chosen on Notifications.
 

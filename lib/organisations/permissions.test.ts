@@ -3,8 +3,17 @@ import test from "node:test";
 import {
   canAddMember,
   canAssignRole,
+  canBuyForOrganisation,
   canCancelInvitation,
+  canEditOrganisation,
 } from "./permissions.ts";
+
+test("owners and admins can buy, bid, pay, and cancel unpaid orders", () => {
+  assert.equal(canBuyForOrganisation("OWNER"), true);
+  assert.equal(canBuyForOrganisation("ADMIN"), true);
+  assert.equal(canBuyForOrganisation("MEMBER"), false);
+  assert.equal(canBuyForOrganisation("MEMBER"), canEditOrganisation("MEMBER"));
+});
 
 test("owners and admins can invite", () => {
   assert.equal(canAddMember("OWNER"), true);

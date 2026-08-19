@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient, getUser } from "@/lib/supabase/server";
-import { canEditOrganisation } from "@/lib/organisations/permissions";
+import { canBuyForOrganisation, canEditOrganisation } from "@/lib/organisations/permissions";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { getMyRole, getOrganisation } from "@/lib/organisations/queries";
 import { getPaymentProvider } from "@/lib/payments/provider";
 import {
@@ -133,6 +134,16 @@ export async function startOrderCheckoutAction(
 
   if (order.status !== "AWAITING_PAYMENT") {
     return { pending: true };
+  }
+
+  const active = await getActiveOrganisation();
+
+  if (
+    !active ||
+    active.id !== order.buyer_organisation_id ||
+    !canBuyForOrganisation(active.role)
+  ) {
+    return { error: "You cannot pay this order." };
   }
 
   if (method === "becs" && !checkoutAllowsBecs(order.amount_aud)) {

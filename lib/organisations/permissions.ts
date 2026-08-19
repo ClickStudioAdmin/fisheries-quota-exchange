@@ -4,6 +4,10 @@ export function canEditOrganisation(role: OrganisationRole) {
   return role === "OWNER" || role === "ADMIN";
 }
 
+export function canBuyForOrganisation(role: OrganisationRole) {
+  return canEditOrganisation(role);
+}
+
 export function canAddMember(role: OrganisationRole) {
   return role === "OWNER" || role === "ADMIN";
 }

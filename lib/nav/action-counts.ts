@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { listMyOrganisations } from "@/lib/organisations/queries";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 
 export type AdminActionCounts = {
   holdings: number;
@@ -174,6 +175,11 @@ export const getMemberActionCounts = cache(
 
     const byOrganisation: Record<number, number> = {};
     const memberOrgs = new Set(organisationIds);
+    const buyerManagerOrgs = new Set(
+      organisations
+        .filter((organisation) => canBuyForOrganisation(organisation.role))
+        .map((organisation) => organisation.id),
+    );
 
     for (const row of holdings ?? []) {
       addCount(byOrganisation, row.organisation_id);
@@ -189,7 +195,7 @@ export const getMemberActionCounts = cache(
 
     for (const row of orders ?? []) {
       if (row.status === "AWAITING_PAYMENT") {
-        if (memberOrgs.has(Number(row.buyer_organisation_id))) {
+        if (buyerManagerOrgs.has(Number(row.buyer_organisation_id))) {
           addCount(byOrganisation, row.buyer_organisation_id);
         }
         continue;
@@ -202,10 +208,17 @@ export const getMemberActionCounts = cache(
       }
     }
 
+    const visibleOrders = (orders ?? []).filter((row) => {
+      if (row.status === "AWAITING_PAYMENT") {
+        return buyerManagerOrgs.has(Number(row.buyer_organisation_id));
+      }
+
+      return true;
+    });
     const holdingsCount = (holdings ?? []).length;
     const listingsCount =
       (pendingListings ?? []).length + (endedAuctions ?? []).length;
-    const ordersCount = (orders ?? []).length;
+    const ordersCount = visibleOrders.length;
 
     return {
       holdings: holdingsCount,

@@ -12,7 +12,7 @@ Do not implement Stripe, seller payouts, or authority adapters in this phase.
 
 1. Organisation `OWNER` or `ADMIN` creates an auction from a **verified** holding (`starting` price, increment, optional reserve, start, end).
 2. Status is `PENDING_APPROVAL`. Platform admin approves it (`PUBLISHED`) on `/admin/listings`.
-3. A member of a different organisation places a bid. `place_bid` locks the listing, compares `now()` to start/end, and stores `bids.created_at` with `now()`.
+3. An owner or admin of a different organisation places a bid. `place_bid` locks the listing, compares `now()` to start/end, and stores `bids.created_at` with `now()`.
 4. A later bid must be at least the current price plus the increment.
 5. After `expires_at`, a signed-in user closes the auction (automatic on the auction page, or the Close button). Close uses server time.
 6. If the highest bid meets the reserve (or there is no reserve), `close_auction` creates an order, reserves quota, and sets the listing to `RESERVED`. Admin then runs the Phase 7 compliance / transfer / settlement steps.

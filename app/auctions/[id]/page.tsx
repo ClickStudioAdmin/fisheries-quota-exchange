@@ -28,6 +28,7 @@ import {
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
 import { getPlatformSettings } from "@/lib/settings/queries";
@@ -192,6 +193,10 @@ export default async function AuctionPage({
                 </>
               ) : null}
             </p>
+          ) : !canBuyForOrganisation(active.role) ? (
+            <p className="text-sm text-ink-muted">
+              Only owners and admins can bid for this business.
+            </p>
           ) : !acceptedTerms ? (
             <TermsRequiredNotice action="bid" />
           ) : (
@@ -220,7 +225,10 @@ export default async function AuctionPage({
             <>
               {" "}
               <Link href={`/orders/${order.id}`} className="underline">
-                {order.status === "AWAITING_PAYMENT"
+                {order.status === "AWAITING_PAYMENT" &&
+                active &&
+                active.id === order.buyer_organisation_id &&
+                canBuyForOrganisation(active.role)
                   ? `Pay order ${order.id}`
                   : `View order ${order.id}`}
               </Link>

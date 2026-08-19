@@ -21,6 +21,7 @@ import { OrderProgress } from "@/components/order-progress";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { SwitchAccountNotice } from "@/components/switch-account-notice";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
@@ -90,6 +91,8 @@ export default async function OrderPage({
 
   const isBuyer = Boolean(active) && active?.id === order.buyer_organisation_id;
   const isSeller = Boolean(active) && active?.id === order.seller_organisation_id;
+  const canPayOrCancel =
+    isBuyer && active != null && canBuyForOrganisation(active.role);
   const involvedIds = [
     buyerRole ? order.buyer_organisation_id : null,
     sellerRole ? order.seller_organisation_id : null,
@@ -128,10 +131,10 @@ export default async function OrderPage({
   const canCancel =
     (order.status === "AWAITING_COMPLIANCE" ||
       order.status === "AWAITING_PAYMENT") &&
-    (admin || isBuyer);
+    (admin || canPayOrCancel);
   const payPanel = orderPayPanel({
     orderStatus: order.status,
-    isBuyer,
+    isBuyer: canPayOrCancel,
     paymentLive,
     paymentStatus: payment?.status ? String(payment.status) : null,
     hasPaymentReceivedEvent,

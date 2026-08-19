@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   canAddMember,
   canAssignRole,
+  canBuyForOrganisation,
   canCancelInvitation,
   canChangeMemberRole,
   canEditOrganisation,
@@ -34,12 +35,12 @@ test("privilege catalogue covers every role cell", () => {
   }
 });
 
-test("members can buy and bid but cannot list or manage the business", () => {
-  assert.equal(privilegeAllows(row("buy"), "MEMBER"), true);
-  assert.equal(privilegeAllows(row("bid"), "MEMBER"), true);
-  assert.equal(privilegeAllows(row("pay"), "MEMBER"), true);
-  assert.equal(privilegeAllows(row("cancel_unpaid_order"), "MEMBER"), true);
+test("members can view but cannot buy, bid, list, or manage the business", () => {
   assert.equal(privilegeAllows(row("view"), "MEMBER"), true);
+  assert.equal(privilegeAllows(row("buy"), "MEMBER"), false);
+  assert.equal(privilegeAllows(row("bid"), "MEMBER"), false);
+  assert.equal(privilegeAllows(row("pay"), "MEMBER"), false);
+  assert.equal(privilegeAllows(row("cancel_unpaid_order"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("manage_listings"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("manage_holdings"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("payments_setup"), "MEMBER"), false);
@@ -71,6 +72,13 @@ test("privilege cells follow the permission helpers", () => {
     assert.equal(
       privilegeAllows(row("manage_listings"), role),
       canEditOrganisation(role),
+    );
+    assert.equal(privilegeAllows(row("buy"), role), canBuyForOrganisation(role));
+    assert.equal(privilegeAllows(row("bid"), role), canBuyForOrganisation(role));
+    assert.equal(privilegeAllows(row("pay"), role), canBuyForOrganisation(role));
+    assert.equal(
+      privilegeAllows(row("cancel_unpaid_order"), role),
+      canBuyForOrganisation(role),
     );
     assert.equal(privilegeAllows(row("invite_admin_or_member"), role), canAddMember(role));
     assert.equal(

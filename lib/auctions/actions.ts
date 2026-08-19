@@ -6,6 +6,7 @@ import { LISTING_OFFERINGS } from "@/lib/listings/types";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import {
   ACTIVE_ORGANISATION_REQUIRED_MESSAGE,
   getActiveOrganisation,
@@ -163,6 +164,10 @@ export async function placeBidAction(
 
   if (!active) {
     return { error: ACTIVE_ORGANISATION_REQUIRED_MESSAGE };
+  }
+
+  if (!canBuyForOrganisation(active.role)) {
+    return { error: "Only owners and admins can bid for this business." };
   }
 
   const organisationId = active.id;

@@ -83,6 +83,13 @@ const EXCEPTION_MESSAGES: Record<string, string> = {
   "this invitation was sent to a different email":
     "This invitation was sent to a different email.",
   "you cannot cancel that invitation": "You cannot cancel that invitation.",
+  "you cannot purchase for this organisation":
+    "Only an owner or admin can buy for this business.",
+  "you cannot bid for this organisation":
+    "Only an owner or admin can bid for this business.",
+  "you cannot pay this order": "Only an owner or admin can pay for this business.",
+  "you cannot cancel this order":
+    "Only an owner or admin can cancel this order.",
 };
 
 type ErrorLike = {

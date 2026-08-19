@@ -26,6 +26,7 @@ import {
 } from "@/lib/orders/types";
 import { userFacingError } from "@/lib/errors/user-message";
 import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import {
   ACTIVE_ORGANISATION_REQUIRED_MESSAGE,
   getActiveOrganisation,
@@ -80,6 +81,10 @@ export async function createOrderAction(
 
   if (!active) {
     return { error: ACTIVE_ORGANISATION_REQUIRED_MESSAGE };
+  }
+
+  if (!canBuyForOrganisation(active.role)) {
+    return { error: "Only owners and admins can buy for this business." };
   }
 
   const buyerOrganisationId = active.id;
@@ -153,6 +158,20 @@ export async function cancelOrderAction(formData: FormData) {
 
   if (!supabase || !Number.isInteger(orderId)) {
     return;
+  }
+
+  if (!(await isPlatformAdmin())) {
+    const order = await getOrder(orderId);
+    const active = await getActiveOrganisation();
+
+    if (
+      !order ||
+      !active ||
+      active.id !== order.buyer_organisation_id ||
+      !canBuyForOrganisation(active.role)
+    ) {
+      redirect(next);
+    }
   }
 
   await supabase.rpc("cancel_order", { p_order_id: orderId });

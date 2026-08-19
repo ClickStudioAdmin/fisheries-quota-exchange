@@ -10,6 +10,7 @@ import { listMyInAppNotifications } from "@/lib/notifications/queries";
 import { listOrganisationOrders } from "@/lib/orders/queries";
 import { accountPaymentsPath } from "@/lib/organisations/paths";
 import { getOrganisation, listMyPendingInvitations } from "@/lib/organisations/queries";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
@@ -57,7 +58,8 @@ export async function AccountOverviewSection({
       listMyPendingInvitations(),
     ]);
   const hasAccount = Boolean(result);
-  const canBuy = acceptedTerms && hasAccount;
+  const canManage = result ? canBuyForOrganisation(result.role) : false;
+  const canBuy = acceptedTerms && hasAccount && canManage;
   const canSell = canBuy && !sellError;
   const href = (path: string) => path;
   const pendingHoldings = holdings.filter(
@@ -76,6 +78,7 @@ export async function AccountOverviewSection({
   const payOrders = orders.filter((order) => order.status === "AWAITING_PAYMENT");
   const needsAttention = orders.filter(
     (order) =>
+      canManage &&
       order.status === "AWAITING_PAYMENT" &&
       organisationId != null &&
       order.buyer_organisation_id === organisationId,

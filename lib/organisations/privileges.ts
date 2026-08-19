@@ -126,22 +126,22 @@ export const ORGANISATION_PRIVILEGE_GROUPS: readonly PrivilegeGroup[] = [
       {
         id: "buy",
         task: "Buy quota",
-        cells: YES,
+        cells: MANAGERS,
       },
       {
         id: "bid",
         task: "Bid on auctions",
-        cells: YES,
+        cells: MANAGERS,
       },
       {
         id: "pay",
         task: "Pay FQX for this business's orders",
-        cells: YES,
+        cells: MANAGERS,
       },
       {
         id: "cancel_unpaid_order",
         task: "Cancel an unpaid order",
-        cells: YES,
+        cells: MANAGERS,
       },
     ],
   },
