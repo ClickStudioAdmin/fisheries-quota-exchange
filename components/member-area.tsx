@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { AreaShell } from "@/components/area-shell";
-import type { SideNavLink } from "@/components/side-nav";
+import type { SideNavItem } from "@/components/side-nav";
 import { getMemberActionCounts } from "@/lib/nav/action-counts";
 import { getMyUnreadNotificationCount } from "@/lib/notifications/queries";
 import { selectAccountPath, resolveActiveOrganisation } from "@/lib/organisations/active-account";
@@ -22,44 +22,54 @@ export async function MemberArea({ children }: { children: ReactNode }) {
     (organisation) => organisation.id === resolved.selectedId,
   );
 
-  const sectionItems: SideNavLink[] = [
-    { href: "/dashboard", label: "Overview" },
-    { href: "/dashboard/profile", label: "Profile" },
-    { href: "/dashboard/account", label: "Account Settings" },
+  const items: SideNavItem[] = [
     {
-      href: "/dashboard/notifications",
-      label: "Inbox",
-      badge: unreadNotifications,
+      heading: "You",
+      items: [
+        { href: "/dashboard/profile", label: "Profile" },
+        {
+          href: "/dashboard/notifications",
+          label: "Inbox",
+          badge: unreadNotifications,
+        },
+      ],
     },
     {
-      href: "/dashboard/holdings",
-      label: "Quota Holdings",
-      match: "prefix",
-      alsoMatch: ["auctions"],
-      badge: counts.holdings,
-    },
-    {
-      href: "/dashboard/listings",
-      label: "Listings",
-      alsoMatch: ["listings"],
-      badge: counts.listings,
-    },
-    {
-      href: "/dashboard/orders",
-      label: "Orders",
-      alsoMatch: ["/orders"],
-      badge: counts.orders,
+      heading: "This account",
+      items: [
+        { href: "/dashboard", label: "Overview" },
+        { href: "/dashboard/account", label: "Account Settings" },
+        {
+          href: "/dashboard/holdings",
+          label: "Quota Holdings",
+          match: "prefix",
+          alsoMatch: ["auctions"],
+          badge: counts.holdings,
+        },
+        {
+          href: "/dashboard/listings",
+          label: "Listings",
+          alsoMatch: ["listings"],
+          badge: counts.listings,
+        },
+        {
+          href: "/dashboard/orders",
+          label: "Orders",
+          alsoMatch: ["/orders"],
+          badge: counts.orders,
+        },
+      ],
     },
   ];
 
   return (
     <AreaShell
-      title="Account"
+      title="Dashboard"
       operatingAs={active?.legal_name ?? null}
       switchAccountHref={
         organisations.length > 1 ? selectAccountPath() : null
       }
-      items={sectionItems}
+      items={items}
     >
       {children}
     </AreaShell>

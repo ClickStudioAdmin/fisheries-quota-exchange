@@ -20,7 +20,12 @@ export type SideNavGroup = {
   children: SideNavLink[];
 };
 
-export type SideNavItem = SideNavLink | SideNavGroup;
+export type SideNavSection = {
+  heading: string;
+  items: SideNavLink[];
+};
+
+export type SideNavItem = SideNavLink | SideNavGroup | SideNavSection;
 
 type SideNavProps = {
   title: string;
@@ -29,6 +34,10 @@ type SideNavProps = {
 
 function isNavGroup(item: SideNavItem): item is SideNavGroup {
   return "children" in item;
+}
+
+function isNavSection(item: SideNavItem): item is SideNavSection {
+  return "heading" in item;
 }
 
 function accountFromLocation(
@@ -217,21 +226,64 @@ function NavGroup({
   );
 }
 
+function NavSection({
+  item,
+  pathname,
+  accountParam,
+}: {
+  item: SideNavSection;
+  pathname: string;
+  accountParam: string | null;
+}) {
+  return (
+    <li className="space-y-1">
+      <p className="px-3 text-xs uppercase tracking-[0.18em] text-ink-muted">
+        {item.heading}
+      </p>
+      <ul className="space-y-1">
+        {item.items.map((link) => (
+          <li key={`${link.href}-${link.label}`}>
+            <NavLink
+              item={link}
+              pathname={pathname}
+              accountParam={accountParam}
+            />
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+}
+
 export function SideNav({ title, items }: SideNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const accountParam = accountFromLocation(pathname, searchParams);
+  const showTitle = !items.some(isNavSection);
 
   return (
     <nav
       aria-label={title}
       className="border border-line bg-paper-raised p-4"
     >
-      <p className="text-xs uppercase tracking-[0.18em] text-ink-muted">
-        {title}
-      </p>
-      <ul className="mt-3 space-y-1 text-sm">
+      {showTitle ? (
+        <p className="text-xs uppercase tracking-[0.18em] text-ink-muted">
+          {title}
+        </p>
+      ) : null}
+      <ul className={`${showTitle ? "mt-3" : ""} space-y-4 text-sm`}>
         {items.map((item) => {
+          if (isNavSection(item)) {
+            return (
+              <NavSection
+                key={item.heading}
+                item={item}
+                pathname={pathname}
+                accountParam={accountParam}
+              />
+            );
+          }
+
           if (isNavGroup(item)) {
             return (
               <NavGroup
