@@ -29,6 +29,11 @@ export async function MemberArea({ children }: { children: ReactNode }) {
 
   const sectionItems: SideNavLink[] = [
     { href: "/dashboard", label: "Overview" },
+    {
+      href: "/dashboard/notifications",
+      label: "Notifications",
+      badge: unreadNotifications,
+    },
     { href: "/dashboard/profile", label: "Profile details" },
     { href: "/dashboard/members", label: "Account members" },
     {
@@ -51,11 +56,6 @@ export async function MemberArea({ children }: { children: ReactNode }) {
       badge: counts.orders,
     },
     { href: "/dashboard/payments", label: "Payments" },
-    {
-      href: "/dashboard/notifications",
-      label: "Notifications",
-      badge: unreadNotifications,
-    },
     { href: "/dashboard/alerts", label: "Alerts" },
   ];
 
