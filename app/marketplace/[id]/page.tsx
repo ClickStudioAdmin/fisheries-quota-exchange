@@ -7,7 +7,9 @@ import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { ListingKindBadges } from "@/components/offer-card";
-import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
+import { OfferDetailLayout } from "@/components/offer-detail-layout";
+import { ListingRelatedMarket } from "@/components/listing-related-market";
+import { LabeledFieldGroups, pageWidthClassName, panelClassName } from "@/components/surface";
 import { formatTableDateTime } from "@/lib/format";
 import { cancelListingAction } from "@/lib/listings/actions";
 import {
@@ -30,8 +32,6 @@ import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getUser } from "@/lib/supabase/server";
 import { isPaymentsConfigured } from "@/lib/payments/env";
 import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
-import { getPlatformSettings } from "@/lib/settings/queries";
-import { platformFeeLabel } from "@/lib/settings/types";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 
 export const metadata = {
@@ -60,10 +60,9 @@ export default async function ListingPage({
     redirect(`/auctions/${listing.id}`);
   }
 
-  const [user, fisheries, settings, holding, commitments] = await Promise.all([
+  const [user, fisheries, holding, commitments] = await Promise.all([
     getUser(),
     listFisheries(),
-    getPlatformSettings(),
     getHolding(listing.holding_id),
     listHoldingCommitments([listing.holding_id]),
   ]);
@@ -98,7 +97,6 @@ export default async function ListingPage({
     !operatingAsSeller &&
     sellerAcceptsCards &&
     canBuyForOrganisation(active.role);
-  const feeLabel = platformFeeLabel(settings, listing.offering);
 
   return (
     <div className={`${pageWidthClassName} py-12 sm:py-16`}>
@@ -120,128 +118,156 @@ export default async function ListingPage({
           </Link>
         </p>
       ) : null}
-      <div className={`mt-8 max-w-lg ${panelClassName}`}>
-        <LabeledFields
-          items={[
-            { label: "Seller", value: listing.seller_name },
-            {
-              label: "Quantity",
-              value: `${listing.quantity} ${listing.unit_label}`,
-            },
-            {
-              label: "Price",
-              value: formatAudPerUnit(
-                listing.unit_price_aud,
-                listing.unit_label,
-              ),
-            },
-            ...(feeLabel
-              ? [{ label: "Platform fee", value: feeLabel }]
-              : []),
-            {
-              label: "Status",
-              value: `${listingStatusLabel(listing.status)}${expired ? " · expired" : ""}`,
-            },
-            {
-              label: "Expires",
-              value: formatTableDateTime(listing.expires_at),
-            },
-          ]}
-        />
-      </div>
-      {listing.status === "PUBLISHED" && !expired ? (
-        <div className="mt-8">
-          {!user ? (
+      <OfferDetailLayout
+        actionTitle="Buy"
+        action={
+          listing.status === "PUBLISHED" && !expired ? (
+            !user ? (
+              <p className="text-sm text-ink-muted">
+                <Link
+                  href={`/login?next=/marketplace/${listing.id}`}
+                  className="underline"
+                >
+                  Log in
+                </Link>{" "}
+                to purchase. Quota is reserved when you buy. You then pay FQX
+                in Stripe test mode: the listed amount by bank debit, or the
+                listed amount plus card processing if you pay by
+                Australian-issued card. FQX holds the funds until settlement.
+              </p>
+            ) : organisations.length === 0 ? (
+              <p className="text-sm text-ink-muted">
+                Add your business details on{" "}
+                <Link href="/dashboard/account" className="underline">
+                  Business Settings
+                </Link>{" "}
+                before you can buy.
+              </p>
+            ) : !active ? (
+              <p className="text-sm text-ink-muted">
+                <SwitchAccountLink next={listingPath}>
+                  Choose a business
+                </SwitchAccountLink>{" "}
+                before you can buy.
+              </p>
+            ) : operatingAsSeller ? (
+              <p className="text-sm text-ink-muted">
+                You cannot purchase this listing while using the seller&apos;s
+                business.
+                {canSwitch ? (
+                  <>
+                    {" "}
+                    <SwitchAccountLink next={listingPath} /> to buy as another
+                    business.
+                  </>
+                ) : null}
+              </p>
+            ) : !canBuyForOrganisation(active.role) ? (
+              <p className="text-sm text-ink-muted">
+                Only owners and admins can buy for this business.
+              </p>
+            ) : !acceptedTerms ? (
+              <TermsRequiredNotice action="buy" />
+            ) : !sellerAcceptsCards ? (
+              <p className="text-sm text-ink-muted">
+                This seller has not completed payment setup, so the listing
+                cannot be purchased yet.
+              </p>
+            ) : canPurchase ? (
+              <PurchaseForm listingId={listing.id} />
+            ) : (
+              <p className="text-sm text-ink-muted">
+                This listing is not available to purchase.
+              </p>
+            )
+          ) : (
             <p className="text-sm text-ink-muted">
-              <Link
-                href={`/login?next=/marketplace/${listing.id}`}
-                className="underline"
-              >
-                Log in
-              </Link>{" "}
-              to purchase. Quota is reserved when you buy. You then pay FQX in
-              Stripe test mode: the listed amount by bank debit, or the listed
-              amount plus card processing if you pay by Australian-issued card.
-              FQX holds the funds until settlement.
+              This listing is not available to purchase.
             </p>
-          ) : organisations.length === 0 ? (
-            <p className="text-sm text-ink-muted">
-              Add your business details on{" "}
-              <Link href="/dashboard/account" className="underline">
-                Business Settings
-              </Link>{" "}
-              before you can buy.
-            </p>
-          ) : !active ? (
-            <p className="text-sm text-ink-muted">
-              <SwitchAccountLink next={listingPath}>
-                Choose a business
-              </SwitchAccountLink>{" "}
-              before you can buy.
-            </p>
-          ) : operatingAsSeller ? (
-            <p className="text-sm text-ink-muted">
-              You cannot purchase this listing while using the seller&apos;s
-              business.
-              {canSwitch ? (
-                <>
-                  {" "}
-                  <SwitchAccountLink next={listingPath} /> to buy as another
-                  business.
-                </>
-              ) : null}
-            </p>
-          ) : !canBuyForOrganisation(active.role) ? (
-            <p className="text-sm text-ink-muted">
-              Only owners and admins can buy for this business.
-            </p>
-          ) : !acceptedTerms ? (
-            <TermsRequiredNotice action="buy" />
-          ) : !sellerAcceptsCards ? (
-            <p className="text-sm text-ink-muted">
-              This seller has not completed payment setup, so the listing
-              cannot be purchased yet.
-            </p>
-          ) : canPurchase ? (
-            <PurchaseForm listingId={listing.id} />
-          ) : null}
-        </div>
-      ) : (
-        <p className="mt-8 text-sm text-ink-muted">
-          This listing is not available to purchase.
-        </p>
-      )}
-      {showEdit || showCancel ? (
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          {showEdit ? (
-            <EditListingPriceButton
-              title="Edit listing"
-              label="Edit listing"
-              listingId={listing.id}
-              unitLabel={listing.unit_label}
-              currentQuantity={listing.quantity}
-              maxQuantity={maxQuantity}
-              currentPrice={listing.unit_price_aud}
+          )
+        }
+        related={
+          fishery ? (
+            <ListingRelatedMarket
+              fishery={fishery}
+              currentListingId={listing.id}
+              offering={listing.offering}
             />
-          ) : null}
-          {showCancel ? (
-            <form action={cancelListingAction}>
-              <input type="hidden" name="listing_id" value={listing.id} />
-              <input
-                type="hidden"
-                name="next"
-                value={`/marketplace/${listing.id}`}
-              />
-              <PendingSubmitButton
-                className={buttonClassName}
-                pendingLabel="Cancelling…"
-              >
-                Cancel listing
-              </PendingSubmitButton>
-            </form>
-          ) : null}
+          ) : null
+        }
+      >
+        <div className={panelClassName}>
+          <LabeledFieldGroups
+            groups={[
+              {
+                title: "Offer",
+                items: [
+                  {
+                    label: "Quantity",
+                    value: `${listing.quantity} ${listing.unit_label}`,
+                  },
+                  {
+                    label: "Price",
+                    value: formatAudPerUnit(
+                      listing.unit_price_aud,
+                      listing.unit_label,
+                    ),
+                  },
+                ],
+              },
+              {
+                items: [{ label: "Seller", value: listing.seller_name }],
+              },
+              {
+                title: "Status",
+                items: [
+                  {
+                    label: "Listing",
+                    value: expired
+                      ? "Expired"
+                      : listingStatusLabel(listing.status),
+                  },
+                  {
+                    label: "Expires",
+                    value: formatTableDateTime(listing.expires_at),
+                  },
+                ],
+              },
+            ]}
+          />
         </div>
-      ) : null}
+        {showEdit || showCancel ? (
+          <div className="flex flex-wrap items-center gap-3">
+            {showEdit ? (
+              <EditListingPriceButton
+                title="Edit listing"
+                label="Edit listing"
+                listingId={listing.id}
+                unitLabel={listing.unit_label}
+                currentQuantity={listing.quantity}
+                maxQuantity={maxQuantity}
+                currentPrice={listing.unit_price_aud}
+              />
+            ) : null}
+            {showCancel ? (
+              <form action={cancelListingAction}>
+                <input type="hidden" name="listing_id" value={listing.id} />
+                <input
+                  type="hidden"
+                  name="next"
+                  value={`/marketplace/${listing.id}`}
+                />
+                <PendingSubmitButton
+                  className={buttonClassName}
+                  pendingLabel="Cancelling…"
+                >
+                  Cancel listing
+                </PendingSubmitButton>
+              </form>
+            ) : null}
+          </div>
+        ) : null}
+      </OfferDetailLayout>
     </div>
   );
 }

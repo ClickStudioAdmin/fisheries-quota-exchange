@@ -27,7 +27,7 @@ export default async function MarketplacePage() {
       </PageIntro>
       <div className={`${pageWidthClassName} pb-16`}>
         {listings.length === 0 ? (
-          <p className="text-ink-muted">No published listings at the moment.</p>
+          <p className="text-ink-muted">No live listings at the moment.</p>
         ) : (
           <MarketplaceList
             listings={listings}

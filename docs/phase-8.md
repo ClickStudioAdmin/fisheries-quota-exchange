@@ -25,9 +25,9 @@ Seller or admin can cancel an auction only when it has no bids. An auction with 
 | Path | Purpose |
 | --- | --- |
 | `/marketplace` | Fixed-price listings and auctions, filterable by jurisdiction, fishery, listing type and sale/lease, sorted by price or quantity, 20 per page |
-| `/marketplace/[id]` | Fixed-price listing detail and purchase |
+| `/marketplace/[id]` | Fixed-price listing detail and purchase (right-hand column); other live listings and recent sales below |
 | `/auctions` | Redirects to Marketplace |
-| `/auctions/[id]` | Bid, history, close |
+| `/auctions/[id]` | Bid in a right-hand column, history, close; other live listings and recent sales below |
 | `/fisheries` | Public list of fisheries |
 | `/fisheries/[id]` | Last and average sale and lease prices, current sale and lease listings, historical sale and lease price charts |
 | `/dashboard/holdings` | Create an auction from a holding. Holding value uses the latest sale. |

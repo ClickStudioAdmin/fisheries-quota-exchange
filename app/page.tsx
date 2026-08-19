@@ -181,7 +181,7 @@ export default async function Home() {
         <div className="mt-6">
           <ListingCards
             listings={featuredListings}
-            empty="No published listings at the moment."
+            empty="No live listings at the moment."
             fisheriesByName={fisheriesByName}
           />
         </div>

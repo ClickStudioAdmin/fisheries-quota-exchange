@@ -27,37 +27,40 @@ export function FisheryCard({
   return (
     <Link
       href={`/fisheries/${fishery.id}`}
-      className={`flex min-w-0 items-start gap-4 ${cardClassName}`}
+      className={`flex min-w-0 flex-col ${cardClassName} !p-0`}
     >
-      <FisheryLogo fishery={fishery} size="md" />
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold tracking-tight text-ink text-lg sm:text-xl">
-          {fishery.name}
-        </p>
-        <div className="mt-4">
-          <LabeledFields
-            items={[
-              {
-                label: "Jurisdiction",
-                value: jurisdictionLabel(jurisdiction),
-              },
-              {
-                label: "Last sale",
-                value: lastSale
-                  ? formatAudPerUnit(lastSale.unit_price_aud, unit)
-                  : "No sales yet",
-              },
-              {
-                label: "Sale listings",
-                value: String(counts.sale),
-              },
-              {
-                label: "Lease listings",
-                value: String(counts.lease),
-              },
-            ]}
-          />
+      <div className="flex min-w-0 items-start gap-4 p-5">
+        <FisheryLogo fishery={fishery} size="md" />
+        <div className="min-w-0">
+          <p className="text-lg font-semibold tracking-tight text-ink sm:text-xl">
+            {fishery.name}
+          </p>
+          <p className="mt-1 text-sm text-ink-muted">
+            {jurisdictionLabel(jurisdiction)}
+            {fishery.code ? ` · ${fishery.code}` : ""}
+          </p>
         </div>
+      </div>
+      <div className="border-t border-line px-5 py-4">
+        <LabeledFields
+          columns={3}
+          items={[
+            {
+              label: "Last sale",
+              value: lastSale
+                ? formatAudPerUnit(lastSale.unit_price_aud, unit)
+                : "No sales yet",
+            },
+            {
+              label: "Sale listings",
+              value: String(counts.sale),
+            },
+            {
+              label: "Lease listings",
+              value: String(counts.lease),
+            },
+          ]}
+        />
       </div>
     </Link>
   );

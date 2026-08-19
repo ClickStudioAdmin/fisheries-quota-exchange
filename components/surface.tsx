@@ -102,7 +102,7 @@ export function LabeledFields({
   }[columns];
 
   return (
-    <dl className={`grid gap-x-6 gap-y-2 ${columnClassName}`}>
+    <dl className={`grid gap-x-6 gap-y-3 ${columnClassName}`}>
       {items.map((item) => (
         <div key={item.label}>
           <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">
@@ -112,5 +112,40 @@ export function LabeledFields({
         </div>
       ))}
     </dl>
+  );
+}
+
+export function LabeledFieldGroups({
+  groups,
+  columns = 2,
+}: {
+  groups: {
+    title?: string;
+    items: { label: string; value: ReactNode }[];
+    columns?: 2 | 3 | 4 | 5;
+  }[];
+  columns?: 2 | 3 | 4 | 5;
+}) {
+  return (
+    <div className="divide-y divide-line">
+      {groups
+        .filter((group) => group.items.length > 0)
+        .map((group) => (
+          <div
+            key={group.title ?? group.items.map((item) => item.label).join("-")}
+            className="py-5 first:pt-0 last:pb-0"
+          >
+            {group.title ? (
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">
+                {group.title}
+              </p>
+            ) : null}
+            <LabeledFields
+              items={group.items}
+              columns={group.columns ?? columns}
+            />
+          </div>
+        ))}
+    </div>
   );
 }

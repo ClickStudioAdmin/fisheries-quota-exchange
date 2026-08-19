@@ -138,7 +138,7 @@ export function listingStatusLabel(status: ListingStatus) {
     case "PENDING_APPROVAL":
       return "Pending approval";
     case "PUBLISHED":
-      return "Published";
+      return "Live";
     case "RESERVED":
       return "Reserved";
     case "SOLD":

@@ -22,7 +22,7 @@ export function BidForm({ listingId, minimumBid }: BidFormProps) {
   );
 
   return (
-    <form action={formAction} className="mt-6 max-w-md space-y-4">
+    <form action={formAction} className="space-y-4">
       <input type="hidden" name="listing_id" value={listingId} />
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">

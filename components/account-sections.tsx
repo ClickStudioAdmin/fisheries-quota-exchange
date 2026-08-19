@@ -606,7 +606,7 @@ export async function AccountListingsSection({
             filter: "select",
             filterOptions: [
               { value: "PENDING_APPROVAL", label: "Pending approval" },
-              { value: "PUBLISHED", label: "Published" },
+              { value: "PUBLISHED", label: "Live" },
               { value: "RESERVED", label: "Reserved" },
               { value: "SOLD", label: "Sold" },
               { value: "UNSOLD", label: "Unsold" },

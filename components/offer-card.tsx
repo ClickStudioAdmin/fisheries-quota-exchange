@@ -26,19 +26,16 @@ function KindBadge({
   tone,
 }: {
   children: string;
-  tone: "filled" | "outline";
+  tone: "filled" | "outline" | "live";
 }) {
-  return (
-    <span
-      className={
-        tone === "filled"
-          ? "bg-sea px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-paper"
-          : "border border-line bg-paper px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink"
-      }
-    >
-      {children}
-    </span>
-  );
+  const className =
+    tone === "filled"
+      ? "bg-sea px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-paper"
+      : tone === "live"
+        ? "border border-sea px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-sea"
+        : "border border-line bg-paper px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink";
+
+  return <span className={className}>{children}</span>;
 }
 
 export function ListingKindBadges({
@@ -60,7 +57,44 @@ export function ListingKindBadges({
       <KindBadge tone="outline">
         {listingTypeLabel(listing.listing_type)}
       </KindBadge>
-      {badge ? <span className="text-xs text-ink-muted">{badge}</span> : null}
+      {badge ? (
+        <KindBadge tone={badge === "Live" ? "live" : "outline"}>{badge}</KindBadge>
+      ) : null}
+    </div>
+  );
+}
+
+function formatQuantity(value: string | number) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) {
+    return String(value);
+  }
+
+  return new Intl.NumberFormat("en-AU", { maximumFractionDigits: 6 }).format(
+    amount,
+  );
+}
+
+function OfferStat({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-semibold tracking-tight text-ink tabular-nums">
+        {value}
+        {detail ? (
+          <span className="text-sm font-normal text-ink-muted"> {detail}</span>
+        ) : null}
+      </p>
     </div>
   );
 }
@@ -77,30 +111,27 @@ export function OfferCard({
   fishery = null,
 }: OfferCardProps) {
   const title = hideFishery ? listing.seller_name : listing.fishery_name;
-  const fields = [
-    {
-      label: "Quantity",
-      value: `${listing.quantity} ${listing.unit_label}`,
-    },
-    ...(hideFishery ? [] : [{ label: "Seller", value: listing.seller_name }]),
-    ...extraFields,
-  ];
   const showFisheryLink = !hideFishery && fisheryId != null;
   const logoFishery =
     fishery ??
     (hideFishery ? null : { name: listing.fishery_name, logo_path: null });
 
   return (
-    <article
-      className="flex h-full min-w-0 flex-col border border-line bg-paper-raised transition-colors hover:border-sea"
-    >
-      <Link href={href} className="flex min-w-0 flex-1 flex-col gap-4 p-5">
-        <div className="flex min-w-0 items-start gap-4">
+    <article className="flex h-full min-w-0 flex-col border border-line bg-paper-raised transition-colors hover:border-sea">
+      <Link href={href} className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 items-start gap-4 p-5">
           {logoFishery ? <FisheryLogo fishery={logoFishery} size="md" /> : null}
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-            <p className="min-w-0 truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
-              {title}
-            </p>
+          <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
+                {title}
+              </p>
+              {hideFishery ? null : (
+                <p className="mt-1 truncate text-sm text-ink-muted">
+                  {listing.seller_name}
+                </p>
+              )}
+            </div>
             <ListingKindBadges
               listing={listing}
               hideOffering={hideOffering}
@@ -108,20 +139,22 @@ export function OfferCard({
             />
           </div>
         </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-            {priceLabel}
-          </p>
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-ink">
-            {formatAud(listing.unit_price_aud)}
-            <span className="text-sm font-normal text-ink-muted">
-              {" "}
-              / {listing.unit_label}
-            </span>
-          </p>
+        <div className="grid grid-cols-2 gap-4 border-t border-line px-5 py-4">
+          <OfferStat
+            label="Quantity"
+            value={formatQuantity(listing.quantity)}
+            detail={listing.unit_label}
+          />
+          <OfferStat
+            label={priceLabel}
+            value={formatAud(listing.unit_price_aud)}
+            detail={`/ ${listing.unit_label}`}
+          />
         </div>
-        {fields.length > 0 ? (
-          <LabeledFields items={fields} columns={2} />
+        {extraFields.length > 0 ? (
+          <div className="border-t border-line px-5 py-4">
+            <LabeledFields items={extraFields} columns={2} />
+          </div>
         ) : null}
       </Link>
       {showFisheryLink ? (

@@ -6,7 +6,9 @@ import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { ListingKindBadges } from "@/components/offer-card";
-import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
+import { OfferDetailLayout } from "@/components/offer-detail-layout";
+import { ListingRelatedMarket } from "@/components/listing-related-market";
+import { LabeledFieldGroups, LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
 import { formatTableDateTime } from "@/lib/format";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
@@ -31,8 +33,6 @@ import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
-import { getPlatformSettings } from "@/lib/settings/queries";
-import { platformFeeLabel } from "@/lib/settings/types";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 
 export const metadata = {
@@ -58,11 +58,10 @@ export default async function AuctionPage({
   }
 
   const listing = await ensureAuctionClosed(initial);
-  const [bids, order, fisheries, settings] = await Promise.all([
+  const [bids, order, fisheries] = await Promise.all([
     listBids(listing.id),
     getOrderForListing(listing.id),
     listFisheries(),
-    getPlatformSettings(),
   ]);
   const fishery = fisheries.find((item) => item.name === listing.fishery_name);
   const user = await getUser();
@@ -85,7 +84,6 @@ export default async function AuctionPage({
     listing.status === "PUBLISHED" && ended && Boolean(user);
   const minBid = minimumBid(listing, bids.length);
   const isSeller = operatingAsSeller;
-  const feeLabel = platformFeeLabel(settings, listing.offering);
 
   return (
     <div className={`${pageWidthClassName} py-12 sm:py-16`}>
@@ -107,193 +105,234 @@ export default async function AuctionPage({
           </Link>
         </p>
       ) : null}
-      <div className={`mt-8 max-w-lg ${panelClassName}`}>
-        <LabeledFields
-          items={[
-            { label: "Seller", value: listing.seller_name },
-            {
-              label: "Quantity",
-              value: `${listing.quantity} ${listing.unit_label}`,
-            },
-            {
-              label: "Current bid",
-              value: formatAudPerUnit(
-                listing.unit_price_aud,
-                listing.unit_label,
-              ),
-            },
-            ...(feeLabel
-              ? [{ label: "Platform fee", value: feeLabel }]
-              : []),
-            {
-              label: "Starting price",
-              value: formatAud(listing.starting_price_aud ?? listing.unit_price_aud),
-            },
-            {
-              label: "Increment",
-              value: formatAud(listing.bid_increment_aud ?? 0),
-            },
-            {
-              label: "Reserve",
-              value: listing.reserve_price_aud
-                ? formatAud(listing.reserve_price_aud)
-                : "None",
-            },
-            { label: "Status", value: listingStatusLabel(listing.status) },
-            {
-              label: "Starts",
-              value: listing.starts_at
-                ? formatTableDateTime(listing.starts_at)
-                : "—",
-            },
-            {
-              label: "Ends",
-              value: formatTableDateTime(listing.expires_at),
-            },
-          ]}
-        />
-      </div>
-      {listing.status === "PUBLISHED" && live ? (
-        <div className="mt-8">
-          {!user ? (
+      <OfferDetailLayout
+        actionTitle="Bid"
+        action={
+          listing.status === "PUBLISHED" && live ? (
+            !user ? (
+              <p className="text-sm text-ink-muted">
+                <Link
+                  href={`/login?next=/auctions/${listing.id}`}
+                  className="underline"
+                >
+                  Log in
+                </Link>{" "}
+                to bid. Bid time is recorded by the server. If you win, you
+                pay FQX in Stripe test mode.
+              </p>
+            ) : organisations.length === 0 ? (
+              <p className="text-sm text-ink-muted">
+                Add your business details on{" "}
+                <Link href="/dashboard/account" className="underline">
+                  Business Settings
+                </Link>{" "}
+                before you can bid.
+              </p>
+            ) : !active ? (
+              <p className="text-sm text-ink-muted">
+                <SwitchAccountLink next={auctionPath}>
+                  Choose a business
+                </SwitchAccountLink>{" "}
+                before you can bid.
+              </p>
+            ) : isSeller ? (
+              <p className="text-sm text-ink-muted">
+                You cannot bid on this auction while using the seller&apos;s
+                business.
+                {canSwitch ? (
+                  <>
+                    {" "}
+                    <SwitchAccountLink next={auctionPath} /> to bid as another
+                    business.
+                  </>
+                ) : null}
+              </p>
+            ) : !canBuyForOrganisation(active.role) ? (
+              <p className="text-sm text-ink-muted">
+                Only owners and admins can bid for this business.
+              </p>
+            ) : !acceptedTerms ? (
+              <TermsRequiredNotice action="bid" />
+            ) : (
+              <BidForm listingId={listing.id} minimumBid={minBid} />
+            )
+          ) : listing.status === "PUBLISHED" && !started ? (
             <p className="text-sm text-ink-muted">
-              <Link
-                href={`/login?next=/auctions/${listing.id}`}
-                className="underline"
-              >
-                Log in
-              </Link>{" "}
-              to bid. Bid time is recorded by the server. If you win, you pay
-              FQX in Stripe test mode.
+              Bidding has not started yet.
             </p>
-          ) : organisations.length === 0 ? (
+          ) : listing.status === "PUBLISHED" && ended ? (
             <p className="text-sm text-ink-muted">
-              Add your business details on{" "}
-              <Link href="/dashboard/account" className="underline">
-                Business Settings
-              </Link>{" "}
-              before you can bid.
+              This auction has ended. Closing uses server time and creates a
+              simulated order if the reserve is met.
             </p>
-          ) : !active ? (
+          ) : listing.status === "UNSOLD" ? (
             <p className="text-sm text-ink-muted">
-              <SwitchAccountLink next={auctionPath}>
-                Choose a business
-              </SwitchAccountLink>{" "}
-              before you can bid.
+              Closed unsold. No bid met the reserve, or there were no bids.
             </p>
-          ) : isSeller ? (
+          ) : listing.status === "RESERVED" || listing.status === "SOLD" ? (
             <p className="text-sm text-ink-muted">
-              You cannot bid on this auction while using the seller&apos;s
-              business.
-              {canSwitch ? (
+              Closed with a winning bid. Quota is reserved. If the seller is
+              set up for payments, the winner pays FQX before compliance. FQX
+              holds the funds until settlement.
+              {order ? (
                 <>
                   {" "}
-                  <SwitchAccountLink next={auctionPath} /> to bid as another
-                  business.
+                  <Link href={`/orders/${order.id}`} className="underline">
+                    {order.status === "AWAITING_PAYMENT" &&
+                    active &&
+                    active.id === order.buyer_organisation_id &&
+                    canBuyForOrganisation(active.role)
+                      ? `Pay order ${order.id}`
+                      : `View order ${order.id}`}
+                  </Link>
                 </>
               ) : null}
             </p>
-          ) : !canBuyForOrganisation(active.role) ? (
-            <p className="text-sm text-ink-muted">
-              Only owners and admins can bid for this business.
-            </p>
-          ) : !acceptedTerms ? (
-            <TermsRequiredNotice action="bid" />
           ) : (
-            <BidForm listingId={listing.id} minimumBid={minBid} />
-          )}
+            <p className="text-sm text-ink-muted">
+              This auction is not open for bids.
+            </p>
+          )
+        }
+        related={
+          fishery ? (
+            <ListingRelatedMarket
+              fishery={fishery}
+              currentListingId={listing.id}
+              offering={listing.offering}
+            />
+          ) : null
+        }
+      >
+        <div className={panelClassName}>
+          <LabeledFieldGroups
+            groups={[
+              {
+                title: "Offer",
+                items: [
+                  {
+                    label: "Quantity",
+                    value: `${listing.quantity} ${listing.unit_label}`,
+                  },
+                  {
+                    label: "Current bid",
+                    value: formatAudPerUnit(
+                      listing.unit_price_aud,
+                      listing.unit_label,
+                    ),
+                  },
+                ],
+              },
+              {
+                title: "Auction",
+                columns: 3,
+                items: [
+                  {
+                    label: "Starting price",
+                    value: formatAud(
+                      listing.starting_price_aud ?? listing.unit_price_aud,
+                    ),
+                  },
+                  {
+                    label: "Increment",
+                    value: formatAud(listing.bid_increment_aud ?? 0),
+                  },
+                  {
+                    label: "Reserve",
+                    value: listing.reserve_price_aud
+                      ? formatAud(listing.reserve_price_aud)
+                      : "None",
+                  },
+                ],
+              },
+              {
+                items: [{ label: "Seller", value: listing.seller_name }],
+              },
+              {
+                title: "Schedule",
+                columns: 3,
+                items: [
+                  {
+                    label: "Status",
+                    value: listingStatusLabel(listing.status),
+                  },
+                  {
+                    label: "Starts",
+                    value: listing.starts_at
+                      ? formatTableDateTime(listing.starts_at)
+                      : "—",
+                  },
+                  {
+                    label: "Ends",
+                    value: formatTableDateTime(listing.expires_at),
+                  },
+                ],
+              },
+            ]}
+          />
         </div>
-      ) : listing.status === "PUBLISHED" && !started ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          Bidding has not started yet.
-        </p>
-      ) : listing.status === "PUBLISHED" && ended ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          This auction has ended. Closing uses server time and creates a
-          simulated order if the reserve is met.
-        </p>
-      ) : listing.status === "UNSOLD" ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          Closed unsold. No bid met the reserve, or there were no bids.
-        </p>
-      ) : listing.status === "RESERVED" || listing.status === "SOLD" ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          Closed with a winning bid. Quota is reserved. If the seller is set
-          up for payments, the winner pays FQX before compliance. FQX holds
-          the funds until settlement.
-          {order ? (
-            <>
-              {" "}
-              <Link href={`/orders/${order.id}`} className="underline">
-                {order.status === "AWAITING_PAYMENT" &&
-                active &&
-                active.id === order.buyer_organisation_id &&
-                canBuyForOrganisation(active.role)
-                  ? `Pay order ${order.id}`
-                  : `View order ${order.id}`}
-              </Link>
-            </>
-          ) : null}
-        </p>
-      ) : (
-        <p className="mt-8 text-sm text-ink-muted">
-          This auction is not open for bids.
-        </p>
-      )}
-      {canClose ? (
-        <form action={closeAuctionAction} className="mt-6">
-          <input type="hidden" name="listing_id" value={listing.id} />
-          <PendingSubmitButton
-            className={buttonClassName}
-            pendingLabel="Closing…"
-          >
-            Close auction
-          </PendingSubmitButton>
-        </form>
-      ) : null}
-      {canCancel ? (
-        <form action={cancelListingAction} className="mt-6">
-          <input type="hidden" name="listing_id" value={listing.id} />
-          <input type="hidden" name="next" value={`/auctions/${listing.id}`} />
-          <PendingSubmitButton
-            className={buttonClassName}
-            pendingLabel="Cancelling…"
-          >
-            Cancel auction
-          </PendingSubmitButton>
-        </form>
-      ) : canManage &&
-        (listing.status === "PENDING_APPROVAL" ||
-          listing.status === "PUBLISHED") &&
-        bids.length > 0 ? (
-        <p className="mt-6 text-sm text-ink-muted">
-          This auction cannot be edited or cancelled because a bid has been
-          placed.
-        </p>
-      ) : null}
-      <section className="mt-10 max-w-lg">
-        <h2 className="text-xl font-semibold text-ink">Bids</h2>
-        {bids.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
-        ) : (
-          <div className={`mt-3 space-y-3 ${panelClassName}`}>
-            {bids.map((bid) => (
-              <div key={bid.id} className="border-b border-line pb-3 last:border-b-0 last:pb-0">
-                <LabeledFields
-                  items={[
-                    { label: "Bid", value: formatAud(bid.amount_aud) },
-                    { label: "Bidder", value: bid.bidder_name },
-                    {
-                      label: "Time",
-                      value: new Date(bid.created_at).toLocaleString("en-AU"),
-                    },
-                  ]}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+        {canClose ? (
+          <form action={closeAuctionAction}>
+            <input type="hidden" name="listing_id" value={listing.id} />
+            <PendingSubmitButton
+              className={buttonClassName}
+              pendingLabel="Closing…"
+            >
+              Close auction
+            </PendingSubmitButton>
+          </form>
+        ) : null}
+        {canCancel ? (
+          <form action={cancelListingAction}>
+            <input type="hidden" name="listing_id" value={listing.id} />
+            <input
+              type="hidden"
+              name="next"
+              value={`/auctions/${listing.id}`}
+            />
+            <PendingSubmitButton
+              className={buttonClassName}
+              pendingLabel="Cancelling…"
+            >
+              Cancel auction
+            </PendingSubmitButton>
+          </form>
+        ) : canManage &&
+          (listing.status === "PENDING_APPROVAL" ||
+            listing.status === "PUBLISHED") &&
+          bids.length > 0 ? (
+          <p className="text-sm text-ink-muted">
+            This auction cannot be edited or cancelled because a bid has been
+            placed.
+          </p>
+        ) : null}
+        <section>
+          <h2 className="text-xl font-semibold text-ink">Bids</h2>
+          {bids.length === 0 ? (
+            <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
+          ) : (
+            <div className={`mt-3 space-y-3 ${panelClassName}`}>
+              {bids.map((bid) => (
+                <div
+                  key={bid.id}
+                  className="border-b border-line pb-3 last:border-b-0 last:pb-0"
+                >
+                  <LabeledFields
+                    items={[
+                      { label: "Bid", value: formatAud(bid.amount_aud) },
+                      { label: "Bidder", value: bid.bidder_name },
+                      {
+                        label: "Time",
+                        value: new Date(bid.created_at).toLocaleString("en-AU"),
+                      },
+                    ]}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </OfferDetailLayout>
     </div>
   );
 }

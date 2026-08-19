@@ -1,4 +1,5 @@
 const SUCCESS = new Set([
+  "live",
   "published",
   "verified",
   "completed",
