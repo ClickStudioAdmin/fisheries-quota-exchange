@@ -46,7 +46,7 @@ import { listOrdersByHolding } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { getOrganisation, getOrganisationLegalName } from "@/lib/organisations/queries";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
-import { accountPath } from "@/lib/organisations/paths";
+import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 
@@ -193,7 +193,7 @@ export async function HoldingRecord({
           <div className="mt-4 space-y-3">
             {sellError ? (
               <PaymentsSetupNotice
-                href={accountPath(holding.organisation_id, "/dashboard/payments")}
+                href={accountPaymentsPath(holding.organisation_id)}
               />
             ) : null}
             <TableActionRow>

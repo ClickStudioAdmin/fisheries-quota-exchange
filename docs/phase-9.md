@@ -10,8 +10,8 @@ Never trust the browser or the Checkout return URL for payment status. The webho
 
 ## Flow
 
-1. Organisation `OWNER` or `ADMIN` opens **Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
-2. Stripe sends `account.updated`. The app stores whether the account can accept charges. Opening **Payments** also refreshes that flag from Stripe. The browser is not trusted for it.
+1. Organisation `OWNER` or `ADMIN` opens **Account details → Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
+2. Stripe sends `account.updated`. The app stores whether the account can accept charges. Opening Payments also refreshes that flag from Stripe. The browser is not trusted for it.
 3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The buyer chooses **bank debit** or **card** first. Bank debit charges the listed quota amount. Card charges the listed amount plus the Stripe card processing surcharge (Checkout line items: quota, then **Card processing (Stripe)**). Each method is a separate Checkout session. The charge sits on the **FQX** Stripe account. The platform fee is not added to the buyer charge. There is no destination charge. The order page totals show the listed amount and the card amount.
 4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` / `payment_intent.succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance (often **Incoming** until they clear). Refreshing the return URL does not charge again. Opening the order page also reconciles payment status from Stripe. Pay FQX on `/orders/[id]` has three display states while the order is still the buyer’s: **Checkout** (embedded Stripe, only if a session can still be started), **Pending** (spinner while a debit is processing or payment is recorded but the order has not yet moved to `AWAITING_COMPLIANCE`), and **Paid** (checkout hidden once the order is `AWAITING_COMPLIANCE` or later). Pending polls the server about every five seconds while the tab is visible. The browser is still not trusted for payment status.
 5. Expired Checkout or failed async payment cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
@@ -43,7 +43,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/dashboard` | Overview: onboarding, holdings/listings/orders/alerts counts, latest 10 in-app notices |
 | `/dashboard/notifications` | Signed-in user inbox (default) and Channels tab for per-event email and in-app switches |
 | `/dashboard/alerts` | Signed-in user switches sale and/or lease alerts per fishery |
-| `/dashboard/payments` | Embedded Connect onboarding and account management |
+| `/dashboard/payments` | Redirects to `/dashboard/profile?tab=payments` |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |
 | `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the quota and fee tax invoices. Return URL is not authoritative |
 | `/orders/[id]/invoice/quota` | Quota tax invoice PDF (seller to buyer) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. `/orders/[id]/invoice` redirects here |

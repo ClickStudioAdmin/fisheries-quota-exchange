@@ -48,7 +48,7 @@ import { orderStatusLabel } from "@/lib/orders/types";
 import { tableButtonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { formatTableDate } from "@/lib/format";
-import { accountPath, dashboardHoldingPath } from "@/lib/organisations/paths";
+import { accountPath, accountPaymentsPath, dashboardHoldingPath } from "@/lib/organisations/paths";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -217,7 +217,7 @@ export async function AccountHoldingsSection({
         {canManage && sellError ? (
           <div className="mt-4">
             <PaymentsSetupNotice
-              href={accountPath(organisationId, "/dashboard/payments")}
+              href={accountPaymentsPath(organisationId)}
             />
           </div>
         ) : null}
@@ -432,7 +432,7 @@ export async function AccountListingsSection({
       </h1>
       {canList && sellError ? (
         <PaymentsSetupNotice
-          href={accountPath(organisationId, "/dashboard/payments")}
+          href={accountPaymentsPath(organisationId)}
         />
       ) : null}
       <DataTable

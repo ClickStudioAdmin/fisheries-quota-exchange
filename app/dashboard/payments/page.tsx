@@ -1,11 +1,4 @@
-import Link from "next/link";
-import { PaymentsConnect } from "@/components/payments-connect";
-import { StripeLogo } from "@/components/stripe-logo";
-import { panelClassName } from "@/components/surface";
-import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
-import { canEditOrganisation } from "@/lib/organisations/permissions";
-import { isPaymentsConfigured, getStripePublishableKey } from "@/lib/payments/env";
-import { refreshOrganisationPaymentStatus } from "@/lib/payments/queries";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Payments",
@@ -17,83 +10,11 @@ export default async function DashboardPaymentsPage({
   searchParams: Promise<{ account?: string }>;
 }) {
   const params = await searchParams;
-  const account = await resolveDashboardAccount(
-    params.account,
-    "/dashboard/payments",
-  );
+  const query = new URLSearchParams({ tab: "payments" });
 
-  if (account.needsSetup) {
-    return (
-      <div className="max-w-lg space-y-4">
-        <div className="flex items-center justify-between gap-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-ink">
-            Payments
-          </h1>
-          <StripeLogo />
-        </div>
-        <p className="text-ink-muted">
-          Add your business details on{" "}
-          <Link href="/dashboard/profile" className="underline">
-            Profile
-          </Link>{" "}
-          before connecting Stripe payments.
-        </p>
-      </div>
-    );
+  if (params.account) {
+    query.set("account", params.account);
   }
 
-  const configured = isPaymentsConfigured();
-  const publishableKey = getStripePublishableKey();
-  const status = await refreshOrganisationPaymentStatus(account.selected.id);
-  const canManage = canEditOrganisation(account.selected.role);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <div className="flex max-w-2xl items-center justify-between gap-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-ink">
-            Payments
-          </h1>
-          <StripeLogo />
-        </div>
-        <p className="mt-2 max-w-lg text-sm text-ink-muted">
-          FQX uses Stripe to process payments. Buyers pay into FQX’s Stripe
-          account and we hold the funds until settlement, where funds are then
-          transferred into the seller’s nominated bank account. You must
-          complete Stripe account setup here before you can list quota for sale
-          or lease. This is Stripe test mode only.
-        </p>
-      </div>
-      {!configured || !publishableKey ? (
-        <p className="text-sm text-ink-muted">
-          Payments are not configured. Purchases stay on the simulated
-          path until Stripe test keys are set.
-        </p>
-      ) : (
-        <div className={`max-w-2xl space-y-4 ${panelClassName}`}>
-          {status?.chargesEnabled ? (
-            <p className="text-sm text-ink">
-              This account can receive settlement transfers.
-            </p>
-          ) : status?.detailsSubmitted ? (
-            <p className="text-sm text-ink">
-              Stripe has your details and is reviewing them. Refresh this page
-              in a minute.
-            </p>
-          ) : null}
-          {canManage ? (
-            <PaymentsConnect
-              organisationId={account.selected.id}
-              publishableKey={publishableKey}
-              detailsSubmitted={Boolean(status?.detailsSubmitted)}
-            />
-          ) : (
-            <p className="text-sm text-ink-muted">
-              Only an owner or admin can connect Stripe for this account.
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  redirect(`/dashboard/profile?${query.toString()}`);
 }

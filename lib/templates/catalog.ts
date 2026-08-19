@@ -110,7 +110,7 @@ const EMAIL_CATALOG: Record<
   listing_alert: {
     summary: "When a subscribed fishery gets a new listing",
     description:
-      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Alerts.",
+      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Listing Alerts.",
     sentWhen: "When a listing or auction is published, matching sale or lease alerts for that fishery.",
     trigger: "notifyListingCreated or notifyListingPublished then notifyNewListingAlert.",
     recipient: "Users with a matching fishery alert, excluding the seller’s organisation.",

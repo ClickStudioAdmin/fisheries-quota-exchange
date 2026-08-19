@@ -117,7 +117,7 @@ export const emailCopy = {
       `New ${input.offeringLabel.toLowerCase()} listing: ${input.fisheryName}`,
       [
         `A new ${input.listingTypeLabel.toLowerCase()} ${input.offeringLabel.toLowerCase()} listing for ${input.fisheryName} is on the marketplace.`,
-        "You asked for this alert on Alerts in your dashboard. You can change those fisheries there.",
+        "You asked for this alert on Listing Alerts in your dashboard. You can change those fisheries there.",
       ],
       { label: "View listing", url: input.listingUrl },
     ),

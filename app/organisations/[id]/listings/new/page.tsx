@@ -7,7 +7,7 @@ import {
   listHoldingCommitments,
   listHoldingsForOrganisation,
 } from "@/lib/fisheries/queries";
-import { accountPath } from "@/lib/organisations/paths";
+import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
 import { loginPath } from "@/lib/auth/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
@@ -113,7 +113,7 @@ export default async function NewListingPage({
           <TermsRequiredNotice action="list" />
         ) : sellError ? (
           <PaymentsSetupNotice
-            href={accountPath(organisationId, "/dashboard/payments")}
+            href={accountPaymentsPath(organisationId)}
           />
         ) : (
           <CreateListingForm

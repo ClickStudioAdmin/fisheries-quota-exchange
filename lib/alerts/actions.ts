@@ -85,5 +85,5 @@ export async function updateListingAlertsAction(
 
   revalidatePath("/dashboard/alerts");
   revalidatePath("/dashboard");
-  return { message: "Alerts saved." };
+  return { message: "Listing alerts saved." };
 }

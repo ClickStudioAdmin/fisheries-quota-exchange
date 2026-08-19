@@ -26,6 +26,14 @@ export function dashboardHoldingPath(holdingId: number, organisationId: number) 
   return accountPath(organisationId, `/dashboard/holdings/${holdingId}`);
 }
 
+export function accountPaymentsPath(organisationId?: number | null) {
+  if (organisationId) {
+    return accountPath(organisationId, "/dashboard/profile", { tab: "payments" });
+  }
+
+  return "/dashboard/profile?tab=payments";
+}
+
 export function parseAdminUserEmailParam(value: string) {
   try {
     const email = decodeURIComponent(value).trim().toLowerCase();

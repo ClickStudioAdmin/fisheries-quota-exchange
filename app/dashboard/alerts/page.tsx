@@ -4,7 +4,7 @@ import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { requireDashboardUser } from "@/lib/organisations/dashboard-account";
 
 export const metadata = {
-  title: "Alerts",
+  title: "Listing Alerts",
 };
 
 export default async function DashboardAlertsPage() {
@@ -19,7 +19,7 @@ export default async function DashboardAlertsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Alerts
+          Listing Alerts
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-muted">
           Choose which fisheries to watch. A published sale or lease listing

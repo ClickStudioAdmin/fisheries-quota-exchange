@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { AccountPaymentsSection } from "@/components/account-payments";
 import {
   AccountMembersSection,
   AccountProfileSection,
 } from "@/components/account-sections";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
-import { accountPath } from "@/lib/organisations/paths";
+import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
 import { organisationRoleLabel } from "@/lib/organisations/types";
 
 export const metadata = {
@@ -27,7 +28,10 @@ export default async function DashboardProfilePage({
     params.account,
     "/dashboard/profile",
   );
-  const tab = params.tab === "members" ? "members" : "profile";
+  const tab =
+    params.tab === "members" || params.tab === "payments"
+      ? params.tab
+      : "profile";
   const organisationId = account.selected?.id ?? null;
   const profileHref = organisationId
     ? accountPath(organisationId, "/dashboard/profile")
@@ -35,6 +39,7 @@ export default async function DashboardProfilePage({
   const membersHref = organisationId
     ? accountPath(organisationId, "/dashboard/profile", { tab: "members" })
     : "/dashboard/profile?tab=members";
+  const paymentsHref = accountPaymentsPath(organisationId);
 
   return (
     <div className="space-y-6">
@@ -68,6 +73,15 @@ export default async function DashboardProfilePage({
               Members
             </Link>
           </li>
+          <li>
+            <Link
+              href={paymentsHref}
+              className={tabClassName(tab === "payments")}
+              aria-current={tab === "payments" ? "page" : undefined}
+            >
+              Payments
+            </Link>
+          </li>
         </ul>
       </nav>
       {tab === "members" ? (
@@ -80,6 +94,18 @@ export default async function DashboardProfilePage({
           <p className="text-sm text-ink-muted">
             Add your business details on the Profile tab before you can manage
             members.
+          </p>
+        )
+      ) : tab === "payments" ? (
+        organisationId && account.selected ? (
+          <AccountPaymentsSection
+            organisationId={organisationId}
+            role={account.selected.role}
+          />
+        ) : (
+          <p className="text-sm text-ink-muted">
+            Add your business details on the Profile tab before connecting
+            Stripe payments.
           </p>
         )
       ) : (

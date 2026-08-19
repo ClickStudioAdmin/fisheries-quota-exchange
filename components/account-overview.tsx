@@ -7,7 +7,7 @@ import { listingIsOpen } from "@/lib/listings/types";
 import { listMyListingAlerts } from "@/lib/alerts/queries";
 import { listMyInAppNotifications } from "@/lib/notifications/queries";
 import { listOrganisationOrders } from "@/lib/orders/queries";
-import { accountPath } from "@/lib/organisations/paths";
+import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
 import { getOrganisation } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
@@ -122,7 +122,7 @@ export async function AccountOverviewSection({
                   </Link>
                   .
                 </p>
-                <PaymentsSetupNotice href={href("/dashboard/payments")}>
+                <PaymentsSetupNotice href={accountPaymentsPath(organisationId)}>
                   Before you can be eligible to list quota for sale, you must
                   provide us with your payment details first.
                 </PaymentsSetupNotice>
@@ -186,7 +186,7 @@ export async function AccountOverviewSection({
         </Link>
         <Link href="/dashboard/alerts" className={cardLinkClassName}>
           <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-            Alerts
+            Listing Alerts
           </p>
           <p className="mt-2 text-2xl font-semibold text-ink">{activeAlerts}</p>
           <p className="mt-1 text-sm text-ink-muted">
