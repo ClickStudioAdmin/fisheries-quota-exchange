@@ -6,11 +6,11 @@ import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { AuctionCountdown } from "@/components/auction-countdown";
-import { OfferCard } from "@/components/offer-card";
+import { OfferCard, OfferStat } from "@/components/offer-card";
 import { OfferDetailLayout } from "@/components/offer-detail-layout";
 import { ListingRelatedMarket } from "@/components/listing-related-market";
-import { LabeledFields, pageWidthClassName, panelClassName } from "@/components/surface";
-import { formatTableDate } from "@/lib/format";
+import { pageWidthClassName, panelClassName } from "@/components/surface";
+import { formatTableDate, formatTableDateTime } from "@/lib/format";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
 import {
@@ -230,35 +230,33 @@ export default async function AuctionPage({
               {bids.length === 0 ? (
                 <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
               ) : (
-                <div className={`mt-3 space-y-3 ${panelClassName}`}>
+                <div className={`mt-3 divide-y divide-line ${panelClassName}`}>
                   {bids.map((bid) => (
                     <div
                       key={bid.id}
-                      className="border-b border-line pb-3 last:border-b-0 last:pb-0"
+                      className="grid grid-cols-3 gap-4 py-4 first:pt-0 last:pb-0"
                     >
-                      <LabeledFields
-                        items={[
-                          { label: "Bid", value: formatAud(bid.amount_aud) },
-                          {
-                            label: "Bidder",
-                            value: (
-                              <PublicSellerName
-                                display={
-                                  bidderDisplays[bid.id] ?? {
-                                    label: bid.bidder_name,
-                                    tooltip: null,
-                                  }
-                                }
-                              />
-                            ),
-                          },
-                          {
-                            label: "Time",
-                            value: new Date(bid.created_at).toLocaleString(
-                              "en-AU",
-                            ),
-                          },
-                        ]}
+                      <OfferStat
+                        label="Bid"
+                        value={formatAud(bid.amount_aud)}
+                      />
+                      <OfferStat
+                        label="Bidder"
+                        tabular={false}
+                        value={
+                          <PublicSellerName
+                            display={
+                              bidderDisplays[Number(bid.id)] ?? {
+                                label: bid.bidder_name,
+                                tooltip: null,
+                              }
+                            }
+                          />
+                        }
+                      />
+                      <OfferStat
+                        label="Time"
+                        value={formatTableDateTime(bid.created_at)}
                       />
                     </div>
                   ))}

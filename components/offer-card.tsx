@@ -16,8 +16,9 @@ import type { PublicSellerDisplay } from "@/lib/organisations/public-seller";
 
 type OfferStatProps = {
   label: string;
-  value: string;
+  value: ReactNode;
   detail?: string;
+  tabular?: boolean;
 };
 
 type OfferCardProps = {
@@ -47,18 +48,27 @@ function formatQuantity(value: string | number) {
   );
 }
 
-export function OfferStat({ label, value, detail }: OfferStatProps) {
+export function OfferStat({
+  label,
+  value,
+  detail,
+  tabular = true,
+}: OfferStatProps) {
   return (
     <div className="min-w-0">
       <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight text-ink tabular-nums">
+      <div
+        className={`mt-1 text-2xl font-semibold tracking-tight text-ink ${
+          tabular ? "tabular-nums" : ""
+        }`}
+      >
         {value}
         {detail ? (
           <span className="text-sm font-normal text-ink-muted"> {detail}</span>
         ) : null}
-      </p>
+      </div>
     </div>
   );
 }

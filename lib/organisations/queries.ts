@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { createClient, getUser } from "@/lib/supabase/server";
 import type {
   Organisation,
@@ -12,11 +13,24 @@ import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import {
+  ACTIVE_ORGANISATION_COOKIE,
+  parseActiveOrganisationId,
+} from "@/lib/organisations/active-account";
+import {
   publicBuyerDisplay,
   publicSellerDisplay,
   type PublicIdentityDisplay,
   type PublicSellerDisplay,
 } from "@/lib/organisations/public-seller";
+
+function asIntegerId(value: unknown) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function isHideIdentity(value: unknown) {
+  return value === true || value === "true" || value === "t";
+}
 
 export async function listMyOrganisations(): Promise<OrganisationSummary[]> {
   const user = await getUser();
@@ -164,7 +178,13 @@ export async function getOrganisation(
 export async function listOrganisationHideIdentity(
   organisationIds: number[],
 ): Promise<Map<number, boolean>> {
-  const ids = [...new Set(organisationIds.filter((id) => Number.isInteger(id)))];
+  const ids = [
+    ...new Set(
+      organisationIds
+        .map((id) => asIntegerId(id))
+        .filter((id): id is number => id != null),
+    ),
+  ];
   const hidden = new Map<number, boolean>();
 
   if (ids.length === 0) {
@@ -191,9 +211,9 @@ export async function listOrganisationHideIdentity(
       organisation_id?: unknown;
       hide_identity?: unknown;
     }[]) {
-      const id = Number(row.organisation_id);
-      if (Number.isInteger(id)) {
-        hidden.set(id, row.hide_identity === true);
+      const id = asIntegerId(row.organisation_id);
+      if (id != null) {
+        hidden.set(id, isHideIdentity(row.hide_identity));
       }
     }
   } catch (error) {
@@ -219,31 +239,46 @@ async function loadPublicIdentityDisplays(
   const visible = (): Record<number, PublicIdentityDisplay> => {
     const displays: Record<number, PublicIdentityDisplay> = {};
     for (const party of parties) {
-      displays[party.id] = {
-        label: party.name,
-        tooltip: null,
-      };
+      const id = asIntegerId(party.id);
+      if (id != null) {
+        displays[id] = {
+          label: party.name,
+          tooltip: null,
+        };
+      }
     }
     return displays;
   };
 
   try {
-    const organisationIds = [
-      ...new Set(parties.map((party) => party.organisation_id)),
-    ];
+    const organisationIds = parties
+      .map((party) => asIntegerId(party.organisation_id))
+      .filter((id): id is number => id != null);
+    const store = await cookies();
+    const activeId = parseActiveOrganisationId(
+      store.get(ACTIVE_ORGANISATION_COOKIE)?.value,
+    );
     const [hideMap, organisations, admin] = await Promise.all([
       listOrganisationHideIdentity(organisationIds),
       listMyOrganisations(),
       isPlatformAdmin(),
     ]);
-    const memberIds = new Set(organisations.map((organisation) => organisation.id));
+    const activeBelongsToUser = organisations.some(
+      (organisation) => asIntegerId(organisation.id) === activeId,
+    );
     const displays: Record<number, PublicIdentityDisplay> = {};
 
     for (const party of parties) {
-      displays[party.id] = display({
+      const partyId = asIntegerId(party.id);
+      const orgId = asIntegerId(party.organisation_id);
+      if (partyId == null || orgId == null) {
+        continue;
+      }
+
+      displays[partyId] = display({
         name: party.name,
-        hideIdentity: hideMap.get(party.organisation_id) === true,
-        viewerIsMember: memberIds.has(party.organisation_id),
+        hideIdentity: hideMap.get(orgId) === true,
+        viewerIsMember: activeBelongsToUser && activeId === orgId,
         isPlatformAdmin: admin,
       });
     }
@@ -264,8 +299,8 @@ export async function loadPublicSellerDisplays(
 ): Promise<Record<number, PublicSellerDisplay>> {
   return loadPublicIdentityDisplays(
     listings.map((listing) => ({
-      id: listing.id,
-      organisation_id: listing.organisation_id,
+      id: Number(listing.id),
+      organisation_id: Number(listing.organisation_id),
       name: listing.seller_name,
     })),
     ({ name, hideIdentity, viewerIsMember, isPlatformAdmin }) =>
@@ -287,8 +322,8 @@ export async function loadPublicBuyerDisplays(
 ): Promise<Record<number, PublicIdentityDisplay>> {
   return loadPublicIdentityDisplays(
     bids.map((bid) => ({
-      id: bid.id,
-      organisation_id: bid.organisation_id,
+      id: Number(bid.id),
+      organisation_id: Number(bid.organisation_id),
       name: bid.bidder_name,
     })),
     ({ name, hideIdentity, viewerIsMember, isPlatformAdmin }) =>
