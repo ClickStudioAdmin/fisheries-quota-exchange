@@ -1,13 +1,16 @@
 import {
   DataTable,
   DataTableRowExtras,
+  TableActionRow,
   tableLinkClassName,
 } from "@/components/data-table";
 import { tableButtonClassName } from "@/components/auth-card";
 import {
   markNotificationsReadAction,
+  markNotificationsUnreadAction,
   openNotificationAction,
 } from "@/lib/notifications/actions";
+import { inAppNotificationLinkLabel } from "@/lib/notifications/href";
 import type { InAppNotification } from "@/lib/notifications/types";
 import { formatTableDateTime } from "@/lib/format";
 
@@ -26,6 +29,7 @@ export function InAppNotificationList({
         </p>
         {unread > 0 ? (
           <form action={markNotificationsReadAction}>
+            <input type="hidden" name="scope" value="all" />
             <button type="submit" className={tableButtonClassName}>
               Mark all as read
             </button>
@@ -37,6 +41,19 @@ export function InAppNotificationList({
         empty="No in-app notifications yet."
         searchPlaceholder="Filter notifications…"
         defaultSort={{ key: "when", direction: "desc" }}
+        selectable
+        bulkActions={[
+          {
+            label: "Mark as read",
+            action: markNotificationsReadAction,
+            requireValue: { key: "status", value: "unread" },
+          },
+          {
+            label: "Mark as unread",
+            action: markNotificationsUnreadAction,
+            requireValue: { key: "status", value: "read" },
+          },
+        ]}
         columns={[
           { key: "message", header: "Message", sortable: true, details: true },
           { key: "when", header: "When", sortable: true, nowrap: true },
@@ -74,9 +91,28 @@ export function InAppNotificationList({
                 <input type="hidden" name="id" value={item.id} />
                 <input type="hidden" name="href" value={item.href} />
                 <button type="submit" className={tableLinkClassName}>
-                  Open
+                  {inAppNotificationLinkLabel(item.template, item.href)}
                 </button>
               </form>
+            }
+            actions={
+              <TableActionRow>
+                {item.read_at ? (
+                  <form action={markNotificationsUnreadAction}>
+                    <input type="hidden" name="id" value={item.id} />
+                    <button type="submit" className={tableLinkClassName}>
+                      Mark as unread
+                    </button>
+                  </form>
+                ) : (
+                  <form action={markNotificationsReadAction}>
+                    <input type="hidden" name="id" value={item.id} />
+                    <button type="submit" className={tableLinkClassName}>
+                      Mark as read
+                    </button>
+                  </form>
+                )}
+              </TableActionRow>
             }
           />
         ))}
