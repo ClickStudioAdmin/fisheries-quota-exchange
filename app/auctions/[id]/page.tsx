@@ -6,10 +6,18 @@ import { TermsRequiredNotice } from "@/components/terms-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { AuctionCountdown } from "@/components/auction-countdown";
-import { OfferCard, OfferStat } from "@/components/offer-card";
+import { OfferCard } from "@/components/offer-card";
 import { OfferDetailLayout } from "@/components/offer-detail-layout";
 import { ListingRelatedMarket } from "@/components/listing-related-market";
-import { pageWidthClassName, panelClassName } from "@/components/surface";
+import { pageWidthClassName } from "@/components/surface";
+import {
+  tableBodyCellClassName,
+  tableClassName,
+  tableHeadClassName,
+  tableHeaderCellClassName,
+  tableRowClassName,
+  tableWrapClassName,
+} from "@/components/table-styles";
 import { formatTableDate, formatTableDateTime } from "@/lib/format";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
@@ -228,38 +236,48 @@ export default async function AuctionPage({
             <section>
               <h2 className="text-xl font-semibold text-ink">Bids</h2>
               {bids.length === 0 ? (
-                <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
+                <p className="mt-4 text-sm text-ink-muted">No bids yet.</p>
               ) : (
-                <div className={`mt-3 divide-y divide-line ${panelClassName}`}>
-                  {bids.map((bid) => (
-                    <div
-                      key={bid.id}
-                      className="grid grid-cols-3 gap-4 py-4 first:pt-0 last:pb-0"
-                    >
-                      <OfferStat
-                        label="Bid"
-                        value={formatAud(bid.amount_aud)}
-                      />
-                      <OfferStat
-                        label="Bidder"
-                        tabular={false}
-                        value={
-                          <PublicSellerName
-                            display={
-                              bidderDisplays[Number(bid.id)] ?? {
-                                label: bid.bidder_name,
-                                tooltip: null,
+                <div className={`mt-4 ${tableWrapClassName}`}>
+                  <table className={`${tableClassName} table-fixed`}>
+                    <thead className={tableHeadClassName}>
+                      <tr>
+                        <th className={`${tableHeaderCellClassName} w-1/3 pl-4`}>
+                          Bid
+                        </th>
+                        <th className={`${tableHeaderCellClassName} w-1/3`}>
+                          Bidder
+                        </th>
+                        <th className={`${tableHeaderCellClassName} w-1/3 pr-4`}>
+                          Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bids.map((bid, index) => (
+                        <tr key={bid.id} className={tableRowClassName(index)}>
+                          <td
+                            className={`${tableBodyCellClassName} pl-4 tabular-nums`}
+                          >
+                            {formatAud(bid.amount_aud)}
+                          </td>
+                          <td className={tableBodyCellClassName}>
+                            <PublicSellerName
+                              display={
+                                bidderDisplays[Number(bid.id)] ?? {
+                                  label: bid.bidder_name,
+                                  tooltip: null,
+                                }
                               }
-                            }
-                          />
-                        }
-                      />
-                      <OfferStat
-                        label="Time"
-                        value={formatTableDateTime(bid.created_at)}
-                      />
-                    </div>
-                  ))}
+                            />
+                          </td>
+                          <td className={`${tableBodyCellClassName} pr-4`}>
+                            {formatTableDateTime(bid.created_at)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </section>
