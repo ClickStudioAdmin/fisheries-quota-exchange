@@ -5,6 +5,7 @@ import {
   PRODUCT_EMAIL_IDS,
   disabledProductEmails,
   emailIsDisabled,
+  isAccountNotificationEmailId,
   isProductEmailId,
   personalNotificationEmailIds,
 } from "./product-emails.ts";
@@ -54,6 +55,16 @@ test("personalNotificationEmailIds omits mail the person would not receive", () 
   assert.equal(manager.includes("purchase_received"), true);
   assert.equal(manager.includes("operator_listing_pending"), false);
   assert.equal(manager.length, MEMBER_EMAIL_IDS.length);
+});
+
+test("isAccountNotificationEmailId is listing and settlement org mail, not personal mail", () => {
+  assert.equal(isAccountNotificationEmailId("holding_verified"), true);
+  assert.equal(isAccountNotificationEmailId("listing_purchased"), true);
+  assert.equal(isAccountNotificationEmailId("order_settled"), true);
+  assert.equal(isAccountNotificationEmailId("listing_alert"), false);
+  assert.equal(isAccountNotificationEmailId("purchase_received"), false);
+  assert.equal(isAccountNotificationEmailId("member_added"), false);
+  assert.equal(isAccountNotificationEmailId("bid_placed"), false);
 });
 
 test("settlement copy differs for buyer and seller", () => {

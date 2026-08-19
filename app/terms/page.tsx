@@ -141,7 +141,7 @@ export default function TermsPage() {
       <LegalSection title="Accounts">
         <p>
           Provide accurate details for yourself. Add your organisation on
-          Account details (legal name, and trading name and ABN where collected)
+          Account Settings (legal name, and trading name and ABN where collected)
           before you buy, bid, or list. You may own one organisation. Others may
           add you to their organisation with a role they assign.
         </p>

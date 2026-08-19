@@ -2,27 +2,58 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
 
 async function db() {
   return createServiceClient() ?? (await createClient());
 }
 
 export async function organisationManagerEmails(organisationId: number) {
+  return organisationNotificationEmails(organisationId, ["OWNER", "ADMIN"]);
+}
+
+export async function organisationNotificationEmails(
+  organisationId: number,
+  roles?: readonly string[],
+) {
   const supabase = await db();
 
   if (!supabase || !Number.isInteger(organisationId)) {
     return [];
   }
 
+  let allowed = roles;
+
+  if (!allowed) {
+    const { data: organisation } = await supabase
+      .from("organisations")
+      .select("notification_roles")
+      .eq("id", organisationId)
+      .maybeSingle();
+    allowed = parseNotificationRoles(organisation?.notification_roles);
+  }
+
   const { data } = await supabase
     .from("organisation_users")
     .select("email, role")
     .eq("organisation_id", organisationId)
-    .in("role", ["OWNER", "ADMIN"]);
+    .in("role", [...allowed]);
 
-  return uniqueEmails(
+  const emails = uniqueEmails(
     (data ?? []).map((row) => String(row.email ?? "")),
   );
+
+  if (emails.length > 0) {
+    return emails;
+  }
+
+  const { data: owners } = await supabase
+    .from("organisation_users")
+    .select("email")
+    .eq("organisation_id", organisationId)
+    .eq("role", "OWNER");
+
+  return uniqueEmails((owners ?? []).map((row) => String(row.email ?? "")));
 }
 
 export async function organisationMemberEmails(organisationId: number) {

@@ -52,7 +52,7 @@ export const emailCopy = {
     notice(
       `You are now an owner of ${input.accountName}`,
       [
-        `Your role on ${input.accountName} is now Owner. You can manage members and payments on Account details, and listings for this account.`,
+        `Your role on ${input.accountName} is now Owner. You can manage members and payments on Account Settings, and listings for this account.`,
       ],
       { label: "Open account", url: input.accountUrl },
     ),
@@ -63,9 +63,9 @@ export const emailCopy = {
     notice(
       `Payments setup is complete for ${input.accountName}`,
       [
-        "This account can receive settlement transfers on FQX. You can list quota for sale or lease when holdings are verified. Review payments setup on the Payments tab of Account details.",
+        "This account can receive settlement transfers on FQX. You can list quota for sale or lease when holdings are verified. Review payments setup on the Payments tab of Account Settings.",
       ],
-      { label: "Account details", url: input.paymentsUrl },
+      { label: "Account Settings", url: input.paymentsUrl },
     ),
   holding_verified: (input: {
     fisheryName: string;
@@ -74,7 +74,7 @@ export const emailCopy = {
     notice(
       `Holding verified: ${input.fisheryName}`,
       [
-        "This holding is verified. You can list quota from it when payments setup is complete on the Payments tab of Account details.",
+        "This holding is verified. You can list quota from it when payments setup is complete on the Payments tab of Account Settings.",
       ],
       { label: "View holding", url: input.holdingUrl },
     ),
@@ -119,7 +119,7 @@ export const emailCopy = {
       `New ${input.offeringLabel.toLowerCase()} listing: ${input.fisheryName}`,
       [
         `A new ${input.listingTypeLabel.toLowerCase()} ${input.offeringLabel.toLowerCase()} listing for ${input.fisheryName} is on the marketplace.`,
-        "You asked for this alert on Listing Alerts in your dashboard. You can change those fisheries there.",
+        "You asked for this alert on Profile → Alerts. You can change those fisheries there.",
       ],
       { label: "View listing", url: input.listingUrl },
     ),

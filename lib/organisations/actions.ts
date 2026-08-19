@@ -9,8 +9,10 @@ import {
   canAssignRole,
   canCancelInvitation,
   canChangeMemberRole,
+  canEditOrganisation,
   canRemoveMember,
 } from "@/lib/organisations/permissions";
+import { notificationRolesFromForm } from "@/lib/organisations/notification-roles";
 import {
   getMyRole,
   getOrganisationLegalName,
@@ -86,6 +88,7 @@ export async function createOrganisationAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/account");
   const organisationId = Number(data);
 
   if (Number.isInteger(organisationId) && organisationId > 0) {
@@ -93,6 +96,99 @@ export async function createOrganisationAction(
   }
 
   redirect("/dashboard");
+}
+
+export async function updateOrganisationDetailsAction(
+  _prev: OrganisationFormState,
+  formData: FormData,
+): Promise<OrganisationFormState> {
+  const supabase = await createClient();
+  const organisationId = Number(formData.get("organisation_id"));
+  const legalName = readText(formData, "legal_name");
+  const tradingName = readText(formData, "trading_name");
+  const abnResult = readAbn(readText(formData, "abn"));
+
+  if (!supabase || !Number.isInteger(organisationId)) {
+    return { error: "Organisation not found." };
+  }
+
+  const mismatch = await requireActiveOrganisationMatch(organisationId);
+
+  if (mismatch) {
+    return { error: mismatch };
+  }
+
+  if (!legalName) {
+    return { error: "Legal name is required." };
+  }
+
+  if ("error" in abnResult) {
+    return { error: abnResult.error };
+  }
+
+  const actorRole = await getMyRole(organisationId);
+
+  if (!actorRole || !canEditOrganisation(actorRole)) {
+    return { error: "You do not have permission to edit business details." };
+  }
+
+  const { error } = await supabase
+    .from("organisations")
+    .update({
+      legal_name: legalName,
+      trading_name: tradingName || null,
+      abn: abnResult.abn,
+    })
+    .eq("id", organisationId);
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/account");
+  return { message: "Business details saved." };
+}
+
+export async function updateOrganisationNotificationRolesAction(
+  _prev: OrganisationFormState,
+  formData: FormData,
+): Promise<OrganisationFormState> {
+  const supabase = await createClient();
+  const organisationId = Number(formData.get("organisation_id"));
+  const roles = notificationRolesFromForm(formData);
+
+  if (!supabase || !Number.isInteger(organisationId)) {
+    return { error: "Organisation not found." };
+  }
+
+  const mismatch = await requireActiveOrganisationMatch(organisationId);
+
+  if (mismatch) {
+    return { error: mismatch };
+  }
+
+  if (roles.length === 0) {
+    return { error: "Choose at least one role." };
+  }
+
+  const actorRole = await getMyRole(organisationId);
+
+  if (!actorRole || !canEditOrganisation(actorRole)) {
+    return { error: "You do not have permission to change notification settings." };
+  }
+
+  const { error } = await supabase
+    .from("organisations")
+    .update({ notification_roles: roles })
+    .eq("id", organisationId);
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/dashboard/account");
+  return { message: "Notification settings saved." };
 }
 
 export async function inviteMemberAction(
@@ -150,7 +246,7 @@ export async function inviteMemberAction(
     return { error: userFacingError(error ?? "Could not send that invitation.") };
   }
 
-  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/account");
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
 
@@ -238,7 +334,7 @@ export async function cancelInvitationAction(
     return { error: userFacingError(error) };
   }
 
-  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/account");
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
   return { message: "Invitation cancelled." };
@@ -271,6 +367,7 @@ export async function acceptInvitationAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/account");
   revalidatePath("/select-account");
   redirect("/dashboard");
 }
@@ -296,6 +393,7 @@ export async function declineInvitationAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/account");
   return { message: "Invitation declined." };
 }
 
@@ -344,7 +442,7 @@ export async function updateMemberRoleAction(
     return { error: "Could not update that role." };
   }
 
-  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/account");
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
 
@@ -432,7 +530,7 @@ export async function removeMemberAction(
     return { error: "Could not remove that person." };
   }
 
-  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/account");
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
 

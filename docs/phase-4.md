@@ -10,18 +10,22 @@ There is no quota, marketplace, or listing functionality in this phase.
 
 | Path | Access |
 | --- | --- |
-| `/register` | Creates the Auth user (name, email, phone). Business details are added later on Account details |
+| `/register` | Creates the Auth user (name, email, phone). Business details are added later on Account Settings |
 | `/select-account` | After login, choose which organisation to use when the person belongs to more than one |
 | `/invitations/[token]` | Signed-in invitee accepts or declines. Login is required; an active organisation cookie is not. |
 | `/dashboard` | Overview. Pending invitations to this person are listed here. |
-| `/dashboard/profile` | Account details: Profile, Password and Security, Members, and Payments (Stripe Connect) tabs |
-| `/dashboard/members` | Redirects to `/dashboard/profile?tab=members` |
+| `/dashboard/profile` | Profile: Details, Password and Security, and Alerts |
+| `/dashboard/account` | Account Settings: Details, Members, Payments, and Notifications (role routing) |
+| `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
+| `/dashboard/payments` | Redirects to `/dashboard/account?tab=payments` |
+| `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
+| `/dashboard/notifications` | Inbox for this person |
 | `/organisations/new` | Redirects to the dashboard |
 | `/organisations/[id]` | If that organisation is already active, redirects to Overview. Otherwise offers Switch account |
 
-Registration collects the user’s name, email, phone, and password. After email confirm they add legal name, trading name, and ABN on `/dashboard/profile`. That creates the organisation and makes the user `OWNER`. They must complete those business details, and agree to the terms, before they can buy or list. A user may own only one account. They can still be invited to someone else’s account.
+Registration collects the user’s name, email, phone, and password. After email confirm they add legal name, trading name, and ABN on `/dashboard/account`. That creates the organisation and makes the user `OWNER`. They must complete those business details, and agree to the terms, before they can buy or list. A user may own only one account. They can still be invited to someone else’s account.
 
-Login is personal (email and password). If the person belongs to two or more organisations, they choose which account to use on `/select-account` after login. That choice is stored in an httpOnly session cookie and is the source of truth for holdings, listings, orders, members, payments, buying, and bidding. There is no Buy as / Bid as picker. The dashboard chrome shows **Operating as** the active organisation, with **Switch account** under that name when they have more than one membership. Notifications, Listing Alerts, and Password and Security stay personal. Deep links that belong to another membership prompt a switch; they do not change account silently.
+Login is personal (email and password). If the person belongs to two or more organisations, they choose which account to use on `/select-account` after login. That choice is stored in an httpOnly session cookie and is the source of truth for holdings, listings, orders, members, payments, buying, and bidding. There is no Buy as / Bid as picker. The dashboard chrome shows **Operating as** the active organisation, with **Switch account** under that name when they have more than one membership. Profile (including Alerts and Password and Security) and Inbox stay personal. Account Settings follows the active organisation. Deep links that belong to another membership prompt a switch; they do not change account silently.
 
 Signed-out users are redirected to `/login`.
 
@@ -31,6 +35,7 @@ Signed-out users are redirected to `/login`.
 | --- | --- | --- | --- |
 | View account and people | Yes | Yes | Yes |
 | Edit business details | Yes | Yes | No |
+| Change who receives account email | Yes | Yes | No |
 | Invite `ADMIN` or `MEMBER` | Yes | Yes | No |
 | Invite `OWNER` | Yes | No | No |
 | Cancel a pending invitation | Yes | Yes, except Owner invites | No |
@@ -73,7 +78,7 @@ Do not create organisations in the Supabase dashboard as the normal process.
 - Registering creates a business account and the user is `OWNER`
 - Dashboard shows account details without a separate organisation page
 - The user cannot create another organisation
-- A `MEMBER` cannot edit the profile or invite people
+- A `MEMBER` cannot edit business details or invite people
 - Push to `develop` applies the migration to development Supabase
 - Vercel Preview build succeeds
 

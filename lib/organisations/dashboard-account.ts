@@ -52,7 +52,12 @@ export async function resolveDashboardAccount(
       redirect(selectAccountPath(currentPath));
     }
 
-    if (currentPath !== "/dashboard" && currentPath !== "/dashboard/profile") {
+    if (
+      currentPath !== "/dashboard" &&
+      currentPath !== "/dashboard/profile" &&
+      currentPath !== "/dashboard/account" &&
+      currentPath !== "/dashboard/notifications"
+    ) {
       redirect("/dashboard");
     }
 

@@ -52,7 +52,7 @@ export function NotificationSettingsForm({
         Choose email, in-app, or both for each message. Only messages that can
         go to you are listed. Auth confirm and password reset stay on Supabase.
         Actions still complete if a channel is off. Listing alerts also need a
-        fishery switched on Listing Alerts.
+        fishery switched on Profile → Alerts.
       </p>
       <div className={tableWrapClassName}>
         <table className={tableClassName}>

@@ -165,8 +165,8 @@ export default async function ListingPage({
           ) : organisations.length === 0 ? (
             <p className="text-sm text-ink-muted">
               Add your business details on{" "}
-              <Link href="/dashboard/profile" className="underline">
-                Account details
+              <Link href="/dashboard/account" className="underline">
+                Account Settings
               </Link>{" "}
               before you can buy.
             </p>

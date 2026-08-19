@@ -126,7 +126,7 @@ export async function AccountOverviewSection({
                 </p>
                 <PaymentsSetupNotice href={accountPaymentsPath(organisationId)}>
                   Before you can be eligible to list quota for sale, provide
-                  your payment details on the Payments tab of Account details.
+                  your payment details on the Payments tab of Account Settings.
                 </PaymentsSetupNotice>
               </>
             ) : acceptedTerms ? (
@@ -141,10 +141,10 @@ export async function AccountOverviewSection({
           ) : (
             <ActionNotice
               title="Add business details"
-              href="/dashboard/profile"
-              actionLabel="Go to Account details"
+              href="/dashboard/account"
+              actionLabel="Go to Account Settings"
             >
-              Add your business details on Account details before you can buy
+              Add your business details on Account Settings before you can buy
               or list quota.
             </ActionNotice>
           )}
@@ -186,9 +186,9 @@ export async function AccountOverviewSection({
               : "None awaiting payment"}
           </p>
         </Link>
-        <Link href="/dashboard/alerts" className={cardLinkClassName}>
+        <Link href="/dashboard/profile?tab=alerts" className={cardLinkClassName}>
           <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-            Listing Alerts
+            Alerts
           </p>
           <p className="mt-2 text-2xl font-semibold text-ink">{activeAlerts}</p>
           <p className="mt-1 text-sm text-ink-muted">

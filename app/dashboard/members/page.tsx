@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Account details",
+  title: "Account Settings",
 };
 
 export default async function DashboardMembersPage() {
-  redirect("/dashboard/profile?tab=members");
+  redirect("/dashboard/account?tab=members");
 }

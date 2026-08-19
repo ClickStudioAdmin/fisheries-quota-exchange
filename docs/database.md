@@ -7,7 +7,7 @@ Current tables:
 | Table | Phase | Purpose |
 | --- | --- | --- |
 | `system_health` | 0 | Pipeline proof. One row: `FQX`. |
-| `organisations` | 1 | Legal entity. |
+| `organisations` | 1 | Legal entity. `notification_roles` (Phase 9) is which membership roles receive account email. |
 | `organisation_users` | 1 | Email membership, role, and display name. |
 | `organisation_invitations` | 9 | Pending membership invites. A person is not a member until they accept. |
 | `platform_admins` | 5 | Platform administrators. |
@@ -37,7 +37,7 @@ Current tables:
 
 Owners and admins invite members through `invite_organisation_member`. That writes `organisation_invitations` and emails an accept link. `accept_organisation_invitation` inserts `organisation_users` when the signed-in email matches. Managers cannot insert membership rows directly.
 
-`organisations` may store a Stripe Connect account id and charge flags. Members cannot change those columns; `attach_organisation_stripe_account` and the signed `account.updated` webhook do. `orders.status` may be `AWAITING_PAYMENT` until a signed webhook marks the order paid. The buyer pays the listed quota amount plus Stripe's card processing fee. That charge sits on the FQX Stripe balance until Simulate settlement Transfers the seller net (`amount_aud` minus the platform fee). `payments` and `stripe_webhook_events` are written by the app server. The browser is not trusted for payment status.
+`organisations` may store a Stripe Connect account id and charge flags. Members cannot change those columns; `attach_organisation_stripe_account` and the signed `account.updated` webhook do. Owners and admins set `notification_roles` on Account Settings → Notifications (a non-empty subset of OWNER, ADMIN, MEMBER; default OWNER and ADMIN). Account email uses those roles and falls back to owners if none of them have members. `orders.status` may be `AWAITING_PAYMENT` until a signed webhook marks the order paid. The buyer pays the listed quota amount plus Stripe's card processing fee. That charge sits on the FQX Stripe balance until Simulate settlement Transfers the seller net (`amount_aud` minus the platform fee). `payments` and `stripe_webhook_events` are written by the app server. The browser is not trusted for payment status.
 
 `fisheries.quantity_type` must be `KG` or `UNITS`. Holdings and listings show that unit beside quantity.
 
@@ -57,4 +57,4 @@ See [phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md)
 
 Membership is keyed by email. The active organisation for a signed-in session is an httpOnly cookie (`fqx_active_organisation`), not a database column. The server validates it against `organisation_users` on each request. See [phase-4.md](phase-4.md).
 
-Transactional email is sent from the app server with Resend after the database write. Auth confirmation and password reset stay on Supabase Auth. Each product email can be disabled globally on `/admin/settings`. Users can turn off email, in-app, or both for mail that can go to their address on `/dashboard/notifications`; operator mail is only switched on Admin settings. In-app notices are stored in `user_notifications`. Users subscribe to new sale/lease listings per fishery on `/dashboard/alerts`. One-shot mail is recorded in `email_dispatches`. Simulated settlement emails dummy tax invoice PDFs generated in the app (quota and platform fee) to buyer and seller managers; the PDFs are not stored in the database. Buyer and seller can download them from `/orders/[id]` after settlement. Each person must agree to the current terms version (`terms_acceptances`) before they can buy, bid, or list; the browser is not trusted. See [phase-9.md](phase-9.md).
+Transactional email is sent from the app server with Resend after the database write. Auth confirmation and password reset stay on Supabase Auth. Each product email can be disabled globally on `/admin/settings`. Account mail goes to the roles on `organisations.notification_roles`. Personal mail (invites, bids, purchases, listing alerts) goes to that person’s email. In-app notices are stored in `user_notifications`. Users subscribe to new sale/lease listings per fishery on Profile → Alerts (`listing_alerts`). One-shot mail is recorded in `email_dispatches`. Simulated settlement emails dummy tax invoice PDFs generated in the app (quota and platform fee) to the buyer who placed the order and the seller’s notification roles; the PDFs are not stored in the database. Buyer and seller can download them from `/orders/[id]` after settlement. Each person must agree to the current terms version (`terms_acceptances`) before they can buy, bid, or list; the browser is not trusted. See [phase-9.md](phase-9.md).

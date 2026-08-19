@@ -16,6 +16,18 @@ export function accountPath(
   return search ? `${path}?${search}` : path;
 }
 
+export function accountSettingsPath(tab?: string) {
+  if (!tab || tab === "details") {
+    return "/dashboard/account";
+  }
+
+  return `/dashboard/account?tab=${tab}`;
+}
+
+export function accountPaymentsPath(_organisationId?: number | null) {
+  return accountSettingsPath("payments");
+}
+
 export function adminUserPath(email: string) {
   return `/admin/users/${encodeURIComponent(email.trim().toLowerCase())}`;
 }
@@ -26,10 +38,6 @@ export function adminHoldingPath(id: number) {
 
 export function dashboardHoldingPath(holdingId: number, _organisationId?: number) {
   return `/dashboard/holdings/${holdingId}`;
-}
-
-export function accountPaymentsPath(_organisationId?: number | null) {
-  return "/dashboard/profile?tab=payments";
 }
 
 export function parseAdminUserEmailParam(value: string) {

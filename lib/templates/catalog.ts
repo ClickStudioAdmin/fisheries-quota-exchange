@@ -35,7 +35,16 @@ export type MessageTemplate = {
 };
 
 const skipWhen =
-  "The email is disabled on /admin/settings or the recipient turned that channel off on /dashboard/notifications, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write unless the recipient turned that channel off. The triggering action still succeeds.";
+  "The email is disabled on /admin/settings, RESEND_API_KEY or EMAIL_FROM is missing, the site URL cannot be resolved, the recipient is invalid, or Resend rejects the send. In-app notices still write. The triggering action still succeeds.";
+
+const accountRolesRecipient =
+  "Roles selected on Account Settings → Notifications (default Owner and Admin). Falls back to owners if those roles have no members.";
+const accountRolesAndCreatorRecipient = `${accountRolesRecipient} Also the listing creator.`;
+const buyerPersonRecipient = "The person who placed the order.";
+const bidderAccountRolesRecipient =
+  "Notification roles on that bidding account (default Owner and Admin).";
+const buyerAndSellerRolesRecipient =
+  "The person who placed the order, plus seller roles selected on Account Settings → Notifications (default Owner and Admin).";
 
 const EMAIL_CATALOG: Record<
   ProductEmailId,
@@ -76,14 +85,14 @@ const EMAIL_CATALOG: Record<
       "Tells account managers that Connect onboarding can accept charges and settlement transfers.",
     sentWhen: "Once per organisation, when Stripe account.updated reports charges_enabled.",
     trigger: "handleStripeWebhook account.updated, then claim_email_dispatch(payments_setup_complete).",
-    recipient: "Account Owner and Admin emails.",
+    recipient: accountRolesRecipient,
   },
   holding_verified: {
     summary: "After a holding is verified",
-    description: "Tells managers the holding can be listed when payments setup is complete on the Payments tab of Account details.",
+    description: "Tells managers the holding can be listed when payments setup is complete on the Payments tab of Account Settings.",
     sentWhen: "After verify_quota_holding, or when create_quota_holding auto-verifies.",
     trigger: "verifyHoldingAction or createHoldingAction when status is VERIFIED.",
-    recipient: "Account Owner and Admin emails.",
+    recipient: accountRolesRecipient,
   },
   holding_needs_changes: {
     summary: "When admin requests holding changes",
@@ -91,71 +100,71 @@ const EMAIL_CATALOG: Record<
       "Tells managers FQX needs more information. The holding stays pending verification.",
     sentWhen: "When a platform admin submits Request changes. Status does not change.",
     trigger: "requestHoldingChangesAction on /admin/holdings.",
-    recipient: "Account Owner and Admin emails.",
+    recipient: accountRolesRecipient,
   },
   listing_submitted: {
     summary: "After a listing waits for approval",
     description: "Confirms the listing is pending FQX approval.",
     sentWhen: "After create_listing when status is PENDING_APPROVAL.",
     trigger: "createListingAction / createAuctionAction then notifyListingCreated.",
-    recipient: "Account owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   listing_published: {
     summary: "When a fixed-price listing is published",
     description: "Tells the seller the listing is on the marketplace.",
     sentWhen: "On create when auto-published, or when admin approves a fixed-price listing.",
     trigger: "notifyListingCreated or notifyListingPublished for FIXED_PRICE.",
-    recipient: "Account owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   listing_alert: {
     summary: "When a subscribed fishery gets a new listing",
     description:
-      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Listing Alerts.",
+      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Profile → Alerts.",
     sentWhen: "When a listing or auction is published, matching sale or lease alerts for that fishery.",
     trigger: "notifyListingCreated or notifyListingPublished then notifyNewListingAlert.",
-    recipient: "Users with a matching fishery alert, excluding the seller’s organisation.",
+    recipient: "Users with a matching fishery alert on Profile → Alerts, excluding the seller’s organisation.",
   },
   listing_rejected: {
     summary: "When a listing is rejected",
     description: "Tells the seller FQX did not publish the listing.",
     sentWhen: "After reject_listing.",
     trigger: "rejectListingAction.",
-    recipient: "Account owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   listing_expired: {
     summary: "When a published listing has passed its end time",
     description: "Tells the seller the listing is no longer open.",
     sentWhen: "Hourly cron, once per listing, when a published fixed-price listing has expired.",
     trigger: "runScheduledEmails via /api/cron/emails.",
-    recipient: "Account owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   listing_cancelled: {
     summary: "When a fixed-price listing is cancelled",
     description: "Confirms cancellation and that quota can be listed again.",
     sentWhen: "After cancel_listing for a fixed-price listing.",
     trigger: "cancelListingAction then notifyListingCancelled.",
-    recipient: "Account owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   listing_purchased: {
     summary: "Seller: listing or auction became an order",
     description: "Tells the seller quota is reserved and the buyer pays FQX next.",
     sentWhen: "After create_order, or when an auction closes with a winner.",
     trigger: "notifyOrderCreated or notifyAuctionClosed.",
-    recipient: "Seller account Owner and Admin emails.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   purchase_received: {
     summary: "Buyer: purchase created",
     description: "Tells the buyer to pay FQX from the order page.",
     sentWhen: "After create_order for a fixed-price purchase.",
     trigger: "notifyOrderCreated.",
-    recipient: "Buyer owners/admins and the person who placed the order.",
+    recipient: buyerPersonRecipient,
   },
   auction_published: {
     summary: "When an auction is published",
     description: "Tells the seller the auction is on the marketplace.",
     sentWhen: "On create when auto-published, or when admin approves an auction.",
     trigger: "notifyListingCreated or notifyListingPublished for AUCTION.",
-    recipient: "Account owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   bid_placed: {
     summary: "After a bid is recorded",
@@ -169,63 +178,63 @@ const EMAIL_CATALOG: Record<
     description: "Tells the previous highest bidder they were outbid.",
     sentWhen: "After a new bid from a different organisation.",
     trigger: "notifyBidPlaced when a previous bid exists.",
-    recipient: "Previous bidder account Owner and Admin emails.",
+    recipient: bidderAccountRolesRecipient,
   },
   auction_new_bid: {
     summary: "Seller: new bid on their auction",
     description: "Tells the seller a new bid was placed.",
     sentWhen: "After each successful bid.",
     trigger: "notifyBidPlaced.",
-    recipient: "Seller account Owner and Admin emails.",
+    recipient: accountRolesRecipient,
   },
   auction_won: {
     summary: "Winning bidder after close",
     description: "Tells the winner an order was created.",
     sentWhen: "When ensureAuctionClosed / closeAuction creates an order.",
     trigger: "notifyAuctionClosed.",
-    recipient: "Winning organisation owners/admins and the order creator.",
+    recipient: buyerPersonRecipient,
   },
   auction_not_won: {
     summary: "Other bidders after a sale",
     description: "Tells unsuccessful bidders the auction closed with a winner.",
     sentWhen: "After auction close with an order, once per other bidding organisation.",
     trigger: "notifyAuctionClosed.",
-    recipient: "Owner/Admin emails of other bidding organisations.",
+    recipient: bidderAccountRolesRecipient,
   },
   auction_unsold: {
     summary: "Seller: auction closed with no winner",
     description: "Tells the seller there was no qualifying bid.",
     sentWhen: "When an auction closes without an order.",
     trigger: "notifyAuctionClosed.",
-    recipient: "Seller owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   auction_cancelled: {
     summary: "When an auction is cancelled",
     description: "Confirms cancellation before close.",
     sentWhen: "After cancel_listing for an auction.",
     trigger: "notifyListingCancelled.",
-    recipient: "Account owners/admins and the creator.",
+    recipient: accountRolesAndCreatorRecipient,
   },
   auction_ending_soon: {
     summary: "Auction due to end within 24 hours",
     description: "Reminds seller and bidders the auction is ending. Bid times use the server clock.",
     sentWhen: "Hourly cron, once per auction, while published and ending within 24 hours.",
     trigger: "runScheduledEmails via /api/cron/emails.",
-    recipient: "Seller owners/admins, creator, and bidding organisation managers.",
+    recipient: `${accountRolesAndCreatorRecipient} Plus notification roles on bidding accounts.`,
   },
   payment_received: {
     summary: "When FQX records payment",
     description: "Tells buyer and seller payment is held until settlement.",
     sentWhen: "Once per order after mark_order_paid (webhook or reconcile).",
     trigger: "handleStripeWebhook or reconcileOrderPayment, then claim_email_dispatch(payment_received).",
-    recipient: "Buyer and seller owners/admins, and the order creator.",
+    recipient: buyerAndSellerRolesRecipient,
   },
   bank_debit_submitted: {
     summary: "When BECS checkout completes unpaid",
     description: "Tells the buyer the bank debit was submitted and may show Incoming until it clears.",
     sentWhen: "Once per order on checkout.session.completed with payment_status unpaid.",
     trigger: "handleStripeWebhook then claim_email_dispatch(bank_debit_submitted).",
-    recipient: "Buyer owners/admins and the order creator.",
+    recipient: buyerPersonRecipient,
   },
   settlement_failed: {
     summary: "When the seller settlement transfer fails",
@@ -233,35 +242,35 @@ const EMAIL_CATALOG: Record<
       "Tells parties quota settlement did not complete because the Stripe Transfer failed.",
     sentWhen: "Before simulate_settlement, if transferOrderSellerProceeds returns an error.",
     trigger: "simulateSettlementAction.",
-    recipient: "Buyer and seller owners/admins, and the order creator.",
+    recipient: buyerAndSellerRolesRecipient,
   },
   checkout_expired: {
     summary: "When unpaid checkout expires",
     description: "Tells the buyer the order was cancelled and quota released.",
     sentWhen: "Once per order on checkout.session.expired after fail_unpaid_order.",
     trigger: "handleStripeWebhook then claim_email_dispatch(checkout_expired).",
-    recipient: "Buyer owners/admins and the order creator.",
+    recipient: buyerPersonRecipient,
   },
   payment_reminder: {
     summary: "Unpaid order still awaiting payment after 24 hours",
     description: "Reminds the buyer to pay FQX to keep the reservation.",
     sentWhen: "Hourly cron, once per order, when status is AWAITING_PAYMENT for more than 24 hours.",
     trigger: "runScheduledEmails via /api/cron/emails.",
-    recipient: "Buyer owners/admins and the order creator.",
+    recipient: buyerPersonRecipient,
   },
   transfer_in_progress: {
     summary: "After compliance is approved",
     description: "Tells parties the authority transfer step has started.",
     sentWhen: "After approve_compliance.",
     trigger: "approveComplianceAction then notifyTransferInProgress.",
-    recipient: "Buyer and seller owners/admins, and the order creator.",
+    recipient: buyerAndSellerRolesRecipient,
   },
   transfer_complete: {
     summary: "After simulated authority transfer",
     description: "Tells parties transfer is complete and settlement is next.",
     sentWhen: "After simulate_transfer succeeds.",
     trigger: "simulateTransferAction then notifyTransferComplete.",
-    recipient: "Buyer and seller owners/admins, and the order creator.",
+    recipient: buyerAndSellerRolesRecipient,
   },
   order_settled: {
     summary: "After simulated settlement completes",
@@ -269,7 +278,7 @@ const EMAIL_CATALOG: Record<
       "Confirms settlement and attaches dummy tax invoice PDFs for the quota and the platform fee.",
     sentWhen: "After simulate_settlement succeeds and the order is COMPLETED.",
     trigger: "simulateSettlementAction then sendSettledOrderInvoice.",
-    recipient: "Buyer owners/admins, the order creator, and seller owners/admins. Both receive both PDFs.",
+    recipient: `${buyerAndSellerRolesRecipient} Both receive both PDFs.`,
   },
   operator_holding_pending: {
     summary: "Operator: holding needs verification",

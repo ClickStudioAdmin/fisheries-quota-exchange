@@ -83,7 +83,7 @@ export async function updateListingAlertsAction(
     return { error: userFacingError(error) };
   }
 
-  revalidatePath("/dashboard/alerts");
+  revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
   return { message: "Listing alerts saved." };
 }

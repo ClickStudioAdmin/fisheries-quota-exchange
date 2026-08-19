@@ -116,6 +116,10 @@ const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
   "order_settled",
 ];
 
+export function isAccountNotificationEmailId(id: ProductEmailId) {
+  return (SELLER_MANAGER_EMAIL_IDS as readonly ProductEmailId[]).includes(id);
+}
+
 export function personalNotificationEmailIds(input: {
   isOrgMember: boolean;
   isOrgManager: boolean;

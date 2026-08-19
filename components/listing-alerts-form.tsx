@@ -131,8 +131,8 @@ export function ListingAlertsForm({
       ) : null}
       <p className="text-sm text-ink-muted">
         Turn on sale and/or lease for each fishery. You are notified when a
-        matching listing or auction is published. You can turn email or in-app
-        off on Notifications without clearing these switches.
+        matching listing or auction is published. These watches stay with you
+        when you switch account.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <label className="sr-only" htmlFor={searchId}>

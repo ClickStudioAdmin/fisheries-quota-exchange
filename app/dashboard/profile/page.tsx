@@ -1,21 +1,14 @@
-import Link from "next/link";
-import { AccountPaymentsSection } from "@/components/account-payments";
+import { DashboardTabs } from "@/components/dashboard-tabs";
 import {
-  AccountMembersSection,
+  AccountAlertsSection,
   AccountProfileSection,
   AccountSecuritySection,
 } from "@/components/account-sections";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 
 export const metadata = {
-  title: "Account details",
+  title: "Profile",
 };
-
-function tabClassName(active: boolean) {
-  return active
-    ? "-mb-px inline-flex items-center gap-1.5 border-b-2 border-sea pb-2 font-medium text-ink"
-    : "inline-flex items-center gap-1.5 pb-2 text-ink-muted hover:text-ink";
-}
 
 export default async function DashboardProfilePage({
   searchParams,
@@ -25,93 +18,34 @@ export default async function DashboardProfilePage({
   const params = await searchParams;
   const account = await resolveDashboardAccount("/dashboard/profile");
   const tab =
-    params.tab === "security" ||
-    params.tab === "members" ||
-    params.tab === "payments"
+    params.tab === "security" || params.tab === "alerts"
       ? params.tab
-      : "profile";
-  const organisationId = account.selected?.id ?? null;
-  const profileHref = "/dashboard/profile";
-  const securityHref = "/dashboard/profile?tab=security";
-  const membersHref = "/dashboard/profile?tab=members";
-  const paymentsHref = "/dashboard/profile?tab=payments";
+      : "details";
 
   return (
     <div className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          Account details
-        </h1>
-      <nav aria-label="Account details sections">
-        <ul className="flex flex-wrap gap-x-6 border-b border-line">
-          <li>
-            <Link
-              href={profileHref}
-              className={tabClassName(tab === "profile")}
-              aria-current={tab === "profile" ? "page" : undefined}
-            >
-              Profile
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={securityHref}
-              className={tabClassName(tab === "security")}
-              aria-current={tab === "security" ? "page" : undefined}
-            >
-              Password and Security
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={membersHref}
-              className={tabClassName(tab === "members")}
-              aria-current={tab === "members" ? "page" : undefined}
-            >
-              Members
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={paymentsHref}
-              className={tabClassName(tab === "payments")}
-              aria-current={tab === "payments" ? "page" : undefined}
-            >
-              Payments
-            </Link>
-          </li>
-        </ul>
-      </nav>
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">
+        Profile
+      </h1>
+      <DashboardTabs
+        label="Profile sections"
+        active={tab}
+        items={[
+          { id: "details", href: "/dashboard/profile", label: "Details" },
+          {
+            id: "security",
+            href: "/dashboard/profile?tab=security",
+            label: "Password and Security",
+          },
+          { id: "alerts", href: "/dashboard/profile?tab=alerts", label: "Alerts" },
+        ]}
+      />
       {tab === "security" ? (
         <AccountSecuritySection />
-      ) : tab === "members" ? (
-        organisationId ? (
-          <AccountMembersSection
-            organisationId={organisationId}
-            userEmail={account.user.email ?? ""}
-          />
-        ) : (
-          <p className="text-sm text-ink-muted">
-            Add your business details on the Profile tab before you can manage
-            members.
-          </p>
-        )
-      ) : tab === "payments" ? (
-        organisationId && account.selected ? (
-          <AccountPaymentsSection
-            organisationId={organisationId}
-            role={account.selected.role}
-          />
-        ) : (
-          <p className="text-sm text-ink-muted">
-            Add your business details on the Profile tab before connecting
-            Stripe payments.
-          </p>
-        )
+      ) : tab === "alerts" ? (
+        <AccountAlertsSection />
       ) : (
-        <AccountProfileSection
-          organisationId={organisationId}
-          user={account.user}
-        />
+        <AccountProfileSection user={account.user} />
       )}
     </div>
   );

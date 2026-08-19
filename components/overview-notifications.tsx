@@ -14,7 +14,7 @@ export function OverviewNotifications({
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="text-xl font-semibold text-ink">
           <Link href="/dashboard/notifications" className="hover:underline">
-            Notifications
+            Inbox
           </Link>
         </h2>
         <Link href="/dashboard/notifications" className="text-sm underline">

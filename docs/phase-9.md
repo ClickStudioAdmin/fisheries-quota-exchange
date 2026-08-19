@@ -10,7 +10,7 @@ Never trust the browser or the Checkout return URL for payment status. The webho
 
 ## Flow
 
-1. Organisation `OWNER` or `ADMIN` opens **Account details → Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
+1. Organisation `OWNER` or `ADMIN` opens **Account Settings → Payments** and completes Stripe Connect embedded onboarding (sandbox). FQX collects requirements and is liable for losses, so the form does not ask the seller to sign in to Stripe separately.
 2. Stripe sends `account.updated`. The app stores whether the account can accept charges. Opening Payments also refreshes that flag from Stripe. The browser is not trusted for it.
 3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The buyer chooses **bank debit** or **card** first. Bank debit charges the listed quota amount. Card charges the listed amount plus the Stripe card processing surcharge (Checkout line items: quota, then **Card processing (Stripe)**). Each method is a separate Checkout session. The charge sits on the **FQX** Stripe account. The platform fee is not added to the buyer charge. There is no destination charge. The order page totals show the listed amount and the card amount.
 4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` / `payment_intent.succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance (often **Incoming** until they clear). Refreshing the return URL does not charge again. Opening the order page also reconciles payment status from Stripe. Pay FQX on `/orders/[id]` has three display states while the order is still the buyer’s: **Checkout** (embedded Stripe, only if a session can still be started), **Pending** (spinner while a debit is processing or payment is recorded but the order has not yet moved to `AWAITING_COMPLIANCE`), and **Paid** (checkout hidden once the order is `AWAITING_COMPLIANCE` or later). Pending polls the server about every five seconds while the tab is visible. The browser is still not trusted for payment status.
@@ -43,9 +43,12 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/dashboard` | Overview: onboarding, pending invitations to this person, holdings/listings/orders/alerts counts, latest 10 in-app notices |
 | `/select-account` | Choose the active organisation after login, or when switching |
 | `/invitations/[token]` | Accept or decline an account invitation. Signed in required; active organisation cookie is not |
-| `/dashboard/notifications` | Signed-in user inbox (default) and Channels tab for per-event email and in-app switches |
-| `/dashboard/alerts` | Signed-in user switches sale and/or lease alerts per fishery |
-| `/dashboard/payments` | Redirects to `/dashboard/profile?tab=payments` |
+| `/dashboard/profile` | Personal details, Password and Security, and Alerts (fishery watches) |
+| `/dashboard/account` | Account Settings for the active organisation: Details, Members, Payments, and Notifications (which roles receive account email) |
+| `/dashboard/notifications` | Signed-in user inbox |
+| `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
+| `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
+| `/dashboard/payments` | Redirects to `/dashboard/account?tab=payments` |
 | `/marketplace/[id]` | Purchase; Checkout when the seller is ready |
 | `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; hidden after `AWAITING_COMPLIANCE`. After settlement, buyer and seller can download the quota and fee tax invoices. Return URL is not authoritative |
 | `/orders/[id]/invoice/quota` | Quota tax invoice PDF (seller to buyer) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. `/orders/[id]/invoice` redirects here |
@@ -56,7 +59,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 
 ## Database
 
-Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`
+Migrations: `supabase/migrations/20260818010000_stripe_test_payments.sql`, `20260818020000_replace_unready_stripe_account.sql`, `20260818030000_seller_settlement_transfer.sql`, `20260818060000_seller_pays_platform_fee.sql`, `20260818100000_transactional_emails.sql`, `20260818110000_user_notifications_and_alerts.sql`, `20260818120000_in_app_notifications.sql`, `20260818130000_seed_admin_in_app_notifications.sql`, `20260819100000_terms_acceptances.sql`, `20260819110000_organisation_invitations.sql`, `20260819120000_organisation_notification_roles.sql`
 
 Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts eight in-app notices for `click.studio.admin@gmail.com` when that membership exists (mix of read and unread). Links use real holdings, listings, and orders when they are present.
 
@@ -65,10 +68,11 @@ Development fixture `20260818130000_seed_admin_in_app_notifications.sql` inserts
 - `stripe_webhook_events` (event id primary key)
 - `terms_acceptances` (email + version; required before buy, bid, or list)
 - `organisation_invitations` (pending invites; membership starts only after accept)
+- `organisations.notification_roles` (which membership roles receive account email; default Owner and Admin)
 
-Every signed-in user must agree to the current terms on Overview and add business details on Account details before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase shows the buyer acknowledgements as a confirmation step after Purchase Now; bid requires ticking them on the auction page. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms may make them liable to pay the platform commission. This phase does not auto-invoice that abort commission.
+Every signed-in user must agree to the current terms on Overview and add business details on Account Settings before they can purchase, bid, or create a listing or auction. Creating a listing or auction also requires ticking the seller acknowledgements. Purchase shows the buyer acknowledgements as a confirmation step after Purchase Now; bid requires ticking them on the auction page. The server checks those boxes; the browser is not trusted. Registration is personal details only. The server records the terms version and organisation membership. If a party does not complete a trade they have already entered, the terms may make them liable to pay the platform commission. This phase does not auto-invoice that abort commission.
 
-Buy, bid, list, holdings, members, and payments use the active organisation from the session cookie. The browser is not trusted to choose a different organisation on the listing. Owners and admins invite people from Account details → Members. The invitee must accept from the email (or Overview) while signed in as that address. They are not added automatically.
+Buy, bid, list, holdings, members, and payments use the active organisation from the session cookie. The browser is not trusted to choose a different organisation on the listing. Owners and admins invite people from Account Settings → Members. The invitee must accept from the email (or Overview) while signed in as that address. They are not added automatically.
 
 Functions:
 
@@ -120,11 +124,13 @@ Test card (AU Visa): `4000 0003 6000 0006`. Test BECS debit: BSB `000-000`, acco
 
 ## Transactional email
 
-Mail is sent from the server after the database write. Auth confirm and password reset stay on Supabase Auth. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; the action still succeeds. The same events also write an in-app notice unless the recipient turned that channel off. Platform admins can disable each product **email** on `/admin/settings`. Each signed-in user can turn off email, in-app, or both for messages that can go to them on `/dashboard/notifications` (operator mail is not listed there). Previews are on `/admin/templates`.
+Mail is sent from the server after the database write. Auth confirm and password reset stay on Supabase Auth. Missing `RESEND_API_KEY` or `EMAIL_FROM` skips sending; the action still succeeds. The same events also write an in-app notice. Platform admins can disable each product **email** on `/admin/settings`. Previews are on `/admin/templates`.
 
-Buyer and seller managers both receive `order_settled` with both dummy tax invoice PDFs.
+Account mail (listings, holdings, payments, and settlement for that organisation) goes to the roles chosen on Account Settings → Notifications. Default is Owner and Admin. The picker is hidden when the organisation has one member. If the chosen roles have no members, owners are used. Personal mail (invitations, your bid, your purchase, listing alerts) is not role-routed.
 
-Users switch sale and/or lease per fishery on `/dashboard/alerts`. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert. Email and in-app for that message can be turned off on Notifications without clearing the switches.
+Buyer and seller both receive `order_settled` with both dummy tax invoice PDFs. The buyer copy goes to the person who placed the order. The seller copy goes to the account notification roles.
+
+Users switch sale and/or lease per fishery on Profile → Alerts. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert.
 
 One-shot mail uses `email_dispatches` via `claim_email_dispatch` so payment, checkout, listing expiry, auction ending soon, payment reminder, and payments-setup messages are not resent.
 

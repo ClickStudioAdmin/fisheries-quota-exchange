@@ -3,6 +3,9 @@ import { AddMemberForm } from "@/components/add-member-form";
 import { OrganisationInvitationList } from "@/components/invitation-lists";
 import { MemberList } from "@/components/member-list";
 import { BusinessDetailsForm } from "@/components/business-details-form";
+import { OrganisationDetailsForm } from "@/components/organisation-details-form";
+import { AccountNotificationForm } from "@/components/account-notification-form";
+import { ListingAlertsForm } from "@/components/listing-alerts-form";
 import {
   PersonProfileForm,
   ProfilePasswordForm,
@@ -50,6 +53,7 @@ import { tableButtonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { formatTableDate } from "@/lib/format";
 import { accountPath, accountPaymentsPath, dashboardHoldingPath } from "@/lib/organisations/paths";
+import { listMyListingAlerts } from "@/lib/alerts/queries";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -62,38 +66,109 @@ type AccountSectionProps = {
 };
 
 export async function AccountProfileSection({
-  organisationId,
   user,
 }: {
-  organisationId: number | null;
   user: User;
+}) {
+  return (
+    <div className="max-w-md space-y-4">
+      <p className="text-sm text-ink-muted">
+        These details are yours. They do not change when you switch account.
+      </p>
+      <PersonProfileForm
+        fullName={userFullName(user)}
+        email={user.email ?? ""}
+        phone={userPhone(user)}
+      />
+    </div>
+  );
+}
+
+export async function AccountBusinessSection({
+  organisationId,
+}: {
+  organisationId: number | null;
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
   const canEdit = result ? canEditOrganisation(result.role) : false;
 
+  if (!result) {
+    return (
+      <div className="max-w-md space-y-4">
+        <p className="text-sm text-ink-muted">
+          Legal name is required. Trading name and ABN are optional. This
+          creates your organisation. You can own one account.
+        </p>
+        <BusinessDetailsForm />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-10">
-      <section className="max-w-md space-y-4">
-        <h2 className="text-xl font-semibold text-ink">Details</h2>
-        <PersonProfileForm
-          fullName={userFullName(user)}
-          email={user.email ?? ""}
-          phone={userPhone(user)}
-          organisation={result?.organisation ?? null}
-          canEditOrganisation={canEdit}
-        />
-      </section>
-      {result ? null : (
-        <section className="max-w-md space-y-4">
-          <h2 className="text-xl font-semibold text-ink">Business details</h2>
-          <p className="text-sm text-ink-muted">
-            Legal name is required. Trading name and ABN are optional. This
-            creates your organisation. You can own one account.
-          </p>
-          <BusinessDetailsForm />
-        </section>
-      )}
+    <div className="max-w-md space-y-4">
+      <p className="text-sm text-ink-muted">
+        Business details for this organisation.
+      </p>
+      <OrganisationDetailsForm
+        organisation={result.organisation}
+        canEdit={canEdit}
+      />
     </div>
+  );
+}
+
+export async function AccountAlertsSection() {
+  const [fisheries, jurisdictions, alerts] = await Promise.all([
+    listFisheries(),
+    listJurisdictions(),
+    listMyListingAlerts(),
+  ]);
+
+  return (
+    <div className="space-y-4">
+      <p className="max-w-2xl text-sm text-ink-muted">
+        Choose which fisheries to watch. A published sale or lease listing
+        (including auctions) notifies you when that switch is on. These alerts
+        are yours and apply across every account you belong to.
+      </p>
+      <ListingAlertsForm
+        fisheries={fisheries}
+        jurisdictions={jurisdictions}
+        alerts={alerts}
+      />
+    </div>
+  );
+}
+
+export async function AccountNotificationsSection({
+  organisationId,
+}: {
+  organisationId: number;
+}) {
+  const result = await getOrganisation(organisationId);
+
+  if (!result) {
+    return <p>Account not found.</p>;
+  }
+
+  const members = await listMembers(organisationId);
+  const canEdit = canEditOrganisation(result.role);
+
+  if (members.length <= 1) {
+    return (
+      <p className="max-w-md text-sm text-ink-muted">
+        This account has one member, so account email goes to them. Role
+        choices appear here when there is more than one member.
+      </p>
+    );
+  }
+
+  return (
+    <AccountNotificationForm
+      organisationId={organisationId}
+      selectedRoles={result.organisation.notification_roles}
+      canEdit={canEdit}
+    />
   );
 }
 

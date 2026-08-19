@@ -24,13 +24,13 @@ export async function MemberArea({ children }: { children: ReactNode }) {
 
   const sectionItems: SideNavLink[] = [
     { href: "/dashboard", label: "Overview" },
-    { href: "/dashboard/profile", label: "Account Details" },
+    { href: "/dashboard/profile", label: "Profile" },
+    { href: "/dashboard/account", label: "Account Settings" },
     {
       href: "/dashboard/notifications",
-      label: "Notifications",
+      label: "Inbox",
       badge: unreadNotifications,
     },
-    { href: "/dashboard/alerts", label: "Listing Alerts" },
     {
       href: "/dashboard/holdings",
       label: "Quota Holdings",

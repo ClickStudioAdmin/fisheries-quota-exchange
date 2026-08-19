@@ -2,7 +2,7 @@ import "server-only";
 
 import { emailCopy } from "@/lib/email/copy";
 import { claimEmailDispatch, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
-import { organisationManagerEmails } from "@/lib/email/recipients";
+import { organisationNotificationEmails } from "@/lib/email/recipients";
 import { listingHref, type Listing } from "@/lib/listings/types";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -38,7 +38,7 @@ export async function runScheduledEmails() {
     >;
     const href = `${siteUrl}${listingHref(listing)}`;
     const expires = new Date(listing.expires_at).getTime();
-    const managers = await organisationManagerEmails(listing.organisation_id);
+    const managers = await organisationNotificationEmails(listing.organisation_id);
     const to = [...managers, listing.created_by_email];
 
     if (
@@ -72,7 +72,7 @@ export async function runScheduledEmails() {
         ),
       ];
       const bidderEmails = (
-        await Promise.all(bidderOrgs.map(organisationManagerEmails))
+        await Promise.all(bidderOrgs.map((id) => organisationNotificationEmails(id)))
       ).flat();
       await notifyEmail(
         "auction_ending_soon",
@@ -87,7 +87,7 @@ export async function runScheduledEmails() {
 
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, created_by_email, created_at, buyer_organisation_id")
+    .select("id, created_by_email, created_at")
     .eq("status", "AWAITING_PAYMENT");
 
   for (const row of orders ?? []) {
@@ -100,12 +100,9 @@ export async function runScheduledEmails() {
       continue;
     }
 
-    const buyerManagers = await organisationManagerEmails(
-      Number(row.buyer_organisation_id),
-    );
     await notifyEmail(
       "payment_reminder",
-      [...buyerManagers, String(row.created_by_email)],
+      [String(row.created_by_email)],
       emailCopy.payment_reminder({
         orderId: Number(row.id),
         orderUrl: `${siteUrl}/orders/${row.id}`,

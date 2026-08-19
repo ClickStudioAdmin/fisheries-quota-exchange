@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getUserNotificationPreferences } from "@/lib/alerts/queries";
 import {
   emailIsDisabled,
+  isAccountNotificationEmailId,
   isOperatorEmailId,
   type ProductEmailId,
 } from "@/lib/email/product-emails";
@@ -26,10 +27,12 @@ export async function insertInAppNotification(input: {
     return;
   }
 
-  const prefs = await getUserNotificationPreferences(input.email);
+  if (!isAccountNotificationEmailId(input.template)) {
+    const prefs = await getUserNotificationPreferences(input.email);
 
-  if (emailIsDisabled(prefs.disabledInApp, input.template)) {
-    return;
+    if (emailIsDisabled(prefs.disabledInApp, input.template)) {
+      return;
+    }
   }
 
   const supabase = await db();

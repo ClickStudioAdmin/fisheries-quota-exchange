@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { invitationPath, isInvitationToken } from "./paths.ts";
+import { accountPaymentsPath, accountSettingsPath, invitationPath, isInvitationToken } from "./paths.ts";
 
 test("isInvitationToken requires 64 hex characters", () => {
   const token = "a".repeat(64);
@@ -9,4 +9,13 @@ test("isInvitationToken requires 64 hex characters", () => {
   assert.equal(isInvitationToken("abc"), false);
   assert.equal(isInvitationToken(`${token}a`), false);
   assert.equal(invitationPath(` ${token} `), `/invitations/${token}`);
+});
+
+test("accountSettingsPath uses Account Settings tabs", () => {
+  assert.equal(accountSettingsPath(), "/dashboard/account");
+  assert.equal(accountSettingsPath("details"), "/dashboard/account");
+  assert.equal(accountSettingsPath("members"), "/dashboard/account?tab=members");
+  assert.equal(accountSettingsPath("payments"), "/dashboard/account?tab=payments");
+  assert.equal(accountSettingsPath("notifications"), "/dashboard/account?tab=notifications");
+  assert.equal(accountPaymentsPath(1), "/dashboard/account?tab=payments");
 });

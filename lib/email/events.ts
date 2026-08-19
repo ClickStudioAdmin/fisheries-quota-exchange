@@ -4,7 +4,7 @@ import { listingAlertEmails } from "@/lib/alerts/queries";
 import { emailCopy } from "@/lib/email/copy";
 import { claimEmailDispatch, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import {
-  organisationManagerEmails,
+  organisationNotificationEmails,
   organisationMemberEmails,
   platformAdminEmails,
   uniqueEmails,
@@ -29,7 +29,7 @@ function listingUrl(siteUrl: string, listing: Pick<Listing, "id" | "listing_type
 
 export async function notifyListingCreated(listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
-  const managers = await organisationManagerEmails(listing.organisation_id);
+  const managers = await organisationNotificationEmails(listing.organisation_id);
   const to = [...managers, listing.created_by_email];
   const href = listingUrl(siteUrl, listing);
 
@@ -84,7 +84,7 @@ export async function notifyListingCreated(listing: Listing) {
 export async function notifyListingPublished(listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
   const to = [
-    ...(await organisationManagerEmails(listing.organisation_id)),
+    ...(await organisationNotificationEmails(listing.organisation_id)),
     listing.created_by_email,
   ];
   const href = listingUrl(siteUrl, listing);
@@ -156,7 +156,7 @@ export async function notifyListingRejected(listing: Listing, note: string) {
   await notifyEmail(
     "listing_rejected",
     [
-      ...(await organisationManagerEmails(listing.organisation_id)),
+      ...(await organisationNotificationEmails(listing.organisation_id)),
       listing.created_by_email,
     ],
     emailCopy.listing_rejected({
@@ -170,7 +170,7 @@ export async function notifyListingRejected(listing: Listing, note: string) {
 export async function notifyListingCancelled(listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
   const to = [
-    ...(await organisationManagerEmails(listing.organisation_id)),
+    ...(await organisationNotificationEmails(listing.organisation_id)),
     listing.created_by_email,
   ];
   const href = listingUrl(siteUrl, listing);
@@ -200,11 +200,11 @@ export async function notifyListingCancelled(listing: Listing) {
 export async function notifyOrderCreated(order: Order, listing: Listing) {
   const siteUrl = await siteUrlOrEmpty();
   const orderUrl = `${siteUrl}/orders/${order.id}`;
-  const sellers = await organisationManagerEmails(order.seller_organisation_id);
-  const buyers = uniqueEmails([
-    ...(await organisationManagerEmails(order.buyer_organisation_id)),
-    order.created_by_email,
+  const sellers = uniqueEmails([
+    ...(await organisationNotificationEmails(order.seller_organisation_id)),
+    listing.created_by_email,
   ]);
+  const buyers = uniqueEmails([order.created_by_email]);
 
   await notifyEmail(
     "listing_purchased",
@@ -252,7 +252,7 @@ export async function notifyBidPlaced(input: {
   if (input.previous && input.previous.organisation_id !== input.bidderOrganisationId) {
     await notifyEmail(
       "bid_outbid",
-      await organisationManagerEmails(input.previous.organisation_id),
+      await organisationNotificationEmails(input.previous.organisation_id),
       emailCopy.bid_outbid({
         fisheryName: input.listing.fishery_name,
         auctionUrl,
@@ -262,7 +262,7 @@ export async function notifyBidPlaced(input: {
 
   await notifyEmail(
     "auction_new_bid",
-    await organisationManagerEmails(input.listing.organisation_id),
+    await organisationNotificationEmails(input.listing.organisation_id),
     emailCopy.auction_new_bid({
       fisheryName: input.listing.fishery_name,
       amount,
@@ -279,7 +279,7 @@ export async function notifyAuctionClosed(input: {
   const siteUrl = await siteUrlOrEmpty();
   const auctionUrl = listingUrl(siteUrl, input.listing);
   const sellers = [
-    ...(await organisationManagerEmails(input.listing.organisation_id)),
+    ...(await organisationNotificationEmails(input.listing.organisation_id)),
     input.listing.created_by_email,
   ];
 
@@ -298,10 +298,7 @@ export async function notifyAuctionClosed(input: {
   const winnerOrg = input.order.buyer_organisation_id;
   await notifyEmail(
     "auction_won",
-    uniqueEmails([
-      ...(await organisationManagerEmails(winnerOrg)),
-      input.order.created_by_email,
-    ]),
+    uniqueEmails([input.order.created_by_email]),
     emailCopy.auction_won({
       fisheryName: input.listing.fishery_name,
       orderUrl: `${siteUrl}/orders/${input.order.id}`,
@@ -326,7 +323,7 @@ export async function notifyAuctionClosed(input: {
   for (const organisationId of otherOrgs) {
     await notifyEmail(
       "auction_not_won",
-      await organisationManagerEmails(organisationId),
+      await organisationNotificationEmails(organisationId),
       emailCopy.auction_not_won({
         fisheryName: input.listing.fishery_name,
         auctionUrl,
@@ -348,8 +345,7 @@ export async function notifyPaymentReceived(order: Order) {
   await notifyEmail(
     "payment_received",
     uniqueEmails([
-      ...(await organisationManagerEmails(order.buyer_organisation_id)),
-      ...(await organisationManagerEmails(order.seller_organisation_id)),
+      ...(await organisationNotificationEmails(order.seller_organisation_id)),
       order.created_by_email,
     ]),
     emailCopy.payment_received({
@@ -368,10 +364,7 @@ export async function notifyBankDebitSubmitted(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
   await notifyEmail(
     "bank_debit_submitted",
-    uniqueEmails([
-      ...(await organisationManagerEmails(order.buyer_organisation_id)),
-      order.created_by_email,
-    ]),
+    uniqueEmails([order.created_by_email]),
     emailCopy.bank_debit_submitted({
       orderId: order.id,
       orderUrl: `${siteUrl}/orders/${order.id}`,
@@ -387,10 +380,7 @@ export async function notifyCheckoutExpired(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
   await notifyEmail(
     "checkout_expired",
-    uniqueEmails([
-      ...(await organisationManagerEmails(order.buyer_organisation_id)),
-      order.created_by_email,
-    ]),
+    uniqueEmails([order.created_by_email]),
     emailCopy.checkout_expired({
       orderId: order.id,
       orderUrl: `${siteUrl}/orders/${order.id}`,
@@ -425,8 +415,7 @@ export async function notifySettlementFailed(order: Order) {
   await notifyEmail(
     "settlement_failed",
     uniqueEmails([
-      ...(await organisationManagerEmails(order.buyer_organisation_id)),
-      ...(await organisationManagerEmails(order.seller_organisation_id)),
+      ...(await organisationNotificationEmails(order.seller_organisation_id)),
       order.created_by_email,
     ]),
     emailCopy.settlement_failed({
@@ -450,8 +439,7 @@ export async function notifyTransferInProgress(order: Order) {
   await notifyEmail(
     "transfer_in_progress",
     uniqueEmails([
-      ...(await organisationManagerEmails(order.buyer_organisation_id)),
-      ...(await organisationManagerEmails(order.seller_organisation_id)),
+      ...(await organisationNotificationEmails(order.seller_organisation_id)),
       order.created_by_email,
     ]),
     emailCopy.transfer_in_progress({
@@ -467,8 +455,7 @@ export async function notifyTransferComplete(order: Order) {
   await notifyEmail(
     "transfer_complete",
     uniqueEmails([
-      ...(await organisationManagerEmails(order.buyer_organisation_id)),
-      ...(await organisationManagerEmails(order.seller_organisation_id)),
+      ...(await organisationNotificationEmails(order.seller_organisation_id)),
       order.created_by_email,
     ]),
     emailCopy.transfer_complete({
@@ -500,7 +487,7 @@ export async function notifyPaymentsSetupComplete(organisationId: number, accoun
   const siteUrl = await siteUrlOrEmpty();
   await notifyEmail(
     "payments_setup_complete",
-    await organisationManagerEmails(organisationId),
+    await organisationNotificationEmails(organisationId),
     emailCopy.payments_setup_complete({
       accountName,
       paymentsUrl: `${siteUrl}${accountPaymentsPath(organisationId)}`,
@@ -516,7 +503,7 @@ export async function notifyHoldingVerified(input: {
   const siteUrl = await siteUrlOrEmpty();
   await notifyEmail(
     "holding_verified",
-    await organisationManagerEmails(input.organisationId),
+    await organisationNotificationEmails(input.organisationId),
     emailCopy.holding_verified({
       fisheryName: input.fisheryName,
       holdingUrl: `${siteUrl}/dashboard/holdings/${input.holdingId}`,
@@ -533,7 +520,7 @@ export async function notifyHoldingNeedsChanges(input: {
   const siteUrl = await siteUrlOrEmpty();
   await notifyEmail(
     "holding_needs_changes",
-    await organisationManagerEmails(input.organisationId),
+    await organisationNotificationEmails(input.organisationId),
     emailCopy.holding_needs_changes({
       fisheryName: input.fisheryName,
       note: input.note,
