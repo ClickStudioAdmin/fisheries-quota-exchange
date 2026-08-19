@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   formatAud,
   formatAudPerUnit,
+  formatListingTotal,
   listingOfferingLabel,
   listingStatusLabel,
   listingTypeLabel,
@@ -25,4 +26,10 @@ test("listingTypeLabel names fixed price and auction", () => {
 
 test("formatAudPerUnit uses a slash, not per", () => {
   assert.equal(formatAudPerUnit(12.5, "kg"), `${formatAud(12.5)} / kg`);
+  assert.equal(formatAudPerUnit(70, "units"), `${formatAud(70)} / Unit`);
+});
+
+test("formatListingTotal multiplies quantity by unit price", () => {
+  assert.equal(formatListingTotal(1500, 0.55), formatAud(825));
+  assert.equal(formatListingTotal("nope", 1), "—");
 });

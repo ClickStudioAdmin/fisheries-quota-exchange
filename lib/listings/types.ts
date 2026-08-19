@@ -46,8 +46,28 @@ export function formatAud(value: string | number) {
   }).format(Number(value));
 }
 
+export function unitPriceSuffix(unit: string) {
+  return unit.trim().toLowerCase() === "units" ? "Unit" : unit.trim();
+}
+
 export function formatAudPerUnit(value: string | number, unit: string) {
-  return `${formatAud(value)} / ${unit}`;
+  return `${formatAud(value)} / ${unitPriceSuffix(unit)}`;
+}
+
+export function listingTotalAud(
+  quantity: string | number,
+  unitPrice: string | number,
+) {
+  const total = Number(quantity) * Number(unitPrice);
+  return Number.isFinite(total) ? total : null;
+}
+
+export function formatListingTotal(
+  quantity: string | number,
+  unitPrice: string | number,
+) {
+  const total = listingTotalAud(quantity, unitPrice);
+  return total == null ? "—" : formatAud(total);
 }
 
 export function listingTypeLabel(type: ListingType) {
