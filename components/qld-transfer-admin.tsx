@@ -6,6 +6,7 @@ import {
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge } from "@/components/status-badge";
 import { LabeledFields, panelClassName } from "@/components/surface";
+import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
 import {
@@ -36,6 +37,7 @@ export function QldTransferAdmin({
   reviewQueue?: number[];
 }) {
   const remaining = reviewQueue.filter((id) => id !== workspace.order.id);
+  const order = workspace.order;
   const status = workspace.application?.status ?? "READY";
   const complete =
     workspace.buyerMissing.length === 0 && workspace.sellerMissing.length === 0;
@@ -47,10 +49,36 @@ export function QldTransferAdmin({
   const formMeta = workspace.process.formType
     ? `${workspace.process.formType} ${workspace.process.formVersion}`
     : null;
+  const fishery = workspace.jurisdictionCode
+    ? `${workspace.jurisdictionCode} · ${order.fishery_name}`
+    : order.fishery_name;
 
   return (
     <div className="mt-2 min-w-0 space-y-6">
       <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
+        <section className={panelClassName}>
+          <h3 className="text-lg font-semibold text-ink">Order</h3>
+          <div className="mt-4">
+            <LabeledFields
+              items={[
+                { label: "Order", value: String(order.id) },
+                { label: "Buyer", value: order.buyer_name },
+                { label: "Seller", value: order.seller_name },
+                {
+                  label: "Offering",
+                  value: listingOfferingLabel(order.offering),
+                },
+                { label: "Fishery", value: fishery },
+                { label: "Quota type", value: order.quota_type_name },
+                {
+                  label: "Quantity",
+                  value: `${order.quantity} ${order.unit_label}`,
+                },
+                { label: "Amount", value: formatAud(order.amount_aud) },
+              ]}
+            />
+          </div>
+        </section>
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Application</h3>
           <p className="mt-1 text-sm text-ink-muted">
@@ -130,7 +158,7 @@ export function QldTransferAdmin({
           ) : null}
           {canGenerate ? (
             <form action={generateTransferDocumentAdminAction} className="mt-4">
-              <input type="hidden" name="order_id" value={workspace.order.id} />
+              <input type="hidden" name="order_id" value={order.id} />
               {queueFields(remaining)}
               <PendingSubmitButton
                 className={tableButtonClassName}
@@ -143,10 +171,9 @@ export function QldTransferAdmin({
             </form>
           ) : null}
         </section>
-      </div>
-      {workspace.latestUnsigned ? (
-        <section className={panelClassName}>
-          <h3 className="text-lg font-semibold text-ink">Signed pack</h3>
+        {workspace.latestUnsigned ? (
+          <section className={panelClassName}>
+            <h3 className="text-lg font-semibold text-ink">Signed pack</h3>
           <p className="mt-1 text-sm text-ink-muted">
             Upload the completed, witnessed PDF. This does not overwrite the
             unsigned application.

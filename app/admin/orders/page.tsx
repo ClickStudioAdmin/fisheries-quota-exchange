@@ -296,24 +296,9 @@ export default async function AdminOrdersPage({
               key={order.id}
               className="space-y-4 py-6 first:pt-0 last:pb-0"
             >
-              <div>
-                <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-                  {index + 1} of {queueOrders.length}
-                </p>
-                <h3 className="mt-1 text-lg font-semibold text-ink">
-                  Order {order.id} · {order.buyer_name} / {order.seller_name}
-                </h3>
-                <p className="mt-1 text-sm text-ink-muted">
-                  {listingOfferingLabel(order.offering)} ·{" "}
-                  {fisherySelectLabelForName(
-                    order.fishery_name,
-                    fisheries,
-                    jurisdictions,
-                  )}{" "}
-                  · {order.quantity} {order.unit_label} ·{" "}
-                  {formatAud(order.amount_aud)}
-                </p>
-              </div>
+              <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+                {index + 1} of {queueOrders.length}
+              </p>
               <ReviewTransferForms
                 order={order}
                 reviewQueue={queueOrders.map((item) => item.id)}
