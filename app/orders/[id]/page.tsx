@@ -168,6 +168,11 @@ export default async function OrderPage({
   });
   const showCheckout = payPanel === "checkout";
   const showPending = payPanel === "pending";
+  const showWaitingForPayment =
+    order.status === "AWAITING_PAYMENT" && !showCheckout && !showPending;
+  const paymentConfirmingForOthers =
+    showWaitingForPayment &&
+    (paymentRecorded || paymentLive === "processing");
   const updateNotes = latestComplianceUpdateNotes(events);
   const showBuyerUpdate = Boolean(updateNotes.buyer) && (admin || isBuyer);
   const showSellerUpdate = Boolean(updateNotes.seller) && (admin || isSeller);
@@ -250,7 +255,7 @@ export default async function OrderPage({
 
   return (
     <div>
-      {showPending ? <OrderPaymentPoll /> : null}
+      {showPending || paymentConfirmingForOthers ? <OrderPaymentPoll /> : null}
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         {showCheckout ? "Checkout" : `Order ${order.id}`}
       </h1>
@@ -367,6 +372,23 @@ export default async function OrderPage({
           <p className="text-sm text-ink-muted">
             Payments are not configured, so this order cannot be charged yet.
           </p>
+        ) : showWaitingForPayment ? (
+          <div className={panelClassName}>
+            <h2 className="text-lg font-semibold text-ink">
+              {paymentConfirmingForOthers
+                ? "Payment pending"
+                : "Waiting for payment"}
+            </h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              {paymentRecorded
+                ? "FQX has recorded payment and is confirming it. The order will move to compliance next. You do not need to do anything."
+                : paymentLive === "processing"
+                  ? "The buyer submitted an Australian bank debit. Stripe may show Incoming until it clears. This page will update when payment is confirmed. You do not need to do anything."
+                  : isSeller
+                    ? "The buyer reserved this quota and must pay FQX. FQX will hold the funds until settlement. You receive the listed amount minus the platform fee at settlement, not now. You do not need to do anything. If the buyer does not pay, the reservation is released and the quota can be sold again."
+                    : "The buyer reserved this quota and must pay FQX. FQX will hold the funds until settlement. The seller is paid the listed amount minus the platform fee at settlement. If the buyer does not pay, the reservation is released."}
+            </p>
+          </div>
         ) : order.status === "AWAITING_COMPLIANCE" ? (
           <SuccessNotice title="Payment received">
             {isSeller
