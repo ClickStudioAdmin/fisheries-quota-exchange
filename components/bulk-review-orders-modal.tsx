@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { tableSecondaryButtonClassName } from "@/components/auth-card";
 
@@ -14,7 +14,9 @@ export function BulkReviewOrdersModal({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const [closing, setClosing] = useState(false);
   const close = useCallback(() => {
+    setClosing(true);
     router.push("/admin/orders");
   }, [router]);
 
@@ -28,6 +30,10 @@ export function BulkReviewOrdersModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [close]);
+
+  if (closing) {
+    return null;
+  }
 
   return (
     <div

@@ -28,8 +28,13 @@ export function TableModal({
   children,
 }: TableModalProps) {
   const [open, setOpen] = useState(false);
+  const [held, setHeld] = useState(false);
   const titleId = useId();
   const close = useCallback(() => setOpen(false), []);
+  const show = useCallback(() => {
+    setHeld(true);
+    setOpen(true);
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -51,18 +56,24 @@ export function TableModal({
       <button
         type="button"
         className={triggerClassName}
-        onClick={() => setOpen(true)}
+        onClick={show}
       >
         {label}
       </button>
-      {open ? (
+      {held ? (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 pt-16"
+          className={
+            open
+              ? "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 pt-16"
+              : "hidden"
+          }
           onClick={close}
+          inert={!open}
+          aria-hidden={!open}
         >
           <div
             role="dialog"
-            aria-modal="true"
+            aria-modal={open}
             aria-labelledby={titleId}
             className={`mb-16 w-full min-w-0 border border-line p-6 ${
               wide

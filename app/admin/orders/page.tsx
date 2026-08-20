@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { startOrderQueueAction } from "@/lib/orders/actions";
 import { listAllOrders } from "@/lib/orders/queries";
 import {
@@ -20,7 +19,6 @@ import { TableModal } from "@/components/table-modal";
 import { CancelOrderForm } from "@/components/cancel-order-form";
 import { ReviewTransferForms } from "@/components/review-transfer-forms";
 import { BulkReviewOrdersModal } from "@/components/bulk-review-orders-modal";
-import { tableButtonClassName } from "@/components/auth-card";
 import { formatTableDate } from "@/lib/format";
 import { orderStatusLabelFor, transferStatusInputForOrder } from "@/lib/transfers/display";
 import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
@@ -243,46 +241,49 @@ export default async function AdminOrdersPage({
           };
         })}
       >
-        {orders.map((order) => (
-          <DataTableRowExtras
-            key={order.id}
-            id={order.id}
-            links={<OrderTableLinks orderId={order.id} />}
-            actions={
-              <>
-                {order.status === "AWAITING_COMPLIANCE" ? (
-                  <TableModal title="Review compliance" label="Review" wide>
+        {orders.map((order) => {
+          const simulated = transferStatusInputForOrder(
+            order,
+            transferApplications.get(order.id),
+            fisheries,
+            jurisdictions,
+          ).usesSimulatedTransfer;
+
+          return (
+            <DataTableRowExtras
+              key={order.id}
+              id={order.id}
+              links={<OrderTableLinks orderId={order.id} />}
+              actions={
+                <>
+                  {order.status === "AWAITING_COMPLIANCE" ? (
+                    <TableModal title="Review compliance" label="Review" wide>
+                      <ReviewTransferForms order={order} />
+                    </TableModal>
+                  ) : null}
+                  {order.status === "AWAITING_PAYMENT" ||
+                  order.status === "AWAITING_COMPLIANCE" ? (
+                    <TableModal title="Cancel order" label="Cancel">
+                      <CancelOrderForm order={order} />
+                    </TableModal>
+                  ) : null}
+                  {order.status === "AWAITING_TRANSFER" ? (
+                    <TableModal
+                      title={simulated ? "Simulate transfer" : "Transfer"}
+                      label={adminTransferActionLabel(simulated)}
+                      wide={!simulated}
+                    >
+                      <ReviewTransferForms order={order} />
+                    </TableModal>
+                  ) : null}
+                  {order.status === "AWAITING_SETTLEMENT" ? (
                     <ReviewTransferForms order={order} />
-                  </TableModal>
-                ) : null}
-                {order.status === "AWAITING_PAYMENT" ||
-                order.status === "AWAITING_COMPLIANCE" ? (
-                  <TableModal title="Cancel order" label="Cancel">
-                    <CancelOrderForm order={order} />
-                  </TableModal>
-                ) : null}
-                {order.status === "AWAITING_TRANSFER" ? (
-                  <Link
-                    href={`/admin/orders?queue=${order.id}`}
-                    className={tableButtonClassName}
-                  >
-                    {adminTransferActionLabel(
-                      transferStatusInputForOrder(
-                        order,
-                        transferApplications.get(order.id),
-                        fisheries,
-                        jurisdictions,
-                      ).usesSimulatedTransfer,
-                    )}
-                  </Link>
-                ) : null}
-                {order.status === "AWAITING_SETTLEMENT" ? (
-                  <ReviewTransferForms order={order} />
-                ) : null}
-              </>
-            }
-          />
-        ))}
+                  ) : null}
+                </>
+              }
+            />
+          );
+        })}
       </DataTable>
       {queueOrders.length > 0 &&
       queueStatus &&
