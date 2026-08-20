@@ -52,7 +52,7 @@ const DANGER = new Set([
 
 const INFO = new Set(["platform admin"]);
 
-export const ACTION_STATUS_TONE_CLASS = "bg-amber-400 text-amber-950";
+export const ACTION_STATUS_TONE_CLASS = "bg-amber-200 text-amber-900";
 
 function normalizeStatus(value: string) {
   return value
