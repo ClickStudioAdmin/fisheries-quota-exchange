@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { OrderCheckout } from "@/components/order-checkout";
 import { OrderCheckoutStatus } from "@/components/order-checkout-status";
 import { OrderPaymentPoll } from "@/components/order-payment-poll";
-import { buttonClassName } from "@/components/auth-card";
+import { PdfDownloadLink } from "@/components/pdf-download-link";
 import {
   getOrder,
   getReservationForOrder,
@@ -41,6 +41,7 @@ import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 import { taxInvoicePath } from "@/lib/invoices/types";
 import { getTransferWorkspace } from "@/lib/transfers/queries";
+import { transferDocumentPath } from "@/lib/transfers/types";
 import { TransferOrderPanel } from "@/components/transfer-order-panel";
 import { SuccessNotice } from "@/components/notices";
 import { ViewMessageModal } from "@/components/view-message-modal";
@@ -92,7 +93,9 @@ export default async function OrderPage({
       isPlatformAdmin(),
       getPaymentForOrder(order.id),
       getActiveOrganisation(),
-      order.status === "AWAITING_TRANSFER"
+      order.status === "AWAITING_TRANSFER" ||
+      order.status === "AWAITING_SETTLEMENT" ||
+      order.status === "COMPLETED"
         ? getTransferWorkspace(order.id)
         : Promise.resolve(null),
     ]);
@@ -380,25 +383,42 @@ export default async function OrderPage({
           </div>
         ) : order.status === "COMPLETED" ? (
           <div className={panelClassName}>
-            <h2 className="text-lg font-semibold text-ink">Tax invoices</h2>
+            <h2 className="text-lg font-semibold text-ink">Documents</h2>
             <p className="mt-2 text-sm text-ink-muted">
+              {transferWorkspace?.latestSignedPack
+                ? "The signed application is the pack lodged with Fisheries Queensland. "
+                : null}
               Dummy invoices from simulated settlement. GST is not calculated.
               These are not real tax invoices. The quota invoice is from the
               seller to the buyer. The fee invoice is from FQX to the seller.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a
+            <div className="mt-4 flex max-w-lg flex-col gap-2">
+              {transferWorkspace?.latestSignedPack ? (
+                <PdfDownloadLink
+                  href={transferDocumentPath(
+                    order.id,
+                    transferWorkspace.latestSignedPack.id,
+                  )}
+                  hint={
+                    transferWorkspace.latestSignedPack.original_filename ??
+                    "Signed application"
+                  }
+                >
+                  Download signed application
+                </PdfDownloadLink>
+              ) : null}
+              <PdfDownloadLink
                 href={taxInvoicePath(order.id, "quota")}
-                className={`${buttonClassName} inline-block`}
+                hint="Seller to buyer · Dummy invoice"
               >
                 Download quota invoice
-              </a>
-              <a
+              </PdfDownloadLink>
+              <PdfDownloadLink
                 href={taxInvoicePath(order.id, "fee")}
-                className={`${buttonClassName} inline-block`}
+                hint="FQX to seller · Dummy invoice"
               >
                 Download fee invoice
-              </a>
+              </PdfDownloadLink>
             </div>
           </div>
         ) : null}

@@ -141,7 +141,12 @@ export async function HoldingRecord({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {variant === "admin" && !verified ? (
-              <TableModal title="Review holding" label="Review" wide>
+              <TableModal
+                persistKey={`holding-${holding.id}-review`}
+                title="Review holding"
+                label="Review"
+                wide
+              >
                 <HoldingVerificationPanel holdingId={holding.id} />
               </TableModal>
             ) : null}

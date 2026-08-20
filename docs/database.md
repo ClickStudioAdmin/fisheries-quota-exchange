@@ -11,7 +11,7 @@ Current tables:
 | `organisation_jurisdiction_profiles` | 10 | Per-business regulator fields (Queensland fisheries client number, commercial fishing licence, symbols). Shown on Business Settings → Details when Queensland is selected. Client number and licence are required to buy or list Queensland quota; symbols stay optional. |
 | `transfer_form_templates` | 10 | Versioned transfer form metadata (FDU1465 `V09/23` for Queensland sales, FDU1469 `V02/26` for Queensland leases). |
 | `transfer_applications` | 10 | One per order. Child status for jurisdiction transfer while `orders.status` stays `AWAITING_TRANSFER`. Sequential QLD signing: `AWAITING_SELLER_SIGNATURE` → `AWAITING_SELLER_PACK_REVIEW` → `AWAITING_BUYER_SIGNATURE` → `ADMIN_REVIEW`. `seller_pack_checklist` is the saved seller-form review steps. |
-| `transfer_documents` | 10 | Stored unsigned applications, seller-signed forms, completed packs, and supporting files. Rows are not updated in place. |
+| `transfer_documents` | 10 | Stored unsigned applications, seller-signed forms, completed packs, and supporting files. Rows are not updated in place. The UI lists only files from the current unsigned application. Stored names use `FQX-order-{id}-{form}-{kind}-v{n}.pdf`. |
 | `organisation_users` | 1 | Email membership, role, and display name. |
 | `organisation_invitations` | 9 | Pending membership invites. A person is not a member until they accept. |
 | `platform_admins` | 5 | Platform administrators. |

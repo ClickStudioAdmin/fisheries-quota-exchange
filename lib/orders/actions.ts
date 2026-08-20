@@ -53,12 +53,11 @@ function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
 }
 
-function redirectAfterOrderQueue(formData: FormData) {
+function refreshAfterOrderQueue(formData: FormData) {
   const orderId = Number(formData.get("order_id"));
   revalidateOrderSurfaces(
     Number.isInteger(orderId) && orderId > 0 ? orderId : undefined,
   );
-  redirect(orderQueuePath(formData.getAll("review_queue").map(String)));
 }
 
 async function currentOrderForStatus(formData: FormData, status: OrderStatus) {
@@ -187,7 +186,6 @@ export async function cancelOrderAction(formData: FormData) {
 
   const supabase = await createClient();
   const orderId = Number(formData.get("order_id"));
-  const next = read(formData, "next") || "/admin/orders";
 
   if (!supabase || !Number.isInteger(orderId)) {
     return;
@@ -195,7 +193,6 @@ export async function cancelOrderAction(formData: FormData) {
 
   await supabase.rpc("cancel_order", { p_order_id: orderId });
   revalidateOrderSurfaces(orderId);
-  redirect(next);
 }
 
 export async function startOrderQueueAction(formData: FormData) {
@@ -291,7 +288,7 @@ export async function approveComplianceAction(formData: FormData) {
     }
   }
 
-  redirectAfterOrderQueue(formData);
+  refreshAfterOrderQueue(formData);
 }
 
 export async function rejectComplianceAction(formData: FormData) {
@@ -315,7 +312,7 @@ export async function rejectComplianceAction(formData: FormData) {
     }
   }
 
-  redirectAfterOrderQueue(formData);
+  refreshAfterOrderQueue(formData);
 }
 
 export async function requestComplianceUpdateAction(
@@ -386,7 +383,7 @@ export async function simulateTransferAction(formData: FormData) {
     }
   }
 
-  redirectAfterOrderQueue(formData);
+  refreshAfterOrderQueue(formData);
 }
 
 export async function simulateSettlementAction(formData: FormData) {
@@ -405,7 +402,7 @@ export async function simulateSettlementAction(formData: FormData) {
       if (transfer.error) {
         console.error("transferOrderSellerProceeds failed", transfer.error);
         await notifySettlementFailed(order);
-        redirectAfterOrderQueue(formData);
+        refreshAfterOrderQueue(formData);
       }
     }
 
@@ -426,5 +423,5 @@ export async function simulateSettlementAction(formData: FormData) {
     }
   }
 
-  redirectAfterOrderQueue(formData);
+  refreshAfterOrderQueue(formData);
 }

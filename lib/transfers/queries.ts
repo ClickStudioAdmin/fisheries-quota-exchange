@@ -11,8 +11,9 @@ import { getOrder } from "@/lib/orders/queries";
 import type { Order } from "@/lib/orders/types";
 import { isEntityKind } from "@/lib/organisations/types";
 import { parseAustralianAddress } from "@/lib/organisations/address";
-import { getTransferProcess } from "@/lib/transfers/registry";
+import { currentTransferDocuments } from "@/lib/transfers/filenames";
 import { missingTransferProfileFields } from "@/lib/transfers/profile";
+import { getTransferProcess } from "@/lib/transfers/registry";
 import type { TransferApplicationPdfData, TransferPartyDetails, TransferSignatory } from "@/lib/transfers/application-data";
 import {
   isTransferApplicationStatus,
@@ -358,6 +359,8 @@ export async function getTransferWorkspace(
       })
     : [...process.requiredProfileFields];
 
+  const current = currentTransferDocuments(documents);
+
   return {
     order,
     process,
@@ -368,13 +371,9 @@ export async function getTransferWorkspace(
     seller: parties.seller,
     buyerMissing,
     sellerMissing,
-    latestUnsigned:
-      documents.find((doc) => doc.document_type === "UNSIGNED_APPLICATION") ??
-      null,
-    latestSellerSigned:
-      documents.find((doc) => doc.document_type === "SELLER_SIGNED") ?? null,
-    latestSignedPack:
-      documents.find((doc) => doc.document_type === "SIGNED_PACK") ?? null,
+    latestUnsigned: current.latestUnsigned,
+    latestSellerSigned: current.latestSellerSigned,
+    latestSignedPack: current.latestSignedPack,
   };
 }
 

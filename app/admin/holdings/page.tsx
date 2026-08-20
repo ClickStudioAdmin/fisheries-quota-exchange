@@ -151,7 +151,12 @@ export default async function HoldingsAdminPage({
             }
             actions={
               holdingIsVerified(holding) ? null : (
-                <TableModal title="Review holding" label="Review" wide>
+                <TableModal
+                  persistKey={`holding-${holding.id}-review`}
+                  title="Review holding"
+                  label="Review"
+                  wide
+                >
                   <HoldingVerificationPanel holdingId={holding.id} />
                 </TableModal>
               )

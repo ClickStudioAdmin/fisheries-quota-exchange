@@ -455,12 +455,6 @@ export async function verifyHoldingAction(formData: FormData) {
   revalidatePath(`/admin/holdings/${holdingId}`);
   revalidatePath(`/dashboard/holdings/${holdingId}`);
   revalidatePath("/admin/users", "layout");
-
-  if (String(formData.get("from_queue") ?? "") === "1") {
-    redirect(
-      holdingVerifyPath(formData.getAll("review_queue").map(String)),
-    );
-  }
 }
 
 export async function requestHoldingChangesAction(formData: FormData) {

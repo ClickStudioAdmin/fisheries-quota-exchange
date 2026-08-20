@@ -170,7 +170,12 @@ export default async function AdminListingsPage({
             }
             actions={
               listing.status === "PENDING_APPROVAL" ? (
-                <TableModal title="Review listing" label="Review" wide>
+                <TableModal
+                  persistKey={`listing-${listing.id}-review`}
+                  title="Review listing"
+                  label="Review"
+                  wide
+                >
                   <ListingApprovalPanel listingId={listing.id} />
                 </TableModal>
               ) : null

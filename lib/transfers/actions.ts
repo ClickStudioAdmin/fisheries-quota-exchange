@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { userFacingError } from "@/lib/errors/user-message";
 import {
@@ -15,14 +14,16 @@ import {
 import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
 import { getOrder } from "@/lib/orders/queries";
 import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
-import { orderQueuePath } from "@/lib/orders/types";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { createClient, getUser } from "@/lib/supabase/server";
 import {
   generateTransferApplicationPdf,
-  unsignedTransferFilename,
 } from "@/lib/transfers/generate";
+import {
+  nextTransferDocumentVersion,
+  transferStoredFilenameForType,
+} from "@/lib/transfers/filenames";
 import {
   getTransferDocumentFile,
   getTransferWorkspace,
@@ -42,14 +43,6 @@ export type TransferFormState = {
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
-}
-
-function redirectAfterQueue(formData: FormData): never {
-  const orderId = Number(formData.get("order_id"));
-  revalidateOrderSurfaces(
-    Number.isInteger(orderId) && orderId > 0 ? orderId : undefined,
-  );
-  redirect(orderQueuePath(formData.getAll("review_queue").map(String)));
 }
 
 async function canManageTransfer(order: {
@@ -218,10 +211,15 @@ export async function generateTransferDocumentAction(
       error: userFacingError(error, "Could not prepare the application PDF."),
     };
   }
-  const filename = unsignedTransferFilename({
+  const filename = transferStoredFilenameForType({
     orderId,
+    type: "UNSIGNED_APPLICATION",
     formType: pdfData.formType,
     formVersion: pdfData.formVersion,
+    version: nextTransferDocumentVersion(
+      workspace.documents,
+      "UNSIGNED_APPLICATION",
+    ),
   });
   const stored = await storeTransferFile({
     orderId,
@@ -270,11 +268,7 @@ export async function generateTransferDocumentAdminAction(
   _prev: TransferFormState,
   formData: FormData,
 ): Promise<TransferFormState> {
-  const result = await generateTransferDocumentAction({}, formData);
-  if (result.error) {
-    return result;
-  }
-  redirectAfterQueue(formData);
+  return generateTransferDocumentAction({}, formData);
 }
 
 export async function uploadPartyTransferDocumentAction(
@@ -329,10 +323,21 @@ export async function uploadPartyTransferDocumentAction(
     return { error: userFacingError(uploadError) };
   }
 
+  const documentType =
+    workspace.application.status === "AWAITING_SELLER_SIGNATURE"
+      ? "SELLER_SIGNED"
+      : "SIGNED_PACK";
+  const filename = transferStoredFilenameForType({
+    orderId: workspace.order.id,
+    type: documentType,
+    formType: workspace.process.formType,
+    formVersion: workspace.process.formVersion,
+    version: nextTransferDocumentVersion(workspace.documents, documentType),
+  });
   const { data, error } = await supabase.rpc("record_party_transfer_upload", {
     p_order_id: workspace.order.id,
     p_storage_path: path,
-    p_filename: file.name || "signed-form.pdf",
+    p_filename: filename,
   });
 
   if (error) {
@@ -360,9 +365,12 @@ export async function uploadPartyTransferDocumentAction(
   };
 }
 
-export async function uploadSignedPackAction(formData: FormData) {
+export async function uploadSignedPackAction(
+  _prev: TransferFormState,
+  formData: FormData,
+): Promise<TransferFormState> {
   if (!(await isPlatformAdmin())) {
-    return;
+    return { error: "Not a platform admin." };
   }
 
   const orderId = Number(formData.get("order_id"));
@@ -375,10 +383,9 @@ export async function uploadSignedPackAction(formData: FormData) {
     file.size === 0 ||
     file.size > 10 * 1024 * 1024
   ) {
-    redirectAfterQueue(formData);
+    return { error: "Choose a PDF up to 10 MB." };
   }
 
-  const signedFile = file as File;
   const workspace = await getTransferWorkspace(orderId);
 
   if (
@@ -387,7 +394,7 @@ export async function uploadSignedPackAction(formData: FormData) {
     workspace.process.usesSimulatedTransfer ||
     !workspace.latestUnsigned
   ) {
-    redirectAfterQueue(formData);
+    return { error: "This order is not waiting for an offline upload." };
   }
 
   const application = workspace.application;
@@ -401,46 +408,58 @@ export async function uploadSignedPackAction(formData: FormData) {
       status === "AWAITING_BUYER_SIGNATURE");
 
   if (!sellerSigned && !completedPack) {
-    redirectAfterQueue(formData);
+    return { error: "This file cannot be uploaded at this step." };
   }
 
+  const documentType = sellerSigned ? "SELLER_SIGNED" : "SIGNED_PACK";
   const stored = await storeTransferFile({
     orderId: workspace.order.id,
     applicationId: application.id,
-    file: signedFile,
-    contentType: signedFile.type || "application/pdf",
-    documentType: sellerSigned ? "SELLER_SIGNED" : "SIGNED_PACK",
+    file,
+    contentType: file.type || "application/pdf",
+    documentType,
     formType: workspace.process.formType,
     formVersion: workspace.process.formVersion,
-    filename: signedFile.name || "signed-pack.pdf",
+    filename: transferStoredFilenameForType({
+      orderId: workspace.order.id,
+      type: documentType,
+      formType: workspace.process.formType,
+      formVersion: workspace.process.formVersion,
+      version: nextTransferDocumentVersion(workspace.documents, documentType),
+    }),
   });
 
-  if (!stored.error) {
-    await setTransferApplicationStatus(
-      application.id,
-      sellerSigned ? "AWAITING_SELLER_PACK_REVIEW" : "ADMIN_REVIEW",
-      sellerSigned ? { seller_pack_checklist: [] } : {},
-    );
-    await writeOrderAudit(
-      workspace.order.id,
-      sellerSigned
-        ? "TRANSFER_SELLER_SIGNED_UPLOADED"
-        : "TRANSFER_SIGNED_PACK_UPLOADED",
-      { document_id: stored.documentId },
-    );
-    try {
-      if (sellerSigned) {
-        await notifyTransferSellerSignedReceived(workspace.order);
-      } else {
-        await notifyTransferBuyerSignedReceived(workspace.order);
-      }
-    } catch (error) {
-      console.error("admin transfer upload notify failed", error);
-    }
-    revalidateTransfer(workspace.order.id);
+  if (stored.error) {
+    return { error: stored.error };
   }
 
-  redirectAfterQueue(formData);
+  await setTransferApplicationStatus(
+    application.id,
+    sellerSigned ? "AWAITING_SELLER_PACK_REVIEW" : "ADMIN_REVIEW",
+    sellerSigned ? { seller_pack_checklist: [] } : {},
+  );
+  await writeOrderAudit(
+    workspace.order.id,
+    sellerSigned
+      ? "TRANSFER_SELLER_SIGNED_UPLOADED"
+      : "TRANSFER_SIGNED_PACK_UPLOADED",
+    { document_id: stored.documentId },
+  );
+  try {
+    if (sellerSigned) {
+      await notifyTransferSellerSignedReceived(workspace.order);
+    } else {
+      await notifyTransferBuyerSignedReceived(workspace.order);
+    }
+  } catch (error) {
+    console.error("admin transfer upload notify failed", error);
+  }
+  revalidateTransfer(workspace.order.id);
+  return {
+    message: sellerSigned
+      ? "Seller-signed form uploaded."
+      : "Completed pack uploaded.",
+  };
 }
 
 export async function saveSellerPackChecklistAction(
@@ -498,7 +517,8 @@ export async function saveSellerPackChecklistAction(
   }
 
   await releaseSellerPackToBuyer(workspace);
-  redirectAfterQueue(formData);
+  revalidateTransfer(workspace.order.id);
+  return { message: "Released to the buyer.", completed };
 }
 
 export async function returnSellerPackAction(formData: FormData) {
@@ -516,7 +536,7 @@ export async function returnSellerPackAction(formData: FormData) {
     !workspace?.application ||
     workspace.application.status !== "AWAITING_SELLER_PACK_REVIEW"
   ) {
-    redirectAfterQueue(formData);
+    return;
   }
 
   await setTransferApplicationStatus(
@@ -537,7 +557,6 @@ export async function returnSellerPackAction(formData: FormData) {
   }
 
   revalidateTransfer(workspace.order.id);
-  redirectAfterQueue(formData);
 }
 
 export async function recordFqSubmissionAction(formData: FormData) {
@@ -571,7 +590,6 @@ export async function recordFqSubmissionAction(formData: FormData) {
     revalidateTransfer(workspace.order.id);
   }
 
-  redirectAfterQueue(formData);
 }
 
 export async function recordTransferProcessingAction(formData: FormData) {
@@ -590,7 +608,6 @@ export async function recordTransferProcessingAction(formData: FormData) {
     revalidateTransfer(workspace.order.id);
   }
 
-  redirectAfterQueue(formData);
 }
 
 export async function recordTransferActionRequiredAction(formData: FormData) {
@@ -616,7 +633,6 @@ export async function recordTransferActionRequiredAction(formData: FormData) {
     revalidateTransfer(workspace.order.id);
   }
 
-  redirectAfterQueue(formData);
 }
 
 export async function approveQldTransferAction(formData: FormData) {
@@ -661,5 +677,4 @@ export async function approveQldTransferAction(formData: FormData) {
     revalidateTransfer(workspace.order.id);
   }
 
-  redirectAfterQueue(formData);
 }

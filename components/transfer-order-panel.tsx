@@ -98,6 +98,7 @@ export function TransferOrderPanel({
           {sellerDownload ? (
             <PdfDownloadLink
               href={transferDocumentPath(workspace.order.id, sellerDownload.id)}
+              hint={sellerDownload.original_filename ?? "PDF document"}
             >
               Download application PDF
             </PdfDownloadLink>
@@ -108,6 +109,9 @@ export function TransferOrderPanel({
                 workspace.order.id,
                 workspace.latestSellerSigned.id,
               )}
+              hint={
+                workspace.latestSellerSigned.original_filename ?? "PDF document"
+              }
             >
               Download seller-signed PDF
             </PdfDownloadLink>

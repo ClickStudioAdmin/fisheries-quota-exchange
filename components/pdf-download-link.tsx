@@ -19,7 +19,7 @@ export function PdfDownloadLink({
         <span className="block truncate text-sm font-medium text-ink">
           {children}
         </span>
-        <span className="mt-0.5 block text-xs text-ink-muted">{hint}</span>
+        <span className="mt-0.5 block truncate text-xs text-ink-muted">{hint}</span>
       </span>
       <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-sea">
         Download

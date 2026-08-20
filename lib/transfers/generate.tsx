@@ -14,13 +14,3 @@ export async function generateTransferApplicationPdf(
 
   return renderToBuffer(<TransferApplicationDocument data={data} />);
 }
-
-export function unsignedTransferFilename(input: {
-  orderId: number;
-  formType: string;
-  formVersion: string;
-}) {
-  const form = input.formType.replace(/[^A-Za-z0-9]+/g, "-");
-  const version = input.formVersion.replace(/[^A-Za-z0-9]+/g, "");
-  return `FQX-order-${input.orderId}-${form}-${version}-unsigned.pdf`;
-}

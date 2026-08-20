@@ -4,6 +4,7 @@ import {
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
 import { QldGenerateApplicationForm } from "@/components/qld-generate-application-form";
+import { QldOfflineUploadForm } from "@/components/qld-offline-upload-form";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge } from "@/components/status-badge";
 import { LabeledFields, panelClassName } from "@/components/surface";
@@ -19,7 +20,6 @@ import {
   recordTransferProcessingAction,
   returnSellerPackAction,
   saveSellerPackChecklistAction,
-  uploadSignedPackAction,
 } from "@/lib/transfers/actions";
 import {
   transferApplicationStatusLabel,
@@ -141,7 +141,8 @@ export function QldTransferAdmin({
           <p className="mt-1 text-sm text-ink-muted">
             Generate the unsigned application from stored business details. The
             seller signs first. FQX checks that file before the buyer can
-            download it.
+            download it. Regenerating stores a new unsigned PDF. Earlier signed
+            files stay stored, but only this application’s files are listed.
           </p>
           {workspace.latestUnsigned ||
           workspace.latestSellerSigned ||
@@ -150,6 +151,7 @@ export function QldTransferAdmin({
               {workspace.latestUnsigned ? (
                 <PdfDownloadLink
                   href={transferDocumentPath(order.id, workspace.latestUnsigned.id)}
+                  hint={workspace.latestUnsigned.original_filename ?? "PDF document"}
                 >
                   Download unsigned PDF
                 </PdfDownloadLink>
@@ -160,6 +162,10 @@ export function QldTransferAdmin({
                     order.id,
                     workspace.latestSellerSigned.id,
                   )}
+                  hint={
+                    workspace.latestSellerSigned.original_filename ??
+                    "PDF document"
+                  }
                 >
                   Download seller-signed PDF
                 </PdfDownloadLink>
@@ -170,6 +176,9 @@ export function QldTransferAdmin({
                     order.id,
                     workspace.latestSignedPack.id,
                   )}
+                  hint={
+                    workspace.latestSignedPack.original_filename ?? "PDF document"
+                  }
                 >
                   Download completed pack
                 </PdfDownloadLink>
@@ -199,61 +208,23 @@ export function QldTransferAdmin({
               not overwrite stored files.
             </p>
             {status === "AWAITING_SELLER_SIGNATURE" ? (
-              <form action={uploadSignedPackAction} className="mt-4 space-y-3">
-                <input type="hidden" name="order_id" value={order.id} />
-                <input type="hidden" name="pack_kind" value="seller_signed" />
-                {queueFields(remaining)}
-                <div>
-                  <label
-                    htmlFor={`seller-signed-${order.id}`}
-                    className="block text-sm text-ink"
-                  >
-                    Seller-signed PDF
-                  </label>
-                  <input
-                    id={`seller-signed-${order.id}`}
-                    name="signed_pack"
-                    type="file"
-                    accept="application/pdf"
-                    required
-                    className={fieldClassName}
-                  />
-                </div>
-                <PendingSubmitButton
-                  className={tableButtonClassName}
-                  pendingLabel="Uploading…"
-                >
-                  Upload seller-signed form
-                </PendingSubmitButton>
-              </form>
+              <QldOfflineUploadForm
+                orderId={order.id}
+                remainingQueue={remaining}
+                packKind="seller_signed"
+                inputId={`seller-signed-${order.id}`}
+                fileLabel="Seller-signed PDF"
+                submitLabel="Upload seller-signed form"
+              />
             ) : null}
-            <form action={uploadSignedPackAction} className="mt-4 space-y-3">
-              <input type="hidden" name="order_id" value={order.id} />
-              <input type="hidden" name="pack_kind" value="signed_pack" />
-              {queueFields(remaining)}
-              <div>
-                <label
-                  htmlFor={`signed-pack-${order.id}`}
-                  className="block text-sm text-ink"
-                >
-                  Completed pack (both parties signed)
-                </label>
-                <input
-                  id={`signed-pack-${order.id}`}
-                  name="signed_pack"
-                  type="file"
-                  accept="application/pdf"
-                  required
-                  className={fieldClassName}
-                />
-              </div>
-              <PendingSubmitButton
-                className={tableButtonClassName}
-                pendingLabel="Uploading…"
-              >
-                Upload completed pack
-              </PendingSubmitButton>
-            </form>
+            <QldOfflineUploadForm
+              orderId={order.id}
+              remainingQueue={remaining}
+              packKind="signed_pack"
+              inputId={`signed-pack-${order.id}`}
+              fileLabel="Completed pack (both parties signed)"
+              submitLabel="Upload completed pack"
+            />
           </section>
         ) : null}
       </div>

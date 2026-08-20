@@ -37,7 +37,6 @@ const WAITING = new Set([
   "held until settlement",
   "not yet",
   "scheduled",
-  "with fisheries queensland",
 ]);
 
 const IN_REVIEW = new Set([
@@ -45,6 +44,9 @@ const IN_REVIEW = new Set([
   "reviewing completed pack",
   "awaiting seller pack review",
   "admin review",
+  "with fisheries queensland",
+  "submitted",
+  "processing",
 ]);
 
 const DANGER = new Set([
@@ -88,7 +90,8 @@ function isInReviewStatus(key: string) {
   return (
     IN_REVIEW.has(key) ||
     key.startsWith("3 of 6") ||
-    key.startsWith("5 of 6")
+    key.startsWith("5 of 6") ||
+    key.startsWith("6 of 6")
   );
 }
 
@@ -110,7 +113,7 @@ export function statusToneClass(value: string, displayLabel?: string) {
     return IN_REVIEW_STATUS_TONE_CLASS;
   }
 
-  if (keys.some((key) => WAITING.has(key) || key.startsWith("6 of 6"))) {
+  if (keys.some((key) => WAITING.has(key))) {
     return WAITING_STATUS_TONE_CLASS;
   }
 

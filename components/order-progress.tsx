@@ -1,4 +1,9 @@
 import type { OrderStep } from "@/lib/orders/progress";
+import {
+  ACTION_STATUS_TONE_CLASS,
+  IN_REVIEW_STATUS_TONE_CLASS,
+  statusToneClass,
+} from "@/lib/status-tone";
 
 const circleClass: Record<OrderStep["state"], string> = {
   done: "border-sea bg-sea text-paper",
@@ -6,6 +11,24 @@ const circleClass: Record<OrderStep["state"], string> = {
   failed: "border-red-800 bg-red-100 text-red-800",
   upcoming: "border-line bg-paper-raised text-ink-muted",
 };
+
+function currentCircleClass(step: OrderStep) {
+  if (step.state !== "current" || step.id !== "transfer") {
+    return circleClass[step.state];
+  }
+
+  const tone = statusToneClass(step.detail, step.detail);
+
+  if (tone === ACTION_STATUS_TONE_CLASS) {
+    return circleClass.current;
+  }
+
+  if (tone === IN_REVIEW_STATUS_TONE_CLASS) {
+    return "border-sea/40 bg-sea/15 text-sea";
+  }
+
+  return circleClass.current;
+}
 
 const lineClass: Record<OrderStep["state"], string> = {
   done: "bg-sea",
@@ -57,7 +80,7 @@ export function OrderProgress({ steps }: { steps: OrderStep[] }) {
                 aria-hidden
               />
               <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${circleClass[step.state]}`}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${currentCircleClass(step)}`}
               >
                 <StepMark step={step} index={index} />
               </span>

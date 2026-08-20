@@ -209,10 +209,8 @@ export async function cancelListingAction(formData: FormData) {
   redirect(safeNextPath(next));
 }
 
-function redirectAfterListingReview(formData: FormData) {
-  redirect(
-    listingReviewPath(formData.getAll("review_queue").map(String)),
-  );
+function refreshAfterListingReview() {
+  revalidatePath("/admin/listings");
 }
 
 export async function startListingReviewAction(formData: FormData) {
@@ -324,7 +322,7 @@ export async function approveListingAction(formData: FormData) {
     await notifyListingPublished(listing);
   }
 
-  redirectAfterListingReview(formData);
+  refreshAfterListingReview();
 }
 
 export async function rejectListingAction(formData: FormData) {
@@ -355,5 +353,5 @@ export async function rejectListingAction(formData: FormData) {
     await notifyListingRejected(listing, note);
   }
 
-  redirectAfterListingReview(formData);
+  refreshAfterListingReview();
 }

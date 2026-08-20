@@ -257,18 +257,28 @@ export default async function AdminOrdersPage({
               actions={
                 <>
                   {order.status === "AWAITING_COMPLIANCE" ? (
-                    <TableModal title="Review compliance" label="Review" wide>
+                    <TableModal
+                      persistKey={`order-${order.id}-compliance`}
+                      title="Review compliance"
+                      label="Review"
+                      wide
+                    >
                       <ReviewTransferForms order={order} />
                     </TableModal>
                   ) : null}
                   {order.status === "AWAITING_PAYMENT" ||
                   order.status === "AWAITING_COMPLIANCE" ? (
-                    <TableModal title="Cancel order" label="Cancel">
+                    <TableModal
+                      persistKey={`order-${order.id}-cancel`}
+                      title="Cancel order"
+                      label="Cancel"
+                    >
                       <CancelOrderForm order={order} />
                     </TableModal>
                   ) : null}
                   {order.status === "AWAITING_TRANSFER" ? (
                     <TableModal
+                      persistKey={`order-${order.id}-transfer`}
                       title={simulated ? "Simulate transfer" : "Transfer"}
                       label={adminTransferActionLabel(simulated)}
                       wide={!simulated}
