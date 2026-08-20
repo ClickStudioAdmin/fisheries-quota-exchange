@@ -115,6 +115,62 @@ function AddressFields({
   );
 }
 
+function QldFisheriesFields({
+  profile,
+  canEdit,
+}: {
+  profile: OrganisationJurisdictionProfile | null;
+  canEdit: boolean;
+}) {
+  return (
+    <fieldset className="min-w-0 space-y-4 self-start border border-line p-4">
+      <legend className="px-1 text-sm font-semibold text-ink">
+        Queensland Fisheries
+      </legend>
+      <p className="text-sm text-ink-muted">
+        Required for Queensland quota sales and leases. Used to prepare the
+        transfer application after payment and compliance.
+      </p>
+      <div>
+        <label htmlFor="qld_client_reference" className="block text-sm text-ink">
+          Fisheries client number
+        </label>
+        <input
+          id="qld_client_reference"
+          name="qld_client_reference"
+          defaultValue={profile?.client_reference ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+      <div>
+        <label htmlFor="qld_licence_number" className="block text-sm text-ink">
+          Primary commercial fishing licence
+        </label>
+        <input
+          id="qld_licence_number"
+          name="qld_licence_number"
+          defaultValue={profile?.licence_number ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+      <div>
+        <label htmlFor="qld_fishery_symbols" className="block text-sm text-ink">
+          Fishery symbols
+        </label>
+        <input
+          id="qld_fishery_symbols"
+          name="qld_fishery_symbols"
+          defaultValue={profile?.fishery_symbols ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+    </fieldset>
+  );
+}
+
 export function OrganisationDetailsForm({
   organisation,
   qldProfile,
@@ -155,96 +211,110 @@ export function OrganisationDetailsForm({
           {state.message}
         </p>
       ) : null}
-      <div>
-        <label htmlFor="entity_kind" className="block text-sm text-ink">
-          Entity kind
-        </label>
-        <select
-          id="entity_kind"
-          name="entity_kind"
-          value={entityKind}
-          onChange={(event) => setEntityKind(event.target.value)}
-          disabled={!canEdit}
-          className={fieldClassName}
-        >
-          <option value="">Select…</option>
-          <option value="INDIVIDUAL">Individual</option>
-          <option value="COMPANY">Company</option>
-        </select>
-      </div>
-      {entityKind === "COMPANY" ? (
-        <div>
-          <label htmlFor="acn" className="block text-sm text-ink">
-            ACN
-          </label>
-          <input
-            id="acn"
-            name="acn"
-            inputMode="numeric"
-            defaultValue={organisation.acn ?? ""}
-            disabled={!canEdit}
-            className={fieldClassName}
-          />
+      <div
+        className={
+          qldJurisdictionId
+            ? "grid items-start gap-8 lg:grid-cols-2"
+            : "space-y-4"
+        }
+      >
+        <div className="min-w-0 space-y-4">
+          <div>
+            <label htmlFor="entity_kind" className="block text-sm text-ink">
+              Entity kind
+            </label>
+            <select
+              id="entity_kind"
+              name="entity_kind"
+              value={entityKind}
+              onChange={(event) => setEntityKind(event.target.value)}
+              disabled={!canEdit}
+              className={fieldClassName}
+            >
+              <option value="">Select…</option>
+              <option value="INDIVIDUAL">Individual</option>
+              <option value="COMPANY">Company</option>
+            </select>
+          </div>
+          {entityKind === "COMPANY" ? (
+            <div>
+              <label htmlFor="acn" className="block text-sm text-ink">
+                ACN
+              </label>
+              <input
+                id="acn"
+                name="acn"
+                inputMode="numeric"
+                defaultValue={organisation.acn ?? ""}
+                disabled={!canEdit}
+                className={fieldClassName}
+              />
+            </div>
+          ) : null}
+          <div>
+            <label htmlFor="abn" className="block text-sm text-ink">
+              ABN
+            </label>
+            <input
+              id="abn"
+              name="abn"
+              inputMode="numeric"
+              defaultValue={organisation.abn ?? ""}
+              disabled={!canEdit}
+              className={fieldClassName}
+            />
+          </div>
+          <div>
+            <label htmlFor="legal_name" className="block text-sm text-ink">
+              Legal name
+            </label>
+            <input
+              id="legal_name"
+              name="legal_name"
+              required={canEdit}
+              defaultValue={organisation.legal_name}
+              disabled={!canEdit}
+              className={fieldClassName}
+            />
+          </div>
+          <div>
+            <label htmlFor="trading_name" className="block text-sm text-ink">
+              Trading name
+            </label>
+            <input
+              id="trading_name"
+              name="trading_name"
+              defaultValue={organisation.trading_name ?? ""}
+              disabled={!canEdit}
+              className={fieldClassName}
+            />
+          </div>
+          <div>
+            <label htmlFor="mobile" className="block text-sm text-ink">
+              Phone
+            </label>
+            <input
+              id="mobile"
+              name="mobile"
+              inputMode="tel"
+              autoComplete="tel"
+              defaultValue={organisation.mobile ?? ""}
+              disabled={!canEdit}
+              className={fieldClassName}
+            />
+          </div>
         </div>
-      ) : null}
-      <div>
-        <label htmlFor="abn" className="block text-sm text-ink">
-          ABN
-        </label>
-        <input
-          id="abn"
-          name="abn"
-          inputMode="numeric"
-          defaultValue={organisation.abn ?? ""}
-          disabled={!canEdit}
-          className={fieldClassName}
-        />
+        {qldJurisdictionId ? (
+          <QldFisheriesFields profile={qldProfile} canEdit={canEdit} />
+        ) : null}
       </div>
-      <div>
-        <label htmlFor="legal_name" className="block text-sm text-ink">
-          Legal name
-        </label>
-        <input
-          id="legal_name"
-          name="legal_name"
-          required={canEdit}
-          defaultValue={organisation.legal_name}
-          disabled={!canEdit}
-          className={fieldClassName}
+      <div className="max-w-lg space-y-4">
+        <AddressFields
+          prefix="registered"
+          legend="Registered address"
+          address={organisation.registered_address}
+          canEdit={canEdit}
         />
-      </div>
-      <div>
-        <label htmlFor="trading_name" className="block text-sm text-ink">
-          Trading name
-        </label>
-        <input
-          id="trading_name"
-          name="trading_name"
-          defaultValue={organisation.trading_name ?? ""}
-          disabled={!canEdit}
-          className={fieldClassName}
-        />
-      </div>
-      <div>
-        <label htmlFor="mobile" className="block text-sm text-ink">
-          Phone
-        </label>
-        <input
-          id="mobile"
-          name="mobile"
-          inputMode="tel"
-          autoComplete="tel"
-          defaultValue={organisation.mobile ?? ""}
-          disabled={!canEdit}
-          className={fieldClassName}
-        />
-      </div>
-      <AddressFields
-        prefix="registered"
-        legend="Registered address"
-        address={organisation.registered_address}
-        canEdit={canEdit}
-      />
       <div className="divide-y divide-line border border-line bg-paper-raised">
         <SettingsSwitchRow
           name="postal_different"
@@ -262,62 +332,6 @@ export function OrganisationDetailsForm({
           address={organisation.postal_address}
           canEdit={canEdit}
         />
-      ) : null}
-      {qldJurisdictionId ? (
-        <fieldset className="space-y-4 border border-line p-4">
-          <legend className="px-1 text-sm font-semibold text-ink">
-            Queensland Fisheries
-          </legend>
-          <p className="text-sm text-ink-muted">
-            Required for Queensland quota sales and leases. Used to prepare the
-            transfer application after payment and compliance.
-          </p>
-          <div>
-            <label
-              htmlFor="qld_client_reference"
-              className="block text-sm text-ink"
-            >
-              Fisheries client number
-            </label>
-            <input
-              id="qld_client_reference"
-              name="qld_client_reference"
-              defaultValue={qldProfile?.client_reference ?? ""}
-              disabled={!canEdit}
-              className={fieldClassName}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="qld_licence_number"
-              className="block text-sm text-ink"
-            >
-              Primary commercial fishing licence
-            </label>
-            <input
-              id="qld_licence_number"
-              name="qld_licence_number"
-              defaultValue={qldProfile?.licence_number ?? ""}
-              disabled={!canEdit}
-              className={fieldClassName}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="qld_fishery_symbols"
-              className="block text-sm text-ink"
-            >
-              Fishery symbols
-            </label>
-            <input
-              id="qld_fishery_symbols"
-              name="qld_fishery_symbols"
-              defaultValue={qldProfile?.fishery_symbols ?? ""}
-              disabled={!canEdit}
-              className={fieldClassName}
-            />
-          </div>
-        </fieldset>
       ) : null}
       <div className="divide-y divide-line border border-line bg-paper-raised">
         <SettingsSwitchRow
@@ -337,6 +351,7 @@ export function OrganisationDetailsForm({
           Only owners and admins can edit business details.
         </p>
       )}
+      </div>
     </form>
   );
 }

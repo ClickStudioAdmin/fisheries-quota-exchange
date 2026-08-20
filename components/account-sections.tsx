@@ -120,8 +120,8 @@ export async function AccountBusinessSection({
   }
 
   return (
-    <div className="max-w-lg space-y-4">
-      <p className="text-sm text-ink-muted">
+    <div className="max-w-4xl space-y-4">
+      <p className="max-w-2xl text-sm text-ink-muted">
         Business details for this business, including fields used on Queensland
         transfer applications. Hide my identity if you do not want this name on
         public listings.
