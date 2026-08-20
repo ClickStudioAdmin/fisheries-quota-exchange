@@ -16,6 +16,7 @@ type TableModalProps = {
   title: string;
   label?: string;
   wide?: boolean;
+  triggerClassName?: string;
   children: ReactNode | ((close: () => void) => ReactNode);
 };
 
@@ -23,6 +24,7 @@ export function TableModal({
   title,
   label = "Edit",
   wide = false,
+  triggerClassName = tableButtonClassName,
   children,
 }: TableModalProps) {
   const [open, setOpen] = useState(false);
@@ -48,7 +50,7 @@ export function TableModal({
     <>
       <button
         type="button"
-        className={tableButtonClassName}
+        className={triggerClassName}
         onClick={() => setOpen(true)}
       >
         {label}

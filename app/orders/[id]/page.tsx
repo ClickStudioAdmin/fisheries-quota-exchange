@@ -43,6 +43,7 @@ import { taxInvoicePath } from "@/lib/invoices/types";
 import { getTransferWorkspace } from "@/lib/transfers/queries";
 import { TransferOrderPanel } from "@/components/transfer-order-panel";
 import { SuccessNotice } from "@/components/notices";
+import { ViewMessageModal } from "@/components/view-message-modal";
 
 export const metadata = {
   title: "Order",
@@ -407,7 +408,12 @@ export default async function OrderPage({
                     ? `Buyer · ${order.buyer_name}`
                     : "FQX asked you to update this order."}
                 </p>
-                <p className="mt-1">{updateNotes.buyer}</p>
+                <div className="mt-2">
+                  <ViewMessageModal
+                    title="Update requested"
+                    message={updateNotes.buyer ?? ""}
+                  />
+                </div>
                 {isBuyer && !admin ? (
                   <p className="mt-2">
                     <Link href={accountSettingsPath()} className="underline">
@@ -424,7 +430,12 @@ export default async function OrderPage({
                     ? `Seller · ${order.seller_name}`
                     : "FQX asked you to update this order."}
                 </p>
-                <p className="mt-1">{updateNotes.seller}</p>
+                <div className="mt-2">
+                  <ViewMessageModal
+                    title="Update requested"
+                    message={updateNotes.seller ?? ""}
+                  />
+                </div>
                 {isSeller && !admin ? (
                   <p className="mt-2">
                     <Link href={accountSettingsPath()} className="underline">

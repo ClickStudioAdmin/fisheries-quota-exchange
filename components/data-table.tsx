@@ -13,7 +13,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { tableButtonClassName } from "@/components/auth-card";
+import { ViewMessageModal } from "@/components/view-message-modal";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge, isStatusColumn } from "@/components/status-badge";
 import {
@@ -39,6 +39,7 @@ export type DataTableColumn = {
   filterOptions?: { value: string; label: string }[];
   align?: "left" | "right";
   details?: boolean;
+  detailsLink?: string;
   nowrap?: boolean;
   stacked?: { key: string; label: string; filter?: "select" }[];
 };
@@ -54,6 +55,7 @@ export type DataTableRow = {
   display?: Record<string, string>;
   needsAction?: boolean;
   details?: DataTableDetail[];
+  detailsTitle?: string;
 };
 
 type DataTableRowExtrasProps = {
@@ -171,6 +173,27 @@ function filterColumns(columns: DataTableColumn[]): DataTableColumn[] {
   });
 }
 
+function detailsControl(
+  row: DataTableRow,
+  column: DataTableColumn,
+) {
+  if (!column.details || !row.details?.length) {
+    return null;
+  }
+
+  if (column.detailsLink) {
+    return (
+      <ViewMessageModal
+        title={row.detailsTitle ?? "Message"}
+        label={column.detailsLink}
+        message={row.details.map((item) => item.value).join("\n\n")}
+      />
+    );
+  }
+
+  return <DetailsTooltip details={row.details} />;
+}
+
 function DetailsTooltip({ details }: { details: DataTableDetail[] }) {
   const tooltipId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -259,7 +282,7 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
               row.details.length > 0 ? (
                 <span className="inline-flex items-center gap-1.5">
                   <span>{text}</span>
-                  <DetailsTooltip details={row.details} />
+                  {detailsControl(row, column)}
                 </span>
               ) : (
                 <div>{text}</div>
@@ -295,7 +318,7 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span>{content}</span>
-      <DetailsTooltip details={row.details} />
+      {detailsControl(row, column)}
     </span>
   );
 }

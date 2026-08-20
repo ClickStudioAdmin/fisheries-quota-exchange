@@ -50,7 +50,7 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/dashboard/profile` | Account Settings: Profile, Password and Security, Notifications (personal message switches), and Alerts (fishery watches) |
 | `/dashboard/account` | Business Settings for the active business: Details, Members, Privileges, Payments, and Notifications (role routing and business message switches) |
 | `/dashboard/activity` | Activity log for the active business. Who is a member's name, FQX, the other business, or System — never an email |
-| `/dashboard/notifications` | Signed-in user inbox |
+| `/dashboard/notifications` | Signed-in user inbox. Notification body opens from View Message |
 | `/dashboard/alerts` | Redirects to `/dashboard/profile?tab=alerts` |
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
 | `/dashboard/payments` | Redirects to `/dashboard/account?tab=payments` |

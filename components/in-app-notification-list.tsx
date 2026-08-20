@@ -55,7 +55,7 @@ export function InAppNotificationList({
           },
         ]}
         columns={[
-          { key: "message", header: "Message", sortable: true, details: true },
+          { key: "message", header: "Message", sortable: true, details: true, detailsLink: "View Message" },
           { key: "when", header: "When", sortable: true, nowrap: true },
           {
             key: "status",
@@ -80,6 +80,7 @@ export function InAppNotificationList({
             status: item.read_at ? "Read" : "Unread",
           },
           details: item.body ? [{ label: "Detail", value: item.body }] : [],
+          detailsTitle: item.title,
         }))}
       >
         {notifications.map((item) => (
