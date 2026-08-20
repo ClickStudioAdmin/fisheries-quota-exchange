@@ -157,7 +157,7 @@ export async function ListingApprovalPanel({
               hidden={{ listing_id: String(listing.id) }}
               checks={checks}
               completed={listing.approval_checklist}
-              proceedMessage="All checks are saved. Continue to the Decision section below to approve this listing."
+              proceedGoal="to approve this listing"
             />
           </div>
         </section>

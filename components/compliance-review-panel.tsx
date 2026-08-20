@@ -201,7 +201,7 @@ export function ComplianceReviewPanel({
               hidden={{ order_id: String(order.id) }}
               checks={workspace.process.complianceChecks}
               completed={order.compliance_checklist}
-              proceedMessage="All checks are saved. Continue to the Decision section below to approve compliance."
+              proceedGoal="to approve compliance"
             />
           </div>
         </section>

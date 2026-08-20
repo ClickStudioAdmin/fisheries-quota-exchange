@@ -108,7 +108,7 @@ export async function HoldingVerificationPanel({
               hidden={{ holding_id: String(holding.id) }}
               checks={checks}
               completed={holding.verification_checklist}
-              proceedMessage="All checks are saved. Continue to the Decision section below to verify this holding."
+              proceedGoal="to verify this holding"
             />
           </div>
         </section>

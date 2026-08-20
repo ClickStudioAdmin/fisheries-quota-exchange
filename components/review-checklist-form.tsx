@@ -17,7 +17,7 @@ export function ReviewChecklistForm({
   checks,
   completed,
   hint = "Save as you work. You must save all checks before you can approve.",
-  proceedMessage = "All checks are saved. Continue to the Decision section below to approve.",
+  proceedGoal = "to approve",
 }: {
   action: (
     prev: ReviewFormState,
@@ -27,7 +27,7 @@ export function ReviewChecklistForm({
   checks: readonly string[];
   completed: readonly string[];
   hint?: string;
-  proceedMessage?: string;
+  proceedGoal?: string;
 }) {
   const [state, formAction] = useActionState(action, initialState);
   const [checked, setChecked] = useState(() => new Set(completed));
@@ -80,11 +80,21 @@ export function ReviewChecklistForm({
         ))}
       </ul>
       {savedComplete ? (
-        <p className="text-sm text-sea" role="status">
-          {proceedMessage}{" "}
-          <a href="#review-decision" className="font-medium underline">
-            Go to Decision
-          </a>
+        <p className="min-w-0 text-sm leading-6 text-sea" role="status">
+          All checks are saved. Continue to the{" "}
+          <button
+            type="button"
+            className="inline cursor-pointer border-0 bg-transparent p-0 font-inherit text-inherit underline decoration-current underline-offset-2"
+            onClick={() => {
+              document.getElementById("review-decision")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }}
+          >
+            Decision section
+          </button>{" "}
+          below {proceedGoal}.
         </p>
       ) : null}
       {state.error ? (
