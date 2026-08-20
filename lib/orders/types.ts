@@ -113,7 +113,40 @@ export function orderQueueTitle(status: OrderQueueStatus) {
   }
 }
 
-export function orderStatusLabel(status: OrderStatus) {
+export function qldTransferPublicStatusLabel(status?: string | null) {
+  switch (status ?? "READY") {
+    case "DOCUMENT_GENERATED":
+    case "AWAITING_SIGNED_PACK":
+      return "Waiting for signed documents";
+    case "ADMIN_REVIEW":
+      return "Reviewing signed pack";
+    case "SUBMITTED":
+    case "PROCESSING":
+      return "With Fisheries Queensland";
+    case "APPROVED":
+      return "Fisheries Queensland approved";
+    case "ACTION_REQUIRED":
+      return "Action required";
+    default:
+      return "Waiting for application";
+  }
+}
+
+export function orderStatusLabel(
+  status: OrderStatus,
+  transfer?: {
+    usesSimulatedTransfer: boolean;
+    applicationStatus?: string | null;
+  } | null,
+) {
+  if (
+    status === "AWAITING_TRANSFER" &&
+    transfer &&
+    !transfer.usesSimulatedTransfer
+  ) {
+    return qldTransferPublicStatusLabel(transfer.applicationStatus);
+  }
+
   switch (status) {
     case "AWAITING_PAYMENT":
       return "Awaiting payment";

@@ -38,6 +38,8 @@ type ProgressInput = {
   paymentStatus?: string | null;
   paymentConfirming?: boolean;
   settlementCompleted?: boolean;
+  usesSimulatedTransfer?: boolean;
+  transferApplicationStatus?: string | null;
 };
 
 function pastPayment(status: OrderStatus) {
@@ -222,12 +224,36 @@ function complianceDetail(input: ProgressInput, state: OrderStepState) {
   return "Waiting";
 }
 
-function transferDetail(_input: ProgressInput, state: OrderStepState) {
+function qldTransferPublicStatusLabel(status?: string | null) {
+  // Keep in sync with qldTransferPublicStatusLabel in lib/orders/types.ts.
+  switch (status ?? "READY") {
+    case "DOCUMENT_GENERATED":
+    case "AWAITING_SIGNED_PACK":
+      return "Waiting for signed documents";
+    case "ADMIN_REVIEW":
+      return "Reviewing signed pack";
+    case "SUBMITTED":
+    case "PROCESSING":
+      return "With Fisheries Queensland";
+    case "APPROVED":
+      return "Fisheries Queensland approved";
+    case "ACTION_REQUIRED":
+      return "Action required";
+    default:
+      return "Waiting for application";
+  }
+}
+
+function transferDetail(input: ProgressInput, state: OrderStepState) {
   if (state === "done") {
     return "Complete";
   }
 
   if (state === "current") {
+    if (input.usesSimulatedTransfer === false) {
+      return qldTransferPublicStatusLabel(input.transferApplicationStatus);
+    }
+
     return "In progress";
   }
 

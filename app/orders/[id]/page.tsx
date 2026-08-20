@@ -192,6 +192,8 @@ export default async function OrderPage({
     paymentStatus: payment?.status ? String(payment.status) : null,
     paymentConfirming: showPending,
     settlementCompleted: transaction?.status === "COMPLETED",
+    usesSimulatedTransfer: transferWorkspace?.process.usesSimulatedTransfer,
+    transferApplicationStatus: transferWorkspace?.application?.status ?? null,
   });
   const feeLabel =
     Number(order.fee_percent) > 0
@@ -250,7 +252,16 @@ export default async function OrderPage({
       <p className="mt-2 flex flex-wrap items-center gap-2 text-ink-muted">
         {showCheckout ? `Order ${order.id}` : null}
         <StatusBadge
-          label={orderStatusLabel(order.status)}
+          label={orderStatusLabel(
+            order.status,
+            transferWorkspace
+              ? {
+                  usesSimulatedTransfer:
+                    transferWorkspace.process.usesSimulatedTransfer,
+                  applicationStatus: transferWorkspace.application?.status ?? null,
+                }
+              : null,
+          )}
           code={order.status}
         />
       </p>

@@ -1,0 +1,154 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { organisationNeedsAttentionItems } from "./needs-attention.ts";
+
+const fisheries = [{ name: "East Coast Spanish Mackerel Fishery", jurisdiction_id: 1 }];
+const jurisdictions = [
+  { id: 1, code: "QLD" },
+  { id: 2, code: "CWLTH" },
+];
+
+function order(
+  overrides: Partial<Parameters<typeof organisationNeedsAttentionItems>[0]["orders"][number]> & {
+    id: number;
+  },
+) {
+  return {
+    status: "AWAITING_TRANSFER",
+    fishery_name: "East Coast Spanish Mackerel Fishery",
+    offering: "SALE" as const,
+    buyer_organisation_id: 10,
+    seller_organisation_id: 20,
+    ...overrides,
+  };
+}
+
+test("organisationNeedsAttentionItems lists pay, QLD documents, compliance updates, and ended auctions", () => {
+  const items = organisationNeedsAttentionItems({
+    organisationId: 10,
+    canManage: true,
+    now: new Date("2026-08-20T05:00:00.000Z"),
+    fisheries,
+    jurisdictions,
+    transferByOrderId: new Map([
+      [3634, { process_code: "QLD_SALE", status: "READY" }],
+      [3635, { process_code: "QLD_SALE", status: "AWAITING_SIGNED_PACK" }],
+      [3636, { process_code: "SIMULATED", status: "READY" }],
+    ]),
+    complianceNotesByOrderId: new Map([
+      [3633, { buyer: "Add the client number.", seller: null }],
+    ]),
+    orders: [
+      order({
+        id: 3632,
+        status: "AWAITING_PAYMENT",
+        fishery_name: "Northern Prawn Fishery",
+      }),
+      order({ id: 3633, status: "AWAITING_COMPLIANCE" }),
+      order({ id: 3634 }),
+      order({ id: 3635 }),
+      order({
+        id: 3636,
+        fishery_name: "Northern Prawn Fishery",
+        status: "AWAITING_TRANSFER",
+      }),
+    ],
+    listings: [
+      {
+        id: 88,
+        listing_type: "AUCTION",
+        status: "PUBLISHED",
+        expires_at: "2026-08-19T00:00:00.000Z",
+        fishery_name: "Coral Trout",
+      },
+      {
+        id: 89,
+        listing_type: "AUCTION",
+        status: "PUBLISHED",
+        expires_at: "2026-08-21T00:00:00.000Z",
+        fishery_name: "Still live",
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    items.map((item) => item.label),
+    [
+      "Pay order 3632 · Northern Prawn Fishery",
+      "Update order 3633 details · East Coast Spanish Mackerel Fishery",
+      "Prepare transfer documents for order 3634 · East Coast Spanish Mackerel Fishery",
+      "Sign transfer documents for order 3635 · East Coast Spanish Mackerel Fishery",
+      "Close auction 88 · Coral Trout",
+    ],
+  );
+  assert.equal(items.find((item) => item.key === "pay-3632")?.href, "/orders/3632");
+  assert.equal(items.find((item) => item.key === "auction-88")?.href, "/auctions/88");
+});
+
+test("organisationNeedsAttentionItems skips seller pay, other-party updates, and simulated transfer", () => {
+  const items = organisationNeedsAttentionItems({
+    organisationId: 20,
+    canManage: true,
+    fisheries,
+    jurisdictions,
+    transferByOrderId: new Map([
+      [1, { process_code: "SIMULATED", status: "READY" }],
+    ]),
+    complianceNotesByOrderId: new Map([
+      [2, { buyer: "Buyer only.", seller: null }],
+    ]),
+    orders: [
+      order({
+        id: 1,
+        status: "AWAITING_TRANSFER",
+        fishery_name: "Northern Prawn Fishery",
+      }),
+      order({ id: 2, status: "AWAITING_COMPLIANCE" }),
+      order({
+        id: 3,
+        status: "AWAITING_PAYMENT",
+        fishery_name: "Northern Prawn Fishery",
+      }),
+    ],
+    listings: [],
+  });
+
+  assert.deepEqual(items, []);
+});
+
+test("organisationNeedsAttentionItems infers QLD prepare when no application row exists", () => {
+  const items = organisationNeedsAttentionItems({
+    organisationId: 10,
+    canManage: true,
+    fisheries,
+    jurisdictions,
+    orders: [order({ id: 9 })],
+    listings: [],
+  });
+
+  assert.deepEqual(items, [
+    {
+      key: "transfer-9",
+      href: "/orders/9",
+      label:
+        "Prepare transfer documents for order 9 · East Coast Spanish Mackerel Fishery",
+    },
+  ]);
+});
+
+test("organisationNeedsAttentionItems is empty without manage permission", () => {
+  const items = organisationNeedsAttentionItems({
+    organisationId: 10,
+    canManage: false,
+    orders: [
+      order({
+        id: 1,
+        status: "AWAITING_PAYMENT",
+        fishery_name: "Northern Prawn Fishery",
+      }),
+    ],
+    listings: [],
+  });
+
+  assert.deepEqual(items, []);
+});

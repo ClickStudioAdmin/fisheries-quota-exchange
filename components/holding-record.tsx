@@ -44,7 +44,8 @@ import {
 } from "@/lib/market/queries";
 import { marketValue } from "@/lib/market/types";
 import { listOrdersByHolding } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
+import { orderStatusLabelFor } from "@/lib/transfers/display";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 import { getOrganisation, getOrganisationLegalName } from "@/lib/organisations/queries";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { accountPaymentsPath } from "@/lib/organisations/paths";
@@ -94,6 +95,9 @@ export async function HoldingRecord({
       : Promise.resolve(null),
   ]);
   const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "units";
+  const transferApplications = await listTransferApplicationsByOrderIds(
+    orders.map((order) => order.id),
+  );
   const listed = commitments.get(holding.id) ?? 0;
   const available = Number(holding.quantity) - listed;
   const verified = holdingIsVerified(holding);
@@ -461,7 +465,12 @@ export async function HoldingRecord({
               Number(order.fee_percent) > 0
                 ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
                 : formatAud(order.fee_amount_aud),
-            status: orderStatusLabel(order.status),
+            status: orderStatusLabelFor(
+              order,
+              transferApplications,
+              fishery ? [fishery] : [],
+              jurisdictions,
+            ),
           },
         }))}
       >

@@ -31,7 +31,8 @@ import {
   listingTypeLabel,
 } from "@/lib/listings/types";
 import { listOrdersByCreator } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
+import { orderStatusLabelFor } from "@/lib/transfers/display";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 import {
   adminUserDisplayName,
   adminUserRole,
@@ -86,6 +87,9 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     listFisheries(),
     listJurisdictions(),
   ]);
+  const transferApplications = await listTransferApplicationsByOrderIds(
+    orders.map((order) => order.id),
+  );
   const role = adminUserRole(profile);
   const organisations = new Map(
     profile.memberships.map((membership) => [
@@ -500,7 +504,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               Number(order.fee_percent) > 0
                 ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
                 : formatAud(order.fee_amount_aud),
-            status: orderStatusLabel(order.status),
+            status: orderStatusLabelFor(
+              order,
+              transferApplications,
+              fisheries,
+              jurisdictions,
+            ),
           },
         }))}
       >

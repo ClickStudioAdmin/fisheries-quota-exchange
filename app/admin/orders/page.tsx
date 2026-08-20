@@ -6,7 +6,6 @@ import {
   isOrderQueueStatus,
   orderQueuePath,
   orderQueueTitle,
-  orderStatusLabel,
   parseOrderIds,
   type Order,
 } from "@/lib/orders/types";
@@ -22,6 +21,8 @@ import { ReviewTransferForms } from "@/components/review-transfer-forms";
 import { BulkReviewOrdersModal } from "@/components/bulk-review-orders-modal";
 import { tableButtonClassName } from "@/components/auth-card";
 import { formatTableDate } from "@/lib/format";
+import { orderStatusLabelFor } from "@/lib/transfers/display";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 
 export const metadata = {
   title: "Orders",
@@ -42,6 +43,9 @@ export default async function AdminOrdersPage({
     listFisheries(),
     listJurisdictions(),
   ]);
+  const transferApplications = await listTransferApplicationsByOrderIds(
+    orders.map((order) => order.id),
+  );
   const queued = parseOrderIds(query.queue);
   const byId = new Map(orders.map((order) => [order.id, order]));
   const firstQueued = queued
@@ -205,7 +209,12 @@ export default async function AdminOrdersPage({
               Number(order.fee_percent) > 0
                 ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
                 : formatAud(order.fee_amount_aud),
-            status: orderStatusLabel(order.status),
+            status: orderStatusLabelFor(
+              order,
+              transferApplications,
+              fisheries,
+              jurisdictions,
+            ),
           },
         }))}
       >

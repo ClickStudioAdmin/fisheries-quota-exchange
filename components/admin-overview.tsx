@@ -1,23 +1,28 @@
 import Link from "next/link";
 import { LabeledFields, panelClassName, statClassName } from "@/components/surface";
 import { getAdminActionCounts } from "@/lib/nav/action-counts";
-import { listFisheries } from "@/lib/fisheries/queries";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { listOrganisationsForAdmin } from "@/lib/organisations/admin-queries";
 import { listAdminQueueOrders } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
+import { orderStatusLabelFor } from "@/lib/transfers/display";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 import { getPlatformSettings } from "@/lib/settings/queries";
 import { formatFeePercent } from "@/lib/settings/types";
 import { isPaymentsConfigured } from "@/lib/payments/env";
 
 export async function AdminOverviewSection() {
-  const [counts, settings, fisheries, organisations, queueOrders] =
+  const [counts, settings, fisheries, jurisdictions, organisations, queueOrders] =
     await Promise.all([
       getAdminActionCounts(),
       getPlatformSettings(),
       listFisheries(),
+      listJurisdictions(),
       listOrganisationsForAdmin(),
       listAdminQueueOrders(),
     ]);
+  const transferApplications = await listTransferApplicationsByOrderIds(
+    queueOrders.map((order) => order.id),
+  );
   const paymentsOn = isPaymentsConfigured();
   const unpaidOrders = Math.max(0, counts.orders - queueOrders.length);
   const hasQueue =
@@ -97,7 +102,12 @@ export async function AdminOverviewSection() {
               <li key={order.id}>
                 <Link href={`/orders/${order.id}`} className="text-sm underline">
                   Order {order.id} · {order.fishery_name} ·{" "}
-                  {orderStatusLabel(order.status)}
+                  {orderStatusLabelFor(
+                    order,
+                    transferApplications,
+                    fisheries,
+                    jurisdictions,
+                  )}
                 </Link>
               </li>
             ))}

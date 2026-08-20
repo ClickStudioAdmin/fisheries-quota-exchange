@@ -49,7 +49,8 @@ import {
 import { marketValue } from "@/lib/market/types";
 import { cancelListingAction } from "@/lib/listings/actions";
 import { listOrganisationOrders } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
+import { orderStatusLabelFor } from "@/lib/transfers/display";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 import { tableButtonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { formatTableDate } from "@/lib/format";
@@ -766,6 +767,9 @@ export async function AccountOrdersSection({
     listFisheries(),
     listJurisdictions(),
   ]);
+  const transferApplications = await listTransferApplicationsByOrderIds(
+    orders.map((order) => order.id),
+  );
 
   return (
     <div className="space-y-4">
@@ -847,7 +851,12 @@ export async function AccountOrdersSection({
             display: {
               offering: order.offering === "SALE" ? "Sale" : "Lease",
               quantity: `${order.quantity} ${order.unit_label}`,
-              status: orderStatusLabel(order.status),
+              status: orderStatusLabelFor(
+                order,
+                transferApplications,
+                fisheries,
+                jurisdictions,
+              ),
             },
           };
         })}

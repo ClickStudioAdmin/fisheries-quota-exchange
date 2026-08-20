@@ -182,6 +182,51 @@ async function loadApplication(orderId: number) {
   return mapApplication(data as Record<string, unknown>);
 }
 
+export async function listTransferApplicationsByOrderIds(orderIds: number[]) {
+  const unique = [
+    ...new Set(
+      orderIds.filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+  const byOrderId = new Map<
+    number,
+    { process_code: string; status: string }
+  >();
+
+  if (unique.length === 0) {
+    return byOrderId;
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return byOrderId;
+  }
+
+  const { data, error } = await supabase
+    .from("transfer_applications")
+    .select("order_id, process_code, status")
+    .in("order_id", unique);
+
+  if (error || !data) {
+    return byOrderId;
+  }
+
+  for (const row of data) {
+    const orderId = Number((row as { order_id?: unknown }).order_id);
+    const processCode = String((row as { process_code?: unknown }).process_code ?? "");
+    const status = String((row as { status?: unknown }).status ?? "");
+
+    if (!Number.isInteger(orderId) || orderId <= 0 || !processCode) {
+      continue;
+    }
+
+    byOrderId.set(orderId, { process_code: processCode, status });
+  }
+
+  return byOrderId;
+}
+
 async function loadDocuments(applicationId: number) {
   const supabase = await createClient();
 

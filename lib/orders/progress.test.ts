@@ -54,6 +54,20 @@ test("transfer is current after compliance, before settlement", () => {
   assert.equal(settlement?.detail, "Waiting");
 });
 
+test("Queensland transfer step uses the application sub-status", () => {
+  const steps = buildOrderSteps({
+    orderStatus: "AWAITING_TRANSFER",
+    reservationStatus: "ACTIVE",
+    paymentStatus: "PAID",
+    usesSimulatedTransfer: false,
+    transferApplicationStatus: "AWAITING_SIGNED_PACK",
+  });
+  const transfer = steps.find((step) => step.id === "transfer");
+
+  assert.equal(transfer?.state, "current");
+  assert.equal(transfer?.detail, "Waiting for signed documents");
+});
+
 test("settlement is current only after transfer", () => {
   const steps = buildOrderSteps({
     orderStatus: "AWAITING_SETTLEMENT",
