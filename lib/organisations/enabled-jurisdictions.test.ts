@@ -5,6 +5,7 @@ import {
   isSelectableJurisdictionCode,
   organisationEnablesJurisdiction,
   parseEnabledJurisdictionCodes,
+  sortJurisdictionsForSelect,
 } from "./enabled-jurisdictions.ts";
 
 test("only Queensland is selectable in this phase", () => {
@@ -32,4 +33,19 @@ test("organisationEnablesJurisdiction reads the stored list", () => {
   assert.equal(organisationEnablesJurisdiction(["QLD"], "QLD"), true);
   assert.equal(organisationEnablesJurisdiction([], "QLD"), false);
   assert.equal(organisationEnablesJurisdiction(undefined, "QLD"), false);
+});
+
+test("sortJurisdictionsForSelect puts Queensland first, then NSW, states, Commonwealth last", () => {
+  const sorted = sortJurisdictionsForSelect([
+    { code: "CTH", name: "Commonwealth of Australia" },
+    { code: "WA", name: "Western Australia" },
+    { code: "NSW", name: "New South Wales" },
+    { code: "QLD", name: "Queensland" },
+    { code: "VIC", name: "Victoria" },
+  ]);
+
+  assert.deepEqual(
+    sorted.map((item) => item.code),
+    ["QLD", "NSW", "VIC", "WA", "CTH"],
+  );
 });

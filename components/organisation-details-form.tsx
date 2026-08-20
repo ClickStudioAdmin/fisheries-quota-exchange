@@ -18,6 +18,7 @@ import {
 import {
   isSelectableJurisdictionCode,
   organisationEnablesJurisdiction,
+  sortJurisdictionsForSelect,
 } from "@/lib/organisations/enabled-jurisdictions";
 import type { Jurisdiction } from "@/lib/fisheries/types";
 
@@ -208,6 +209,99 @@ function QldFisheriesFields({
   );
 }
 
+function JurisdictionPillSelect({
+  jurisdictions,
+  enabledCodes,
+  onEnabledCodesChange,
+  canEdit,
+}: {
+  jurisdictions: Jurisdiction[];
+  enabledCodes: string[];
+  onEnabledCodesChange: (codes: string[]) => void;
+  canEdit: boolean;
+}) {
+  const ordered = sortJurisdictionsForSelect(jurisdictions);
+  const selected = ordered.filter((item) =>
+    organisationEnablesJurisdiction(enabledCodes, item.code),
+  );
+  const remaining = ordered.filter(
+    (item) => !organisationEnablesJurisdiction(enabledCodes, item.code),
+  );
+
+  function add(code: string) {
+    if (!code || !isSelectableJurisdictionCode(code)) {
+      return;
+    }
+
+    onEnabledCodesChange(
+      enabledCodes.includes(code) ? enabledCodes : [...enabledCodes, code],
+    );
+  }
+
+  function remove(code: string) {
+    onEnabledCodesChange(enabledCodes.filter((item) => item !== code));
+  }
+
+  return (
+    <div className={`${fieldClassName} flex min-h-10 flex-wrap items-center gap-1.5`}>
+      {selected.map((jurisdiction) => (
+        <span
+          key={jurisdiction.id}
+          className="inline-flex items-center gap-1 rounded-full bg-sea px-2 py-0.5 text-xs font-medium text-paper"
+        >
+          <input
+            type="hidden"
+            name="jurisdiction_code"
+            value={jurisdiction.code}
+          />
+          {jurisdiction.name}
+          {canEdit ? (
+            <button
+              type="button"
+              aria-label={`Remove ${jurisdiction.name}`}
+              onClick={() => remove(jurisdiction.code)}
+              className="rounded-full leading-none text-paper/80 hover:text-paper"
+            >
+              ×
+            </button>
+          ) : null}
+        </span>
+      ))}
+      {canEdit && remaining.length > 0 ? (
+        <select
+          id="jurisdiction_code"
+          value=""
+          aria-label="Add jurisdiction"
+          onChange={(event) => {
+            add(event.target.value);
+          }}
+          className="min-w-28 flex-1 border-0 bg-transparent py-0 text-sm text-ink outline-none"
+        >
+          <option value="">
+            {selected.length === 0 ? "Select jurisdictions…" : "Add…"}
+          </option>
+          {remaining.map((jurisdiction) => {
+            const selectable = isSelectableJurisdictionCode(jurisdiction.code);
+            return (
+              <option
+                key={jurisdiction.id}
+                value={jurisdiction.code}
+                disabled={!selectable}
+              >
+                {selectable
+                  ? jurisdiction.name
+                  : `${jurisdiction.name} (coming later)`}
+              </option>
+            );
+          })}
+        </select>
+      ) : selected.length === 0 ? (
+        <span className="text-sm text-ink-muted">None selected</span>
+      ) : null}
+    </div>
+  );
+}
+
 export function OrganisationDetailsForm({
   organisation,
   jurisdictions,
@@ -370,70 +464,19 @@ export function OrganisationDetailsForm({
         </div>
         <div className="min-w-0 space-y-4">
           {jurisdictions.length > 0 ? (
-            <fieldset className="min-w-0 space-y-3 border border-line p-4">
-              <legend className="px-1 text-sm font-semibold text-ink">
-                Jurisdictions
-              </legend>
-              <p className="text-sm text-ink-muted">
-                Select every jurisdiction this business trades in. Required
-                fields for that jurisdiction appear below. Only Queensland can
-                be selected now; others will open as we add them.
+            <div>
+              <FieldLabel htmlFor="jurisdiction_code">Jurisdictions</FieldLabel>
+              <p className="mt-1 text-sm text-ink-muted">
+                Select every jurisdiction this business trades in. Queensland is
+                available now; others will open as we add them.
               </p>
-              <ul className="space-y-2">
-                {jurisdictions.map((jurisdiction) => {
-                  const selectable = isSelectableJurisdictionCode(
-                    jurisdiction.code,
-                  );
-                  const checked = organisationEnablesJurisdiction(
-                    enabledCodes,
-                    jurisdiction.code,
-                  );
-
-                  return (
-                    <li key={jurisdiction.id}>
-                      <label
-                        className={`flex items-start gap-2 text-sm text-ink ${
-                          !canEdit || !selectable
-                            ? "cursor-default"
-                            : "cursor-pointer"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          name="jurisdiction_code"
-                          value={jurisdiction.code}
-                          checked={checked}
-                          disabled={!canEdit || !selectable}
-                          onChange={(event) => {
-                            const selected = event.target.checked;
-                            setEnabledCodes((current) => {
-                              if (selected) {
-                                return current.includes(jurisdiction.code)
-                                  ? current
-                                  : [...current, jurisdiction.code];
-                              }
-                              return current.filter(
-                                (code) => code !== jurisdiction.code,
-                              );
-                            });
-                          }}
-                          className="mt-1 h-4 w-4 shrink-0 border-line accent-sea"
-                        />
-                        <span>
-                          {jurisdiction.name}
-                          {selectable ? null : (
-                            <span className="font-normal text-ink-muted">
-                              {" "}
-                              (coming later)
-                            </span>
-                          )}
-                        </span>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            </fieldset>
+              <JurisdictionPillSelect
+                jurisdictions={jurisdictions}
+                enabledCodes={enabledCodes}
+                onEnabledCodesChange={setEnabledCodes}
+                canEdit={canEdit}
+              />
+            </div>
           ) : null}
           {qldEnabled && qldJurisdiction ? (
             <QldFisheriesFields

@@ -61,8 +61,8 @@ export async function ListingApprovalPanel({
     : listing.unit_price_aud;
 
   return (
-    <div className="mt-2 space-y-6">
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+    <div className="mt-2 min-w-0 space-y-6">
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Listing</h3>
           <div className="mt-4">
@@ -161,7 +161,7 @@ export async function ListingApprovalPanel({
           </div>
         </section>
       </div>
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Seller</h3>
           {organisation ? (

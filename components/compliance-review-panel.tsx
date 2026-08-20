@@ -157,8 +157,8 @@ export function ComplianceReviewPanel({
     workspace.buyerMissing.length > 0 || workspace.sellerMissing.length > 0;
 
   return (
-    <div className="mt-2 space-y-6">
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+    <div className="mt-2 min-w-0 space-y-6">
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Order</h3>
           <div className="mt-4">
@@ -204,7 +204,7 @@ export function ComplianceReviewPanel({
           </div>
         </section>
       </div>
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
         <PartyDetails
           heading="Seller"
           party={workspace.seller}

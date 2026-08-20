@@ -62,9 +62,9 @@ export function TableModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className={`mb-16 w-full border border-line p-6 ${
+            className={`mb-16 w-full min-w-0 border border-line p-6 ${
               wide
-                ? "max-w-5xl bg-paper"
+                ? "max-w-7xl bg-paper"
                 : "max-w-md bg-paper-raised"
             }`}
             onClick={(event) => event.stopPropagation()}
@@ -81,7 +81,7 @@ export function TableModal({
                 Close
               </button>
             </div>
-            <div className="mt-4">
+            <div className="mt-4 min-w-0">
               {typeof children === "function" ? children(close) : children}
             </div>
           </div>

@@ -67,7 +67,7 @@ export function ReviewChecklistForm({
                 }}
                 className="mt-1 h-4 w-4 shrink-0 border-line accent-sea"
               />
-              <span>
+              <span className="min-w-0 flex-1 whitespace-normal break-words">
                 <span className="mr-1 text-ink-muted">{index + 1}.</span>
                 {item}
               </span>

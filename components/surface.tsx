@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export const panelClassName = "border border-line bg-paper-raised p-5";
+export const panelClassName = "min-w-0 border border-line bg-paper-raised p-5";
 
 export const pageWidthClassName =
   "mx-auto w-full max-w-[min(100rem,96vw)] px-4 sm:px-6 lg:px-8";
@@ -28,7 +28,7 @@ export function LabeledFields({
   return (
     <dl className={`grid gap-x-6 gap-y-3 ${columnClassName}`}>
       {items.map((item) => (
-        <div key={item.label}>
+        <div key={item.label} className="min-w-0">
           <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">
             {item.label}
           </dt>
