@@ -18,16 +18,14 @@ export async function sendSettledOrderInvoice(orderId: number) {
   const orderUrl = siteUrl ? `${siteUrl}/orders/${order.id}` : "";
   const offeringLabel = listingOfferingLabel(order.offering);
   const amount = invoices.quota.data.total;
-  const attachments = [
-    {
-      filename: invoices.quota.filename,
-      content: invoices.quota.pdf,
-    },
-    {
-      filename: invoices.fee.filename,
-      content: invoices.fee.pdf,
-    },
-  ];
+  const quotaAttachment = {
+    filename: invoices.quota.filename,
+    content: invoices.quota.pdf,
+  };
+  const feeAttachment = {
+    filename: invoices.fee.filename,
+    content: invoices.fee.pdf,
+  };
 
   await notifyAccountEmail(
     "order_settled",
@@ -40,7 +38,7 @@ export async function sendSettledOrderInvoice(orderId: number) {
       forSeller: false,
     }),
     undefined,
-    attachments,
+    [quotaAttachment],
   );
   await notifyAccountEmail(
     "order_settled",
@@ -53,6 +51,6 @@ export async function sendSettledOrderInvoice(orderId: number) {
       forSeller: true,
     }),
     undefined,
-    attachments,
+    [quotaAttachment, feeAttachment],
   );
 }

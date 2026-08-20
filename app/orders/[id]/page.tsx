@@ -425,7 +425,10 @@ export default async function OrderPage({
                 : null}
               Dummy invoices from simulated settlement. GST is not calculated.
               These are not real tax invoices. The quota invoice is from the
-              seller to the buyer. The fee invoice is from FQX to the seller.
+              seller to the buyer.
+              {showCommission
+                ? " The fee invoice is from FQX to the seller."
+                : null}
             </p>
             <div className="mt-4 flex max-w-lg flex-col gap-2">
               {transferWorkspace?.latestSignedPack ? (
@@ -448,12 +451,14 @@ export default async function OrderPage({
               >
                 Download quota invoice
               </PdfDownloadLink>
-              <PdfDownloadLink
-                href={taxInvoicePath(order.id, "fee")}
-                hint="FQX to seller · Dummy invoice"
-              >
-                Download fee invoice
-              </PdfDownloadLink>
+              {showCommission ? (
+                <PdfDownloadLink
+                  href={taxInvoicePath(order.id, "fee")}
+                  hint="FQX to seller · Dummy invoice"
+                >
+                  Download fee invoice
+                </PdfDownloadLink>
+              ) : null}
             </div>
           </div>
         ) : null}

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { isPlatformAdmin } from "@/lib/admin/access";
 import { loginPath } from "@/lib/auth/paths";
+import { canDownloadTaxInvoice } from "@/lib/invoices/access";
 import { getSettledOrderInvoice } from "@/lib/invoices/for-order";
 import { isTaxInvoiceKind } from "@/lib/invoices/types";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { getOrder } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
 
 export async function GET(
@@ -18,6 +22,22 @@ export async function GET(
   const orderId = Number(id);
 
   if (!Number.isInteger(orderId) || !isTaxInvoiceKind(kind)) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  const order = await getOrder(orderId);
+  const admin = await isPlatformAdmin();
+  const active = await getActiveOrganisation();
+  const allowed =
+    order != null &&
+    canDownloadTaxInvoice({
+      kind,
+      isAdmin: admin,
+      isBuyer: active?.id === order.buyer_organisation_id,
+      isSeller: active?.id === order.seller_organisation_id,
+    });
+
+  if (!allowed) {
     return new NextResponse("Not found", { status: 404 });
   }
 

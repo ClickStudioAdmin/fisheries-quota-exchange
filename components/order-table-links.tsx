@@ -18,9 +18,11 @@ export function OrderTableLinks({ orderId }: { orderId: number }) {
 export function OrderTableDownloads({
   orderId,
   settled,
+  showFeeInvoice = true,
 }: {
   orderId: number;
   settled: boolean;
+  showFeeInvoice?: boolean;
 }) {
   if (!settled) {
     return null;
@@ -34,9 +36,11 @@ export function OrderTableDownloads({
       >
         Quota invoice
       </a>
-      <a href={taxInvoicePath(orderId, "fee")} className={tableLinkClassName}>
-        Fee invoice
-      </a>
+      {showFeeInvoice ? (
+        <a href={taxInvoicePath(orderId, "fee")} className={tableLinkClassName}>
+          Fee invoice
+        </a>
+      ) : null}
     </span>
   );
 }

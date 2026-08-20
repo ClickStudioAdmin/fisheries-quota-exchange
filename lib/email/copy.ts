@@ -476,7 +476,7 @@ export const emailCopy = {
             `Quota total ${input.amount}. These are not real tax invoices.`,
           ]
         : [
-            `Simulated settlement is complete (${input.offeringLabel}). Dummy tax invoices are attached: quota (seller to you) and the platform fee invoice (FQX to the seller).`,
+            `Simulated settlement is complete (${input.offeringLabel}). A dummy quota tax invoice is attached (seller to you).`,
             `Quota total ${input.amount}. These are not real tax invoices.`,
           ],
       { label: "View order", url: input.orderUrl },

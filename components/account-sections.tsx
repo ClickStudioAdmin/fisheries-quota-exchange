@@ -870,6 +870,7 @@ export async function AccountOrdersSection({
               <OrderTableDownloads
                 orderId={order.id}
                 settled={order.status === "COMPLETED"}
+                showFeeInvoice={order.seller_organisation_id === organisationId}
               />
             }
           />
