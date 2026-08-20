@@ -236,27 +236,25 @@ export function OfferCard({
           headerAndStats
         )}
         {showMeta ? (
-          <div className="mt-4 flex items-end justify-between gap-3">
-            <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1">
-              {usage ? (
-                <>
-                  <MetaBlock
-                    label="Unused"
-                    value={quantityWithUnit(usage.unused, listing.unit_label)}
-                  />
-                  <MetaBlock
-                    label="Used"
-                    value={quantityWithUnit(usage.used, listing.unit_label)}
-                  />
-                </>
-              ) : (
-                <span />
-              )}
-            </div>
+          <div className="mt-4 grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
+            {usage ? (
+              <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1 sm:col-start-3">
+                <MetaBlock
+                  label="Unused"
+                  value={quantityWithUnit(usage.unused, listing.unit_label)}
+                />
+                <MetaBlock
+                  label="Used"
+                  value={quantityWithUnit(usage.used, listing.unit_label)}
+                />
+              </div>
+            ) : (
+              <span className="sm:col-start-3" />
+            )}
             {showFisheryLink ? (
               <Link
                 href={`/fisheries/${fisheryId}`}
-                className="shrink-0 text-sm underline"
+                className="justify-self-end text-sm underline sm:col-start-4"
               >
                 View fishery
               </Link>
