@@ -123,7 +123,7 @@ function QldFisheriesFields({
   canEdit: boolean;
 }) {
   return (
-    <fieldset className="min-w-0 space-y-4 self-start border border-line p-4">
+    <fieldset className="min-w-0 space-y-4 border border-line p-4">
       <legend className="px-1 text-sm font-semibold text-ink">
         Queensland Fisheries
       </legend>
@@ -211,13 +211,7 @@ export function OrganisationDetailsForm({
           {state.message}
         </p>
       ) : null}
-      <div
-        className={
-          qldJurisdictionId
-            ? "grid items-start gap-8 lg:grid-cols-2"
-            : "space-y-4"
-        }
-      >
+      <div className="grid items-start gap-8 lg:grid-cols-2">
         <div className="min-w-0 space-y-4">
           <div>
             <label htmlFor="entity_kind" className="block text-sm text-ink">
@@ -327,6 +321,11 @@ export function OrganisationDetailsForm({
               canEdit={canEdit}
             />
           ) : null}
+        </div>
+        <div className="min-w-0 space-y-4">
+          {qldJurisdictionId ? (
+            <QldFisheriesFields profile={qldProfile} canEdit={canEdit} />
+          ) : null}
           <div className="divide-y divide-line border border-line bg-paper-raised">
             <SettingsSwitchRow
               name="hide_identity"
@@ -336,20 +335,17 @@ export function OrganisationDetailsForm({
               description='Marketplace, fishery, and auction pages show “Private Seller” for listings and “Private Buyer” for bids instead of this business name, including when you are signed in as this business. Orders, invoices, and admin records still use the real name. Platform admins see the real name in a tooltip.'
             />
           </div>
-          {canEdit ? (
-            <button type="submit" className={buttonClassName} disabled={pending}>
-              {pending ? "Saving…" : "Save"}
-            </button>
-          ) : (
-            <p className="text-sm text-ink-muted">
-              Only owners and admins can edit business details.
-            </p>
-          )}
         </div>
-        {qldJurisdictionId ? (
-          <QldFisheriesFields profile={qldProfile} canEdit={canEdit} />
-        ) : null}
       </div>
+      {canEdit ? (
+        <button type="submit" className={buttonClassName} disabled={pending}>
+          {pending ? "Saving…" : "Save"}
+        </button>
+      ) : (
+        <p className="text-sm text-ink-muted">
+          Only owners and admins can edit business details.
+        </p>
+      )}
     </form>
   );
 }
