@@ -168,7 +168,15 @@ export async function generateTransferDocumentAction(
     return { error: "Could not prepare the application." };
   }
 
-  const pdf = await generateTransferApplicationPdf(pdfData);
+  let pdf: Buffer;
+  try {
+    pdf = Buffer.from(await generateTransferApplicationPdf(pdfData));
+  } catch (error) {
+    console.error("generateTransferApplicationPdf failed", error);
+    return {
+      error: userFacingError(error, "Could not prepare the application PDF."),
+    };
+  }
   const filename = unsignedTransferFilename({
     orderId,
     formType: pdfData.formType,
@@ -203,17 +211,27 @@ export async function generateTransferDocumentAction(
     form_type: pdfData.formType,
     form_version: pdfData.formVersion,
   });
-  await notifyTransferApplicationReady(workspace.order, {
-    filename,
-    pdf,
-    documentId: stored.documentId,
-  });
+  try {
+    await notifyTransferApplicationReady(workspace.order, {
+      filename,
+      pdf,
+      documentId: stored.documentId,
+    });
+  } catch (error) {
+    console.error("notifyTransferApplicationReady failed", error);
+  }
   revalidateTransfer(orderId);
   return { message: "Application prepared and emailed to buyer and seller." };
 }
 
-export async function generateTransferDocumentAdminAction(formData: FormData) {
-  await generateTransferDocumentAction({}, formData);
+export async function generateTransferDocumentAdminAction(
+  _prev: TransferFormState,
+  formData: FormData,
+): Promise<TransferFormState> {
+  const result = await generateTransferDocumentAction({}, formData);
+  if (result.error) {
+    return result;
+  }
   redirectAfterQueue(formData);
 }
 

@@ -7,7 +7,10 @@ const nextConfig: NextConfig = {
     },
   },
   outputFileTracingIncludes: {
-    "/*": ["./lib/transfers/forms/fdu1465-v09-23.pdf"],
+    "/*": [
+      "./lib/transfers/forms/fdu1465-v09-23.pdf",
+      "./lib/transfers/forms/fdu1469-v02-26.pdf",
+    ],
   },
   serverExternalPackages: [
     "resend",

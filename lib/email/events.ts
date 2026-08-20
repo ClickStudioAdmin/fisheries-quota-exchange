@@ -539,7 +539,7 @@ export async function notifyTransferApplicationReady(
     orderUrl: `${siteUrl}/orders/${order.id}`,
     formTitle:
       order.offering === "LEASE"
-        ? "The Queensland lease transfer application"
+        ? "The Queensland FDU1469 temporary transfer application"
         : "The Queensland FDU1465 transfer application",
   });
   await notifyAccountEmail(

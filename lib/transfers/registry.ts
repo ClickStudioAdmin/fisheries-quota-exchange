@@ -39,14 +39,14 @@ export const qldLeaseProcess: JurisdictionTransferProcess = {
   code: "QLD_LEASE",
   jurisdictionCode: "QLD",
   offering: "LEASE",
-  formType: "FDU_LEASE",
-  formVersion: "V01/26",
-  title: "Queensland lease / temporary transfer application",
+  formType: "FDU1469",
+  formVersion: "V02/26",
+  title: "Temporary transfer of quota and/or effort units (FDU1469)",
   usesSimulatedTransfer: false,
   requiredProfileFields: QLD_REQUIRED,
   complianceChecks: [
     ...QLD_SHARED_CHECKS,
-    "After approval, FQX prepares an unsigned Queensland lease / temporary transfer application from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX.",
+    "After approval, FQX prepares an unsigned FDU1469 (V02/26) from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX. A checkbox is not a witness.",
     "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the signed pack is uploaded.",
   ],
 };

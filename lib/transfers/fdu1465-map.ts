@@ -44,10 +44,10 @@ const QUOTA_ROWS = [
   },
 ] as const;
 
-export function fduWholeUnits(quantity: string) {
-  const trimmed = quantity.trim();
+export function fduWholeUnits(quantity: string | number | null | undefined) {
+  const trimmed = String(quantity ?? "").trim();
   const value = Number(trimmed);
-  if (!Number.isFinite(value)) {
+  if (!trimmed || !Number.isFinite(value)) {
     return trimmed;
   }
   if (Math.abs(value - Math.round(value)) < 1e-9) {
@@ -96,7 +96,7 @@ function postalAddress(party: TransferPartyDetails) {
   return party.postal_address ?? party.registered_address;
 }
 
-function partyValues(
+export function partyFieldValues(
   party: TransferPartyDetails,
   fields: {
     surnameOrCompany: string;
@@ -108,11 +108,11 @@ function partyValues(
     postalPostcode: string;
     registered: string;
     registeredPostcode: string;
-    home: string;
-    work: string;
-    fax: string;
+    home?: string;
+    work?: string;
+    fax?: string;
     mobile: string;
-    email: string;
+    email?: string;
     client: string;
   },
 ) {
@@ -140,22 +140,44 @@ function partyValues(
     }
   }
 
-  values[fields.postal] = postal.text;
-  values[fields.postalPostcode] = postal.postcode;
-  values[fields.registered] = registered.text;
-  values[fields.registeredPostcode] = registered.postcode;
-  values[fields.mobile] = party.mobile ?? "";
-  values[fields.client] = party.profile?.client_reference ?? "";
-  values[fields.home] = "";
-  values[fields.work] = "";
-  values[fields.fax] = "";
-  values[fields.email] = "";
+  if (fields.postal) {
+    values[fields.postal] = postal.text;
+  }
+  if (fields.postalPostcode) {
+    values[fields.postalPostcode] = postal.postcode;
+  }
+  if (fields.registered) {
+    values[fields.registered] = fields.registeredPostcode
+      ? registered.text
+      : [registered.text, registered.postcode].filter(Boolean).join(" ");
+  }
+  if (fields.registeredPostcode) {
+    values[fields.registeredPostcode] = registered.postcode;
+  }
+  if (fields.mobile) {
+    values[fields.mobile] = party.mobile ?? "";
+  }
+  if (fields.client) {
+    values[fields.client] = party.profile?.client_reference ?? "";
+  }
+  if (fields.home) {
+    values[fields.home] = "";
+  }
+  if (fields.work) {
+    values[fields.work] = "";
+  }
+  if (fields.fax) {
+    values[fields.fax] = "";
+  }
+  if (fields.email) {
+    values[fields.email] = "";
+  }
   return values;
 }
 
 export function fdu1465FieldValues(data: TransferApplicationPdfData) {
   const values = {
-    ...partyValues(data.seller, {
+    ...partyFieldValues(data.seller, {
       surnameOrCompany: "Textfield-2",
       given: "Textfield-3",
       postal: "Text10",
@@ -169,7 +191,7 @@ export function fdu1465FieldValues(data: TransferApplicationPdfData) {
       email: "Textfield-8",
       client: "Textfield-9",
     }),
-    ...partyValues(data.buyer, {
+    ...partyFieldValues(data.buyer, {
       surnameOrCompany: "",
       company: "Textfield-19",
       individualSurname: "Textfield-10",
@@ -188,6 +210,85 @@ export function fdu1465FieldValues(data: TransferApplicationPdfData) {
   };
 
   const quota = matchFdu1465QuotaRow(
+    `${data.fisheryName} ${data.quotaTypeName} ${data.unitLabel}`,
+  );
+  if (quota) {
+    values[quota.unused] = fduWholeUnits(data.quantity);
+  }
+
+  return Object.fromEntries(
+    Object.entries(values).filter(([, value]) => value.trim().length > 0),
+  );
+}
+
+export const FDU1469_TEMPLATE_FILENAME = "fdu1469-v02-26.pdf";
+
+const LEASE_QUOTA_ROWS = [
+  { unused: "Unused units-0", match: /blue swimmer|\bbc1\b/i },
+  { unused: "Unused units-1", match: /mud crab east|\bec1\b/i },
+  { unused: "Unused units-2", match: /mud crab gulf|\bgc1\b/i },
+  { unused: "Unused units-3", match: /spanner crab|\bc2-itq\b|\bc2\b/i },
+  { unused: "Text12", match: /coral trout|\bct line\b/i },
+  { unused: "Text13", match: /red throat|\brte\b/i },
+  { unused: "Text14", match: /other species|\bos line\b/i },
+  {
+    unused: "Text15",
+    match: /spanish mackerel|\bsm units\b|\becsm\b/i,
+  },
+  { unused: "Text16", match: /northern trawl/i },
+  { unused: "Text17", match: /central trawl/i },
+  { unused: "Text18", match: /southern inshore/i },
+  { unused: "Trawl  T4-0", match: /region a|4a|offshore trawl region a/i },
+  { unused: "Trawl-10", match: /region b|4b|offshore trawl region b/i },
+  { unused: "Trawl-8", match: /moreton/i },
+  { unused: "Trawl-6", match: /t4-itq|prescribed whiting|\bt4\b/i },
+  { unused: "Trawl-4", match: /grey mackerel|\bgm5\b/i },
+  { unused: "Trawl-2", match: /sand whiting|\bwt5\b/i },
+  { unused: "Trawl-0", match: /school mackerel|\bscm5\b/i },
+  { unused: "Bechdemer-0", match: /black teatfish|\bb1b\b/i },
+  { unused: "Bechdemer-2", match: /other beche|\bb1o\b/i },
+  { unused: "Bechdemer-4", match: /white teatfish|\bb1w\b/i },
+  { unused: "Coral-2", match: /other coral|\bdo-itq\b/i },
+  { unused: "Coral-0", match: /specialty coral|\bds-itq\b/i },
+  { unused: "Shell Grit-0", match: /shell grit|\bg-itq\b/i },
+] as const;
+
+export function matchFdu1469QuotaRow(haystack: string) {
+  const text = haystack.trim();
+  if (!text) {
+    return null;
+  }
+  return LEASE_QUOTA_ROWS.find((row) => row.match.test(text)) ?? null;
+}
+
+export function fdu1469FieldValues(data: TransferApplicationPdfData) {
+  const values = {
+    ...partyFieldValues(data.seller, {
+      surnameOrCompany: "Textfield-3",
+      given: "Textfield-4",
+      postal: "Text2",
+      postalPostcode: "Text3",
+      registered: "Text4",
+      registeredPostcode: "",
+      mobile: "Textfield-10",
+      client: "",
+    }),
+    ...partyFieldValues(data.buyer, {
+      surnameOrCompany: "",
+      company: "Textfield-20",
+      individualSurname: "Textfield-11",
+      individualGiven: "Textfield-12",
+      postal: "Text7",
+      postalPostcode: "Text9",
+      registered: "",
+      registeredPostcode: "",
+      mobile: "Textfield-24",
+      email: "Textfield-25",
+      client: "Textfield-26",
+    }),
+  };
+
+  const quota = matchFdu1469QuotaRow(
     `${data.fisheryName} ${data.quotaTypeName} ${data.unitLabel}`,
   );
   if (quota) {

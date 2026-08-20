@@ -42,10 +42,12 @@ test("getTransferProcess routes QLD sale and lease separately from simulated", (
     ),
   );
   assert.equal(getTransferProcess("QLD", "LEASE").code, "QLD_LEASE");
+  assert.equal(getTransferProcess("QLD", "LEASE").formType, "FDU1469");
+  assert.equal(getTransferProcess("QLD", "LEASE").formVersion, "V02/26");
   assert.equal(getTransferProcess("QLD", "LEASE").usesSimulatedTransfer, false);
   assert.ok(
     getTransferProcess("QLD", "LEASE").complianceChecks.some((item) =>
-      item.toLowerCase().includes("lease"),
+      item.includes("FDU1469"),
     ),
   );
   assert.equal(getTransferProcess("NSW", "SALE").code, "SIMULATED");

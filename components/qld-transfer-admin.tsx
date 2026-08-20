@@ -3,6 +3,7 @@ import {
   tableButtonClassName,
   tableSecondaryButtonClassName,
 } from "@/components/auth-card";
+import { QldGenerateApplicationForm } from "@/components/qld-generate-application-form";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge } from "@/components/status-badge";
 import { LabeledFields, panelClassName } from "@/components/surface";
@@ -11,7 +12,6 @@ import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
 import {
   approveQldTransferAction,
-  generateTransferDocumentAdminAction,
   recordFqSubmissionAction,
   recordTransferActionRequiredAction,
   recordTransferProcessingAction,
@@ -156,18 +156,15 @@ export function QldTransferAdmin({
             </div>
           ) : null}
           {canGenerate ? (
-            <form action={generateTransferDocumentAdminAction} className="mt-4">
-              <input type="hidden" name="order_id" value={order.id} />
-              {queueFields(remaining)}
-              <PendingSubmitButton
-                className={tableButtonClassName}
-                pendingLabel="Preparing…"
-              >
-                {workspace.latestUnsigned
+            <QldGenerateApplicationForm
+              orderId={order.id}
+              remainingQueue={remaining}
+              label={
+                workspace.latestUnsigned
                   ? "Regenerate application"
-                  : "Generate application"}
-              </PendingSubmitButton>
-            </form>
+                  : "Generate application"
+              }
+            />
           ) : null}
         </section>
         {workspace.latestUnsigned ? (
