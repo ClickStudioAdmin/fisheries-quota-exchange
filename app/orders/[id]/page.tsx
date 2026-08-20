@@ -381,6 +381,41 @@ export default async function OrderPage({
               canPrepare={canPrepareTransfer}
             />
           </div>
+        ) : order.status === "AWAITING_SETTLEMENT" ? (
+          <div className={panelClassName}>
+            <h2 className="text-lg font-semibold text-ink">Settlement</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              {transferWorkspace &&
+              !transferWorkspace.process.usesSimulatedTransfer
+                ? "Fisheries Queensland has approved the transfer. "
+                : "The transfer is recorded. "}
+              FQX is settling this order: quota moves on the ledger, then the
+              seller is paid their net proceeds, then dummy tax invoices are
+              issued. You do not need to do anything.
+            </p>
+            {transferWorkspace?.application?.fq_reference ? (
+              <p className="mt-2 text-sm text-ink-muted">
+                Fisheries Queensland reference:{" "}
+                {transferWorkspace.application.fq_reference}
+              </p>
+            ) : null}
+            {transferWorkspace?.latestSignedPack ? (
+              <div className="mt-4 flex max-w-lg flex-col gap-2">
+                <PdfDownloadLink
+                  href={transferDocumentPath(
+                    order.id,
+                    transferWorkspace.latestSignedPack.id,
+                  )}
+                  hint={
+                    transferWorkspace.latestSignedPack.original_filename ??
+                    "Signed application"
+                  }
+                >
+                  Download signed application
+                </PdfDownloadLink>
+              </div>
+            ) : null}
+          </div>
         ) : order.status === "COMPLETED" ? (
           <div className={panelClassName}>
             <h2 className="text-lg font-semibold text-ink">Documents</h2>
