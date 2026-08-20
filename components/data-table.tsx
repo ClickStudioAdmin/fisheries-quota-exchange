@@ -13,6 +13,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
+import { tableButtonClassName } from "@/components/auth-card";
 import { ViewMessageModal } from "@/components/view-message-modal";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge, isStatusColumn } from "@/components/status-badge";
