@@ -1,5 +1,9 @@
 import { ReviewOrderForms } from "@/components/review-order-forms";
-import { LabeledFields } from "@/components/surface";
+import {
+  LabeledFieldGroups,
+  LabeledFields,
+  panelClassName,
+} from "@/components/surface";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { formatAustralianAddress } from "@/lib/organisations/address";
 import {
@@ -45,9 +49,9 @@ function PartyDetails({
 }) {
   if (!party) {
     return (
-      <section>
-        <h3 className="text-sm font-semibold text-ink">{heading}</h3>
-        <p className="mt-2 text-sm text-ink-muted">
+      <section className={panelClassName}>
+        <h3 className="text-lg font-semibold text-ink">{heading}</h3>
+        <p className="mt-3 text-sm text-ink-muted">
           {fallbackName
             ? `Listed on this order as ${fallbackName}. Full business details are not available yet.`
             : "Business details are not available yet."}
@@ -62,51 +66,72 @@ function PartyDetails({
     : formatAustralianAddress(party.postal_address) || "—";
 
   return (
-    <section>
-      <h3 className="text-sm font-semibold text-ink">{heading}</h3>
+    <section className={panelClassName}>
+      <h3 className="text-lg font-semibold text-ink">{heading}</h3>
       {missing.length > 0 ? (
         <p className="mt-2 text-sm text-ink-muted">
           Incomplete for transfer: {transferProfileFieldLabels(missing).join(", ")}
         </p>
       ) : null}
-      <div className="mt-3">
-        <LabeledFields
-          columns={2}
-          items={[
-            { label: "Legal name", value: display(party.legal_name) },
-            { label: "Trading name", value: display(party.trading_name) },
+      <div className="mt-4">
+        <LabeledFieldGroups
+          groups={[
             {
-              label: "Entity",
-              value: party.entity_kind
-                ? entityKindLabel(party.entity_kind)
-                : "—",
+              items: [
+                {
+                  label: "Entity",
+                  value: party.entity_kind
+                    ? entityKindLabel(party.entity_kind)
+                    : "—",
+                },
+                ...(company
+                  ? [{ label: "ACN", value: display(party.acn) }]
+                  : []),
+                { label: "ABN", value: display(party.abn) },
+                { label: "Legal name", value: display(party.legal_name) },
+                { label: "Trading name", value: display(party.trading_name) },
+                { label: "Phone", value: display(party.mobile) },
+              ],
             },
-            { label: "ABN", value: display(party.abn) },
-            ...(company ? [{ label: "ACN", value: display(party.acn) }] : []),
-            { label: "Phone", value: display(party.mobile) },
             {
-              label: "Registered address",
-              value:
-                formatAustralianAddress(party.registered_address) || "—",
+              title: "Address",
+              columns: 1,
+              items: [
+                {
+                  label: "Registered",
+                  value:
+                    formatAustralianAddress(party.registered_address) || "—",
+                },
+                { label: "Postal", value: postal },
+              ],
             },
-            { label: "Postal address", value: postal },
             ...(showQldFields
               ? [
                   {
-                    label: "QLD client number",
-                    value: display(party.profile?.client_reference),
-                  },
-                  {
-                    label: "Commercial fishing licence",
-                    value: display(party.profile?.licence_number),
-                  },
-                  {
-                    label: "Fishery symbols",
-                    value: display(party.profile?.fishery_symbols),
+                    title: "Queensland Fisheries",
+                    items: [
+                      {
+                        label: "Client number",
+                        value: display(party.profile?.client_reference),
+                      },
+                      {
+                        label: "Commercial fishing licence",
+                        value: display(party.profile?.licence_number),
+                      },
+                      {
+                        label: "Fishery symbols",
+                        value: display(party.profile?.fishery_symbols),
+                      },
+                    ],
                   },
                 ]
               : []),
-            { label: "Owners / admins", value: signatoryLabel(party) },
+            {
+              columns: 1 as const,
+              items: [
+                { label: "Owners / admins", value: signatoryLabel(party) },
+              ],
+            },
           ]}
         />
       </div>
@@ -130,59 +155,73 @@ export function ComplianceReviewPanel({
     workspace.buyerMissing.length > 0 || workspace.sellerMissing.length > 0;
 
   return (
-    <div className="space-y-6">
-      <section>
-        <h3 className="text-sm font-semibold text-ink">Order</h3>
-        <div className="mt-3">
-          <LabeledFields
-            items={[
-              { label: "Order", value: String(order.id) },
-              { label: "Offering", value: listingOfferingLabel(order.offering) },
-              { label: "Fishery", value: fishery },
-              { label: "Quota type", value: order.quota_type_name },
-              {
-                label: "Quantity",
-                value: `${order.quantity} ${order.unit_label}`,
-              },
-              { label: "Amount", value: formatAud(order.amount_aud) },
-              {
-                label: "Platform fee",
-                value:
-                  Number(order.fee_percent) > 0
-                    ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
-                    : formatAud(order.fee_amount_aud),
-              },
-            ]}
-          />
-        </div>
-      </section>
-      <section>
-        <h3 className="text-sm font-semibold text-ink">
-          {qld ? "Queensland checks" : "Compliance checks"}
-        </h3>
-        <p className="mt-1 text-sm text-ink-muted">{workspace.process.title}</p>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-ink">
-          {workspace.process.complianceChecks.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-      <PartyDetails
-        heading="Seller"
-        party={workspace.seller}
-        missing={workspace.sellerMissing}
-        showQldFields={qld}
-        fallbackName={order.seller_name}
-      />
-      <PartyDetails
-        heading="Buyer"
-        party={workspace.buyer}
-        missing={workspace.buyerMissing}
-        showQldFields={qld}
-        fallbackName={order.buyer_name}
-      />
-      <section>
-        <h3 className="text-sm font-semibold text-ink">Decision</h3>
+    <div className="mt-2 space-y-6">
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <section className={panelClassName}>
+          <h3 className="text-lg font-semibold text-ink">Order</h3>
+          <div className="mt-4">
+            <LabeledFields
+              items={[
+                { label: "Order", value: String(order.id) },
+                {
+                  label: "Offering",
+                  value: listingOfferingLabel(order.offering),
+                },
+                { label: "Fishery", value: fishery },
+                { label: "Quota type", value: order.quota_type_name },
+                {
+                  label: "Quantity",
+                  value: `${order.quantity} ${order.unit_label}`,
+                },
+                { label: "Amount", value: formatAud(order.amount_aud) },
+                {
+                  label: "Platform fee",
+                  value:
+                    Number(order.fee_percent) > 0
+                      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                      : formatAud(order.fee_amount_aud),
+                },
+              ]}
+            />
+          </div>
+        </section>
+        <section className={panelClassName}>
+          <h3 className="text-lg font-semibold text-ink">
+            {qld ? "Queensland checks" : "Compliance checks"}
+          </h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            {workspace.process.title}
+          </p>
+          <ul className="mt-4 space-y-3">
+            {workspace.process.complianceChecks.map((item) => (
+              <li
+                key={item}
+                className="border-l border-line pl-3 text-sm text-ink"
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <PartyDetails
+          heading="Seller"
+          party={workspace.seller}
+          missing={workspace.sellerMissing}
+          showQldFields={qld}
+          fallbackName={order.seller_name}
+        />
+        <PartyDetails
+          heading="Buyer"
+          party={workspace.buyer}
+          missing={workspace.buyerMissing}
+          showQldFields={qld}
+          fallbackName={order.buyer_name}
+        />
+      </div>
+      <section className={panelClassName}>
+        <h3 className="text-lg font-semibold text-ink">Decision</h3>
         {qld && incomplete ? (
           <p className="mt-2 text-sm text-ink-muted">
             Missing transfer fields are listed above. They do not block this
@@ -190,7 +229,7 @@ export function ComplianceReviewPanel({
             Queensland profile.
           </p>
         ) : null}
-        <div className="mt-3">
+        <div className="mt-4">
           <ReviewOrderForms order={order} reviewQueue={reviewQueue} />
         </div>
       </section>

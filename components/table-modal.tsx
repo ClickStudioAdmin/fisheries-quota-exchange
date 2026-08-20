@@ -62,8 +62,10 @@ export function TableModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className={`mb-16 w-full border border-line bg-paper-raised p-6 ${
-              wide ? "max-w-3xl" : "max-w-md"
+            className={`mb-16 w-full border border-line p-6 ${
+              wide
+                ? "max-w-5xl bg-paper"
+                : "max-w-md bg-paper-raised"
             }`}
             onClick={(event) => event.stopPropagation()}
           >

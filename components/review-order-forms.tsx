@@ -25,12 +25,11 @@ export function ReviewOrderForms({
       <input key={id} type="hidden" name="review_queue" value={id} />
     ));
   }
-  const approveFormId = `approve-compliance-${order.id}`;
 
   if (order.status === "AWAITING_COMPLIANCE") {
     return (
-      <div className="space-y-4">
-        <form id={approveFormId} action={approveComplianceAction}>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <form action={approveComplianceAction} className="space-y-3">
           <input type="hidden" name="order_id" value={order.id} />
           {queueFields()}
           <PendingSubmitButton
@@ -39,10 +38,29 @@ export function ReviewOrderForms({
           >
             Approve
           </PendingSubmitButton>
+          <div>
+            <label
+              htmlFor={`approve-note-${order.id}`}
+              className="block text-sm text-ink"
+            >
+              Note (optional)
+            </label>
+            <input
+              id={`approve-note-${order.id}`}
+              name="review_note"
+              className={fieldClassName}
+            />
+          </div>
         </form>
         <form action={rejectComplianceAction} className="space-y-3">
           <input type="hidden" name="order_id" value={order.id} />
           {queueFields()}
+          <PendingSubmitButton
+            className={tableButtonClassName}
+            pendingLabel="Rejecting…"
+          >
+            Reject
+          </PendingSubmitButton>
           <div>
             <label
               htmlFor={`reject-note-${order.id}`}
@@ -56,27 +74,7 @@ export function ReviewOrderForms({
               className={fieldClassName}
             />
           </div>
-          <PendingSubmitButton
-            className={tableButtonClassName}
-            pendingLabel="Rejecting…"
-          >
-            Reject
-          </PendingSubmitButton>
         </form>
-        <div>
-          <label
-            htmlFor={`approve-note-${order.id}`}
-            className="block text-sm text-ink"
-          >
-            Note (optional)
-          </label>
-          <input
-            id={`approve-note-${order.id}`}
-            name="review_note"
-            form={approveFormId}
-            className={fieldClassName}
-          />
-        </div>
       </div>
     );
   }

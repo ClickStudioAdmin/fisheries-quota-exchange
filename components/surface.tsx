@@ -18,8 +18,8 @@ export function LabeledFields({
   columns?: 2 | 3 | 4 | 5;
 }) {
   const columnClassName = {
-    2: "grid-cols-2",
-    3: "grid-cols-2 sm:grid-cols-3",
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
     4: "grid-cols-2 sm:grid-cols-4",
     5: "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5",
   }[columns];
@@ -31,7 +31,7 @@ export function LabeledFields({
           <dt className="text-xs uppercase tracking-[0.12em] text-ink-muted">
             {item.label}
           </dt>
-          <dd className="mt-0.5 text-sm text-ink">{item.value}</dd>
+          <dd className="mt-0.5 break-words text-sm text-ink">{item.value}</dd>
         </div>
       ))}
     </dl>
