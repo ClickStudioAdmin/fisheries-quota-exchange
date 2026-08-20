@@ -55,9 +55,10 @@ export function ReviewOrderForms({
               >
                 Note (optional)
               </label>
-              <input
+              <textarea
                 id={`approve-note-${order.id}`}
                 name="review_note"
+                rows={3}
                 className={fieldClassName}
               />
             </div>
@@ -86,9 +87,10 @@ export function ReviewOrderForms({
               >
                 Reason (optional)
               </label>
-              <input
+              <textarea
                 id={`reject-note-${order.id}`}
                 name="review_note"
+                rows={3}
                 className={fieldClassName}
               />
             </div>
