@@ -508,12 +508,15 @@ export async function notifyTransferInProgress(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
   const jurisdictionCode = await getOrderJurisdictionCode(order);
   const process = getTransferProcess(jurisdictionCode, order.offering);
-  const data = emailCopy.transfer_in_progress({
-    orderId: order.id,
-    orderUrl: `${siteUrl}/orders/${order.id}`,
-    prepareDocuments: !process.usesSimulatedTransfer,
-  });
-  await notifyBuyerAndSeller("transfer_in_progress", order, data);
+  const prepareDocuments = !process.usesSimulatedTransfer;
+  await notifyBuyerAndSellerCopies("transfer_in_progress", order, (forSeller) =>
+    emailCopy.transfer_in_progress({
+      orderId: order.id,
+      orderUrl: `${siteUrl}/orders/${order.id}`,
+      prepareDocuments,
+      forSeller,
+    }),
+  );
   await notifyOperatorOrderPending(order, siteUrl);
 }
 
@@ -544,17 +547,83 @@ export async function notifyTransferApplicationReady(
   });
   await notifyAccountEmail(
     "transfer_application_ready",
-    order.buyer_organisation_id,
-    data,
-    undefined,
-    attachments,
-  );
-  await notifyAccountEmail(
-    "transfer_application_ready",
     order.seller_organisation_id,
     data,
     undefined,
     attachments,
+  );
+}
+
+export async function notifyTransferSellerSignedReceived(order: Order) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "transfer_seller_signed_received",
+    order.seller_organisation_id,
+    emailCopy.transfer_seller_signed_received({
+      orderId: order.id,
+      orderUrl: `${siteUrl}/orders/${order.id}`,
+    }),
+  );
+  await notifyOperatorOrderPending(order, siteUrl);
+}
+
+export async function notifyTransferBuyerFormReady(
+  order: Order,
+  attachment: { filename: string; pdf: Buffer; documentId: number },
+) {
+  if (
+    !(await claimEmailDispatch(
+      "transfer_buyer_form_ready",
+      `${order.id}:doc:${attachment.documentId}`,
+    ))
+  ) {
+    return;
+  }
+
+  const siteUrl = await siteUrlOrEmpty();
+  const data = emailCopy.transfer_buyer_form_ready({
+    orderId: order.id,
+    orderUrl: `${siteUrl}/orders/${order.id}`,
+    formTitle:
+      order.offering === "LEASE"
+        ? "The Queensland FDU1469 temporary transfer application"
+        : "The Queensland FDU1465 transfer application",
+  });
+  await notifyAccountEmail(
+    "transfer_buyer_form_ready",
+    order.buyer_organisation_id,
+    data,
+    undefined,
+    [{ filename: attachment.filename, content: attachment.pdf }],
+  );
+}
+
+export async function notifyTransferBuyerSignedReceived(order: Order) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "transfer_buyer_signed_received",
+    order.buyer_organisation_id,
+    emailCopy.transfer_buyer_signed_received({
+      orderId: order.id,
+      orderUrl: `${siteUrl}/orders/${order.id}`,
+    }),
+  );
+  await notifyOperatorOrderPending(order, siteUrl);
+}
+
+export async function notifyTransferSellerPackReturned(
+  order: Order,
+  note: string,
+) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "transfer_seller_pack_returned",
+    order.seller_organisation_id,
+    emailCopy.transfer_seller_pack_returned({
+      orderId: order.id,
+      orderUrl: `${siteUrl}/orders/${order.id}`,
+      note,
+    }),
   );
 }
 

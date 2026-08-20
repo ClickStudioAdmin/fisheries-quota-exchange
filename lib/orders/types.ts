@@ -119,20 +119,23 @@ export function adminTransferActionLabel(usesSimulatedTransfer: boolean) {
 
 export function qldTransferPublicStatusLabel(status?: string | null) {
   switch (status ?? "READY") {
-    case "DOCUMENT_GENERATED":
-    case "AWAITING_SIGNED_PACK":
-      return "2 of 4 · Waiting for signed documents";
+    case "AWAITING_SELLER_SIGNATURE":
+      return "2 of 6 · Waiting for seller to sign";
+    case "AWAITING_SELLER_PACK_REVIEW":
+      return "3 of 6 · Checking seller signed form";
+    case "AWAITING_BUYER_SIGNATURE":
+      return "4 of 6 · Waiting for buyer to sign";
     case "ADMIN_REVIEW":
-      return "3 of 4 · Reviewing signed pack";
+      return "5 of 6 · Reviewing completed pack";
     case "SUBMITTED":
     case "PROCESSING":
-      return "4 of 4 · With Fisheries Queensland";
+      return "6 of 6 · With Fisheries Queensland";
     case "APPROVED":
       return "Fisheries Queensland approved";
     case "ACTION_REQUIRED":
       return "Action required";
     default:
-      return "1 of 4 · Waiting for application";
+      return "1 of 6 · Waiting for application";
   }
 }
 

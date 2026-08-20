@@ -40,7 +40,9 @@ const PLATFORM_ACTOR_EVENTS = new Set([
   "COMPLIANCE_UPDATE_REQUESTED_SELLER",
   "TRANSFER_SIMULATED",
   "TRANSFER_DOCUMENT_GENERATED",
-  "TRANSFER_SIGNED_PACK_UPLOADED",
+  "TRANSFER_SELLER_PACK_CHECK_COMPLETED",
+  "TRANSFER_SELLER_PACK_ACCEPTED",
+  "TRANSFER_SELLER_PACK_RETURNED",
   "TRANSFER_SUBMITTED",
   "TRANSFER_PROCESSING",
   "TRANSFER_ACTION_REQUIRED",
@@ -270,6 +272,14 @@ export function auditEventLabel(eventType: string) {
       return "Transfer recorded";
     case "TRANSFER_DOCUMENT_GENERATED":
       return "Transfer application generated";
+    case "TRANSFER_SELLER_SIGNED_UPLOADED":
+      return "Seller-signed transfer form uploaded";
+    case "TRANSFER_SELLER_PACK_CHECK_COMPLETED":
+      return "Seller-signed form check completed";
+    case "TRANSFER_SELLER_PACK_ACCEPTED":
+      return "Seller-signed form released to buyer";
+    case "TRANSFER_SELLER_PACK_RETURNED":
+      return "Seller-signed form returned";
     case "TRANSFER_SIGNED_PACK_UPLOADED":
       return "Signed transfer pack uploaded";
     case "TRANSFER_SUBMITTED":

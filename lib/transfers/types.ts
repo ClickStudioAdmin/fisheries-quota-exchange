@@ -8,8 +8,9 @@ export type TransferProcessCode = (typeof TRANSFER_PROCESS_CODES)[number];
 
 export const TRANSFER_APPLICATION_STATUSES = [
   "READY",
-  "DOCUMENT_GENERATED",
-  "AWAITING_SIGNED_PACK",
+  "AWAITING_SELLER_SIGNATURE",
+  "AWAITING_SELLER_PACK_REVIEW",
+  "AWAITING_BUYER_SIGNATURE",
   "ADMIN_REVIEW",
   "SUBMITTED",
   "PROCESSING",
@@ -22,6 +23,7 @@ export type TransferApplicationStatus =
 
 export const TRANSFER_DOCUMENT_TYPES = [
   "UNSIGNED_APPLICATION",
+  "SELLER_SIGNED",
   "SIGNED_PACK",
   "SUPPORTING",
 ] as const;
@@ -52,6 +54,7 @@ export type JurisdictionTransferProcess = {
   usesSimulatedTransfer: boolean;
   requiredProfileFields: readonly TransferProfileField[];
   complianceChecks: readonly string[];
+  sellerPackChecks: readonly string[];
 };
 
 export type TransferApplication = {
@@ -65,6 +68,7 @@ export type TransferApplication = {
   submission_method: string | null;
   submitted_at: string | null;
   notes: string | null;
+  seller_pack_checklist: string[];
   created_at: string;
   updated_at: string;
 };
@@ -118,12 +122,14 @@ export function transferApplicationStatusLabel(status: TransferApplicationStatus
   switch (status) {
     case "READY":
       return "Ready to prepare";
-    case "DOCUMENT_GENERATED":
-      return "Application generated";
-    case "AWAITING_SIGNED_PACK":
-      return "Waiting for signed application";
+    case "AWAITING_SELLER_SIGNATURE":
+      return "Waiting for seller to sign";
+    case "AWAITING_SELLER_PACK_REVIEW":
+      return "Checking seller signed form";
+    case "AWAITING_BUYER_SIGNATURE":
+      return "Waiting for buyer to sign";
     case "ADMIN_REVIEW":
-      return "Admin review";
+      return "Reviewing completed pack";
     case "SUBMITTED":
       return "Submitted to Fisheries Queensland";
     case "PROCESSING":

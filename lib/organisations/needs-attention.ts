@@ -94,13 +94,21 @@ function usesSimulatedTransfer(
   return jurisdictionCode !== "QLD";
 }
 
-function qldTransferActionLabel(status: string | null) {
+function qldTransferActionLabel(
+  status: string | null,
+  isSeller: boolean,
+  isBuyer: boolean,
+) {
   if (status == null || status === "READY") {
-    return "Prepare transfer documents";
+    return isSeller ? "Prepare transfer documents" : null;
   }
 
-  if (status === "DOCUMENT_GENERATED" || status === "AWAITING_SIGNED_PACK") {
-    return "Sign transfer documents";
+  if (status === "AWAITING_SELLER_SIGNATURE") {
+    return isSeller ? "Sign and upload transfer documents" : null;
+  }
+
+  if (status === "AWAITING_BUYER_SIGNATURE") {
+    return isBuyer ? "Sign and upload transfer documents" : null;
   }
 
   if (status === "ACTION_REQUIRED") {
@@ -184,7 +192,11 @@ export function organisationNeedsAttentionItems(input: {
         continue;
       }
 
-      const action = qldTransferActionLabel(application?.status ?? "READY");
+      const action = qldTransferActionLabel(
+        application?.status ?? "READY",
+        isSeller,
+        isBuyer,
+      );
       if (action) {
         items.push({
           key: `transfer-${order.id}`,

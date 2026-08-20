@@ -323,21 +323,36 @@ export const emailCopy = {
     orderId: number;
     orderUrl: string;
     prepareDocuments?: boolean;
+    forSeller?: boolean;
   }) =>
     input.prepareDocuments
-      ? {
-          ...notice(
-            `Prepare transfer documents for FQX order ${input.orderId}`,
-            [
-              "Compliance passed. Next, buyer and seller prepare the Queensland transfer application.",
-              "Open the order to complete any missing business details. FQX will generate the unsigned PDF. Sign and witness it offline, then return the signed pack to FQX.",
-            ],
-            { label: "Prepare documents", url: input.orderUrl },
-          ),
-          highlight:
-            "You need to prepare transfer documents for this order. This is not complete until the signed pack is back with FQX.",
-          highlightLabel: "What you need to do",
-        }
+      ? input.forSeller
+        ? {
+            ...notice(
+              `Prepare transfer documents for FQX order ${input.orderId}`,
+              [
+                "Compliance passed. You sign the Queensland transfer application first.",
+                "Open the order to complete any missing business details. FQX will generate the unsigned PDF. Sign and witness it offline, then upload it from the order. The buyer cannot sign until FQX has checked your form.",
+              ],
+              { label: "Prepare documents", url: input.orderUrl },
+            ),
+            highlight:
+              "Sign the transfer application first. This is not complete until FQX has the seller-signed form.",
+            highlightLabel: "What you need to do",
+          }
+        : {
+            ...notice(
+              `Transfer documents will follow for FQX order ${input.orderId}`,
+              [
+                "Compliance passed. The seller signs the Queensland transfer application first.",
+                "FQX will email you the seller-signed form when it is ready. Do not use a blank copy.",
+              ],
+              { label: "View order", url: input.orderUrl },
+            ),
+            highlight:
+              "Wait until FQX releases the seller-signed form. You do not sign a blank application.",
+            highlightLabel: "What you need to do",
+          }
       : notice(
           `Quota transfer has started for FQX order ${input.orderId}`,
           [
@@ -354,10 +369,60 @@ export const emailCopy = {
       `Transfer application ready for FQX order ${input.orderId}`,
       [
         `${input.formTitle} is ready. A copy is attached.`,
-        "Download it, sign and witness it offline, then return the completed form to FQX. Do not upload it yourself in this phase.",
+        "Download it, sign and witness it offline, then upload the seller-signed form from the order. The buyer will receive it after FQX checks your upload.",
       ],
       { label: "View order", url: input.orderUrl },
     ),
+  transfer_seller_signed_received: (input: {
+    orderId: number;
+    orderUrl: string;
+  }) =>
+    notice(
+      `FQX has your signed transfer form for order ${input.orderId}`,
+      [
+        "Your seller-signed application is with FQX. The buyer cannot access it until FQX has checked the signatures and witnessing.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
+  transfer_buyer_form_ready: (input: {
+    orderId: number;
+    orderUrl: string;
+    formTitle: string;
+  }) =>
+    notice(
+      `Seller-signed transfer form ready for FQX order ${input.orderId}`,
+      [
+        `FQX has checked the seller-signed ${input.formTitle}. A copy is attached.`,
+        "Download that file, add the buyer signature and witness, then upload it from the order. Do not start from a blank application.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
+  transfer_buyer_signed_received: (input: {
+    orderId: number;
+    orderUrl: string;
+  }) =>
+    notice(
+      `FQX has the completed transfer pack for order ${input.orderId}`,
+      [
+        "The completed application is with FQX for review before Fisheries Queensland submission.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
+  transfer_seller_pack_returned: (input: {
+    orderId: number;
+    orderUrl: string;
+    note: string;
+  }) => ({
+    ...notice(
+      `FQX needs a new seller-signed form for order ${input.orderId}`,
+      [
+        "FQX returned the seller-signed application. Download the unsigned form from the order, sign and witness it again, then upload a new copy.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
+    highlight: input.note,
+    highlightLabel: "Message from FQX",
+  }),
   compliance_rejected: (input: {
     orderId: number;
     orderUrl: string;

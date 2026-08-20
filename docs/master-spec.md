@@ -215,7 +215,7 @@ Stripe Connect in test mode behind a `PaymentProvider` abstraction. Separate cha
 
 ## 29. Phase 10 — Queensland transfer process (foundation)
 
-Jurisdiction-specific transfer after payment and compliance. Queensland sales and leases generate stored application PDFs from business details, admin reviews an offline signed pack, and admin records Fisheries Queensland submission. Other jurisdictions keep simulated transfer. Approved QLD applications hand off to existing `simulate_transfer` and settlement. No live e-sign and no FQ API.
+Jurisdiction-specific transfer after payment and compliance. Queensland sales and leases generate stored application PDFs from business details. The seller signs first and uploads; admin checks that file before the buyer can download it; admin records Fisheries Queensland submission. Other jurisdictions keep simulated transfer. Approved QLD applications hand off to existing `simulate_transfer` and settlement. No live e-sign and no FQ API.
 
 See [phase-10.md](phase-10.md).
 

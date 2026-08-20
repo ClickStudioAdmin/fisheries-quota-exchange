@@ -2,6 +2,7 @@ import Link from "next/link";
 import { buttonClassName } from "@/components/auth-card";
 import { StatusBadge } from "@/components/status-badge";
 import { TransferPrepareForm } from "@/components/transfer-prepare-form";
+import { TransferPartyUploadForm } from "@/components/transfer-party-upload-form";
 import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
 import { accountSettingsPath } from "@/lib/organisations/paths";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
@@ -22,27 +23,38 @@ export function TransferOrderPanel({
   }
 
   const status = workspace.application?.status ?? "READY";
-  const ownMissing =
-    viewerOrganisationId === workspace.order.buyer_organisation_id
-      ? workspace.buyerMissing
-      : viewerOrganisationId === workspace.order.seller_organisation_id
-        ? workspace.sellerMissing
-        : [];
-  const otherMissing =
-    viewerOrganisationId === workspace.order.buyer_organisation_id
+  const isBuyer = viewerOrganisationId === workspace.order.buyer_organisation_id;
+  const isSeller =
+    viewerOrganisationId === workspace.order.seller_organisation_id;
+  const ownMissing = isBuyer
+    ? workspace.buyerMissing
+    : isSeller
       ? workspace.sellerMissing
-      : viewerOrganisationId === workspace.order.seller_organisation_id
-        ? workspace.buyerMissing
-        : [...workspace.buyerMissing, ...workspace.sellerMissing];
+      : [];
+  const otherMissing = isBuyer
+    ? workspace.sellerMissing
+    : isSeller
+      ? workspace.buyerMissing
+      : [...workspace.buyerMissing, ...workspace.sellerMissing];
   const complete =
     workspace.buyerMissing.length === 0 && workspace.sellerMissing.length === 0;
+  const sellerDownload = isSeller && workspace.latestUnsigned;
+  const buyerDownload =
+    isBuyer &&
+    status === "AWAITING_BUYER_SIGNATURE" &&
+    workspace.latestSellerSigned;
+  const sellerUpload =
+    canPrepare && isSeller && status === "AWAITING_SELLER_SIGNATURE";
+  const buyerUpload =
+    canPrepare && isBuyer && status === "AWAITING_BUYER_SIGNATURE";
 
   return (
     <div>
       <h2 className="text-lg font-semibold text-ink">Queensland transfer</h2>
       <p className="mt-2 text-sm text-ink-muted">
-        Application prepared from your business details. Sign and witness the
-        PDF offline. FQX does not collect signatures in the browser.
+        The seller signs and witnesses first, then uploads that file. FQX checks
+        it before the buyer can download it. Signatures are not collected in
+        the browser.
       </p>
       <div className="mt-4">
         <StatusBadge label={qldTransferPublicStatusLabel(status)} />
@@ -52,7 +64,9 @@ export function TransferOrderPanel({
           Fisheries Queensland reference: {workspace.application.fq_reference}
         </p>
       ) : null}
-      {workspace.application?.notes && status === "ACTION_REQUIRED" ? (
+      {workspace.application?.notes &&
+      (status === "ACTION_REQUIRED" ||
+        status === "AWAITING_SELLER_SIGNATURE") ? (
         <p className="mt-2 text-sm text-ink-muted">
           {workspace.application.notes}
         </p>
@@ -78,17 +92,42 @@ export function TransferOrderPanel({
           <TransferPrepareForm orderId={workspace.order.id} />
         </div>
       ) : null}
-      {workspace.latestUnsigned ? (
+      {sellerDownload || buyerDownload ? (
         <div className="mt-6">
-          <a
-            href={transferDocumentPath(
-              workspace.order.id,
-              workspace.latestUnsigned.id,
-            )}
-            className={`${buttonClassName} inline-block`}
-          >
-            Download application PDF
-          </a>
+          {sellerDownload ? (
+            <a
+              href={transferDocumentPath(
+                workspace.order.id,
+                workspace.latestUnsigned.id,
+              )}
+              className={`${buttonClassName} inline-block`}
+            >
+              Download application PDF
+            </a>
+          ) : null}
+          {buyerDownload && workspace.latestSellerSigned ? (
+            <a
+              href={transferDocumentPath(
+                workspace.order.id,
+                workspace.latestSellerSigned.id,
+              )}
+              className={`${buttonClassName} inline-block`}
+            >
+              Download seller-signed PDF
+            </a>
+          ) : null}
+          {sellerUpload ? (
+            <TransferPartyUploadForm
+              orderId={workspace.order.id}
+              label="Upload seller-signed PDF"
+            />
+          ) : null}
+          {buyerUpload ? (
+            <TransferPartyUploadForm
+              orderId={workspace.order.id}
+              label="Upload completed pack"
+            />
+          ) : null}
           {canPrepare &&
           (status === "ACTION_REQUIRED" || status === "ADMIN_REVIEW") ? (
             <div className="mt-4">
@@ -96,6 +135,21 @@ export function TransferOrderPanel({
             </div>
           ) : null}
         </div>
+      ) : null}
+      {isBuyer &&
+      (status === "READY" ||
+        status === "AWAITING_SELLER_SIGNATURE" ||
+        status === "AWAITING_SELLER_PACK_REVIEW") ? (
+        <p className="mt-4 text-sm text-ink-muted">
+          The seller signs first. FQX will email you the seller-signed form when
+          it is ready.
+        </p>
+      ) : null}
+      {isSeller && status === "AWAITING_SELLER_PACK_REVIEW" ? (
+        <p className="mt-4 text-sm text-ink-muted">
+          FQX has your signed form and is checking it before the buyer can
+          download it.
+        </p>
       ) : null}
     </div>
   );

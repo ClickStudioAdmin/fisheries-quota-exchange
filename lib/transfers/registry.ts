@@ -19,6 +19,13 @@ const QLD_SHARED_CHECKS = [
   "Quota is already reserved on this order. Approving compliance does not move quota. Fisheries Queensland approval later must not apply quota again.",
 ] as const;
 
+const QLD_SELLER_PACK_CHECKS = [
+  "Confirm the transferor (seller) has signed.",
+  "Confirm the seller witness block is completed.",
+  "Confirm pre-filled names, addresses, client numbers, and quantity look unaltered and match this order.",
+  "Confirm this is the FQX application for this order, not a separate copy.",
+] as const;
+
 export const qldSaleProcess: JurisdictionTransferProcess = {
   code: "QLD_SALE",
   jurisdictionCode: "QLD",
@@ -30,9 +37,10 @@ export const qldSaleProcess: JurisdictionTransferProcess = {
   requiredProfileFields: QLD_REQUIRED,
   complianceChecks: [
     ...QLD_SHARED_CHECKS,
-    "After approval, FQX prepares an unsigned FDU1465 (V09/23) from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX. A checkbox is not a witness.",
-    "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the signed pack is uploaded.",
+    "After approval, FQX prepares an unsigned FDU1465 (V09/23) from these details. The seller signs and witnesses first, uploads it, and FQX checks that form before the buyer can access it. A checkbox is not a witness.",
+    "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the completed pack is uploaded.",
   ],
+  sellerPackChecks: QLD_SELLER_PACK_CHECKS,
 };
 
 export const qldLeaseProcess: JurisdictionTransferProcess = {
@@ -46,9 +54,10 @@ export const qldLeaseProcess: JurisdictionTransferProcess = {
   requiredProfileFields: QLD_REQUIRED,
   complianceChecks: [
     ...QLD_SHARED_CHECKS,
-    "After approval, FQX prepares an unsigned FDU1469 (V02/26) from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX. A checkbox is not a witness.",
-    "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the signed pack is uploaded.",
+    "After approval, FQX prepares an unsigned FDU1469 (V02/26) from these details. The seller signs and witnesses first, uploads it, and FQX checks that form before the buyer can access it. A checkbox is not a witness.",
+    "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the completed pack is uploaded.",
   ],
+  sellerPackChecks: QLD_SELLER_PACK_CHECKS,
 };
 
 export const simulatedProcess: JurisdictionTransferProcess = {
@@ -65,6 +74,7 @@ export const simulatedProcess: JurisdictionTransferProcess = {
     "Confirm the fishery, offering, and quantity.",
     "Quota is already reserved. Approving compliance starts the simulated transfer step, not a regulator submission.",
   ],
+  sellerPackChecks: [],
 };
 
 export function getTransferProcess(

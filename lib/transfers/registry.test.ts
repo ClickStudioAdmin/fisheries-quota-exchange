@@ -50,7 +50,9 @@ test("getTransferProcess routes QLD sale and lease separately from simulated", (
       item.includes("FDU1469"),
     ),
   );
+  assert.ok(getTransferProcess("QLD", "SALE").sellerPackChecks.length > 0);
   assert.equal(getTransferProcess("NSW", "SALE").code, "SIMULATED");
+  assert.equal(getTransferProcess("NSW", "SALE").sellerPackChecks.length, 0);
   assert.ok(getTransferProcess("NSW", "SALE").complianceChecks.length > 0);
   assert.equal(getTransferProcess(null, "LEASE").usesSimulatedTransfer, true);
 });

@@ -12,6 +12,10 @@ import {
 test("auditEventLabel covers business and order events", () => {
   assert.equal(auditEventLabel("MEMBER_INVITED"), "Member invited");
   assert.equal(auditEventLabel("TRANSFER_DOCUMENT_GENERATED"), "Transfer application generated");
+  assert.equal(
+    auditEventLabel("TRANSFER_SELLER_PACK_ACCEPTED"),
+    "Seller-signed form released to buyer",
+  );
   assert.equal(auditEventCategory("TRANSFER_APPROVED"), "Orders");
   assert.equal(auditEventLabel("PAYMENTS_SETUP_UPDATED"), "Payments setup updated");
   assert.equal(auditEventLabel("UNKNOWN_EVENT"), "Unknown Event");

@@ -6,15 +6,19 @@ import {
 import { QldGenerateApplicationForm } from "@/components/qld-generate-application-form";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge } from "@/components/status-badge";
-import { LabeledFields, panelClassName } from "@/components/surface";
+import { ReviewChecklistForm } from "@/components/review-checklist-form";
+import { checklistIsComplete } from "@/lib/orders/checklist";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
 import {
   approveQldTransferAction,
+  acceptSellerPackAction,
   recordFqSubmissionAction,
   recordTransferActionRequiredAction,
   recordTransferProcessingAction,
+  returnSellerPackAction,
+  saveSellerPackChecklistAction,
   uploadSignedPackAction,
 } from "@/lib/transfers/actions";
 import {
@@ -115,7 +119,13 @@ export function QldTransferAdmin({
                     : "Not generated",
                 },
                 {
-                  label: "Signed pack",
+                  label: "Seller-signed PDF",
+                  value: workspace.latestSellerSigned
+                    ? "Uploaded"
+                    : "Not uploaded",
+                },
+                {
+                  label: "Completed pack",
                   value: workspace.latestSignedPack
                     ? "Uploaded"
                     : "Not uploaded",
@@ -129,10 +139,13 @@ export function QldTransferAdmin({
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Documents</h3>
           <p className="mt-1 text-sm text-ink-muted">
-            Generate the unsigned application from stored business details.
-            Parties sign and witness it offline.
+            Generate the unsigned application from stored business details. The
+            seller signs first. FQX checks that file before the buyer can
+            download it.
           </p>
-          {workspace.latestUnsigned || workspace.latestSignedPack ? (
+          {workspace.latestUnsigned ||
+          workspace.latestSellerSigned ||
+          workspace.latestSignedPack ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {workspace.latestUnsigned ? (
                 <a
@@ -140,6 +153,17 @@ export function QldTransferAdmin({
                   className={tableSecondaryButtonClassName}
                 >
                   Download unsigned PDF
+                </a>
+              ) : null}
+              {workspace.latestSellerSigned ? (
+                <a
+                  href={transferDocumentPath(
+                    order.id,
+                    workspace.latestSellerSigned.id,
+                  )}
+                  className={tableSecondaryButtonClassName}
+                >
+                  Download seller-signed PDF
                 </a>
               ) : null}
               {workspace.latestSignedPack ? (
@@ -150,7 +174,7 @@ export function QldTransferAdmin({
                   )}
                   className={tableSecondaryButtonClassName}
                 >
-                  Download signed pack
+                  Download completed pack
                 </a>
               ) : null}
             </div>
@@ -167,22 +191,55 @@ export function QldTransferAdmin({
             />
           ) : null}
         </section>
-        {workspace.latestUnsigned ? (
+        {workspace.latestUnsigned &&
+        (status === "AWAITING_SELLER_SIGNATURE" ||
+          status === "AWAITING_SELLER_PACK_REVIEW" ||
+          status === "AWAITING_BUYER_SIGNATURE") ? (
           <section className={panelClassName}>
-            <h3 className="text-lg font-semibold text-ink">Signed pack</h3>
+            <h3 className="text-lg font-semibold text-ink">Offline upload</h3>
             <p className="mt-1 text-sm text-ink-muted">
-              Upload the completed, witnessed PDF. This does not overwrite the
-              unsigned application.
+              Use this when the signed PDF came in by email or post. This does
+              not overwrite stored files.
             </p>
+            {status === "AWAITING_SELLER_SIGNATURE" ? (
+              <form action={uploadSignedPackAction} className="mt-4 space-y-3">
+                <input type="hidden" name="order_id" value={order.id} />
+                <input type="hidden" name="pack_kind" value="seller_signed" />
+                {queueFields(remaining)}
+                <div>
+                  <label
+                    htmlFor={`seller-signed-${order.id}`}
+                    className="block text-sm text-ink"
+                  >
+                    Seller-signed PDF
+                  </label>
+                  <input
+                    id={`seller-signed-${order.id}`}
+                    name="signed_pack"
+                    type="file"
+                    accept="application/pdf"
+                    required
+                    className={fieldClassName}
+                  />
+                </div>
+                <PendingSubmitButton
+                  className={tableButtonClassName}
+                  pendingLabel="Uploading…"
+                >
+                  Upload seller-signed form
+                </PendingSubmitButton>
+              </form>
+            ) : null}
             <form action={uploadSignedPackAction} className="mt-4 space-y-3">
               <input type="hidden" name="order_id" value={order.id} />
+              <input type="hidden" name="pack_kind" value="signed_pack" />
               {queueFields(remaining)}
               <div>
                 <label
                   htmlFor={`signed-pack-${order.id}`}
                   className="block text-sm text-ink"
                 >
-                  Completed / signed PDF
+                  Completed pack (both parties signed)
                 </label>
                 <input
                   id={`signed-pack-${order.id}`}
@@ -197,12 +254,79 @@ export function QldTransferAdmin({
                 className={tableButtonClassName}
                 pendingLabel="Uploading…"
               >
-                Upload signed pack
+                Upload completed pack
               </PendingSubmitButton>
             </form>
           </section>
         ) : null}
       </div>
+      {status === "AWAITING_SELLER_PACK_REVIEW" &&
+      workspace.latestSellerSigned ? (
+        <section id="review-decision" className={panelClassName}>
+          <h3 className="text-lg font-semibold text-ink">
+            Seller-signed form
+          </h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            Check the seller-signed PDF before the buyer can download it. Save
+            every check. The browser is not trusted.
+          </p>
+          <div className="mt-4">
+            <ReviewChecklistForm
+              action={saveSellerPackChecklistAction}
+              hidden={{ order_id: String(order.id) }}
+              checks={workspace.process.sellerPackChecks}
+              completed={workspace.application?.seller_pack_checklist ?? []}
+              proceedGoal="to release the form to the buyer"
+            />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <form action={acceptSellerPackAction}>
+              <input type="hidden" name="order_id" value={order.id} />
+              {queueFields(remaining)}
+              <PendingSubmitButton
+                className={tableButtonClassName}
+                pendingLabel="Releasing…"
+                disabled={
+                  !checklistIsComplete(
+                    workspace.process.sellerPackChecks,
+                    workspace.application?.seller_pack_checklist ?? [],
+                  )
+                }
+              >
+                Release to buyer
+              </PendingSubmitButton>
+            </form>
+          </div>
+          <form
+            action={returnSellerPackAction}
+            className="mt-4 space-y-3"
+          >
+            <input type="hidden" name="order_id" value={order.id} />
+            {queueFields(remaining)}
+            <div>
+              <label
+                htmlFor={`seller-return-${order.id}`}
+                className="block text-sm text-ink"
+              >
+                Return note
+              </label>
+              <textarea
+                id={`seller-return-${order.id}`}
+                name="notes"
+                rows={3}
+                required
+                className={fieldClassName}
+              />
+            </div>
+            <PendingSubmitButton
+              className={tableSecondaryButtonClassName}
+              pendingLabel="Returning…"
+            >
+              Return to seller
+            </PendingSubmitButton>
+          </form>
+        </section>
+      ) : null}
       {workspace.latestSignedPack ? (
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">

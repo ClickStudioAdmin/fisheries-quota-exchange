@@ -227,12 +227,22 @@ test("cancelled-order copy differs for buyer and seller", () => {
   assert.match(simulatedTransfer.subject, /Quota transfer has started/);
   assert.equal(simulatedTransfer.highlight, undefined);
 
-  const qldTransfer = emailCopy.transfer_in_progress({
+  const qldSeller = emailCopy.transfer_in_progress({
     ...input,
     prepareDocuments: true,
+    forSeller: true,
   });
-  assert.match(qldTransfer.subject, /Prepare transfer documents/);
-  assert.match(qldTransfer.paragraphs.join(" "), /Queensland transfer application/);
-  assert.match(qldTransfer.highlight ?? "", /prepare transfer documents/);
-  assert.equal(qldTransfer.actionLabel, "Prepare documents");
+  assert.match(qldSeller.subject, /Prepare transfer documents/);
+  assert.match(qldSeller.paragraphs.join(" "), /sign the Queensland transfer application first/);
+  assert.match(qldSeller.highlight ?? "", /Sign the transfer application first/);
+  assert.equal(qldSeller.actionLabel, "Prepare documents");
+
+  const qldBuyer = emailCopy.transfer_in_progress({
+    ...input,
+    prepareDocuments: true,
+    forSeller: false,
+  });
+  assert.match(qldBuyer.subject, /Transfer documents will follow/);
+  assert.match(qldBuyer.paragraphs.join(" "), /seller signs/);
+  assert.match(qldBuyer.highlight ?? "", /Wait until FQX releases/);
 });

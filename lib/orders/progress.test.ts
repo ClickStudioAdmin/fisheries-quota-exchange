@@ -60,12 +60,12 @@ test("Queensland transfer step uses the application sub-status", () => {
     reservationStatus: "ACTIVE",
     paymentStatus: "PAID",
     usesSimulatedTransfer: false,
-    transferApplicationStatus: "AWAITING_SIGNED_PACK",
+    transferApplicationStatus: "AWAITING_SELLER_SIGNATURE",
   });
   const transfer = steps.find((step) => step.id === "transfer");
 
   assert.equal(transfer?.state, "current");
-  assert.equal(transfer?.detail, "2 of 4 · Waiting for signed documents");
+  assert.equal(transfer?.detail, "2 of 6 · Waiting for seller to sign");
 });
 
 test("Queensland transfer action required stays unnumbered", () => {

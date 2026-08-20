@@ -16,7 +16,8 @@ const ACTION = new Set([
   "awaiting payment",
   "action required",
   "waiting for application",
-  "waiting for signed documents",
+  "waiting for seller to sign",
+  "waiting for buyer to sign",
   "ended",
   "ended waiting to close",
   "unread",
@@ -36,7 +37,8 @@ const WAITING = new Set([
   "held until settlement",
   "not yet",
   "scheduled",
-  "reviewing signed pack",
+  "checking seller signed form",
+  "reviewing completed pack",
   "with fisheries queensland",
 ]);
 
@@ -68,7 +70,11 @@ function isActionStatus(key: string) {
     return true;
   }
 
-  return key.startsWith("1 of 4") || key.startsWith("2 of 4");
+  return (
+    key.startsWith("1 of 6") ||
+    key.startsWith("2 of 6") ||
+    key.startsWith("4 of 6")
+  );
 }
 
 export function statusToneClass(value: string, displayLabel?: string) {
@@ -85,7 +91,7 @@ export function statusToneClass(value: string, displayLabel?: string) {
     return "bg-sea/15 text-sea";
   }
 
-  if (keys.some((key) => WAITING.has(key) || key.startsWith("3 of 4") || key.startsWith("4 of 4"))) {
+  if (keys.some((key) => WAITING.has(key) || key.startsWith("3 of 6") || key.startsWith("5 of 6") || key.startsWith("6 of 6"))) {
     return "bg-line text-ink";
   }
 

@@ -35,7 +35,7 @@ test("organisationNeedsAttentionItems lists pay, QLD documents, compliance updat
     jurisdictions,
     transferByOrderId: new Map([
       [3634, { process_code: "QLD_SALE", status: "READY" }],
-      [3635, { process_code: "QLD_SALE", status: "AWAITING_SIGNED_PACK" }],
+      [3635, { process_code: "QLD_SALE", status: "AWAITING_BUYER_SIGNATURE" }],
       [3636, { process_code: "SIMULATED", status: "READY" }],
     ]),
     complianceNotesByOrderId: new Map([
@@ -92,12 +92,7 @@ test("organisationNeedsAttentionItems lists pay, QLD documents, compliance updat
         actionLabel: "Go to order",
       },
       {
-        title: "Prepare transfer documents for order 3634",
-        detail: "East Coast Spanish Mackerel Fishery",
-        actionLabel: "Go to order",
-      },
-      {
-        title: "Sign transfer documents for order 3635",
+        title: "Sign and upload transfer documents for order 3635",
         detail: "East Coast Spanish Mackerel Fishery",
         actionLabel: "Go to order",
       },
@@ -111,9 +106,9 @@ test("organisationNeedsAttentionItems lists pay, QLD documents, compliance updat
   assert.equal(items.find((item) => item.key === "pay-3632")?.href, "/orders/3632");
   assert.equal(items.find((item) => item.key === "auction-88")?.href, "/auctions/88");
   assert.deepEqual(memberActionCountBuckets(items), {
-    orders: 4,
+    orders: 3,
     listings: 1,
-    overview: 5,
+    overview: 4,
   });
 });
 
@@ -150,7 +145,7 @@ test("organisationNeedsAttentionItems skips seller pay, other-party updates, and
 
 test("organisationNeedsAttentionItems infers QLD prepare when no application row exists", () => {
   const items = organisationNeedsAttentionItems({
-    organisationId: 10,
+    organisationId: 20,
     canManage: true,
     fisheries,
     jurisdictions,

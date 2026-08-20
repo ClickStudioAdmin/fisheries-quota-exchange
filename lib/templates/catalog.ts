@@ -44,6 +44,10 @@ const bidderAccountRolesRecipient =
   "Notification roles on that bidding business (default Owner and Admin).";
 const buyerAndSellerRolesRecipient =
   "Notification roles on the buying business and the selling business (default Owner and Admin).";
+const sellerRolesRecipient =
+  "Notification roles on the selling business (default Owner and Admin).";
+const buyerRolesRecipient =
+  "Notification roles on the buying business (default Owner and Admin).";
 
 const EMAIL_CATALOG: Record<
   ProductEmailId,
@@ -286,18 +290,50 @@ const EMAIL_CATALOG: Record<
   transfer_in_progress: {
     summary: "After compliance is approved",
     description:
-      "On Queensland orders, tells buyer and seller to prepare transfer documents. On simulated orders, says the authority transfer has started.",
+      "On Queensland orders, tells the seller to sign first and the buyer to wait for the seller-signed form. On simulated orders, says the authority transfer has started.",
     sentWhen: "After approve_compliance.",
     trigger: "approveComplianceAction then notifyTransferInProgress.",
     recipient: buyerAndSellerRolesRecipient,
   },
   transfer_application_ready: {
-    summary: "Queensland transfer PDF is ready",
+    summary: "Queensland unsigned transfer PDF is ready",
     description:
-      "Attaches the unsigned application PDF and tells parties to sign and witness it offline.",
+      "Attaches the unsigned application PDF and tells the seller to sign, witness, and upload it.",
     sentWhen: "When an unsigned transfer PDF is generated or regenerated.",
     trigger: "generateTransferDocumentAction then notifyTransferApplicationReady.",
-    recipient: `${buyerAndSellerRolesRecipient} Both receive the PDF attachment.`,
+    recipient: `${sellerRolesRecipient} Receives the PDF attachment.`,
+  },
+  transfer_seller_signed_received: {
+    summary: "Seller uploaded the signed application",
+    description:
+      "Confirms FQX has the seller-signed form and that the buyer cannot see it until FQX checks it.",
+    sentWhen: "After the seller (or admin on their behalf) uploads the seller-signed PDF.",
+    trigger: "uploadPartyTransferDocumentAction or admin seller-signed upload.",
+    recipient: sellerRolesRecipient,
+  },
+  transfer_buyer_form_ready: {
+    summary: "Seller-signed form is released to the buyer",
+    description:
+      "Attaches the accepted seller-signed PDF and tells the buyer to sign that file, not a blank copy.",
+    sentWhen: "When admin accepts the seller-signed form.",
+    trigger: "acceptSellerPackAction then notifyTransferBuyerFormReady.",
+    recipient: `${buyerRolesRecipient} Receives the seller-signed PDF attachment.`,
+  },
+  transfer_buyer_signed_received: {
+    summary: "Completed pack uploaded",
+    description:
+      "Confirms FQX has the completed application for review before Fisheries Queensland submission.",
+    sentWhen: "After the buyer (or admin) uploads the completed pack.",
+    trigger: "uploadPartyTransferDocumentAction or admin completed-pack upload.",
+    recipient: buyerRolesRecipient,
+  },
+  transfer_seller_pack_returned: {
+    summary: "Seller-signed form returned",
+    description:
+      "Tells the seller FQX returned their signed form, with the admin note, and to upload a new copy.",
+    sentWhen: "When admin returns the seller-signed form.",
+    trigger: "returnSellerPackAction then notifyTransferSellerPackReturned.",
+    recipient: sellerRolesRecipient,
   },
   transfer_complete: {
     summary: "After simulated authority transfer",

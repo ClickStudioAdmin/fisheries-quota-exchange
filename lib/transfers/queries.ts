@@ -3,7 +3,9 @@ import "server-only";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getFishery, getHolding, listJurisdictions } from "@/lib/fisheries/queries";
-import { listingOfferingLabel } from "@/lib/listings/types";
+import { parseComplianceChecklist } from "@/lib/orders/checklist";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { canDownloadTransferDocument } from "@/lib/transfers/access";
 import { getOrder } from "@/lib/orders/queries";
 import type { Order } from "@/lib/orders/types";
 import { isEntityKind } from "@/lib/organisations/types";
@@ -114,6 +116,7 @@ function mapApplication(row: Record<string, unknown>): TransferApplication | nul
     submission_method: asNullableText(row.submission_method),
     submitted_at: asNullableText(row.submitted_at),
     notes: asNullableText(row.notes),
+    seller_pack_checklist: parseComplianceChecklist(row.seller_pack_checklist),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
@@ -170,7 +173,7 @@ async function loadApplication(orderId: number) {
   const { data, error } = await supabase
     .from("transfer_applications")
     .select(
-      "id, order_id, process_code, form_type, form_version, status, fq_reference, submission_method, submitted_at, notes, created_at, updated_at",
+      "id, order_id, process_code, form_type, form_version, status, fq_reference, submission_method, submitted_at, notes, seller_pack_checklist, created_at, updated_at",
     )
     .eq("order_id", orderId)
     .maybeSingle();
@@ -319,6 +322,7 @@ export type TransferWorkspace = {
   buyerMissing: TransferProfileField[];
   sellerMissing: TransferProfileField[];
   latestUnsigned: TransferDocument | null;
+  latestSellerSigned: TransferDocument | null;
   latestSignedPack: TransferDocument | null;
 };
 
@@ -366,6 +370,8 @@ export async function getTransferWorkspace(
     latestUnsigned:
       documents.find((doc) => doc.document_type === "UNSIGNED_APPLICATION") ??
       null,
+    latestSellerSigned:
+      documents.find((doc) => doc.document_type === "SELLER_SIGNED") ?? null,
     latestSignedPack:
       documents.find((doc) => doc.document_type === "SIGNED_PACK") ?? null,
   };
@@ -413,7 +419,16 @@ export async function getTransferDocumentFile(
     return null;
   }
 
-  if (document.document_type !== "UNSIGNED_APPLICATION" && !admin) {
+  const active = await getActiveOrganisation();
+  const allowed = canDownloadTransferDocument({
+    documentType: document.document_type,
+    applicationStatus: workspace.application?.status ?? null,
+    isAdmin: admin,
+    isBuyer: active?.id === workspace.order.buyer_organisation_id,
+    isSeller: active?.id === workspace.order.seller_organisation_id,
+  });
+
+  if (!allowed) {
     return null;
   }
 
@@ -466,7 +481,11 @@ export async function setTransferApplicationStatus(
   extra: Partial<
     Pick<
       TransferApplication,
-      "fq_reference" | "submission_method" | "submitted_at" | "notes"
+      | "fq_reference"
+      | "submission_method"
+      | "submitted_at"
+      | "notes"
+      | "seller_pack_checklist"
     >
   > = {},
 ) {

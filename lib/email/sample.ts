@@ -170,6 +170,28 @@ export function sampleEmailData(
         orderUrl,
         formTitle: "The Queensland FDU1465 transfer application",
       });
+    case "transfer_seller_signed_received":
+      return emailCopy.transfer_seller_signed_received({
+        orderId: 1001,
+        orderUrl,
+      });
+    case "transfer_buyer_form_ready":
+      return emailCopy.transfer_buyer_form_ready({
+        orderId: 1001,
+        orderUrl,
+        formTitle: "The Queensland FDU1465 transfer application",
+      });
+    case "transfer_buyer_signed_received":
+      return emailCopy.transfer_buyer_signed_received({
+        orderId: 1001,
+        orderUrl,
+      });
+    case "transfer_seller_pack_returned":
+      return emailCopy.transfer_seller_pack_returned({
+        orderId: 1001,
+        orderUrl,
+        note: "The witness block is incomplete.",
+      });
     case "compliance_rejected":
       return emailCopy.compliance_rejected({
         orderId: 1001,
