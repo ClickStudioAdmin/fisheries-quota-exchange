@@ -11,7 +11,10 @@ import {
 } from "@/lib/email/product-emails";
 import type { NoticeEmailData } from "@/lib/email/types";
 import { inAppNotificationHref } from "@/lib/notifications/href";
-import type { InAppNotification } from "@/lib/notifications/types";
+import {
+  inAppNotificationBody,
+  type InAppNotification,
+} from "@/lib/notifications/types";
 
 async function db() {
   return createServiceClient() ?? (await createClient());
@@ -49,7 +52,7 @@ export async function insertInAppNotification(input: {
     p_email: input.email,
     p_template: input.template,
     p_title: input.data.heading || input.data.subject,
-    p_body: input.data.paragraphs[0] ?? input.data.preview ?? "",
+    p_body: inAppNotificationBody(input.data),
     p_href: inAppNotificationHref(input.data.actionUrl),
   });
 

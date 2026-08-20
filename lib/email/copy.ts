@@ -362,8 +362,8 @@ export const emailCopy = {
     notice(
       `FQX needs an update for order ${input.orderId}`,
       [
-        "Compliance review is still open. Payment is held and the quota reservation stays in place.",
         input.note,
+        "Compliance review is still open. Payment is held and the quota reservation stays in place.",
         "Update your details on Business Settings → Details if needed, then FQX can continue this review.",
       ],
       { label: "View order", url: input.orderUrl },
