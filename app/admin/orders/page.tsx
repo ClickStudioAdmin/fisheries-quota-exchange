@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { startOrderQueueAction } from "@/lib/orders/actions";
 import { listAllOrders } from "@/lib/orders/queries";
 import {
@@ -16,8 +17,9 @@ import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { OrderTableLinks } from "@/components/order-table-links";
 import { TableModal } from "@/components/table-modal";
-import { ReviewOrderForms } from "@/components/review-order-forms";
+import { ReviewTransferForms } from "@/components/review-transfer-forms";
 import { BulkReviewOrdersModal } from "@/components/bulk-review-orders-modal";
+import { tableButtonClassName } from "@/components/auth-card";
 import { formatTableDate } from "@/lib/format";
 
 export const metadata = {
@@ -70,12 +72,12 @@ export default async function AdminOrdersPage({
           Simulated orders
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
-          No live payment. Approve compliance, simulate transfer, then simulate
-          settlement. Select orders in the same status to open a queue. The
-          buyer pays the listed amount. Settlement Transfers the seller’s share
-          after the platform fee, writes SALE/PURCHASE or LEASE_OUT/LEASE_IN
-          ledger rows, consumes the reservation, and emails dummy tax invoices
-          (quota and platform fee) to the buyer.
+          Approve compliance, run transfer (Queensland workspace or simulate),
+          then simulate settlement. Select orders in the same status to open a
+          queue. The buyer pays the listed amount. Settlement Transfers the
+          seller’s share after the platform fee, writes SALE/PURCHASE or
+          LEASE_OUT/LEASE_IN ledger rows, consumes the reservation, and emails
+          dummy tax invoices (quota and platform fee) to the buyer.
         </p>
       </div>
       <DataTable
@@ -95,7 +97,7 @@ export default async function AdminOrdersPage({
             hiddenFields: { expected_status: "AWAITING_COMPLIANCE" },
           },
           {
-            label: "Simulate transfer",
+            label: "Transfer",
             action: startOrderQueueAction,
             requireValue: {
               key: "status",
@@ -213,12 +215,19 @@ export default async function AdminOrdersPage({
               <>
                 {order.status === "AWAITING_COMPLIANCE" ? (
                   <TableModal title="Review compliance" label="Review">
-                    <ReviewOrderForms order={order} />
+                    <ReviewTransferForms order={order} />
                   </TableModal>
                 ) : null}
-                {order.status === "AWAITING_TRANSFER" ||
-                order.status === "AWAITING_SETTLEMENT" ? (
-                  <ReviewOrderForms order={order} />
+                {order.status === "AWAITING_TRANSFER" ? (
+                  <Link
+                    href={`/admin/orders?queue=${order.id}`}
+                    className={tableButtonClassName}
+                  >
+                    Transfer
+                  </Link>
+                ) : null}
+                {order.status === "AWAITING_SETTLEMENT" ? (
+                  <ReviewTransferForms order={order} />
                 ) : null}
               </>
             }
@@ -255,7 +264,7 @@ export default async function AdminOrdersPage({
                   {formatAud(order.amount_aud)}
                 </p>
               </div>
-              <ReviewOrderForms
+              <ReviewTransferForms
                 order={order}
                 reviewQueue={queueOrders.map((item) => item.id)}
               />

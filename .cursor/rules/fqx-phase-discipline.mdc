@@ -7,16 +7,14 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Phase 9 is complete. There is no current implementation phase until a new phase document is added under `docs/`.
+Work only on the current phase. The current phase is Phase 10. See [docs/phase-10.md](docs/phase-10.md).
 
 Do feature work on `develop`. Merge to `main` only when the user is ready for production.
 
-Do not start a previously listed Phase 10 or later. New phases are defined as we go.
-
-Until a later phase explicitly changes them, keep these constraints: Stripe **test mode** only (no live keys), no seller bank payouts, no refund/chargeback workflows, no authority integrations. Never trust the browser for payment status, bid time, or quota availability. Never delete quota ledger rows.
+Phase 10 may add a jurisdiction transfer adapter, Queensland profile fields, generated and stored application PDFs, admin review of an offline signed pack, and manual Fisheries Queensland tracking. Do not add live e-sign, an FQ API, live Stripe keys, seller bank payouts, refund/chargeback workflows, or other jurisdictions’ real processes. Never trust the browser for payment status, bid time, quota availability, or transfer outcome. Never delete quota ledger rows.
 
 Do not create later-phase tables or speculative architecture.
 
-Keep dependencies minimal. Prefer the simplest solution that satisfies the current request.
+Keep dependencies minimal. Prefer the simplest solution that satisfies the current phase.
 
 Stop at the end of each phase. After acceptance criteria pass, report results and wait for instruction.

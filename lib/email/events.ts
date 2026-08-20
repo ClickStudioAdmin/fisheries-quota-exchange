@@ -2,6 +2,7 @@ import "server-only";
 
 import { listingAlertEmails } from "@/lib/alerts/queries";
 import { emailCopy } from "@/lib/email/copy";
+import type { EmailAttachment } from "@/lib/email/send";
 import { claimEmailDispatch, notifyAccountEmail, notifyEmail, siteUrlOrEmpty } from "@/lib/email/notify";
 import type { ProductEmailId } from "@/lib/email/product-emails";
 import {
@@ -477,6 +478,47 @@ export async function notifyTransferInProgress(order: Order) {
   });
   await notifyBuyerAndSeller("transfer_in_progress", order, data);
   await notifyOperatorOrderPending(order, siteUrl);
+}
+
+export async function notifyTransferApplicationReady(
+  order: Order,
+  attachment: { filename: string; pdf: Buffer; documentId: number },
+) {
+  if (
+    !(await claimEmailDispatch(
+      "transfer_application_ready",
+      `${order.id}:doc:${attachment.documentId}`,
+    ))
+  ) {
+    return;
+  }
+
+  const siteUrl = await siteUrlOrEmpty();
+  const attachments: EmailAttachment[] = [
+    { filename: attachment.filename, content: attachment.pdf },
+  ];
+  const data = emailCopy.transfer_application_ready({
+    orderId: order.id,
+    orderUrl: `${siteUrl}/orders/${order.id}`,
+    formTitle:
+      order.offering === "LEASE"
+        ? "The Queensland lease transfer application"
+        : "The Queensland FDU1465 transfer application",
+  });
+  await notifyAccountEmail(
+    "transfer_application_ready",
+    order.buyer_organisation_id,
+    data,
+    undefined,
+    attachments,
+  );
+  await notifyAccountEmail(
+    "transfer_application_ready",
+    order.seller_organisation_id,
+    data,
+    undefined,
+    attachments,
+  );
 }
 
 export async function notifyTransferComplete(order: Order) {

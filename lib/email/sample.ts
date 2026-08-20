@@ -160,6 +160,12 @@ export function sampleEmailData(
       return emailCopy.payment_reminder({ orderId: 1001, orderUrl });
     case "transfer_in_progress":
       return emailCopy.transfer_in_progress({ orderId: 1001, orderUrl });
+    case "transfer_application_ready":
+      return emailCopy.transfer_application_ready({
+        orderId: 1001,
+        orderUrl,
+        formTitle: "The Queensland FDU1465 transfer application",
+      });
     case "compliance_rejected":
       return emailCopy.compliance_rejected({
         orderId: 1001,

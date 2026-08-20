@@ -6,11 +6,9 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 9 — Stripe test payments (complete)**
+**Phase 10 — Queensland transfer process (foundation)**
 
-The next phase is not yet defined. New phases are written under `docs/` when work starts.
-
-See [docs/phase-9.md](docs/phase-9.md) for what shipped.
+See [docs/phase-10.md](docs/phase-10.md). Phase 9 (Stripe test payments) is complete.
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 
@@ -42,7 +40,7 @@ Never commit `.env.local` or production secrets.
 
 ## Testing
 
-Phase 9 shipped Stripe Connect in test mode: a seller can onboard in the sandbox, a buyer can pay a listing through Stripe Checkout, funds stay on FQX until Simulate settlement Transfers the seller’s share, and the webhook marks the order paid without trusting the browser.
+Phase 10 adds a Queensland transfer workspace after compliance: generated application PDFs, admin upload of an offline signed pack, and tracked Fisheries Queensland submission. Other jurisdictions still use Simulate transfer. Settlement is unchanged.
 
 Automated test coverage is added where business logic requires it. There is no standing plan for a Vitest or Playwright phase.
 
@@ -61,4 +59,4 @@ GitHub Actions secrets:
 - Production (`main`): `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_ID`
 - Development (`develop`): `DEVELOPMENT_SUPABASE_DB_PASSWORD`, `DEVELOPMENT_SUPABASE_PROJECT_ID`
 
-See [docs/phase-8.md](docs/phase-8.md), [docs/phase-9.md](docs/phase-9.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).
+See [docs/phase-9.md](docs/phase-9.md), [docs/phase-10.md](docs/phase-10.md), [docs/database.md](docs/database.md), and [docs/environments.md](docs/environments.md).

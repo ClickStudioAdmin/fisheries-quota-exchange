@@ -281,6 +281,14 @@ const EMAIL_CATALOG: Record<
     trigger: "approveComplianceAction then notifyTransferInProgress.",
     recipient: buyerAndSellerRolesRecipient,
   },
+  transfer_application_ready: {
+    summary: "Queensland transfer PDF is ready",
+    description:
+      "Attaches the unsigned application PDF and tells parties to sign and witness it offline.",
+    sentWhen: "When an unsigned transfer PDF is generated or regenerated.",
+    trigger: "generateTransferDocumentAction then notifyTransferApplicationReady.",
+    recipient: `${buyerAndSellerRolesRecipient} Both receive the PDF attachment.`,
+  },
   transfer_complete: {
     summary: "After simulated authority transfer",
     description: "Tells parties transfer is complete and settlement is next.",

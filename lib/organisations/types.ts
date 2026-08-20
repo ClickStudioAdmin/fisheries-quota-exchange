@@ -4,6 +4,10 @@ export const ORGANISATION_ROLES = ["OWNER", "ADMIN", "MEMBER"] as const;
 
 export type OrganisationRole = (typeof ORGANISATION_ROLES)[number];
 
+export const ENTITY_KINDS = ["INDIVIDUAL", "COMPANY"] as const;
+
+export type EntityKind = (typeof ENTITY_KINDS)[number];
+
 export type Organisation = {
   id: number;
   legal_name: string;
@@ -15,7 +19,29 @@ export type Organisation = {
   disabled_notification_in_app: ProductEmailId[];
   created_at: string;
   updated_at: string;
+  entity_kind: EntityKind | null;
+  acn: string | null;
+  phone: string | null;
+  mobile: string | null;
+  registered_address: string | null;
+  postal_address: string | null;
 };
+
+export type OrganisationJurisdictionProfile = {
+  organisation_id: number;
+  jurisdiction_id: number;
+  client_reference: string | null;
+  licence_number: string | null;
+  fishery_symbols: string | null;
+};
+
+export function isEntityKind(value: string): value is EntityKind {
+  return (ENTITY_KINDS as readonly string[]).includes(value);
+}
+
+export function entityKindLabel(kind: EntityKind) {
+  return kind === "COMPANY" ? "Company" : "Individual";
+}
 
 export type OrganisationMember = {
   id: number;

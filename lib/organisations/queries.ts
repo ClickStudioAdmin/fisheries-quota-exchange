@@ -1,12 +1,14 @@
 import { createClient, getUser } from "@/lib/supabase/server";
 import type {
+  EntityKind,
   Organisation,
   OrganisationInvitation,
+  OrganisationJurisdictionProfile,
   OrganisationMember,
   OrganisationRole,
   OrganisationSummary,
 } from "@/lib/organisations/types";
-import { isOrganisationRole } from "@/lib/organisations/types";
+import { isEntityKind, isOrganisationRole } from "@/lib/organisations/types";
 import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
 import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
@@ -22,6 +24,46 @@ import {
 function asIntegerId(value: unknown) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function asNullableText(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function asEntityKind(value: unknown): EntityKind | null {
+  return typeof value === "string" && isEntityKind(value) ? value : null;
+}
+
+const ORGANISATION_COLUMNS =
+  "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at, entity_kind, acn, phone, mobile, registered_address, postal_address";
+
+function mapOrganisation(row: Record<string, unknown>): Organisation {
+  return {
+    id: Number(row.id),
+    legal_name: String(row.legal_name),
+    trading_name: asNullableText(row.trading_name),
+    abn: asNullableText(row.abn),
+    hide_identity: row.hide_identity === true,
+    notification_roles: parseNotificationRoles(row.notification_roles),
+    disabled_notification_emails: parseDisabledProductEmails(
+      row.disabled_notification_emails,
+    ),
+    disabled_notification_in_app: parseDisabledProductEmails(
+      row.disabled_notification_in_app,
+    ),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+    entity_kind: asEntityKind(row.entity_kind),
+    acn: asNullableText(row.acn),
+    phone: asNullableText(row.phone),
+    mobile: asNullableText(row.mobile),
+    registered_address: asNullableText(row.registered_address),
+    postal_address: asNullableText(row.postal_address),
+  };
 }
 
 export async function listMyOrganisations(): Promise<OrganisationSummary[]> {
@@ -100,13 +142,11 @@ export async function getOrganisation(
 
   const { data, error } = await supabase
     .from("organisations")
-    .select(
-      "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at",
-    )
+    .select(ORGANISATION_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 
-  if (error?.message?.includes("hide_identity")) {
+  if (error?.message?.includes("hide_identity") || error?.message?.includes("entity_kind")) {
     const fallback = await supabase
       .from("organisations")
       .select(
@@ -120,24 +160,16 @@ export async function getOrganisation(
     }
 
     return {
-      organisation: {
-        id: fallback.data.id,
-        legal_name: fallback.data.legal_name,
-        trading_name: fallback.data.trading_name,
-        abn: fallback.data.abn,
+      organisation: mapOrganisation({
+        ...fallback.data,
         hide_identity: false,
-        notification_roles: parseNotificationRoles(
-          fallback.data.notification_roles,
-        ),
-        disabled_notification_emails: parseDisabledProductEmails(
-          fallback.data.disabled_notification_emails,
-        ),
-        disabled_notification_in_app: parseDisabledProductEmails(
-          fallback.data.disabled_notification_in_app,
-        ),
-        created_at: fallback.data.created_at,
-        updated_at: fallback.data.updated_at,
-      },
+        entity_kind: null,
+        acn: null,
+        phone: null,
+        mobile: null,
+        registered_address: null,
+        postal_address: null,
+      }),
       role,
     };
   }
@@ -147,23 +179,40 @@ export async function getOrganisation(
   }
 
   return {
-    organisation: {
-      id: data.id,
-      legal_name: data.legal_name,
-      trading_name: data.trading_name,
-      abn: data.abn,
-      hide_identity: data.hide_identity === true,
-      notification_roles: parseNotificationRoles(data.notification_roles),
-      disabled_notification_emails: parseDisabledProductEmails(
-        data.disabled_notification_emails,
-      ),
-      disabled_notification_in_app: parseDisabledProductEmails(
-        data.disabled_notification_in_app,
-      ),
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-    },
+    organisation: mapOrganisation(data as Record<string, unknown>),
     role,
+  };
+}
+
+export async function getOrganisationJurisdictionProfile(
+  organisationId: number,
+  jurisdictionId: number,
+): Promise<OrganisationJurisdictionProfile | null> {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("organisation_jurisdiction_profiles")
+    .select(
+      "organisation_id, jurisdiction_id, client_reference, licence_number, fishery_symbols",
+    )
+    .eq("organisation_id", organisationId)
+    .eq("jurisdiction_id", jurisdictionId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    organisation_id: Number(data.organisation_id),
+    jurisdiction_id: Number(data.jurisdiction_id),
+    client_reference: asNullableText(data.client_reference),
+    licence_number: asNullableText(data.licence_number),
+    fishery_symbols: asNullableText(data.fishery_symbols),
   };
 }
 

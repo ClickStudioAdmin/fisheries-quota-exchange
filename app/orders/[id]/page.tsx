@@ -23,7 +23,7 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listAuditPersonNames } from "@/lib/audit/queries";
 import { getMyRole, getOrganisationLegalName } from "@/lib/organisations/queries";
-import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import { canBuyForOrganisation, canEditOrganisation } from "@/lib/organisations/permissions";
 import { SwitchAccountNotice } from "@/components/switch-account-notice";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
@@ -41,6 +41,8 @@ import { formatTableDateTime } from "@/lib/format";
 import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 import { taxInvoicePath } from "@/lib/invoices/types";
+import { getTransferWorkspace } from "@/lib/transfers/queries";
+import { TransferOrderPanel } from "@/components/transfer-order-panel";
 
 export const metadata = {
   title: "Order",
@@ -79,7 +81,7 @@ export default async function OrderPage({
     order = (await getOrder(orderId)) ?? order;
   }
 
-  const [reservation, transaction, events, buyerRole, sellerRole, admin, payment, active] =
+  const [reservation, transaction, events, buyerRole, sellerRole, admin, payment, active, transferWorkspace] =
     await Promise.all([
       getReservationForOrder(order.id),
       getTransactionForOrder(order.id),
@@ -89,6 +91,9 @@ export default async function OrderPage({
       isPlatformAdmin(),
       getPaymentForOrder(order.id),
       getActiveOrganisation(),
+      order.status === "AWAITING_TRANSFER"
+        ? getTransferWorkspace(order.id)
+        : Promise.resolve(null),
     ]);
 
   const isBuyer = Boolean(active) && active?.id === order.buyer_organisation_id;
@@ -107,6 +112,11 @@ export default async function OrderPage({
   };
   const canPayOrCancel =
     isBuyer && active != null && canBuyForOrganisation(active.role);
+  const canPrepareTransfer =
+    Boolean(admin) ||
+    (active != null &&
+      (isBuyer || isSeller) &&
+      canEditOrganisation(active.role));
   const involvedIds = [
     buyerRole ? order.buyer_organisation_id : null,
     sellerRole ? order.seller_organisation_id : null,
@@ -363,6 +373,16 @@ export default async function OrderPage({
           <p className="text-sm text-ink-muted">
             Payments are not configured, so this order cannot be charged yet.
           </p>
+        ) : order.status === "AWAITING_TRANSFER" &&
+          transferWorkspace &&
+          !transferWorkspace.process.usesSimulatedTransfer ? (
+          <div className={panelClassName}>
+            <TransferOrderPanel
+              workspace={transferWorkspace}
+              viewerOrganisationId={active?.id ?? null}
+              canPrepare={canPrepareTransfer}
+            />
+          </div>
         ) : order.status === "COMPLETED" ? (
           <div className={panelClassName}>
             <h2 className="text-lg font-semibold text-ink">Tax invoices</h2>

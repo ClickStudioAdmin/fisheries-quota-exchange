@@ -325,6 +325,19 @@ export const emailCopy = {
       ["Compliance passed. FQX is running the authority transfer for this order."],
       { label: "View order", url: input.orderUrl },
     ),
+  transfer_application_ready: (input: {
+    orderId: number;
+    orderUrl: string;
+    formTitle: string;
+  }) =>
+    notice(
+      `Transfer application ready for FQX order ${input.orderId}`,
+      [
+        `${input.formTitle} is ready. A copy is attached.`,
+        "Download it, sign and witness it offline, then return the completed form to FQX. Do not upload it yourself in this phase.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
   compliance_rejected: (input: {
     orderId: number;
     orderUrl: string;
@@ -344,7 +357,7 @@ export const emailCopy = {
   transfer_complete: (input: { orderId: number; orderUrl: string }) =>
     notice(
       `Quota transfer is complete for FQX order ${input.orderId}`,
-      ["The simulated authority transfer is complete. Settlement is next."],
+      ["The authority transfer is complete. Settlement is next."],
       { label: "View order", url: input.orderUrl },
     ),
   order_settled: (input: {

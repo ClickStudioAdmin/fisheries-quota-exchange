@@ -23,6 +23,7 @@ import {
   setActiveOrganisationCookie,
 } from "@/lib/organisations/active-session";
 import {
+  isEntityKind,
   isOrganisationRole,
   organisationRoleLabel,
 } from "@/lib/organisations/types";
@@ -55,6 +56,20 @@ function readAbn(value: string) {
   }
 
   return { abn } as const;
+}
+
+function readAcn(value: string) {
+  const acn = value.replace(/\s/g, "");
+
+  if (!acn) {
+    return { acn: null } as const;
+  }
+
+  if (!/^\d{9}$/.test(acn)) {
+    return { error: "ACN must be 9 digits if provided." } as const;
+  }
+
+  return { acn } as const;
 }
 
 export async function createOrganisationAction(
@@ -111,7 +126,17 @@ export async function updateOrganisationDetailsAction(
   const legalName = readText(formData, "legal_name");
   const tradingName = readText(formData, "trading_name");
   const hideIdentity = formData.get("hide_identity") === "on";
+  const entityKindRaw = readText(formData, "entity_kind");
+  const phone = readText(formData, "phone");
+  const mobile = readText(formData, "mobile");
+  const registeredAddress = readText(formData, "registered_address");
+  const postalAddress = readText(formData, "postal_address");
+  const qldJurisdictionId = Number(formData.get("qld_jurisdiction_id"));
+  const clientReference = readText(formData, "qld_client_reference");
+  const licenceNumber = readText(formData, "qld_licence_number");
+  const fisherySymbols = readText(formData, "qld_fishery_symbols");
   const abnResult = readAbn(readText(formData, "abn"));
+  const acnResult = readAcn(readText(formData, "acn"));
 
   if (!supabase || !Number.isInteger(organisationId)) {
     return { error: "Organisation not found." };
@@ -127,8 +152,16 @@ export async function updateOrganisationDetailsAction(
     return { error: "Legal name is required." };
   }
 
+  if (entityKindRaw && !isEntityKind(entityKindRaw)) {
+    return { error: "Choose a valid entity kind." };
+  }
+
   if ("error" in abnResult) {
     return { error: abnResult.error };
+  }
+
+  if ("error" in acnResult) {
+    return { error: acnResult.error };
   }
 
   const actorRole = await getMyRole(organisationId);
@@ -144,11 +177,36 @@ export async function updateOrganisationDetailsAction(
       trading_name: tradingName || null,
       abn: abnResult.abn,
       hide_identity: hideIdentity,
+      entity_kind: entityKindRaw || null,
+      acn: acnResult.acn,
+      phone: phone || null,
+      mobile: mobile || null,
+      registered_address: registeredAddress || null,
+      postal_address: postalAddress || null,
     })
     .eq("id", organisationId);
 
   if (error) {
     return { error: userFacingError(error) };
+  }
+
+  if (Number.isInteger(qldJurisdictionId) && qldJurisdictionId > 0) {
+    const { error: profileError } = await supabase
+      .from("organisation_jurisdiction_profiles")
+      .upsert(
+        {
+          organisation_id: organisationId,
+          jurisdiction_id: qldJurisdictionId,
+          client_reference: clientReference || null,
+          licence_number: licenceNumber || null,
+          fishery_symbols: fisherySymbols || null,
+        },
+        { onConflict: "organisation_id,jurisdiction_id" },
+      );
+
+    if (profileError) {
+      return { error: userFacingError(profileError) };
+    }
   }
 
   revalidatePath("/dashboard");

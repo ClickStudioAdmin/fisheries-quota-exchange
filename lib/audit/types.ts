@@ -37,6 +37,12 @@ const PLATFORM_ACTOR_EVENTS = new Set([
   "COMPLIANCE_APPROVED",
   "COMPLIANCE_REJECTED",
   "TRANSFER_SIMULATED",
+  "TRANSFER_DOCUMENT_GENERATED",
+  "TRANSFER_SIGNED_PACK_UPLOADED",
+  "TRANSFER_SUBMITTED",
+  "TRANSFER_PROCESSING",
+  "TRANSFER_ACTION_REQUIRED",
+  "TRANSFER_APPROVED",
   "SETTLEMENT_SIMULATED",
   "LISTING_REJECTED",
   "AUCTION_REJECTED",
@@ -247,6 +253,18 @@ export function auditEventLabel(eventType: string) {
       return "Compliance rejected";
     case "TRANSFER_SIMULATED":
       return "Transfer recorded";
+    case "TRANSFER_DOCUMENT_GENERATED":
+      return "Transfer application generated";
+    case "TRANSFER_SIGNED_PACK_UPLOADED":
+      return "Signed transfer pack uploaded";
+    case "TRANSFER_SUBMITTED":
+      return "Transfer submitted to Fisheries Queensland";
+    case "TRANSFER_PROCESSING":
+      return "Fisheries Queensland processing";
+    case "TRANSFER_ACTION_REQUIRED":
+      return "Transfer action required";
+    case "TRANSFER_APPROVED":
+      return "Fisheries Queensland approved";
     case "SETTLEMENT_SIMULATED":
       return "Settlement completed";
     case "BID_PLACED":
@@ -291,6 +309,7 @@ export function auditEventCategory(eventType: string): AuditCategory {
     eventType === "QUOTA_RESERVED" ||
     eventType.startsWith("COMPLIANCE_") ||
     eventType === "TRANSFER_SIMULATED" ||
+    eventType.startsWith("TRANSFER_") ||
     eventType === "SETTLEMENT_SIMULATED"
   ) {
     return "Orders";
@@ -378,6 +397,7 @@ export function auditEventSummary(
     || event.event_type === "PAYMENT_RECEIVED" || event.event_type === "PAYMENT_FAILED"
     || event.event_type.startsWith("COMPLIANCE_")
     || event.event_type === "TRANSFER_SIMULATED"
+    || event.event_type.startsWith("TRANSFER_")
     || event.event_type === "SETTLEMENT_SIMULATED") {
     return safeLabel(
       [`Order ${event.entity_id}`, fishery].filter(Boolean).join(" · "),

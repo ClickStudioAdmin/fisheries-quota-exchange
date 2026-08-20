@@ -3,6 +3,8 @@ const FALLBACK = "Something went wrong. Try again.";
 const CONSTRAINT_MESSAGES: Record<string, string> = {
   organisations_abn_unique:
     "This ABN is already registered to another business.",
+  organisations_acn_unique:
+    "This ACN is already registered to another business.",
   organisation_users_organisation_email_unique:
     "That email is already a member of this business.",
   organisations_stripe_account_id_unique:
@@ -28,6 +30,7 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
 
 const COLUMN_MESSAGES: Record<string, string> = {
   abn: "This ABN is already registered to another business.",
+  acn: "This ACN is already registered to another business.",
   email: "That email is already in use.",
   code: "That code is already in use.",
   stripe_account_id: "This payment account is already connected.",

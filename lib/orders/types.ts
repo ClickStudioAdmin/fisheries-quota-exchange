@@ -105,7 +105,7 @@ export function orderQueueTitle(status: OrderQueueStatus) {
     case "AWAITING_COMPLIANCE":
       return "Review orders";
     case "AWAITING_TRANSFER":
-      return "Simulate transfer";
+      return "Transfer";
     case "AWAITING_SETTLEMENT":
       return "Simulate settlement";
   }

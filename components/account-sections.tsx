@@ -61,7 +61,7 @@ import {
 } from "@/lib/alerts/queries";
 import { ACCOUNT_NOTIFICATION_EMAIL_IDS } from "@/lib/email/product-emails";
 import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissions";
-import { getOrganisation, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
+import { getOrganisation, getOrganisationJurisdictionProfile, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { SuccessNotice } from "@/components/notices";
@@ -97,6 +97,15 @@ export async function AccountBusinessSection({
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
   const canEdit = result ? canEditOrganisation(result.role) : false;
+  const jurisdictions = organisationId ? await listJurisdictions() : [];
+  const qldJurisdiction = jurisdictions.find((item) => item.code === "QLD") ?? null;
+  const qldProfile =
+    result && qldJurisdiction
+      ? await getOrganisationJurisdictionProfile(
+          result.organisation.id,
+          qldJurisdiction.id,
+        )
+      : null;
 
   if (!result) {
     return (
@@ -111,13 +120,16 @@ export async function AccountBusinessSection({
   }
 
   return (
-    <div className="max-w-md space-y-4">
+    <div className="max-w-lg space-y-4">
       <p className="text-sm text-ink-muted">
-        Business details for this business. Hide my identity if you do not
-        want this name on public listings.
+        Business details for this business, including fields used on Queensland
+        transfer applications. Hide my identity if you do not want this name on
+        public listings.
       </p>
       <OrganisationDetailsForm
         organisation={result.organisation}
+        qldProfile={qldProfile}
+        qldJurisdictionId={qldJurisdiction?.id ?? null}
         canEdit={canEdit}
       />
     </div>
