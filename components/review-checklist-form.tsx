@@ -1,21 +1,32 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { tableButtonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 type ReviewFormState = {
   error?: string;
   message?: string;
+  completed?: string[];
 };
 
 const initialState: ReviewFormState = {};
 
+export type ReviewChecklistExtraSubmit = {
+  intent: string;
+  label: string;
+  pendingLabel: string;
+  requireAllChecked?: boolean;
+  requireSaved?: boolean;
+};
+
 export function ReviewChecklistForm({
   action,
   hidden,
+  extraHidden,
   checks,
   completed,
+  extraSubmits = [],
   hint = "Save as you work. You must save all checks before you can approve.",
   proceedGoal = "to approve",
 }: {
@@ -24,14 +35,17 @@ export function ReviewChecklistForm({
     formData: FormData,
   ) => Promise<ReviewFormState>;
   hidden: Record<string, string>;
+  extraHidden?: ReactNode;
   checks: readonly string[];
   completed: readonly string[];
+  extraSubmits?: readonly ReviewChecklistExtraSubmit[];
   hint?: string;
   proceedGoal?: string;
 }) {
   const [state, formAction] = useActionState(action, initialState);
   const [checked, setChecked] = useState(() => new Set(completed));
-  const saved = completed.join("\u0001");
+  const persisted = state.completed ?? completed;
+  const saved = persisted.join("\u0001");
 
   useEffect(() => {
     setChecked(new Set(saved ? saved.split("\u0001") : []));
@@ -39,13 +53,14 @@ export function ReviewChecklistForm({
 
   const done = checks.filter((item) => checked.has(item)).length;
   const savedComplete =
-    checks.length > 0 && checks.every((item) => completed.includes(item));
+    checks.length > 0 && checks.every((item) => persisted.includes(item));
 
   return (
     <form action={formAction} className="space-y-4">
       {Object.entries(hidden).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
+      {extraHidden}
       <p className="text-sm text-ink-muted">
         {done} of {checks.length} complete. {hint}
       </p>
@@ -107,12 +122,31 @@ export function ReviewChecklistForm({
           {state.message}
         </p>
       ) : null}
-      <PendingSubmitButton
-        className={tableButtonClassName}
-        pendingLabel="Saving…"
-      >
-        Save progress
-      </PendingSubmitButton>
+      <div className="flex flex-col items-start gap-2">
+        <PendingSubmitButton
+          className={tableButtonClassName}
+          pendingLabel="Saving…"
+          name="intent"
+          value="save"
+        >
+          Save progress
+        </PendingSubmitButton>
+        {extraSubmits.map((item) => (
+          <PendingSubmitButton
+            key={item.intent}
+            className={tableButtonClassName}
+            pendingLabel={item.pendingLabel}
+            name="intent"
+            value={item.intent}
+            disabled={
+              (item.requireAllChecked && done !== checks.length) ||
+              (item.requireSaved && !savedComplete)
+            }
+          >
+            {item.label}
+          </PendingSubmitButton>
+        ))}
+      </div>
     </form>
   );
 }

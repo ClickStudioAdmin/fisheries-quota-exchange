@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState, type DragEvent } from "react";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/lib/transfers/actions";
 
 const initialState: TransferFormState = {};
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
 
 export function TransferPartyUploadForm({
   orderId,
@@ -22,7 +23,71 @@ export function TransferPartyUploadForm({
     initialState,
   );
   const [filename, setFilename] = useState("");
+  const [localError, setLocalError] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dragDepth = useRef(0);
   const inputId = `party-signed-${orderId}`;
+
+  function applyFile(file: File | undefined) {
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+
+    if (!file) {
+      input.value = "";
+      setFilename("");
+      setLocalError("");
+      return;
+    }
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      input.value = "";
+      setFilename("");
+      setLocalError("Choose a PDF.");
+      return;
+    }
+
+    if (file.size > MAX_PDF_BYTES) {
+      input.value = "";
+      setFilename("");
+      setLocalError("Choose a PDF up to 10 MB.");
+      return;
+    }
+
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    setFilename(file.name);
+    setLocalError("");
+  }
+
+  function onDragEnter(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    dragDepth.current += 1;
+    setDragging(true);
+  }
+
+  function onDragOver(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  function onDragLeave(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) {
+      setDragging(false);
+    }
+  }
+
+  function onDrop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    dragDepth.current = 0;
+    setDragging(false);
+    applyFile(event.dataTransfer.files[0]);
+  }
 
   return (
     <form action={formAction} className="mt-4 max-w-lg space-y-3">
@@ -33,21 +98,39 @@ export function TransferPartyUploadForm({
         </p>
         <label
           htmlFor={inputId}
-          className="mt-1 flex cursor-pointer items-center gap-3 border border-dashed border-line bg-paper px-3 py-3 hover:border-sea"
+          onDragEnter={onDragEnter}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          className={`mt-1 flex cursor-pointer flex-col items-center justify-center border border-dashed px-4 py-8 text-center ${
+            dragging
+              ? "border-sea bg-sea/10"
+              : "border-line bg-paper-stripe hover:border-sea"
+          }`}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-paper-stripe text-[11px] font-semibold tracking-[0.08em] text-ink-muted">
-            PDF
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium text-ink">
-              {filename || "Choose signed PDF"}
-            </span>
-            <span className="mt-0.5 block text-xs text-ink-muted">
-              {filename ? "Ready to upload" : "PDF up to 10 MB"}
-            </span>
-          </span>
+          <UploadGlyph className="h-8 w-8 text-sea" />
+          {filename ? (
+            <>
+              <span className="mt-3 max-w-full truncate text-sm font-medium text-ink">
+                {filename}
+              </span>
+              <span className="mt-1 text-xs text-ink-muted">
+                Drop a different PDF here, or click to browse
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="mt-3 text-sm font-medium text-ink">
+                Drop PDF here or click to browse
+              </span>
+              <span className="mt-1 text-xs text-ink-muted">
+                PDF up to 10 MB
+              </span>
+            </>
+          )}
         </label>
         <input
+          ref={inputRef}
           id={inputId}
           name="signed_pack"
           type="file"
@@ -55,13 +138,13 @@ export function TransferPartyUploadForm({
           required
           className="sr-only"
           onChange={(event) => {
-            setFilename(event.target.files?.[0]?.name ?? "");
+            applyFile(event.target.files?.[0]);
           }}
         />
       </div>
-      {state.error ? (
+      {localError || state.error ? (
         <p className="text-sm text-red-800" role="alert">
-          {state.error}
+          {localError || state.error}
         </p>
       ) : null}
       {state.message ? (
@@ -77,5 +160,24 @@ export function TransferPartyUploadForm({
         {label}
       </PendingSubmitButton>
     </form>
+  );
+}
+
+function UploadGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 16V5" />
+      <path d="M8 9l4-4 4 4" />
+      <path d="M5 19h14" />
+    </svg>
   );
 }

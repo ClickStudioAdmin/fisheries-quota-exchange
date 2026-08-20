@@ -316,7 +316,7 @@ const EMAIL_CATALOG: Record<
     description:
       "Attaches the accepted seller-signed PDF and tells the buyer to sign that file, not a blank copy.",
     sentWhen: "When admin accepts the seller-signed form.",
-    trigger: "acceptSellerPackAction then notifyTransferBuyerFormReady.",
+    trigger: "saveSellerPackChecklistAction then notifyTransferBuyerFormReady.",
     recipient: `${buyerRolesRecipient} Receives the seller-signed PDF attachment.`,
   },
   transfer_buyer_signed_received: {

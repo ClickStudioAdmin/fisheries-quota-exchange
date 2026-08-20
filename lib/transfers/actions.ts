@@ -29,6 +29,7 @@ import {
   setTransferApplicationStatus,
   transferPdfData,
   writeOrderAudit,
+  type TransferWorkspace,
 } from "@/lib/transfers/queries";
 import { TRANSFER_DOCUMENTS_BUCKET } from "@/lib/transfers/types";
 import type { TransferDocumentType } from "@/lib/transfers/types";
@@ -36,6 +37,7 @@ import type { TransferDocumentType } from "@/lib/transfers/types";
 export type TransferFormState = {
   error?: string;
   message?: string;
+  completed?: string[];
 };
 
 function read(formData: FormData, name: string) {
@@ -73,6 +75,38 @@ async function canManageTransfer(order: {
 
 function revalidateTransfer(orderId: number) {
   revalidateOrderSurfaces(orderId);
+}
+
+async function releaseSellerPackToBuyer(workspace: TransferWorkspace) {
+  if (!workspace.application || !workspace.latestSellerSigned) {
+    return;
+  }
+
+  const document = workspace.latestSellerSigned;
+  await setTransferApplicationStatus(
+    workspace.application.id,
+    "AWAITING_BUYER_SIGNATURE",
+    { notes: null },
+  );
+  await writeOrderAudit(workspace.order.id, "TRANSFER_SELLER_PACK_ACCEPTED", {
+    document_id: document.id,
+  });
+
+  try {
+    const file = await getTransferDocumentFile(
+      workspace.order.id,
+      document.id,
+    );
+    if (file) {
+      await notifyTransferBuyerFormReady(workspace.order, {
+        filename: file.filename,
+        pdf: file.buffer,
+        documentId: document.id,
+      });
+    }
+  } catch (error) {
+    console.error("notifyTransferBuyerFormReady failed", error);
+  }
 }
 
 async function storeTransferFile(input: {
@@ -431,71 +465,39 @@ export async function saveSellerPackChecklistAction(
     return { error: "Seller signed form is not waiting for review." };
   }
 
-  const completed = selectedComplianceChecks(
-    workspace.process.sellerPackChecks,
-    formData.getAll("checks").map(String),
-  );
-  const { error } = await supabase.rpc("save_seller_pack_checklist", {
-    p_order_id: workspace.order.id,
-    p_completed: completed,
-  });
+  const intent = read(formData, "intent") || "save";
+  let completed = workspace.application.seller_pack_checklist;
 
-  if (error) {
-    return { error: userFacingError(error) };
+  if (intent !== "release") {
+    completed = selectedComplianceChecks(
+      workspace.process.sellerPackChecks,
+      formData.getAll("checks").map(String),
+    );
+    const { error } = await supabase.rpc("save_seller_pack_checklist", {
+      p_order_id: workspace.order.id,
+      p_completed: completed,
+    });
+
+    if (error) {
+      return { error: userFacingError(error), completed };
+    }
   }
 
-  revalidateTransfer(workspace.order.id);
-  return { message: "Progress saved." };
-}
-
-export async function acceptSellerPackAction(formData: FormData) {
-  if (!(await isPlatformAdmin())) {
-    return;
+  if (intent === "save") {
+    return { message: "Progress saved.", completed };
   }
-
-  const orderId = Number(formData.get("order_id"));
-  const workspace = Number.isInteger(orderId)
-    ? await getTransferWorkspace(orderId)
-    : null;
 
   if (
-    !workspace?.application ||
     !workspace.latestSellerSigned ||
-    workspace.application.status !== "AWAITING_SELLER_PACK_REVIEW" ||
-    !checklistIsComplete(
-      workspace.process.sellerPackChecks,
-      workspace.application.seller_pack_checklist,
-    )
+    !checklistIsComplete(workspace.process.sellerPackChecks, completed)
   ) {
-    redirectAfterQueue(formData);
+    return {
+      error: "Save all checks before releasing to the buyer.",
+      completed,
+    };
   }
 
-  await setTransferApplicationStatus(
-    workspace.application.id,
-    "AWAITING_BUYER_SIGNATURE",
-    { notes: null },
-  );
-  await writeOrderAudit(workspace.order.id, "TRANSFER_SELLER_PACK_ACCEPTED", {
-    document_id: workspace.latestSellerSigned.id,
-  });
-
-  try {
-    const file = await getTransferDocumentFile(
-      workspace.order.id,
-      workspace.latestSellerSigned.id,
-    );
-    if (file) {
-      await notifyTransferBuyerFormReady(workspace.order, {
-        filename: file.filename,
-        pdf: file.buffer,
-        documentId: workspace.latestSellerSigned.id,
-      });
-    }
-  } catch (error) {
-    console.error("notifyTransferBuyerFormReady failed", error);
-  }
-
-  revalidateTransfer(workspace.order.id);
+  await releaseSellerPackToBuyer(workspace);
   redirectAfterQueue(formData);
 }
 

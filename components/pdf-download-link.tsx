@@ -10,7 +10,7 @@ export function PdfDownloadLink({
   return (
     <a
       href={href}
-      className="group flex w-full max-w-lg items-center gap-3 border border-line bg-paper px-3 py-3 hover:border-sea"
+      className="group flex w-full min-w-0 max-w-lg items-center gap-3 border border-line bg-paper px-3 py-3 hover:border-sea"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-sea/15 text-[11px] font-semibold tracking-[0.08em] text-sea">
         PDF

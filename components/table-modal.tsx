@@ -64,7 +64,7 @@ export function TableModal({
         <div
           className={
             open
-              ? "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 pt-16"
+              ? "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 pt-16 whitespace-normal"
               : "hidden"
           }
           onClick={close}
@@ -75,7 +75,7 @@ export function TableModal({
             role="dialog"
             aria-modal={open}
             aria-labelledby={titleId}
-            className={`mb-16 w-full min-w-0 border border-line p-6 ${
+            className={`mb-16 w-full min-w-0 overflow-x-hidden border border-line p-6 whitespace-normal ${
               wide
                 ? "max-w-7xl bg-paper"
                 : "max-w-md bg-paper-raised"

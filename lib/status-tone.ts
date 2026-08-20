@@ -37,9 +37,14 @@ const WAITING = new Set([
   "held until settlement",
   "not yet",
   "scheduled",
+  "with fisheries queensland",
+]);
+
+const IN_REVIEW = new Set([
   "checking seller signed form",
   "reviewing completed pack",
-  "with fisheries queensland",
+  "awaiting seller pack review",
+  "admin review",
 ]);
 
 const DANGER = new Set([
@@ -55,6 +60,8 @@ const DANGER = new Set([
 const INFO = new Set(["platform admin"]);
 
 export const ACTION_STATUS_TONE_CLASS = "bg-amber-200 text-amber-900";
+export const IN_REVIEW_STATUS_TONE_CLASS = "bg-sea/15 text-sea";
+export const WAITING_STATUS_TONE_CLASS = "bg-line text-ink";
 
 function normalizeStatus(value: string) {
   return value
@@ -77,6 +84,14 @@ function isActionStatus(key: string) {
   );
 }
 
+function isInReviewStatus(key: string) {
+  return (
+    IN_REVIEW.has(key) ||
+    key.startsWith("3 of 6") ||
+    key.startsWith("5 of 6")
+  );
+}
+
 export function statusToneClass(value: string, displayLabel?: string) {
   const keys = [normalizeStatus(value)];
   if (displayLabel) {
@@ -91,8 +106,12 @@ export function statusToneClass(value: string, displayLabel?: string) {
     return "bg-sea/15 text-sea";
   }
 
-  if (keys.some((key) => WAITING.has(key) || key.startsWith("3 of 6") || key.startsWith("5 of 6") || key.startsWith("6 of 6"))) {
-    return "bg-line text-ink";
+  if (keys.some(isInReviewStatus)) {
+    return IN_REVIEW_STATUS_TONE_CLASS;
+  }
+
+  if (keys.some((key) => WAITING.has(key) || key.startsWith("6 of 6"))) {
+    return WAITING_STATUS_TONE_CLASS;
   }
 
   if (keys.some((key) => DANGER.has(key))) {

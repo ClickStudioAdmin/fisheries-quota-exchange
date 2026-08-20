@@ -9,13 +9,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { LabeledFields, panelClassName } from "@/components/surface";
 import { PdfDownloadLink } from "@/components/pdf-download-link";
 import { ReviewChecklistForm } from "@/components/review-checklist-form";
-import { checklistIsComplete } from "@/lib/orders/checklist";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
 import {
   approveQldTransferAction,
-  acceptSellerPackAction,
   recordFqSubmissionAction,
   recordTransferActionRequiredAction,
   recordTransferProcessingAction,
@@ -273,28 +271,25 @@ export function QldTransferAdmin({
             <ReviewChecklistForm
               action={saveSellerPackChecklistAction}
               hidden={{ order_id: String(order.id) }}
+              extraHidden={queueFields(remaining)}
               checks={workspace.process.sellerPackChecks}
               completed={workspace.application?.seller_pack_checklist ?? []}
               proceedGoal="to release the form to the buyer"
+              extraSubmits={[
+                {
+                  intent: "save_and_release",
+                  label: "Save and release to buyer",
+                  pendingLabel: "Releasing…",
+                  requireAllChecked: true,
+                },
+                {
+                  intent: "release",
+                  label: "Release to buyer",
+                  pendingLabel: "Releasing…",
+                  requireSaved: true,
+                },
+              ]}
             />
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <form action={acceptSellerPackAction}>
-              <input type="hidden" name="order_id" value={order.id} />
-              {queueFields(remaining)}
-              <PendingSubmitButton
-                className={tableButtonClassName}
-                pendingLabel="Releasing…"
-                disabled={
-                  !checklistIsComplete(
-                    workspace.process.sellerPackChecks,
-                    workspace.application?.seller_pack_checklist ?? [],
-                  )
-                }
-              >
-                Release to buyer
-              </PendingSubmitButton>
-            </form>
           </div>
           <form
             action={returnSellerPackAction}

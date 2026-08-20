@@ -82,7 +82,7 @@ Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260
 2. A non-Queensland order still shows Simulate transfer.
 3. Incomplete buyer or seller details block PDF generation and name the missing fields.
 4. A generated PDF is stored, emailed to the seller, and downloadable by the seller and admin. The buyer cannot download it.
-5. Seller (or admin) can upload a seller-signed PDF without overwriting the unsigned file. Admin must save seller-pack checks before releasing it to the buyer.
+5. Seller (or admin) can upload a seller-signed PDF without overwriting the unsigned file. Admin must save seller-pack checks before releasing it to the buyer. Saving progress stays in the transfer workspace. Admin can save and release in one step.
 6. After release, the buyer (or admin) can upload the completed pack. Recording FQ approved calls existing `simulate_transfer`. Quota ledger quantity does not change until Simulate settlement.
 7. Lint and production build pass. Tests cover process routing, required-field gating, and buy/list completeness.
 
