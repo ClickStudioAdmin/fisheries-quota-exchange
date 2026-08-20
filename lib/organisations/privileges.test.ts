@@ -40,7 +40,6 @@ test("members can view but cannot buy, bid, list, or manage the business", () =>
   assert.equal(privilegeAllows(row("buy"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("bid"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("pay"), "MEMBER"), false);
-  assert.equal(privilegeAllows(row("cancel_unpaid_order"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("manage_listings"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("manage_holdings"), "MEMBER"), false);
   assert.equal(privilegeAllows(row("payments_setup"), "MEMBER"), false);
@@ -77,10 +76,9 @@ test("privilege cells follow the permission helpers", () => {
     assert.equal(privilegeAllows(row("bid"), role), canBuyForOrganisation(role));
     assert.equal(privilegeAllows(row("pay"), role), canBuyForOrganisation(role));
     assert.equal(
-      privilegeAllows(row("cancel_unpaid_order"), role),
-      canBuyForOrganisation(role),
+      privilegeAllows(row("invite_admin_or_member"), role),
+      canAddMember(role),
     );
-    assert.equal(privilegeAllows(row("invite_admin_or_member"), role), canAddMember(role));
     assert.equal(
       privilegeAllows(row("invite_owner"), role),
       canAssignRole(role, "OWNER"),

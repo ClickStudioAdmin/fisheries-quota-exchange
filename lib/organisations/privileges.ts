@@ -138,11 +138,6 @@ export const ORGANISATION_PRIVILEGE_GROUPS: readonly PrivilegeGroup[] = [
         task: "Pay FQX for this business's orders",
         cells: MANAGERS,
       },
-      {
-        id: "cancel_unpaid_order",
-        task: "Cancel an unpaid order",
-        cells: MANAGERS,
-      },
     ],
   },
 ];

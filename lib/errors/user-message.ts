@@ -92,7 +92,7 @@ const EXCEPTION_MESSAGES: Record<string, string> = {
     "Only an owner or admin can bid for this business.",
   "you cannot pay this order": "Only an owner or admin can pay for this business.",
   "you cannot cancel this order":
-    "Only an owner or admin can cancel this order.",
+    "Only a platform admin can cancel this order.",
 };
 
 type ErrorLike = {

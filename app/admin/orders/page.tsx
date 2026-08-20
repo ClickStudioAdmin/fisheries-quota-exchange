@@ -17,6 +17,7 @@ import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import { DataTable, DataTableRowExtras } from "@/components/data-table";
 import { OrderTableLinks } from "@/components/order-table-links";
 import { TableModal } from "@/components/table-modal";
+import { CancelOrderForm } from "@/components/cancel-order-form";
 import { ReviewTransferForms } from "@/components/review-transfer-forms";
 import { BulkReviewOrdersModal } from "@/components/bulk-review-orders-modal";
 import { tableButtonClassName } from "@/components/auth-card";
@@ -73,11 +74,13 @@ export default async function AdminOrdersPage({
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           Approve compliance, run transfer (Queensland workspace or simulate),
-          then simulate settlement. Select orders in the same status to open a
-          queue. The buyer pays the listed amount. Settlement Transfers the
-          seller’s share after the platform fee, writes SALE/PURCHASE or
-          LEASE_OUT/LEASE_IN ledger rows, consumes the reservation, and emails
-          dummy tax invoices (quota and platform fee) to the buyer.
+          then simulate settlement. Cancel is admin-only and available while an
+          order is awaiting payment or compliance. Select orders in the same
+          status to open a queue. The buyer pays the listed amount. Settlement
+          Transfers the seller’s share after the platform fee, writes
+          SALE/PURCHASE or LEASE_OUT/LEASE_IN ledger rows, consumes the
+          reservation, and emails dummy tax invoices (quota and platform fee)
+          to the buyer.
         </p>
       </div>
       <DataTable
@@ -216,6 +219,12 @@ export default async function AdminOrdersPage({
                 {order.status === "AWAITING_COMPLIANCE" ? (
                   <TableModal title="Review compliance" label="Review" wide>
                     <ReviewTransferForms order={order} />
+                  </TableModal>
+                ) : null}
+                {order.status === "AWAITING_PAYMENT" ||
+                order.status === "AWAITING_COMPLIANCE" ? (
+                  <TableModal title="Cancel order" label="Cancel">
+                    <CancelOrderForm order={order} />
                   </TableModal>
                 ) : null}
                 {order.status === "AWAITING_TRANSFER" ? (

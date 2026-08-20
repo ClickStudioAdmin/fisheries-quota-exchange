@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { cancelOrderAction } from "@/lib/orders/actions";
 import { OrderCheckout } from "@/components/order-checkout";
 import { OrderCheckoutStatus } from "@/components/order-checkout-status";
 import { OrderPaymentPoll } from "@/components/order-payment-poll";
 import { buttonClassName } from "@/components/auth-card";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   getOrder,
   getReservationForOrder,
@@ -109,7 +107,7 @@ export default async function OrderPage({
         : null,
     personNames,
   };
-  const canPayOrCancel =
+  const canPay =
     isBuyer && active != null && canBuyForOrganisation(active.role);
   const canPrepareTransfer =
     Boolean(admin) ||
@@ -151,13 +149,9 @@ export default async function OrderPage({
     payment?.status === "PAID" ||
     hasPaymentReceivedEvent;
 
-  const canCancel =
-    (order.status === "AWAITING_COMPLIANCE" ||
-      order.status === "AWAITING_PAYMENT") &&
-    (admin || canPayOrCancel);
   const payPanel = orderPayPanel({
     orderStatus: order.status,
-    isBuyer: canPayOrCancel,
+    isBuyer: canPay,
     paymentLive,
     paymentStatus: payment?.status ? String(payment.status) : null,
     hasPaymentReceivedEvent,
@@ -255,8 +249,7 @@ export default async function OrderPage({
       </p>
       {query.pay === "cancelled" ? (
         <p className="mt-3 text-sm text-ink-muted">
-          Payment was not completed. The quota is still reserved until you pay
-          or cancel the order.
+          Payment was not completed. The quota is still reserved until you pay.
         </p>
       ) : null}
       {query.pay === "setup" ? (
@@ -308,18 +301,6 @@ export default async function OrderPage({
               <LabeledFields items={totalItems} />
             </div>
           </section>
-          {canCancel ? (
-            <form action={cancelOrderAction} className="mt-6">
-              <input type="hidden" name="order_id" value={order.id} />
-              <input type="hidden" name="next" value={`/orders/${order.id}`} />
-              <PendingSubmitButton
-                className={buttonClassName}
-                pendingLabel="Cancelling…"
-              >
-                Cancel order
-              </PendingSubmitButton>
-            </form>
-          ) : null}
         </div>
         {showPending ? (
           <div className={panelClassName}>

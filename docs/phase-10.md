@@ -56,11 +56,11 @@ Child statuses (QLD only): `READY` â†’ `AWAITING_SIGNED_PACK` (after generate) â
 | `/dashboard/account` | Business Details includes entity, ACN (companies), mobile, structured Australian addresses, and Queensland Fisheries fields |
 | `/orders/[id]` | During `AWAITING_TRANSFER` on a QLD order: status, missing fields, prepare/download unsigned PDF |
 | `/orders/[id]/transfer/[documentId]` | Auth-checked download of a stored transfer PDF |
-| `/admin/orders` | Compliance review shows order, buyer and seller details, and Queensland checks. QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
+| `/admin/orders` | Compliance review shows order, buyer and seller details, and Queensland checks. Cancel is admin-only (awaiting payment or compliance). QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
 
 ## Database
 
-Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260820020000_organisation_structured_address.sql`
+Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260820020000_organisation_structured_address.sql`, `20260820030000_admin_cancel_order.sql`
 
 - `organisations`: `entity_kind`, `acn`, `mobile`, structured `registered_address` / `postal_address` (street, suburb, state, postcode), `postal_same_as_registered`
 - `organisation_jurisdiction_profiles`: per business and jurisdiction (QLD client number, commercial fishing licence, symbols)

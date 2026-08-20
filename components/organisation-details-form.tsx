@@ -169,6 +169,20 @@ export function OrganisationDetailsForm({
         />
       </div>
       <div>
+        <label htmlFor="mobile" className="block text-sm text-ink">
+          Mobile
+        </label>
+        <input
+          id="mobile"
+          name="mobile"
+          inputMode="tel"
+          autoComplete="tel"
+          defaultValue={organisation.mobile ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+      <div>
         <label htmlFor="trading_name" className="block text-sm text-ink">
           Trading name
         </label>
@@ -225,20 +239,6 @@ export function OrganisationDetailsForm({
           />
         </div>
       ) : null}
-      <div>
-        <label htmlFor="mobile" className="block text-sm text-ink">
-          Mobile
-        </label>
-        <input
-          id="mobile"
-          name="mobile"
-          inputMode="tel"
-          autoComplete="tel"
-          defaultValue={organisation.mobile ?? ""}
-          disabled={!canEdit}
-          className={fieldClassName}
-        />
-      </div>
       <AddressFields
         prefix="registered"
         legend="Registered address"

@@ -50,9 +50,8 @@ Signed-out users are redirected to `/login`.
 | Buy quota | Yes | Yes | No |
 | Bid on auctions | Yes | Yes | No |
 | Pay FQX for this business's orders | Yes | Yes | No |
-| Cancel an unpaid order | Yes | Yes | No |
 
-That list is shown on Business Settings → Privileges. Roles are fixed; the page is not a permission editor. Who receives business email is chosen on Notifications.
+That list is shown on Business Settings → Privileges. Roles are fixed; the page is not a permission editor. Who receives business email is chosen on Notifications. Order cancel is a platform-admin action on `/admin/orders`, not a business privilege.
 
 The last owner cannot be removed. Membership is keyed by email and matches the signed-in Auth user. Each member has a `full_name`. The fill-name trigger is `security definer` (`20260817350000_organisation_users_fill_name_definer.sql`) so it can read Auth names when a member is added.
 

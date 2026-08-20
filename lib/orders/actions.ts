@@ -152,26 +152,16 @@ export async function createOrderAction(
 }
 
 export async function cancelOrderAction(formData: FormData) {
+  if (!(await isPlatformAdmin())) {
+    redirect("/admin");
+  }
+
   const supabase = await createClient();
   const orderId = Number(formData.get("order_id"));
-  const next = read(formData, "next") || "/dashboard";
+  const next = read(formData, "next") || "/admin/orders";
 
   if (!supabase || !Number.isInteger(orderId)) {
     return;
-  }
-
-  if (!(await isPlatformAdmin())) {
-    const order = await getOrder(orderId);
-    const active = await getActiveOrganisation();
-
-    if (
-      !order ||
-      !active ||
-      active.id !== order.buyer_organisation_id ||
-      !canBuyForOrganisation(active.role)
-    ) {
-      redirect(next);
-    }
   }
 
   await supabase.rpc("cancel_order", { p_order_id: orderId });

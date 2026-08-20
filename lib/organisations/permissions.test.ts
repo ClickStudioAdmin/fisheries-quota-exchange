@@ -8,7 +8,7 @@ import {
   canEditOrganisation,
 } from "./permissions.ts";
 
-test("owners and admins can buy, bid, pay, and cancel unpaid orders", () => {
+test("owners and admins can buy, bid, and pay", () => {
   assert.equal(canBuyForOrganisation("OWNER"), true);
   assert.equal(canBuyForOrganisation("ADMIN"), true);
   assert.equal(canBuyForOrganisation("MEMBER"), false);
