@@ -243,6 +243,7 @@ export function MarketplaceList({
         listings={paged}
         empty="No listings match these filters."
         fisheriesByName={Object.fromEntries(fisheriesByName)}
+        jurisdictions={jurisdictions}
         sellerDisplays={sellerDisplays}
         auctionIdsWithBids={auctionIdsWithBids}
       />

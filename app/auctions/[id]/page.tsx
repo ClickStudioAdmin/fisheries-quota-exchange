@@ -336,6 +336,7 @@ export default async function AuctionPage({
           listing={listing}
           fishery={fishery ?? { name: listing.fishery_name, logo_path: null }}
           fisheryId={fishery?.id ?? null}
+          jurisdictionCode={jurisdictionCode}
           sellerDisplay={sellerDisplay}
           priceLabel="Current bid"
           totalLabel="Indicative price"

@@ -263,6 +263,7 @@ export default async function ListingPage({
           listing={listing}
           fishery={fishery ?? { name: listing.fishery_name, logo_path: null }}
           fisheryId={fishery?.id ?? null}
+          jurisdictionCode={jurisdictionCode}
           sellerDisplay={sellerDisplay}
           badge={
             expired && listing.status === "PUBLISHED"

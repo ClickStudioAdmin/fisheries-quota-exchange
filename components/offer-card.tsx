@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FisheryLogo } from "@/components/fishery-logo";
 import { ListingKindBadges } from "@/components/listing-kind-badges";
 import { PublicSellerName } from "@/components/public-seller-name";
-import type { Fishery } from "@/lib/fisheries/types";
+import { fisheryNameWithJurisdiction, type Fishery } from "@/lib/fisheries/types";
 import {
   formatAud,
   formatListingTotal,
@@ -36,6 +36,7 @@ type OfferCardProps = {
   hideOffering?: boolean;
   fisheryId?: number | null;
   fishery?: Pick<Fishery, "name" | "logo_path"> | null;
+  jurisdictionCode?: string | null;
   sellerDisplay?: PublicSellerDisplay;
 };
 
@@ -111,6 +112,7 @@ export function OfferCard({
   hideOffering = false,
   fisheryId = null,
   fishery = null,
+  jurisdictionCode = null,
   sellerDisplay,
 }: OfferCardProps) {
   const seller = sellerDisplay ?? {
@@ -133,7 +135,9 @@ export function OfferCard({
   const title = hideFishery ? (
     <PublicSellerName display={seller} />
   ) : (
-    <span className="block truncate">{listing.fishery_name}</span>
+    <span className="block truncate">
+      {fisheryNameWithJurisdiction(listing.fishery_name, jurisdictionCode)}
+    </span>
   );
   const sellerLine = hideFishery ? null : (
     <p className="mt-1 flex min-w-0 items-baseline gap-2 text-sm text-ink">

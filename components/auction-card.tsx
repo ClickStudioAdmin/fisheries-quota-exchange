@@ -12,6 +12,7 @@ type AuctionCardProps = {
   hideOffering?: boolean;
   fisheryId?: number | null;
   fishery?: Pick<Fishery, "name" | "logo_path"> | null;
+  jurisdictionCode?: string | null;
   sellerDisplay?: PublicSellerDisplay;
   hasBids?: boolean;
 };
@@ -22,6 +23,7 @@ export function AuctionCard({
   hideOffering,
   fisheryId,
   fishery,
+  jurisdictionCode,
   sellerDisplay,
   hasBids = false,
 }: AuctionCardProps) {
@@ -47,6 +49,7 @@ export function AuctionCard({
       hideOffering={hideOffering}
       fisheryId={fisheryId}
       fishery={fishery}
+      jurisdictionCode={jurisdictionCode}
       sellerDisplay={sellerDisplay}
       metaLabel={ended ? "Ended" : started ? "Time left" : "Starts in"}
       metaValue={

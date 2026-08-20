@@ -27,19 +27,23 @@ export function jurisdictionLabel(
   return name ? name : "Jurisdiction";
 }
 
+export function fisheryNameWithJurisdiction(
+  name: string,
+  code: string | null | undefined,
+) {
+  const trimmed = code?.trim();
+  return trimmed ? `${trimmed} - ${name}` : name;
+}
+
 export function fisherySelectLabel(
   fishery: Pick<Fishery, "name" | "jurisdiction_id">,
   jurisdictions: readonly Pick<Jurisdiction, "id" | "code">[],
 ) {
-  const code = jurisdictions
-    .find((item) => item.id === fishery.jurisdiction_id)
-    ?.code?.trim();
+  const code = jurisdictions.find(
+    (item) => item.id === fishery.jurisdiction_id,
+  )?.code;
 
-  if (!code) {
-    return fishery.name;
-  }
-
-  return `${code} - ${fishery.name}`;
+  return fisheryNameWithJurisdiction(fishery.name, code);
 }
 
 export function fisherySelectLabelForName(

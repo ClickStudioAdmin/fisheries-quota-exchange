@@ -9,7 +9,7 @@ import {
   useListPagination,
 } from "@/components/list-pager";
 import { OfferCard } from "@/components/offer-card";
-import type { Fishery } from "@/lib/fisheries/types";
+import type { Fishery, Jurisdiction } from "@/lib/fisheries/types";
 import { formatTableDate } from "@/lib/format";
 import {
   listingTypeLabel,
@@ -24,6 +24,7 @@ type ListingCardProps = {
   hideOffering?: boolean;
   fisheryId?: number | null;
   fishery?: Pick<Fishery, "name" | "logo_path"> | null;
+  jurisdictionCode?: string | null;
   sellerDisplay?: PublicSellerDisplay;
   hasBids?: boolean;
 };
@@ -34,6 +35,7 @@ export function ListingCard({
   hideOffering,
   fisheryId,
   fishery,
+  jurisdictionCode,
   sellerDisplay,
 }: ListingCardProps) {
   return (
@@ -44,6 +46,7 @@ export function ListingCard({
       hideOffering={hideOffering}
       fisheryId={fisheryId}
       fishery={fishery}
+      jurisdictionCode={jurisdictionCode}
       sellerDisplay={sellerDisplay}
       metaLabel="Expires"
       metaValue={formatTableDate(listing.expires_at)}
@@ -57,6 +60,7 @@ export function MarketplaceListingCard({
   hideOffering,
   fisheryId,
   fishery,
+  jurisdictionCode,
   sellerDisplay,
   hasBids,
 }: ListingCardProps) {
@@ -68,6 +72,7 @@ export function MarketplaceListingCard({
         hideOffering={hideOffering}
         fisheryId={fisheryId}
         fishery={fishery}
+        jurisdictionCode={jurisdictionCode}
         sellerDisplay={sellerDisplay}
         hasBids={hasBids}
       />
@@ -81,6 +86,7 @@ export function MarketplaceListingCard({
       hideOffering={hideOffering}
       fisheryId={fisheryId}
       fishery={fishery}
+      jurisdictionCode={jurisdictionCode}
       sellerDisplay={sellerDisplay}
     />
   );
@@ -92,6 +98,7 @@ export function ListingCards({
   hideFishery,
   hideOffering,
   fisheriesByName,
+  jurisdictions,
   sellerDisplays,
   auctionIdsWithBids,
   columns = 2,
@@ -100,7 +107,11 @@ export function ListingCards({
   empty: string;
   hideFishery?: boolean;
   hideOffering?: boolean;
-  fisheriesByName?: Record<string, Pick<Fishery, "id" | "name" | "logo_path">>;
+  fisheriesByName?: Record<
+    string,
+    Pick<Fishery, "id" | "name" | "logo_path" | "jurisdiction_id">
+  >;
+  jurisdictions?: readonly Pick<Jurisdiction, "id" | "code">[];
   sellerDisplays?: Record<number, PublicSellerDisplay>;
   auctionIdsWithBids?: number[];
   columns?: 1 | 2;
@@ -119,6 +130,10 @@ export function ListingCards({
     >
       {listings.map((listing) => {
         const fishery = fisheriesByName?.[listing.fishery_name] ?? null;
+        const jurisdictionCode = hideFishery
+          ? null
+          : (jurisdictions?.find((item) => item.id === fishery?.jurisdiction_id)
+              ?.code ?? null);
 
         return (
           <MarketplaceListingCard
@@ -128,6 +143,7 @@ export function ListingCards({
             hideOffering={hideOffering}
             fisheryId={fishery?.id ?? null}
             fishery={fishery}
+            jurisdictionCode={jurisdictionCode}
             sellerDisplay={sellerDisplays?.[listing.id]}
             hasBids={auctionIdsWithBids?.includes(Number(listing.id))}
           />

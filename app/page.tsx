@@ -189,6 +189,7 @@ export default async function Home() {
             listings={featuredListings}
             empty="No live listings at the moment."
             fisheriesByName={fisheriesByName}
+            jurisdictions={jurisdictions}
             sellerDisplays={sellerDisplays}
             auctionIdsWithBids={[...auctionIdsWithBids]}
           />
