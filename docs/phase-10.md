@@ -55,7 +55,7 @@ Child statuses (QLD only): `READY` â†’ `AWAITING_SIGNED_PACK` (after generate) â
 | Path | Purpose |
 | --- | --- |
 | `/dashboard/account` | Business Details includes entity, ACN (companies), phone, structured Australian addresses, a jurisdiction multi-select (Queensland selectable now), and Queensland Fisheries fields when Queensland is selected |
-| `/orders/[id]` | During `AWAITING_TRANSFER` on a QLD order: status, missing fields, prepare/download unsigned PDF |
+| `/orders/[id]` | During `AWAITING_COMPLIANCE`: payment-received notice. During `AWAITING_TRANSFER` on a QLD order: status, missing fields, prepare/download unsigned PDF |
 | `/orders/[id]/transfer/[documentId]` | Auth-checked download of a stored transfer PDF |
 | `/admin/orders` | Compliance review shows order, buyer and seller details, and a saveable checklist of jurisdiction steps. Approve stays disabled until every required check is saved. Request update emails only the selected buyer and/or seller; the order stays open. Cancel is admin-only (awaiting payment or compliance). QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
 | `/admin/holdings` | Holding verification review shows holding, business details, recent ledger, and a saveable checklist. Queensland holdings add client-number and licence checks. Verify stays disabled until every required check is saved; each saved check and the final verify write audit events |

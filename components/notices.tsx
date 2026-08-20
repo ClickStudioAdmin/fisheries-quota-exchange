@@ -5,14 +5,16 @@ export function SuccessNotice({
   title,
   action,
   children,
+  className,
 }: {
   title: string;
   action?: ReactNode;
   children?: ReactNode;
+  className?: string;
 }) {
   return (
     <div
-      className="mt-4 flex gap-3 border border-sea bg-sea/10 px-4 py-3"
+      className={`flex gap-3 border border-sea bg-sea/10 px-4 py-3 ${className ?? "mt-4"}`}
       role="status"
     >
       <span

@@ -42,6 +42,7 @@ import { getUser } from "@/lib/supabase/server";
 import { taxInvoicePath } from "@/lib/invoices/types";
 import { getTransferWorkspace } from "@/lib/transfers/queries";
 import { TransferOrderPanel } from "@/components/transfer-order-panel";
+import { SuccessNotice } from "@/components/notices";
 
 export const metadata = {
   title: "Order",
@@ -349,6 +350,12 @@ export default async function OrderPage({
           <p className="text-sm text-ink-muted">
             Payments are not configured, so this order cannot be charged yet.
           </p>
+        ) : order.status === "AWAITING_COMPLIANCE" ? (
+          <SuccessNotice title="Payment received">
+            {isSeller
+              ? "FQX is holding the funds until settlement. Next, FQX reviews the order. Payout is at settlement, not now."
+              : "FQX is holding the funds until settlement. Next, FQX reviews the order. We'll email you if anything needs updating."}
+          </SuccessNotice>
         ) : order.status === "AWAITING_TRANSFER" &&
           transferWorkspace &&
           !transferWorkspace.process.usesSimulatedTransfer ? (
