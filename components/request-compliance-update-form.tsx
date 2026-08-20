@@ -27,15 +27,26 @@ export function RequestComplianceUpdateForm({
   const [notifyBuyer, setNotifyBuyer] = useState(false);
   const [notifySeller, setNotifySeller] = useState(false);
 
+  const notifySummary = [
+    "The order stays in compliance review. Quota stays reserved. Payment stays held.",
+    notifyBuyer
+      ? `Emails ${buyerName} (buyer) with your message. They can see it on the order.`
+      : `${buyerName} (buyer) is not emailed.`,
+    notifySeller
+      ? `Emails ${sellerName} (seller) with your message. They can see it on the order.`
+      : `${sellerName} (seller) is not emailed.`,
+  ];
+
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="order_id" value={orderId} />
       <div>
         <h4 className="text-sm font-semibold text-ink">Request update</h4>
-        <p className="mt-1 text-sm text-ink-muted">
-          The order stays in compliance review. Quota stays reserved. Only the
-          parties you tick are emailed.
-        </p>
+        <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-ink-muted">
+          {notifySummary.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </div>
       <label className="flex items-start gap-2 text-sm text-ink">
         <input

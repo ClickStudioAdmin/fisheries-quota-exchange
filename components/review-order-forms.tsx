@@ -36,18 +36,18 @@ export function ReviewOrderForms({
           <form action={approveComplianceAction} className="space-y-3">
             <input type="hidden" name="order_id" value={order.id} />
             {queueFields()}
+            <h4 className="text-sm font-semibold text-ink">Approve</h4>
+            <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
+              <li>Moves this order to the transfer step.</li>
+              <li>Emails buyer and seller that transfer has started.</li>
+              <li>Does not move quota. The reservation stays until settlement.</li>
+              <li>The optional note is stored on the order. It is not emailed.</li>
+            </ul>
             {!canApprove ? (
               <p className="text-sm text-ink-muted">
                 Save all compliance checks above before you can approve.
               </p>
             ) : null}
-            <PendingSubmitButton
-              className={tableButtonClassName}
-              pendingLabel="Approving…"
-              disabled={!canApprove}
-            >
-              Approve
-            </PendingSubmitButton>
             <div>
               <label
                 htmlFor={`approve-note-${order.id}`}
@@ -61,16 +61,24 @@ export function ReviewOrderForms({
                 className={fieldClassName}
               />
             </div>
+            <PendingSubmitButton
+              className={tableButtonClassName}
+              pendingLabel="Approving…"
+              disabled={!canApprove}
+            >
+              Approve
+            </PendingSubmitButton>
           </form>
           <form action={rejectComplianceAction} className="space-y-3">
             <input type="hidden" name="order_id" value={order.id} />
             {queueFields()}
-            <PendingSubmitButton
-              className={tableButtonClassName}
-              pendingLabel="Rejecting…"
-            >
-              Reject
-            </PendingSubmitButton>
+            <h4 className="text-sm font-semibold text-ink">Reject</h4>
+            <ul className="list-disc space-y-1 pl-4 text-sm text-ink-muted">
+              <li>Cancels this order and sets it to rejected.</li>
+              <li>Releases the quota reservation back to the seller.</li>
+              <li>Emails buyer and seller. Does not refund payment.</li>
+              <li>If you add a reason, both parties receive the same text.</li>
+            </ul>
             <div>
               <label
                 htmlFor={`reject-note-${order.id}`}
@@ -84,6 +92,12 @@ export function ReviewOrderForms({
                 className={fieldClassName}
               />
             </div>
+            <PendingSubmitButton
+              className={tableButtonClassName}
+              pendingLabel="Rejecting…"
+            >
+              Reject
+            </PendingSubmitButton>
           </form>
         </div>
         <RequestComplianceUpdateForm
