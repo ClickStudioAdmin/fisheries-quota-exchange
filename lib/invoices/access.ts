@@ -6,9 +6,17 @@ export function canDownloadTaxInvoice(input: {
   isBuyer: boolean;
   isSeller: boolean;
 }) {
-  if (input.isAdmin || input.isSeller) {
+  if (input.isAdmin) {
     return true;
   }
 
-  return input.kind === "quota" && input.isBuyer;
+  if (input.kind === "quota") {
+    return input.isBuyer;
+  }
+
+  if (input.kind === "fee") {
+    return input.isSeller;
+  }
+
+  return false;
 }

@@ -18,6 +18,7 @@ export async function sendSettledOrderInvoice(orderId: number) {
   const orderUrl = siteUrl ? `${siteUrl}/orders/${order.id}` : "";
   const offeringLabel = listingOfferingLabel(order.offering);
   const amount = invoices.quota.data.total;
+  const feeAmount = invoices.fee.data.total;
   const quotaAttachment = {
     filename: invoices.quota.filename,
     content: invoices.quota.pdf,
@@ -46,11 +47,11 @@ export async function sendSettledOrderInvoice(orderId: number) {
     emailCopy.order_settled({
       orderId: order.id,
       offeringLabel,
-      amount,
+      amount: feeAmount,
       orderUrl,
       forSeller: true,
     }),
     undefined,
-    [quotaAttachment, feeAttachment],
+    [feeAttachment],
   );
 }

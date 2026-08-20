@@ -23,13 +23,34 @@ test("buyer can download the quota invoice but not the fee invoice", () => {
   );
 });
 
-test("seller and admin can download both invoices", () => {
+test("seller can download the fee invoice but not the quota invoice", () => {
+  assert.equal(
+    canDownloadTaxInvoice({
+      kind: "quota",
+      isAdmin: false,
+      isBuyer: false,
+      isSeller: true,
+    }),
+    false,
+  );
   assert.equal(
     canDownloadTaxInvoice({
       kind: "fee",
       isAdmin: false,
       isBuyer: false,
       isSeller: true,
+    }),
+    true,
+  );
+});
+
+test("admin can download both invoices", () => {
+  assert.equal(
+    canDownloadTaxInvoice({
+      kind: "quota",
+      isAdmin: true,
+      isBuyer: false,
+      isSeller: false,
     }),
     true,
   );

@@ -488,6 +488,7 @@ export async function HoldingRecord({
               <OrderTableDownloads
                 orderId={order.id}
                 settled={order.status === "COMPLETED"}
+                showFeeInvoice
               />
             }
           />

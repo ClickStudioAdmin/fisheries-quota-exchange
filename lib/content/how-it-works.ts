@@ -40,6 +40,6 @@ export const HOW_IT_WORKS_SELLER_STEPS = [
   },
   {
     title: "Settle the trade",
-    body: "After compliance and transfer, settlement moves quota to the buyer and pays you the listed amount minus the platform fee. You can download the quota invoice and the fee invoice.",
+    body: "After compliance and transfer, settlement moves quota to the buyer and pays you the listed amount minus the platform fee. You can download the fee invoice.",
   },
 ];

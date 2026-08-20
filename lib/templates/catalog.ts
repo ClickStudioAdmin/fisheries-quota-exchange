@@ -345,10 +345,10 @@ const EMAIL_CATALOG: Record<
   order_settled: {
     summary: "After simulated settlement completes",
     description:
-      "Confirms settlement and attaches dummy tax invoice PDFs. The buyer receives the quota invoice. The seller receives the quota invoice and the platform fee invoice.",
+      "Confirms settlement and attaches dummy tax invoice PDFs. The buyer receives the quota invoice (for their payment). The seller receives the platform fee invoice.",
     sentWhen: "After simulate_settlement succeeds and the order is COMPLETED.",
     trigger: "simulateSettlementAction then sendSettledOrderInvoice.",
-    recipient: `${buyerAndSellerRolesRecipient} Buyer: quota PDF. Seller: quota and fee PDFs.`,
+    recipient: `${buyerAndSellerRolesRecipient} Buyer: quota PDF. Seller: fee PDF.`,
   },
   operator_holding_pending: {
     summary: "Operator: holding needs verification",
@@ -419,13 +419,13 @@ const pdfTemplates: MessageTemplate[] = [
     name: "Simulated quota tax invoice",
     description:
       "Dummy A4 tax invoice for the quota: seller to buyer for the listed amount. Marked as not a real tax invoice. GST is not calculated. The PDF is generated in memory and is not stored.",
-    summary: "Attached to the order settled email; downloadable after settlement",
+    summary: "Attached to the buyer order settled email; downloadable by the buyer after settlement",
     sentWhen:
-      "Generated when the order settled email is sent, and on download from /orders/[id]/invoice/quota after COMPLETED. It is not emailed on its own.",
+      "Generated when the buyer order settled email is sent, and on download from /orders/[id]/invoice/quota after COMPLETED. It is not emailed on its own.",
     trigger:
       "sendSettledOrderInvoice after simulated settlement, or GET /orders/[id]/invoice/quota.",
     recipient:
-      "Email attachment to buyer and seller managers. Download for buyer, seller, or platform admin after settlement.",
+      "Email attachment to buyer managers. Download for buyer or platform admin after settlement.",
     skipWhen:
       "The order settled email is skipped or fails before attach. Settlement still completes.",
     source: "lib/invoices/tax-invoice.tsx",

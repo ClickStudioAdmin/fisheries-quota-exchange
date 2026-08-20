@@ -522,6 +522,8 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               <OrderTableDownloads
                 orderId={order.id}
                 settled={order.status === "COMPLETED"}
+                showQuotaInvoice
+                showFeeInvoice
               />
             }
           />

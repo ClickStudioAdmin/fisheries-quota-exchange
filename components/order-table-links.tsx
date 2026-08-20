@@ -18,24 +18,28 @@ export function OrderTableLinks({ orderId }: { orderId: number }) {
 export function OrderTableDownloads({
   orderId,
   settled,
-  showFeeInvoice = true,
+  showQuotaInvoice = false,
+  showFeeInvoice = false,
 }: {
   orderId: number;
   settled: boolean;
+  showQuotaInvoice?: boolean;
   showFeeInvoice?: boolean;
 }) {
-  if (!settled) {
+  if (!settled || (!showQuotaInvoice && !showFeeInvoice)) {
     return null;
   }
 
   return (
     <span className="inline-flex flex-wrap gap-x-3 gap-y-1">
-      <a
-        href={taxInvoicePath(orderId, "quota")}
-        className={tableLinkClassName}
-      >
-        Quota invoice
-      </a>
+      {showQuotaInvoice ? (
+        <a
+          href={taxInvoicePath(orderId, "quota")}
+          className={tableLinkClassName}
+        >
+          Quota invoice
+        </a>
+      ) : null}
       {showFeeInvoice ? (
         <a href={taxInvoicePath(orderId, "fee")} className={tableLinkClassName}>
           Fee invoice

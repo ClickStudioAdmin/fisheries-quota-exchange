@@ -19,7 +19,7 @@ Never trust the browser or the Checkout return URL for payment status. The webho
 3. A buyer purchases a published listing. `create_order` reserves quota. If the seller can accept charges, the order is `AWAITING_PAYMENT` and FQX shows an **embedded** Stripe Checkout on `/orders/[id]`. The buyer chooses **bank debit** or **card** first. Bank debit charges the listed quota amount. Card charges the listed amount plus the Stripe card processing surcharge (Checkout line items: quota, then **Card processing (Stripe)**). Each method is a separate Checkout session. The charge sits on the **FQX** Stripe account. The platform fee is not added to the buyer charge. There is no destination charge. The order page totals show the listed amount and the card amount.
 4. Stripe sends `checkout.session.completed` (cards) or `checkout.session.async_payment_succeeded` / `payment_intent.succeeded` (bank debit). The app marks the order paid. Funds stay on the FQX balance (often **Incoming** until they clear). Refreshing the return URL does not charge again. Opening the order page also reconciles payment status from Stripe. Pay FQX on `/orders/[id]` has three display states while the order is still the buyer’s: **Checkout** (embedded Stripe, only if a session can still be started), **Pending** (spinner while a debit is processing or payment is recorded but the order has not yet moved to `AWAITING_COMPLIANCE`), and **Paid** (checkout hidden once the order is `AWAITING_COMPLIANCE` or later). Pending polls the server about every five seconds while the tab is visible. The browser is still not trusted for payment status.
 5. Expired Checkout or failed async payment cancels an unpaid order and releases the reservation. A declined card does not cancel the order; the buyer can pay again.
-6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` minus `fee_amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails dummy tax invoice PDFs (quota: seller to buyer; fee: FQX to seller). After settlement the buyer can download the quota invoice; the seller can download the quota and fee invoices.
+6. Admin runs compliance, then simulated authority transfer, then **Simulate settlement**. Settlement first Transfers `amount_aud` minus `fee_amount_aud` to the seller (`source_transaction` when a charge id exists), keeps `fee_amount_aud` on FQX, then completes quota and emails dummy tax invoice PDFs (quota: seller to buyer; fee: FQX to seller). After settlement the buyer can download the quota invoice; the seller can download the fee invoice.
 
 If Stripe keys are missing, purchase stays on the Phase 7 path (`AWAITING_COMPLIANCE` immediately). No live payment.
 
@@ -55,8 +55,8 @@ Test BECS: BSB `000-000`, account `000123456`. Test card (AU Visa): `4000 0003 6
 | `/dashboard/members` | Redirects to `/dashboard/account?tab=members` |
 | `/dashboard/payments` | Redirects to `/dashboard/account?tab=payments` |
 | `/marketplace/[id]` | Purchase in a right-hand column; other live listings and recent sales for that fishery below |
-| `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; payment-received notice after `AWAITING_COMPLIANCE`. After settlement, the buyer can download the quota tax invoice (PDF row); the seller can also download the fee invoice. Queensland orders also show the signed application pack. Return URL is not authoritative |
-| `/orders/[id]/invoice/quota` | Quota tax invoice PDF (seller to buyer) after `COMPLETED`. Buyer, seller, or platform admin. Generated on request; not stored. `/orders/[id]/invoice` redirects here |
+| `/orders/[id]` | Pay FQX: Checkout (embedded) if `AWAITING_PAYMENT` and a session can start; Pending spinner while debit/payment is confirming; payment-received notice after `AWAITING_COMPLIANCE`. After settlement, the buyer can download the quota tax invoice (PDF row); the seller can download the fee invoice. Queensland orders also show the signed application pack. Return URL is not authoritative |
+| `/orders/[id]/invoice/quota` | Quota tax invoice PDF (seller to buyer) after `COMPLETED`. Buyer or platform admin. Generated on request; not stored. `/orders/[id]/invoice` redirects here |
 | `/orders/[id]/invoice/fee` | Platform fee tax invoice PDF (FQX to seller) after `COMPLETED`. Seller or platform admin. Generated on request; not stored |
 | `/admin/activity` | Platform activity log. Who is a person's name, FQX, a business name, or System — never an email |
 | `/api/stripe/webhook` | Signed Stripe events |
@@ -147,7 +147,7 @@ Account Settings → Notifications is this login. Membership and listing-alert c
 
 Both lists group related messages. Sent to is You on Account Settings and Business roles on Business Settings.
 
-Buyer and seller both receive `order_settled`. The buyer copy attaches the quota PDF; the seller copy attaches the quota and fee PDFs. The buyer copy goes to the buying business’s notification roles. The seller copy goes to the selling business’s notification roles.
+Buyer and seller both receive `order_settled`. The buyer copy attaches the quota PDF; the seller copy attaches the fee PDF. The buyer copy goes to the buying business’s notification roles. The seller copy goes to the selling business’s notification roles.
 
 Users switch sale and/or lease per fishery on Account Settings → Alerts. When a listing or auction is published, matching subscribers receive `listing_alert`. The seller’s organisation is not emailed that alert.
 

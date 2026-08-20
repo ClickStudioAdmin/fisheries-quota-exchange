@@ -171,7 +171,8 @@ export function ReviewOrderForms({
         </p>
         <p className="mt-1 text-sm text-ink-muted">
           Transfers the seller’s share after the platform fee and writes the
-          quota ledger. Dummy tax invoices are emailed after settlement.
+          quota ledger. The dummy quota invoice is emailed to the buyer; the
+          dummy fee invoice is emailed to the seller.
         </p>
         <div className="mt-4">{form}</div>
       </section>

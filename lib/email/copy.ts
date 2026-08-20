@@ -472,12 +472,10 @@ export const emailCopy = {
       `Order ${input.orderId} has settled`,
       input.forSeller
         ? [
-            `Simulated settlement is complete (${input.offeringLabel}). Dummy tax invoices are attached: quota (seller to buyer) and platform fee (FQX to you).`,
-            `Quota total ${input.amount}. These are not real tax invoices.`,
+            `Simulated settlement is complete (${input.offeringLabel}). A dummy platform fee tax invoice is on the order (FQX to you) for ${input.amount}. It is not a real tax invoice.`,
           ]
         : [
-            `Simulated settlement is complete (${input.offeringLabel}). A dummy quota tax invoice is attached (seller to you).`,
-            `Quota total ${input.amount}. These are not real tax invoices.`,
+            `Simulated settlement is complete (${input.offeringLabel}). A dummy quota tax invoice is on the order (seller to you) for ${input.amount}. It is not a real tax invoice.`,
           ],
       { label: "View order", url: input.orderUrl },
     ),

@@ -182,10 +182,12 @@ test("settlement copy differs for buyer and seller", () => {
   };
   const buyer = emailCopy.order_settled(input);
   const seller = emailCopy.order_settled({ ...input, forSeller: true });
+  const sellerText = (seller.paragraphs ?? []).join(" ");
   assert.notEqual(buyer.paragraphs[0], seller.paragraphs[0]);
   assert.match(buyer.paragraphs[0] ?? "", /quota tax invoice/);
   assert.doesNotMatch(buyer.paragraphs[0] ?? "", /platform fee/);
-  assert.match(seller.paragraphs[0] ?? "", /FQX to you/);
+  assert.match(sellerText, /platform fee tax invoice/);
+  assert.doesNotMatch(sellerText, /quota/i);
 });
 
 test("cancelled-order copy differs for buyer and seller", () => {

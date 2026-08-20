@@ -148,6 +148,8 @@ export default async function OrderPage({
     );
   }
   const showCommission = isSeller || (Boolean(admin) && !isBuyer);
+  const showQuotaInvoice = isBuyer || (Boolean(admin) && !isSeller);
+  const showFeeInvoice = showCommission;
   const hasPaymentReceivedEvent = events.some(
     (event) => event.event_type === "PAYMENT_RECEIVED",
   );
@@ -424,9 +426,11 @@ export default async function OrderPage({
                 ? "The signed application is the pack lodged with Fisheries Queensland. "
                 : null}
               Dummy invoices from simulated settlement. GST is not calculated.
-              These are not real tax invoices. The quota invoice is from the
-              seller to the buyer.
-              {showCommission
+              These are not real tax invoices.
+              {showQuotaInvoice
+                ? " The quota invoice is for the buyer&apos;s payment."
+                : null}
+              {showFeeInvoice
                 ? " The fee invoice is from FQX to the seller."
                 : null}
             </p>
@@ -445,13 +449,15 @@ export default async function OrderPage({
                   Download signed application
                 </PdfDownloadLink>
               ) : null}
-              <PdfDownloadLink
-                href={taxInvoicePath(order.id, "quota")}
-                hint="Seller to buyer · Dummy invoice"
-              >
-                Download quota invoice
-              </PdfDownloadLink>
-              {showCommission ? (
+              {showQuotaInvoice ? (
+                <PdfDownloadLink
+                  href={taxInvoicePath(order.id, "quota")}
+                  hint="Seller to buyer · Dummy invoice"
+                >
+                  Download quota invoice
+                </PdfDownloadLink>
+              ) : null}
+              {showFeeInvoice ? (
                 <PdfDownloadLink
                   href={taxInvoicePath(order.id, "fee")}
                   hint="FQX to seller · Dummy invoice"
