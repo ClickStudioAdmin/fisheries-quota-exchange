@@ -25,20 +25,34 @@ test("orderStatusLabel uses Queensland child status during transfer", () => {
     orderStatusLabel("AWAITING_TRANSFER", {
       usesSimulatedTransfer: false,
     }),
-    "Waiting for application",
+    "1 of 4 · Waiting for application",
   );
   assert.equal(
     orderStatusLabel("AWAITING_TRANSFER", {
       usesSimulatedTransfer: false,
       applicationStatus: "AWAITING_SIGNED_PACK",
     }),
-    "Waiting for signed documents",
+    "2 of 4 · Waiting for signed documents",
+  );
+  assert.equal(
+    orderStatusLabel("AWAITING_TRANSFER", {
+      usesSimulatedTransfer: false,
+      applicationStatus: "ADMIN_REVIEW",
+    }),
+    "3 of 4 · Reviewing signed pack",
   );
   assert.equal(
     orderStatusLabel("AWAITING_TRANSFER", {
       usesSimulatedTransfer: false,
       applicationStatus: "SUBMITTED",
     }),
-    "With Fisheries Queensland",
+    "4 of 4 · With Fisheries Queensland",
+  );
+  assert.equal(
+    orderStatusLabel("AWAITING_TRANSFER", {
+      usesSimulatedTransfer: false,
+      applicationStatus: "ACTION_REQUIRED",
+    }),
+    "Action required",
   );
 });

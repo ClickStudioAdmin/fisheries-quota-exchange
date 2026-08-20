@@ -229,18 +229,18 @@ function qldTransferPublicStatusLabel(status?: string | null) {
   switch (status ?? "READY") {
     case "DOCUMENT_GENERATED":
     case "AWAITING_SIGNED_PACK":
-      return "Waiting for signed documents";
+      return "2 of 4 · Waiting for signed documents";
     case "ADMIN_REVIEW":
-      return "Reviewing signed pack";
+      return "3 of 4 · Reviewing signed pack";
     case "SUBMITTED":
     case "PROCESSING":
-      return "With Fisheries Queensland";
+      return "4 of 4 · With Fisheries Queensland";
     case "APPROVED":
       return "Fisheries Queensland approved";
     case "ACTION_REQUIRED":
       return "Action required";
     default:
-      return "Waiting for application";
+      return "1 of 4 · Waiting for application";
   }
 }
 
