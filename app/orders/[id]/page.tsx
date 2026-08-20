@@ -35,6 +35,8 @@ import {
 import { orderPayPanel } from "@/lib/payments/order-pay-panel";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { formatTableDateTime } from "@/lib/format";
+import { latestComplianceUpdateNotes } from "@/lib/orders/compliance-update";
+import { accountSettingsPath } from "@/lib/organisations/paths";
 import { loginPath } from "@/lib/auth/paths";
 import { getUser } from "@/lib/supabase/server";
 import { taxInvoicePath } from "@/lib/invoices/types";
@@ -159,6 +161,9 @@ export default async function OrderPage({
   });
   const showCheckout = payPanel === "checkout";
   const showPending = payPanel === "pending";
+  const updateNotes = latestComplianceUpdateNotes(events);
+  const showBuyerUpdate = Boolean(updateNotes.buyer) && (admin || isBuyer);
+  const showSellerUpdate = Boolean(updateNotes.seller) && (admin || isSeller);
   const publishableKey = showCheckout ? getStripePublishableKey() : null;
   const listedDue = formatAud(order.amount_aud);
   const cardDue = formatAud(orderChargeAud(order.amount_aud));
@@ -381,6 +386,49 @@ export default async function OrderPage({
       </div>
       {order.review_note ? (
         <p className="mt-6 text-sm text-ink-muted">Note: {order.review_note}</p>
+      ) : null}
+      {showBuyerUpdate || showSellerUpdate ? (
+        <section className={`mt-6 ${panelClassName}`}>
+          <h2 className="text-sm font-semibold text-ink">
+            Update requested
+          </h2>
+          <div className="mt-3 space-y-4 text-sm text-ink">
+            {showBuyerUpdate ? (
+              <div>
+                <p className="text-ink-muted">
+                  {admin || !isBuyer
+                    ? `Buyer · ${order.buyer_name}`
+                    : "FQX asked you to update this order."}
+                </p>
+                <p className="mt-1">{updateNotes.buyer}</p>
+                {isBuyer && !admin ? (
+                  <p className="mt-2">
+                    <Link href={accountSettingsPath()} className="underline">
+                      Business Settings → Details
+                    </Link>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {showSellerUpdate ? (
+              <div>
+                <p className="text-ink-muted">
+                  {admin || !isSeller
+                    ? `Seller · ${order.seller_name}`
+                    : "FQX asked you to update this order."}
+                </p>
+                <p className="mt-1">{updateNotes.seller}</p>
+                {isSeller && !admin ? (
+                  <p className="mt-2">
+                    <Link href={accountSettingsPath()} className="underline">
+                      Business Settings → Details
+                    </Link>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </section>
       ) : null}
       <section className={`mt-8 ${panelClassName}`}>
         <h2 className="text-sm font-semibold text-ink">Activity</h2>

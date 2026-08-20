@@ -27,6 +27,18 @@ test("auditEventLabel covers business and order events", () => {
     auditEventLabel("COMPLIANCE_CHECK_COMPLETED"),
     "Compliance check completed",
   );
+  assert.equal(
+    auditEventLabel("COMPLIANCE_UPDATE_REQUESTED_BUYER"),
+    "Asked buyer to update",
+  );
+  assert.equal(
+    auditEventLabel("COMPLIANCE_UPDATE_REQUESTED_SELLER"),
+    "Asked seller to update",
+  );
+  assert.equal(
+    auditEventCategory("COMPLIANCE_UPDATE_REQUESTED_BUYER"),
+    "Orders",
+  );
   assert.equal(auditEventCategory("HOLDING_CHECK_COMPLETED"), "Holdings");
   assert.equal(auditEventCategory("LISTING_CHECK_COMPLETED"), "Listings");
   assert.equal(auditEventCategory("COMPLIANCE_CHECK_COMPLETED"), "Orders");
@@ -101,6 +113,14 @@ test("auditEventSummary names people without emails", () => {
       payload: { check: "Confirm buyer and seller identities match this order." },
     }),
     "Confirm buyer and seller identities match this order.",
+  );
+  assert.equal(
+    auditEventSummary({
+      event_type: "COMPLIANCE_UPDATE_REQUESTED_BUYER",
+      entity_id: 9,
+      payload: { note: "Please update the client number." },
+    }),
+    "Please update the client number.",
   );
 });
 

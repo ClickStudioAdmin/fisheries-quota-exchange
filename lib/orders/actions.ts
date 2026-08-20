@@ -10,12 +10,14 @@ import { transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
 import { getOrder } from "@/lib/orders/queries";
 import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
+import { selectedComplianceUpdateNotes } from "@/lib/orders/compliance-update";
 import { getOrderJurisdictionCode } from "@/lib/transfers/queries";
 import { getTransferProcess } from "@/lib/transfers/registry";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 import {
   notifyOrderCreated,
   notifyComplianceRejected,
+  notifyComplianceUpdateRequested,
   notifySettlementFailed,
   notifyTransferComplete,
   notifyTransferException,
@@ -308,6 +310,49 @@ export async function rejectComplianceAction(formData: FormData) {
   }
 
   redirectAfterOrderQueue(formData);
+}
+
+export async function requestComplianceUpdateAction(
+  _prev: OrderFormState,
+  formData: FormData,
+): Promise<OrderFormState> {
+  const supabase = await createClient();
+
+  if (!supabase || !(await isPlatformAdmin())) {
+    return { error: "Not a platform admin." };
+  }
+
+  const order = await currentOrderForStatus(formData, "AWAITING_COMPLIANCE");
+
+  if (!order) {
+    return { error: "Order is not waiting for compliance review." };
+  }
+
+  const selected = selectedComplianceUpdateNotes({
+    notifyBuyer: formData.get("notify_buyer") === "1",
+    buyerNote: read(formData, "buyer_note"),
+    notifySeller: formData.get("notify_seller") === "1",
+    sellerNote: read(formData, "seller_note"),
+  });
+
+  if ("error" in selected) {
+    return { error: selected.error };
+  }
+
+  const { error } = await supabase.rpc("request_compliance_update", {
+    p_order_id: order.id,
+    p_buyer_note: selected.buyerNote,
+    p_seller_note: selected.sellerNote,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  await notifyComplianceUpdateRequested(order, selected);
+  revalidatePath("/admin/orders");
+  revalidatePath(`/orders/${order.id}`);
+  return { message: "Update requested." };
 }
 
 export async function simulateTransferAction(formData: FormData) {

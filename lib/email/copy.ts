@@ -354,6 +354,20 @@ export const emailCopy = {
       ],
       { label: "View order", url: input.orderUrl },
     ),
+  compliance_update_requested: (input: {
+    orderId: number;
+    orderUrl: string;
+    note: string;
+  }) =>
+    notice(
+      `FQX needs an update for order ${input.orderId}`,
+      [
+        "Compliance review is still open. Payment is held and the quota reservation stays in place.",
+        input.note,
+        "Update your details on Business Settings → Details if needed, then FQX can continue this review.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
   transfer_complete: (input: { orderId: number; orderUrl: string }) =>
     notice(
       `Quota transfer is complete for FQX order ${input.orderId}`,

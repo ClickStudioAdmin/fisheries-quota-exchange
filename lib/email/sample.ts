@@ -172,6 +172,12 @@ export function sampleEmailData(
         orderUrl,
         note: "Licence details do not match the holding.",
       });
+    case "compliance_update_requested":
+      return emailCopy.compliance_update_requested({
+        orderId: 1001,
+        orderUrl,
+        note: "Please update the Queensland fisheries client number.",
+      });
     case "transfer_complete":
       return emailCopy.transfer_complete({ orderId: 1001, orderUrl });
     case "order_settled":

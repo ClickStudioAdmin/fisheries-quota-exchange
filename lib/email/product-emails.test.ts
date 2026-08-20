@@ -114,6 +114,7 @@ test("isAccountNotificationEmailId includes shared buyer trade mail and seller m
   assert.equal(isAccountNotificationEmailId("bid_outbid"), true);
   assert.equal(isAccountNotificationEmailId("payment_failed"), true);
   assert.equal(isAccountNotificationEmailId("compliance_rejected"), true);
+  assert.equal(isAccountNotificationEmailId("compliance_update_requested"), true);
   assert.equal(isAccountNotificationEmailId("listing_alert"), false);
   assert.equal(isAccountNotificationEmailId("member_added"), false);
 });
@@ -210,4 +211,15 @@ test("cancelled-order copy differs for buyer and seller", () => {
   });
   assert.match(rejectedBuyer.paragraphs[1] ?? "", /Licence mismatch/);
   assert.notEqual(rejectedBuyer.paragraphs[0], rejectedSeller.paragraphs[0]);
+
+  const updateRequested = emailCopy.compliance_update_requested({
+    ...input,
+    note: "Please update the Queensland fisheries client number.",
+  });
+  assert.match(updateRequested.paragraphs[0] ?? "", /still open/);
+  assert.match(
+    updateRequested.paragraphs[1] ?? "",
+    /Queensland fisheries client number/,
+  );
+  assert.doesNotMatch(updateRequested.paragraphs.join(" "), /cancelled/);
 });

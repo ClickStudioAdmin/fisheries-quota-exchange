@@ -452,6 +452,38 @@ export async function notifyComplianceRejected(order: Order, note: string) {
   );
 }
 
+export async function notifyComplianceUpdateRequested(
+  order: Order,
+  notes: { buyerNote: string | null; sellerNote: string | null },
+) {
+  const siteUrl = await siteUrlOrEmpty();
+  const orderUrl = `${siteUrl}/orders/${order.id}`;
+
+  if (notes.buyerNote) {
+    await notifyAccountEmail(
+      "compliance_update_requested",
+      order.buyer_organisation_id,
+      emailCopy.compliance_update_requested({
+        orderId: order.id,
+        orderUrl,
+        note: notes.buyerNote,
+      }),
+    );
+  }
+
+  if (notes.sellerNote) {
+    await notifyAccountEmail(
+      "compliance_update_requested",
+      order.seller_organisation_id,
+      emailCopy.compliance_update_requested({
+        orderId: order.id,
+        orderUrl,
+        note: notes.sellerNote,
+      }),
+    );
+  }
+}
+
 export async function notifySettlementFailed(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
   const data = emailCopy.settlement_failed({

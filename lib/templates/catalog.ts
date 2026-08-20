@@ -236,6 +236,15 @@ const EMAIL_CATALOG: Record<
     trigger: "rejectComplianceAction then claim_email_dispatch(compliance_rejected).",
     recipient: buyerAndSellerRolesRecipient,
   },
+  compliance_update_requested: {
+    summary: "When admin asks a party to update details during compliance",
+    description:
+      "Tells only the selected buyer and/or seller that compliance review is still open and what FQX needs. The other party is not emailed. The order is not cancelled.",
+    sentWhen: "After request_compliance_update. Can be sent more than once.",
+    trigger: "requestComplianceUpdateAction then notifyComplianceUpdateRequested.",
+    recipient:
+      "Notification roles on each selected business only (buyer, seller, or both).",
+  },
   bank_debit_submitted: {
     summary: "When BECS checkout completes unpaid",
     description: "Tells the buyer the bank debit was submitted and may show Incoming until it clears.",

@@ -36,6 +36,8 @@ export type AuditActorContext = {
 const PLATFORM_ACTOR_EVENTS = new Set([
   "COMPLIANCE_APPROVED",
   "COMPLIANCE_REJECTED",
+  "COMPLIANCE_UPDATE_REQUESTED_BUYER",
+  "COMPLIANCE_UPDATE_REQUESTED_SELLER",
   "TRANSFER_SIMULATED",
   "TRANSFER_DOCUMENT_GENERATED",
   "TRANSFER_SIGNED_PACK_UPLOADED",
@@ -260,6 +262,10 @@ export function auditEventLabel(eventType: string) {
       return "Compliance approved";
     case "COMPLIANCE_REJECTED":
       return "Compliance rejected";
+    case "COMPLIANCE_UPDATE_REQUESTED_BUYER":
+      return "Asked buyer to update";
+    case "COMPLIANCE_UPDATE_REQUESTED_SELLER":
+      return "Asked seller to update";
     case "TRANSFER_SIMULATED":
       return "Transfer recorded";
     case "TRANSFER_DOCUMENT_GENERATED":
@@ -400,6 +406,13 @@ export function auditEventSummary(
     event.event_type === "COMPLIANCE_CHECK_COMPLETED"
   ) {
     return safeLabel(payloadString(payload, "check")) || "—";
+  }
+
+  if (
+    event.event_type === "COMPLIANCE_UPDATE_REQUESTED_BUYER" ||
+    event.event_type === "COMPLIANCE_UPDATE_REQUESTED_SELLER"
+  ) {
+    return safeLabel(payloadString(payload, "note")) || "—";
   }
 
   if (buyer || seller) {

@@ -8,7 +8,7 @@ export async function ReviewTransferForms({
   order,
   reviewQueue = [],
 }: {
-  order: Pick<Order, "id" | "status">;
+  order: Pick<Order, "id" | "status" | "buyer_name" | "seller_name">;
   reviewQueue?: number[];
 }) {
   if (order.status === "AWAITING_COMPLIANCE") {

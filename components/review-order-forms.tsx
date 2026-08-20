@@ -9,6 +9,7 @@ import {
   simulateSettlementAction,
   simulateTransferAction,
 } from "@/lib/orders/actions";
+import { RequestComplianceUpdateForm } from "@/components/request-compliance-update-form";
 import type { Order } from "@/lib/orders/types";
 
 export function ReviewOrderForms({
@@ -16,7 +17,7 @@ export function ReviewOrderForms({
   reviewQueue = [],
   canApprove = false,
 }: {
-  order: Pick<Order, "id" | "status">;
+  order: Pick<Order, "id" | "status" | "buyer_name" | "seller_name">;
   reviewQueue?: number[];
   canApprove?: boolean;
 }) {
@@ -30,59 +31,66 @@ export function ReviewOrderForms({
 
   if (order.status === "AWAITING_COMPLIANCE") {
     return (
-      <div className="grid gap-6 sm:grid-cols-2">
-        <form action={approveComplianceAction} className="space-y-3">
-          <input type="hidden" name="order_id" value={order.id} />
-          {queueFields()}
-          {!canApprove ? (
-            <p className="text-sm text-ink-muted">
-              Save all compliance checks above before you can approve.
-            </p>
-          ) : null}
-          <PendingSubmitButton
-            className={tableButtonClassName}
-            pendingLabel="Approving…"
-            disabled={!canApprove}
-          >
-            Approve
-          </PendingSubmitButton>
-          <div>
-            <label
-              htmlFor={`approve-note-${order.id}`}
-              className="block text-sm text-ink"
+      <div className="space-y-6">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <form action={approveComplianceAction} className="space-y-3">
+            <input type="hidden" name="order_id" value={order.id} />
+            {queueFields()}
+            {!canApprove ? (
+              <p className="text-sm text-ink-muted">
+                Save all compliance checks above before you can approve.
+              </p>
+            ) : null}
+            <PendingSubmitButton
+              className={tableButtonClassName}
+              pendingLabel="Approving…"
+              disabled={!canApprove}
             >
-              Note (optional)
-            </label>
-            <input
-              id={`approve-note-${order.id}`}
-              name="review_note"
-              className={fieldClassName}
-            />
-          </div>
-        </form>
-        <form action={rejectComplianceAction} className="space-y-3">
-          <input type="hidden" name="order_id" value={order.id} />
-          {queueFields()}
-          <PendingSubmitButton
-            className={tableButtonClassName}
-            pendingLabel="Rejecting…"
-          >
-            Reject
-          </PendingSubmitButton>
-          <div>
-            <label
-              htmlFor={`reject-note-${order.id}`}
-              className="block text-sm text-ink"
+              Approve
+            </PendingSubmitButton>
+            <div>
+              <label
+                htmlFor={`approve-note-${order.id}`}
+                className="block text-sm text-ink"
+              >
+                Note (optional)
+              </label>
+              <input
+                id={`approve-note-${order.id}`}
+                name="review_note"
+                className={fieldClassName}
+              />
+            </div>
+          </form>
+          <form action={rejectComplianceAction} className="space-y-3">
+            <input type="hidden" name="order_id" value={order.id} />
+            {queueFields()}
+            <PendingSubmitButton
+              className={tableButtonClassName}
+              pendingLabel="Rejecting…"
             >
-              Reason (optional)
-            </label>
-            <input
-              id={`reject-note-${order.id}`}
-              name="review_note"
-              className={fieldClassName}
-            />
-          </div>
-        </form>
+              Reject
+            </PendingSubmitButton>
+            <div>
+              <label
+                htmlFor={`reject-note-${order.id}`}
+                className="block text-sm text-ink"
+              >
+                Reason (optional)
+              </label>
+              <input
+                id={`reject-note-${order.id}`}
+                name="review_note"
+                className={fieldClassName}
+              />
+            </div>
+          </form>
+        </div>
+        <RequestComplianceUpdateForm
+          orderId={order.id}
+          buyerName={order.buyer_name}
+          sellerName={order.seller_name}
+        />
       </div>
     );
   }
