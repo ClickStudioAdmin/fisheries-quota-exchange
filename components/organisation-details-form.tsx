@@ -156,6 +156,51 @@ export function OrganisationDetailsForm({
         </p>
       ) : null}
       <div>
+        <label htmlFor="entity_kind" className="block text-sm text-ink">
+          Entity kind
+        </label>
+        <select
+          id="entity_kind"
+          name="entity_kind"
+          value={entityKind}
+          onChange={(event) => setEntityKind(event.target.value)}
+          disabled={!canEdit}
+          className={fieldClassName}
+        >
+          <option value="">Select…</option>
+          <option value="INDIVIDUAL">Individual</option>
+          <option value="COMPANY">Company</option>
+        </select>
+      </div>
+      {entityKind === "COMPANY" ? (
+        <div>
+          <label htmlFor="acn" className="block text-sm text-ink">
+            ACN
+          </label>
+          <input
+            id="acn"
+            name="acn"
+            inputMode="numeric"
+            defaultValue={organisation.acn ?? ""}
+            disabled={!canEdit}
+            className={fieldClassName}
+          />
+        </div>
+      ) : null}
+      <div>
+        <label htmlFor="abn" className="block text-sm text-ink">
+          ABN
+        </label>
+        <input
+          id="abn"
+          name="abn"
+          inputMode="numeric"
+          defaultValue={organisation.abn ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+      <div>
         <label htmlFor="legal_name" className="block text-sm text-ink">
           Legal name
         </label>
@@ -164,20 +209,6 @@ export function OrganisationDetailsForm({
           name="legal_name"
           required={canEdit}
           defaultValue={organisation.legal_name}
-          disabled={!canEdit}
-          className={fieldClassName}
-        />
-      </div>
-      <div>
-        <label htmlFor="mobile" className="block text-sm text-ink">
-          Mobile
-        </label>
-        <input
-          id="mobile"
-          name="mobile"
-          inputMode="tel"
-          autoComplete="tel"
-          defaultValue={organisation.mobile ?? ""}
           disabled={!canEdit}
           className={fieldClassName}
         />
@@ -195,50 +226,19 @@ export function OrganisationDetailsForm({
         />
       </div>
       <div>
-        <label htmlFor="entity_kind" className="block text-sm text-ink">
-          Entity kind
-        </label>
-        <select
-          id="entity_kind"
-          name="entity_kind"
-          value={entityKind}
-          onChange={(event) => setEntityKind(event.target.value)}
-          disabled={!canEdit}
-          className={fieldClassName}
-        >
-          <option value="">Select…</option>
-          <option value="INDIVIDUAL">Individual</option>
-          <option value="COMPANY">Company</option>
-        </select>
-      </div>
-      <div>
-        <label htmlFor="abn" className="block text-sm text-ink">
-          ABN
+        <label htmlFor="mobile" className="block text-sm text-ink">
+          Phone
         </label>
         <input
-          id="abn"
-          name="abn"
-          inputMode="numeric"
-          defaultValue={organisation.abn ?? ""}
+          id="mobile"
+          name="mobile"
+          inputMode="tel"
+          autoComplete="tel"
+          defaultValue={organisation.mobile ?? ""}
           disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
-      {entityKind === "COMPANY" ? (
-        <div>
-          <label htmlFor="acn" className="block text-sm text-ink">
-            ACN
-          </label>
-          <input
-            id="acn"
-            name="acn"
-            inputMode="numeric"
-            defaultValue={organisation.acn ?? ""}
-            disabled={!canEdit}
-            className={fieldClassName}
-          />
-        </div>
-      ) : null}
       <AddressFields
         prefix="registered"
         legend="Registered address"

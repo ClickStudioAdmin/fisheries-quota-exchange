@@ -133,7 +133,7 @@ function PartyBlock({
       {party.entity_kind === "COMPANY" ? (
         <Field label="ACN" value={party.acn} />
       ) : null}
-      <Field label="Mobile" value={party.mobile} />
+      <Field label="Phone" value={party.mobile} />
       <Field
         label="Registered address"
         value={formatAustralianAddress(party.registered_address) || null}

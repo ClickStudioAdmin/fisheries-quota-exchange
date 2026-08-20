@@ -83,7 +83,7 @@ function PartyDetails({
             },
             { label: "ABN", value: display(party.abn) },
             ...(company ? [{ label: "ACN", value: display(party.acn) }] : []),
-            { label: "Mobile", value: display(party.mobile) },
+            { label: "Phone", value: display(party.mobile) },
             {
               label: "Registered address",
               value:

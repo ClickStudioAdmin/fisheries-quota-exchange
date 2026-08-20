@@ -83,7 +83,7 @@ function readMobile(value: string) {
   const digits = mobile.replace(/\D/g, "");
 
   if (digits.length < 8) {
-    return { error: "Enter a valid mobile number." } as const;
+    return { error: "Enter a valid phone number." } as const;
   }
 
   return { mobile } as const;

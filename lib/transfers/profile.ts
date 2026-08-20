@@ -10,7 +10,7 @@ export const TRANSFER_PROFILE_FIELD_LABELS: Record<TransferProfileField, string>
     legal_name: "Legal name",
     abn: "ABN",
     acn: "ACN",
-    mobile: "Mobile",
+    mobile: "Phone",
     registered_address: "Registered address",
     postal_address: "Postal address",
     qld_client_number: "Queensland fisheries client number",
