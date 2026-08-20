@@ -38,6 +38,7 @@ import {
   listingStatusLabel,
   listingTypeLabel,
 } from "@/lib/listings/types";
+import { quantityUsageTooltips } from "@/lib/listings/quota-usage";
 import {
   latestSalePriceMap,
   listLatestSalePrices,
@@ -345,6 +346,11 @@ export async function HoldingRecord({
             price: formatAud(listing.unit_price_aud),
             status: listingStatusLabel(listing.status),
           },
+          tooltips: quantityUsageTooltips(
+            listing.unused_quantity,
+            listing.used_quantity,
+            listing.unit_label,
+          ),
         }))}
       >
         {listings.map((listing) => (
@@ -477,6 +483,11 @@ export async function HoldingRecord({
               jurisdictions,
             ),
           },
+          tooltips: quantityUsageTooltips(
+            order.unused_quantity,
+            order.used_quantity,
+            order.unit_label,
+          ),
         }))}
       >
         {orders.map((order) => (

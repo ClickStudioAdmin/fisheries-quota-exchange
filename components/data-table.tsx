@@ -8,7 +8,6 @@ import {
   useEffect,
   useId,
   useMemo,
-  useRef,
   useState,
   type ReactElement,
   type ReactNode,
@@ -16,6 +15,7 @@ import {
 import { tableButtonClassName } from "@/components/auth-card";
 import { ViewMessageModal } from "@/components/view-message-modal";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { InfoTooltip } from "@/components/info-tooltip";
 import { StatusBadge, isStatusColumn } from "@/components/status-badge";
 import {
   ListPager,
@@ -59,6 +59,7 @@ export type DataTableRow = {
   detailsTitle?: string;
   detailsQuote?: string | null;
   detailsQuoteLabel?: string;
+  tooltips?: Record<string, DataTableDetail[]>;
 };
 
 type DataTableRowExtrasProps = {
@@ -125,7 +126,10 @@ function rowText(row: DataTableRow) {
     item.label,
     item.value,
   ]);
-  return [...values, ...labels, ...details, row.detailsQuote ?? ""].join(" ").toLowerCase();
+  const tooltips = Object.values(row.tooltips ?? {}).flatMap((items) =>
+    items.flatMap((item) => [item.label, item.value]),
+  );
+  return [...values, ...labels, ...details, ...tooltips, row.detailsQuote ?? ""].join(" ").toLowerCase();
 }
 
 function bulkActionEnabled(
@@ -200,69 +204,33 @@ function detailsControl(
     );
   }
 
-  return <DetailsTooltip details={row.details ?? []} />;
+  return <InfoTooltip details={row.details ?? []} />;
 }
 
-function DetailsTooltip({ details }: { details: DataTableDetail[] }) {
-  const tooltipId = useId();
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-
-  function show() {
-    const rect = buttonRef.current?.getBoundingClientRect();
-
-    if (!rect) {
-      return;
-    }
-
-    const width = 288;
-    const left = Math.min(
-      rect.left,
-      Math.max(8, window.innerWidth - width - 8),
+function cellMarker(row: DataTableRow, column: DataTableColumn, key = column.key) {
+  const tooltip = row.tooltips?.[key];
+  if (tooltip && tooltip.length > 0) {
+    return (
+      <InfoTooltip details={tooltip} label="Used and unused quantity" />
     );
+  }
 
-    setPosition({ top: rect.bottom + 8, left });
-    setOpen(true);
+  return key === column.key ? detailsControl(row, column) : null;
+}
+
+function withCellMarker(
+  content: ReactNode,
+  marker: ReactNode,
+) {
+  if (!marker) {
+    return content;
   }
 
   return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-label="More details"
-        aria-describedby={open ? tooltipId : undefined}
-        onMouseEnter={show}
-        onMouseLeave={() => setOpen(false)}
-        onFocus={show}
-        onBlur={() => setOpen(false)}
-        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-[11px] font-medium leading-none text-ink-muted hover:border-sea hover:text-sea"
-      >
-        i
-      </button>
-      {open ? (
-        <span
-          id={tooltipId}
-          role="tooltip"
-          style={{ top: position.top, left: position.left }}
-          className="fixed z-50 w-72 border border-line bg-paper-raised p-3 text-left shadow-sm"
-        >
-          <dl className="space-y-2">
-            {details.map((item) => (
-              <div key={item.label}>
-                <dt className="text-[10px] uppercase tracking-[0.12em] text-ink-muted">
-                  {item.label}
-                </dt>
-                <dd className="mt-0.5 whitespace-pre-line text-xs text-ink">
-                  {item.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </span>
-      ) : null}
-    </>
+    <span className="inline-flex items-center gap-1.5">
+      <span>{content}</span>
+      {marker}
+    </span>
   );
 }
 
@@ -285,13 +253,11 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
               <div className="text-[10px] uppercase tracking-[0.12em] text-ink-muted">
                 {line.label}
               </div>
-              {column.details && line.key === "id" && rowHasDetails(row) ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <span>{text}</span>
-                  {detailsControl(row, column)}
-                </span>
-              ) : (
-                <div>{text}</div>
+              {withCellMarker(
+                text,
+                column.details && line.key === "id"
+                  ? detailsControl(row, column)
+                  : cellMarker(row, column, line.key),
               )}
             </div>
           );
@@ -317,16 +283,7 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
     "—"
   );
 
-  if (!column.details || !rowHasDetails(row)) {
-    return content;
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span>{content}</span>
-      {detailsControl(row, column)}
-    </span>
-  );
+  return withCellMarker(content, cellMarker(row, column));
 }
 
 function hasNode(node: ReactNode): boolean {

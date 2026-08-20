@@ -71,6 +71,7 @@ export function sampleEmailData(
         fisheryName: "Northern Prawn Fishery",
         offeringLabel: "Sale",
         listingTypeLabel: "Fixed price",
+        quantityLabel: "40 kg",
         listingUrl,
       });
     case "listing_rejected":
@@ -92,11 +93,13 @@ export function sampleEmailData(
     case "listing_purchased":
       return emailCopy.listing_purchased({
         fisheryName: "Northern Prawn Fishery",
+        quantityLabel: "40 kg",
         orderUrl,
       });
     case "purchase_received":
       return emailCopy.purchase_received({
         fisheryName: "Northern Prawn Fishery",
+        quantityLabel: "40 kg",
         orderUrl,
       });
     case "auction_published":
@@ -124,6 +127,7 @@ export function sampleEmailData(
     case "auction_won":
       return emailCopy.auction_won({
         fisheryName: "Northern Prawn Fishery",
+        quantityLabel: "40 kg",
         orderUrl,
       });
     case "auction_not_won":

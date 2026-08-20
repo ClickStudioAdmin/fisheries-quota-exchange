@@ -113,12 +113,13 @@ export const emailCopy = {
     fisheryName: string;
     offeringLabel: string;
     listingTypeLabel: string;
+    quantityLabel: string;
     listingUrl: string;
   }) =>
     notice(
       `New ${input.offeringLabel.toLowerCase()} listing: ${input.fisheryName}`,
       [
-        `A new ${input.listingTypeLabel.toLowerCase()} ${input.offeringLabel.toLowerCase()} listing for ${input.fisheryName} is on the marketplace.`,
+        `A new ${input.listingTypeLabel.toLowerCase()} ${input.offeringLabel.toLowerCase()} listing for ${input.fisheryName} is on the marketplace (${input.quantityLabel}).`,
         "You asked for this alert on Account Settings → Alerts. You can change those fisheries there.",
       ],
       { label: "View listing", url: input.listingUrl },
@@ -156,23 +157,25 @@ export const emailCopy = {
     ),
   listing_purchased: (input: {
     fisheryName: string;
+    quantityLabel: string;
     orderUrl: string;
   }) =>
     notice(
       `Your listing was purchased: ${input.fisheryName}`,
       [
-        "Quota is reserved. The buyer pays FQX next. Settlement follows compliance and transfer.",
+        `Quota is reserved (${input.quantityLabel}). The buyer pays FQX next. Settlement follows compliance and transfer.`,
       ],
       { label: "View order", url: input.orderUrl },
     ),
   purchase_received: (input: {
     fisheryName: string;
+    quantityLabel: string;
     orderUrl: string;
   }) =>
     notice(
       `Purchase received: ${input.fisheryName}`,
       [
-        "Quota is reserved. Pay FQX from the order page. FQX holds the funds until settlement.",
+        `Quota is reserved (${input.quantityLabel}). Pay FQX from the order page. FQX holds the funds until settlement.`,
       ],
       { label: "Pay FQX", url: input.orderUrl },
     ),
@@ -216,11 +219,12 @@ export const emailCopy = {
     ),
   auction_won: (input: {
     fisheryName: string;
+    quantityLabel: string;
     orderUrl: string;
   }) =>
     notice(
       `You won the auction: ${input.fisheryName}`,
-      ["An order was created and quota is reserved. Open the order to pay FQX if payment is due, then wait for settlement."],
+      [`An order was created and quota is reserved (${input.quantityLabel}). Open the order to pay FQX if payment is due, then wait for settlement.`],
       { label: "View order", url: input.orderUrl },
     ),
   auction_not_won: (input: {

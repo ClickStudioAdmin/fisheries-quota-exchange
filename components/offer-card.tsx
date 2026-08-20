@@ -16,7 +16,7 @@ import type { PublicSellerDisplay } from "@/lib/organisations/public-seller";
 
 type OfferStatProps = {
   label: string;
-  value: string;
+  value: ReactNode;
   detail?: string;
 };
 
@@ -49,6 +49,21 @@ function formatQuantity(value: string | number) {
   return new Intl.NumberFormat("en-AU", { maximumFractionDigits: 6 }).format(
     amount,
   );
+}
+
+function listingUsageTotals(listing: Listing) {
+  if (listing.unused_quantity == null || listing.used_quantity == null) {
+    return null;
+  }
+
+  return {
+    unused: listing.unused_quantity,
+    used: listing.used_quantity,
+  };
+}
+
+function quantityWithUnit(value: string, unitLabel: string) {
+  return `${formatQuantity(value)} ${unitLabel}`;
 }
 
 export function OfferStat({ label, value, detail }: OfferStatProps) {
@@ -119,11 +134,12 @@ export function OfferCard({
     label: listing.seller_name,
     tooltip: null,
   };
+  const usage = listingUsageTotals(listing);
   const showFisheryLink = Boolean(href) && !hideFishery && fisheryId != null;
   const logoFishery =
     fishery ??
     (hideFishery ? null : { name: listing.fishery_name, logo_path: null });
-  const showMeta = Boolean(metaLabel && metaValue != null) || showFisheryLink;
+  const showMeta = showFisheryLink || usage != null;
   const TitleTag = href ? "p" : "h1";
   const titleClassName = href
     ? "min-w-0 text-lg font-semibold tracking-tight text-ink sm:text-xl"
@@ -169,7 +185,7 @@ export function OfferCard({
           {badges}
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <OfferStat
           label="Quantity"
           value={formatQuantity(listing.quantity)}
@@ -184,6 +200,9 @@ export function OfferCard({
               : `/ ${unitPriceSuffix(listing.unit_label)}`
           }
         />
+        {metaLabel && metaValue != null ? (
+          <MetaBlock label={metaLabel} value={metaValue} />
+        ) : null}
         <OfferStat
           label={totalLabel}
           value={
@@ -218,13 +237,27 @@ export function OfferCard({
         )}
         {showMeta ? (
           <div className="mt-4 flex items-end justify-between gap-3">
-            {metaLabel && metaValue != null ? (
-              <MetaBlock href={href} label={metaLabel} value={metaValue} />
-            ) : (
-              <span />
-            )}
+            <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1">
+              {usage ? (
+                <>
+                  <MetaBlock
+                    label="Unused"
+                    value={quantityWithUnit(usage.unused, listing.unit_label)}
+                  />
+                  <MetaBlock
+                    label="Used"
+                    value={quantityWithUnit(usage.used, listing.unit_label)}
+                  />
+                </>
+              ) : (
+                <span />
+              )}
+            </div>
             {showFisheryLink ? (
-              <Link href={`/fisheries/${fisheryId}`} className="shrink-0 text-sm underline">
+              <Link
+                href={`/fisheries/${fisheryId}`}
+                className="shrink-0 text-sm underline"
+              >
                 View fishery
               </Link>
             ) : null}

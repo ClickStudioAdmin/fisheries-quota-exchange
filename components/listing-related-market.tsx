@@ -8,6 +8,8 @@ import {
   tableWrapClassName,
 } from "@/components/table-styles";
 import { formatTableDate } from "@/lib/format";
+import { quotaUsageTooltip } from "@/lib/listings/quota-usage";
+import { InfoTooltip } from "@/components/info-tooltip";
 import {
   formatAud,
   formatAudPerUnit,
@@ -95,14 +97,31 @@ export async function ListingRelatedMarket({
                 </tr>
               </thead>
               <tbody>
-                {others.map((listing, index) => (
+                {others.map((listing, index) => {
+                  const usage = quotaUsageTooltip(
+                    listing.unused_quantity,
+                    listing.used_quantity,
+                    listing.unit_label,
+                  );
+
+                  return (
                     <tr key={listing.id} className={tableRowClassName(index)}>
                       <td className={`${tableBodyCellClassName} pl-4`}>
                         {listingOfferingLabel(listing.offering)} ·{" "}
                         {listingTypeLabel(listing.listing_type)}
                       </td>
                       <td className={`${tableBodyCellClassName} tabular-nums`}>
-                        {listing.quantity} {listing.unit_label}
+                        <span className="inline-flex items-center gap-1.5">
+                          <span>
+                            {listing.quantity} {listing.unit_label}
+                          </span>
+                          {usage ? (
+                            <InfoTooltip
+                              details={usage}
+                              label="Used and unused quantity"
+                            />
+                          ) : null}
+                        </span>
                       </td>
                       <td className={`${tableBodyCellClassName} tabular-nums`}>
                         {formatAudPerUnit(
@@ -125,7 +144,8 @@ export async function ListingRelatedMarket({
                         </Link>
                       </td>
                     </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

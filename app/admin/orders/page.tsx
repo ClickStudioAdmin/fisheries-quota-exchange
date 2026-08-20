@@ -10,6 +10,7 @@ import {
   type Order,
 } from "@/lib/orders/types";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
+import { quantityUsageTooltips } from "@/lib/listings/quota-usage";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { fisherySelectLabelForName } from "@/lib/fisheries/types";
@@ -238,6 +239,11 @@ export default async function AdminOrdersPage({
                 jurisdictions,
               ),
             },
+            tooltips: quantityUsageTooltips(
+              order.unused_quantity,
+              order.used_quantity,
+              order.unit_label,
+            ),
           };
         })}
       >

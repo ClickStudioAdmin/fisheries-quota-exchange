@@ -40,6 +40,7 @@ import {
   listingStatusLabel,
   listingTypeLabel,
 } from "@/lib/listings/types";
+import { quantityUsageTooltips } from "@/lib/listings/quota-usage";
 import { listOrganisationListings } from "@/lib/listings/queries";
 import { listingIdsWithBids } from "@/lib/auctions/queries";
 import {
@@ -679,6 +680,11 @@ export async function AccountListingsSection({
             price: formatAud(listing.unit_price_aud),
             status: listingStatusLabel(listing.status),
           },
+          tooltips: quantityUsageTooltips(
+            listing.unused_quantity,
+            listing.used_quantity,
+            listing.unit_label,
+          ),
         }))}
       >
         {listings.map((listing) => {
@@ -858,6 +864,11 @@ export async function AccountOrdersSection({
                 jurisdictions,
               ),
             },
+            tooltips: quantityUsageTooltips(
+              order.unused_quantity,
+              order.used_quantity,
+              order.unit_label,
+            ),
           };
         })}
       >

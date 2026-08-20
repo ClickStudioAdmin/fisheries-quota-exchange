@@ -76,8 +76,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: line,
   },
-  colDesc: { width: "46%" },
-  colQty: { width: "18%" },
+  colDesc: { width: "38%" },
+  colQty: { width: "26%" },
   colPrice: { width: "18%", textAlign: "right" },
   colAmount: { width: "18%", textAlign: "right" },
   totals: {

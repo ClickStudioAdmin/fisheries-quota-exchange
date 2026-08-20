@@ -46,7 +46,19 @@ test("quota invoice is seller to buyer for the listed amount", () => {
   assert.equal(invoice.recipientName, order.buyer_name);
   assert.equal(invoice.total, "$750.00");
   assert.equal(invoice.lines[0]?.amount, "$750.00");
+  assert.equal(invoice.lines[0]?.quantity, "40 kg");
   assert.equal(invoice.note.includes("Card processing"), false);
+});
+
+test("quota invoice includes unused and used quantities when stored", () => {
+  const invoice = buildTaxInvoiceData(
+    "quota",
+    { ...order, unused_quantity: "32", used_quantity: "8" },
+    abns,
+    750,
+  );
+
+  assert.equal(invoice.lines[0]?.quantity, "40 kg (32 unused / 8 used)");
 });
 
 test("quota invoice notes card processing collected by FQX", () => {

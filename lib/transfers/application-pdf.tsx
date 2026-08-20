@@ -219,7 +219,22 @@ export function TransferApplicationDocument({
           <Text style={styles.heading}>Quota</Text>
           <Field label="Offering" value={data.offeringLabel} />
           <Field label="Fishery" value={data.fisheryName} />
-          <Field label="Quantity" value={`${data.quantity} ${data.unitLabel}`} />
+          <Field
+            label="Quantity"
+            value={`${data.quantity} ${data.unitLabel}`}
+          />
+          {data.unusedQuantity && data.usedQuantity ? (
+            <>
+              <Field
+                label="Unused"
+                value={`${data.unusedQuantity} ${data.unitLabel}`}
+              />
+              <Field
+                label="Used"
+                value={`${data.usedQuantity} ${data.unitLabel}`}
+              />
+            </>
+          ) : null}
         </View>
         <View style={styles.parties}>
           <PartyBlock heading="Transferor (seller)" party={data.seller} />

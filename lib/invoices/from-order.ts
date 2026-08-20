@@ -1,6 +1,7 @@
 import { formatTableDate } from "@/lib/format";
 import type { TaxInvoiceData, TaxInvoiceKind } from "@/lib/invoices/types";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
+import { formatQuantityWithUsage } from "@/lib/listings/quota-usage";
 import type { Order } from "@/lib/orders/types";
 import { buyerCardFeeAud, orderSellerPayoutAud } from "@/lib/payments/money";
 
@@ -67,7 +68,12 @@ export function buildTaxInvoiceData(
       lines: [
         {
           description: `${offeringLabel} — ${order.fishery_name}`,
-          quantity: `${order.quantity} ${order.unit_label}`,
+          quantity: formatQuantityWithUsage(
+            order.quantity,
+            order.unit_label,
+            order.unused_quantity,
+            order.used_quantity,
+          ),
           unitPrice: formatAud(order.unit_price_aud),
           amount,
         },

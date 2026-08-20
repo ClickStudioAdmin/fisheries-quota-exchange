@@ -35,3 +35,41 @@ export function qldListingUsage(input: {
 
   return { unused, used };
 }
+
+export function quotaUsageTooltip(
+  unused: string | null | undefined,
+  used: string | null | undefined,
+  unitLabel: string,
+): { label: string; value: string }[] | undefined {
+  if (unused == null || used == null) {
+    return undefined;
+  }
+
+  return [
+    { label: "Unused", value: `${unused} ${unitLabel}` },
+    { label: "Used", value: `${used} ${unitLabel}` },
+  ];
+}
+
+export function quantityUsageTooltips(
+  unused: string | null | undefined,
+  used: string | null | undefined,
+  unitLabel: string,
+) {
+  const details = quotaUsageTooltip(unused, used, unitLabel);
+  return details ? { quantity: details } : undefined;
+}
+
+export function formatQuantityWithUsage(
+  quantity: string,
+  unitLabel: string,
+  unused?: string | null,
+  used?: string | null,
+) {
+  const total = `${quantity} ${unitLabel}`;
+  if (unused == null || used == null) {
+    return total;
+  }
+
+  return `${total} (${unused} unused / ${used} used)`;
+}

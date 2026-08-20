@@ -19,6 +19,7 @@ import { TableModal } from "@/components/table-modal";
 import { ListingApprovalPanel } from "@/components/listing-approval-panel";
 import { BulkReviewListingsModal } from "@/components/bulk-review-listings-modal";
 import { formatTableDate } from "@/lib/format";
+import { quantityUsageTooltips } from "@/lib/listings/quota-usage";
 
 export const metadata = {
   title: "Listings",
@@ -148,6 +149,11 @@ export default async function AdminListingsPage({
             price: formatAud(listing.unit_price_aud),
             status: listingStatusLabel(listing.status),
           },
+          tooltips: quantityUsageTooltips(
+            listing.unused_quantity,
+            listing.used_quantity,
+            listing.unit_label,
+          ),
         }))}
       >
         {listings.map((listing) => (

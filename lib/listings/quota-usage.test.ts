@@ -1,6 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { qldListingUsage } from "./quota-usage.ts";
+import { qldListingUsage, quotaUsageTooltip, formatQuantityWithUsage } from "./quota-usage.ts";
+
+test("quotaUsageTooltip lists unused and used with the unit label", () => {
+  assert.deepEqual(
+    quotaUsageTooltip("4000", "1000", "units"),
+    [
+      { label: "Unused", value: "4000 units" },
+      { label: "Used", value: "1000 units" },
+    ],
+  );
+  assert.equal(quotaUsageTooltip(null, null, "units"), undefined);
+});
+
+test("formatQuantityWithUsage appends unused and used when both are stored", () => {
+  assert.equal(
+    formatQuantityWithUsage("155", "units", "124", "31"),
+    "155 units (124 unused / 31 used)",
+  );
+  assert.equal(formatQuantityWithUsage("40", "kg"), "40 kg");
+});
 
 test("qldListingUsage allows omitted used and unused so SQL can default them", () => {
   assert.deepEqual(

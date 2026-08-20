@@ -122,7 +122,7 @@ const EMAIL_CATALOG: Record<
   listing_alert: {
     summary: "When a subscribed fishery gets a new listing",
     description:
-      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Account Settings → Alerts.",
+      "Tells a user a new sale or lease listing (including auctions) is on the marketplace for a fishery they ticked on Account Settings → Alerts. The quantity includes unused and used units when those were stored on the listing.",
     sentWhen: "When a listing or auction is published, matching sale or lease alerts for that fishery.",
     trigger: "notifyListingCreated or notifyListingPublished then notifyNewListingAlert.",
     recipient: "Users with a matching fishery alert on Account Settings → Alerts, excluding the seller’s organisation.",
@@ -150,14 +150,14 @@ const EMAIL_CATALOG: Record<
   },
   listing_purchased: {
     summary: "Seller: listing or auction became an order",
-    description: "Tells the seller quota is reserved and the buyer pays FQX next.",
+    description: "Tells the seller quota is reserved and the buyer pays FQX next. Quantity includes unused and used units when those were stored on the order.",
     sentWhen: "After create_order, or when an auction closes with a winner.",
     trigger: "notifyOrderCreated or notifyAuctionClosed.",
     recipient: accountRolesAndCreatorRecipient,
   },
   purchase_received: {
     summary: "Buyer: purchase created",
-    description: "Tells the buyer to pay FQX from the order page.",
+    description: "Tells the buyer to pay FQX from the order page. Quantity includes unused and used units when those were stored on the order.",
     sentWhen: "After create_order for a fixed-price purchase.",
     trigger: "notifyOrderCreated.",
     recipient: accountRolesRecipient,
@@ -192,7 +192,7 @@ const EMAIL_CATALOG: Record<
   },
   auction_won: {
     summary: "Winning bidder after close",
-    description: "Tells the winner an order was created.",
+    description: "Tells the winner an order was created. Quantity includes unused and used units when those were stored on the order.",
     sentWhen: "When ensureAuctionClosed / closeAuction creates an order.",
     trigger: "notifyAuctionClosed.",
     recipient: accountRolesRecipient,
@@ -418,7 +418,7 @@ const pdfTemplates: MessageTemplate[] = [
     kind: "pdf",
     name: "Simulated quota tax invoice",
     description:
-      "Dummy A4 tax invoice for the quota: seller to buyer for the listed amount. Marked as not a real tax invoice. GST is not calculated. The PDF is generated in memory and is not stored.",
+      "Dummy A4 tax invoice for the quota: seller to buyer for the listed amount. Quantity includes unused and used units when those were stored on the order. Marked as not a real tax invoice. GST is not calculated. The PDF is generated in memory and is not stored.",
     summary: "Attached to the buyer order settled email; downloadable by the buyer after settlement",
     sentWhen:
       "Generated when the buyer order settled email is sent, and on download from /orders/[id]/invoice/quota after COMPLETED. It is not emailed on its own.",

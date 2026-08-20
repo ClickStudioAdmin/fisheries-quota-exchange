@@ -30,6 +30,7 @@ import {
   listingStatusLabel,
   listingTypeLabel,
 } from "@/lib/listings/types";
+import { quantityUsageTooltips } from "@/lib/listings/quota-usage";
 import { listOrdersByCreator } from "@/lib/orders/queries";
 import { orderStatusLabelFor } from "@/lib/transfers/display";
 import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
@@ -389,6 +390,11 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             price: formatAud(listing.unit_price_aud),
             status: listingStatusLabel(listing.status),
           },
+          tooltips: quantityUsageTooltips(
+            listing.unused_quantity,
+            listing.used_quantity,
+            listing.unit_label,
+          ),
         }))}
       >
         {listings.map((listing) => (
@@ -511,6 +517,11 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               jurisdictions,
             ),
           },
+          tooltips: quantityUsageTooltips(
+            order.unused_quantity,
+            order.used_quantity,
+            order.unit_label,
+          ),
         }))}
       >
         {orders.map((order) => (

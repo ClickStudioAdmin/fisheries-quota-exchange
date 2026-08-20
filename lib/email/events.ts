@@ -17,6 +17,7 @@ import {
   listingTypeLabel,
   type Listing,
 } from "@/lib/listings/types";
+import { formatQuantityWithUsage } from "@/lib/listings/quota-usage";
 import type { NoticeEmailData } from "@/lib/email/types";
 import type { Order } from "@/lib/orders/types";
 import { orderStatusLabel } from "@/lib/orders/types";
@@ -29,6 +30,17 @@ import { getTransferProcess } from "@/lib/transfers/registry";
 
 function listingUrl(siteUrl: string, listing: Pick<Listing, "id" | "listing_type">) {
   return `${siteUrl}${listingHref(listing)}`;
+}
+
+function quantityLabelFor(
+  item: Pick<Listing | Order, "quantity" | "unit_label" | "unused_quantity" | "used_quantity">,
+) {
+  return formatQuantityWithUsage(
+    item.quantity,
+    item.unit_label,
+    item.unused_quantity,
+    item.used_quantity,
+  );
 }
 
 async function notifyBuyerAndSeller(
@@ -177,6 +189,7 @@ async function notifyNewListingAlert(listing: Listing) {
       fisheryName: listing.fishery_name,
       offeringLabel: listingOfferingLabel(listing.offering),
       listingTypeLabel: listingTypeLabel(listing.listing_type),
+      quantityLabel: quantityLabelFor(listing),
       listingUrl: href,
     }),
   );
@@ -233,6 +246,7 @@ export async function notifyOrderCreated(order: Order, listing: Listing) {
     order.seller_organisation_id,
     emailCopy.listing_purchased({
       fisheryName: listing.fishery_name,
+      quantityLabel: quantityLabelFor(order),
       orderUrl,
     }),
     [listing.created_by_email],
@@ -242,6 +256,7 @@ export async function notifyOrderCreated(order: Order, listing: Listing) {
     order.buyer_organisation_id,
     emailCopy.purchase_received({
       fisheryName: listing.fishery_name,
+      quantityLabel: quantityLabelFor(order),
       orderUrl,
     }),
   );
@@ -321,6 +336,7 @@ export async function notifyAuctionClosed(input: {
     winnerOrg,
     emailCopy.auction_won({
       fisheryName: input.listing.fishery_name,
+      quantityLabel: quantityLabelFor(input.order),
       orderUrl: `${siteUrl}/orders/${input.order.id}`,
     }),
   );
@@ -329,6 +345,7 @@ export async function notifyAuctionClosed(input: {
     input.listing.organisation_id,
     emailCopy.listing_purchased({
       fisheryName: input.listing.fishery_name,
+      quantityLabel: quantityLabelFor(input.order),
       orderUrl: `${siteUrl}/orders/${input.order.id}`,
     }),
     extra,
