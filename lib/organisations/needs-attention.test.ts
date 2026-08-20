@@ -75,13 +75,37 @@ test("organisationNeedsAttentionItems lists pay, QLD documents, compliance updat
   });
 
   assert.deepEqual(
-    items.map((item) => item.label),
+    items.map((item) => ({
+      title: item.title,
+      detail: item.detail,
+      actionLabel: item.actionLabel,
+    })),
     [
-      "Pay order 3632 · Northern Prawn Fishery",
-      "Update order 3633 details · East Coast Spanish Mackerel Fishery",
-      "Prepare transfer documents for order 3634 · East Coast Spanish Mackerel Fishery",
-      "Sign transfer documents for order 3635 · East Coast Spanish Mackerel Fishery",
-      "Close auction 88 · Coral Trout",
+      {
+        title: "Pay order 3632",
+        detail: "Northern Prawn Fishery",
+        actionLabel: "Go to order",
+      },
+      {
+        title: "Update order 3633 details",
+        detail: "East Coast Spanish Mackerel Fishery",
+        actionLabel: "Go to order",
+      },
+      {
+        title: "Prepare transfer documents for order 3634",
+        detail: "East Coast Spanish Mackerel Fishery",
+        actionLabel: "Go to order",
+      },
+      {
+        title: "Sign transfer documents for order 3635",
+        detail: "East Coast Spanish Mackerel Fishery",
+        actionLabel: "Go to order",
+      },
+      {
+        title: "Close auction 88",
+        detail: "Coral Trout",
+        actionLabel: "Go to auction",
+      },
     ],
   );
   assert.equal(items.find((item) => item.key === "pay-3632")?.href, "/orders/3632");
@@ -138,8 +162,9 @@ test("organisationNeedsAttentionItems infers QLD prepare when no application row
     {
       key: "transfer-9",
       href: "/orders/9",
-      label:
-        "Prepare transfer documents for order 9 · East Coast Spanish Mackerel Fishery",
+      title: "Prepare transfer documents for order 9",
+      detail: "East Coast Spanish Mackerel Fishery",
+      actionLabel: "Go to order",
     },
   ]);
 });

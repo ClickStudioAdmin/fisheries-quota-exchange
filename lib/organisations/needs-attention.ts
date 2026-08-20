@@ -1,7 +1,9 @@
 export type NeedsAttentionItem = {
   key: string;
   href: string;
-  label: string;
+  title: string;
+  detail?: string;
+  actionLabel: string;
 };
 
 export type NeedsAttentionOrder = {
@@ -154,7 +156,9 @@ export function organisationNeedsAttentionItems(input: {
       items.push({
         key: `pay-${order.id}`,
         href: `/orders/${order.id}`,
-        label: `Pay order ${order.id} · ${order.fishery_name}`,
+        title: `Pay order ${order.id}`,
+        detail: order.fishery_name,
+        actionLabel: "Go to order",
       });
     }
 
@@ -167,7 +171,9 @@ export function organisationNeedsAttentionItems(input: {
         items.push({
           key: `compliance-update-${order.id}`,
           href: `/orders/${order.id}`,
-          label: `Update order ${order.id} details · ${order.fishery_name}`,
+          title: `Update order ${order.id} details`,
+          detail: order.fishery_name,
+          actionLabel: "Go to order",
         });
       }
     }
@@ -183,7 +189,9 @@ export function organisationNeedsAttentionItems(input: {
         items.push({
           key: `transfer-${order.id}`,
           href: `/orders/${order.id}`,
-          label: `${action} for order ${order.id} · ${order.fishery_name}`,
+          title: `${action} for order ${order.id}`,
+          detail: order.fishery_name,
+          actionLabel: "Go to order",
         });
       }
     }
@@ -208,7 +216,9 @@ export function organisationNeedsAttentionItems(input: {
     items.push({
       key: `auction-${listing.id}`,
       href: `/auctions/${listing.id}`,
-      label: `Close auction ${listing.id} · ${listing.fishery_name}`,
+      title: `Close auction ${listing.id}`,
+      detail: listing.fishery_name,
+      actionLabel: "Go to auction",
     });
   }
 

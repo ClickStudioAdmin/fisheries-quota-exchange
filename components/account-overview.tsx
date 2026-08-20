@@ -276,11 +276,18 @@ export async function AccountOverviewSection({
                 Nothing needs your action right now.
               </p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="-mx-5 -my-5 divide-y divide-line">
                 {needsAttention.map((item) => (
-                  <li key={item.key}>
-                    <Link href={item.href} className="text-sm underline">
-                      {item.label}
+                  <li key={item.key} className="px-5 py-4">
+                    <p className="text-sm font-medium text-ink">{item.title}</p>
+                    {item.detail ? (
+                      <p className="mt-1 text-sm text-ink-muted">{item.detail}</p>
+                    ) : null}
+                    <Link
+                      href={item.href}
+                      className="mt-2 inline-block text-sm underline"
+                    >
+                      {item.actionLabel}
                     </Link>
                   </li>
                 ))}
