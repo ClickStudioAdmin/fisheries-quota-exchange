@@ -127,7 +127,7 @@ function PartyDetails({
                 ]
               : []),
             {
-              columns: 1 as const,
+              columns: 1,
               items: [
                 { label: "Owners / admins", value: signatoryLabel(party) },
               ],

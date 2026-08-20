@@ -15,9 +15,10 @@ export function LabeledFields({
   columns = 2,
 }: {
   items: { label: string; value: ReactNode }[];
-  columns?: 2 | 3 | 4 | 5;
+  columns?: 1 | 2 | 3 | 4 | 5;
 }) {
   const columnClassName = {
+    1: "grid-cols-1",
     2: "grid-cols-1 sm:grid-cols-2",
     3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
     4: "grid-cols-2 sm:grid-cols-4",
@@ -45,9 +46,9 @@ export function LabeledFieldGroups({
   groups: {
     title?: string;
     items: { label: string; value: ReactNode }[];
-    columns?: 2 | 3 | 4 | 5;
+    columns?: 1 | 2 | 3 | 4 | 5;
   }[];
-  columns?: 2 | 3 | 4 | 5;
+  columns?: 1 | 2 | 3 | 4 | 5;
 }) {
   return (
     <div className="divide-y divide-line">
