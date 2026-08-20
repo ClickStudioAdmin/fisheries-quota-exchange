@@ -2,7 +2,7 @@ import type { OrderStep } from "@/lib/orders/progress";
 
 const circleClass: Record<OrderStep["state"], string> = {
   done: "border-sea bg-sea text-paper",
-  current: "border-amber-800 bg-amber-100 text-amber-900",
+  current: "border-amber-400 bg-amber-400 text-amber-950",
   failed: "border-red-800 bg-red-100 text-red-800",
   upcoming: "border-line bg-paper-raised text-ink-muted",
 };
