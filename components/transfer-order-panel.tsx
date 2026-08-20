@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { buttonClassName } from "@/components/auth-card";
+import { StatusBadge } from "@/components/status-badge";
 import { TransferPrepareForm } from "@/components/transfer-prepare-form";
+import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
 import { accountSettingsPath } from "@/lib/organisations/paths";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
-import {
-  transferApplicationStatusLabel,
-  transferDocumentPath,
-} from "@/lib/transfers/types";
+import { transferDocumentPath } from "@/lib/transfers/types";
 import type { TransferWorkspace } from "@/lib/transfers/queries";
 
 export function TransferOrderPanel({
@@ -45,9 +44,9 @@ export function TransferOrderPanel({
         Application prepared from your business details. Sign and witness the
         PDF offline. FQX does not collect signatures in the browser.
       </p>
-      <p className="mt-4 text-sm text-ink">
-        {transferApplicationStatusLabel(status)}
-      </p>
+      <div className="mt-4">
+        <StatusBadge label={qldTransferPublicStatusLabel(status)} />
+      </div>
       {workspace.application?.fq_reference ? (
         <p className="mt-2 text-sm text-ink-muted">
           Fisheries Queensland reference: {workspace.application.fq_reference}
