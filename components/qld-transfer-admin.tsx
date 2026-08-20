@@ -36,8 +36,8 @@ export function QldTransferAdmin({
   workspace: TransferWorkspace;
   reviewQueue?: number[];
 }) {
-  const remaining = reviewQueue.filter((id) => id !== workspace.order.id);
   const order = workspace.order;
+  const remaining = reviewQueue.filter((id) => id !== order.id);
   const status = workspace.application?.status ?? "READY";
   const complete =
     workspace.buyerMissing.length === 0 && workspace.sellerMissing.length === 0;
@@ -124,6 +124,8 @@ export function QldTransferAdmin({
             />
           </div>
         </section>
+      </div>
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Documents</h3>
           <p className="mt-1 text-sm text-ink-muted">
@@ -134,10 +136,7 @@ export function QldTransferAdmin({
             <div className="mt-4 flex flex-wrap gap-2">
               {workspace.latestUnsigned ? (
                 <a
-                  href={transferDocumentPath(
-                    workspace.order.id,
-                    workspace.latestUnsigned.id,
-                  )}
+                  href={transferDocumentPath(order.id, workspace.latestUnsigned.id)}
                   className={tableSecondaryButtonClassName}
                 >
                   Download unsigned PDF
@@ -146,7 +145,7 @@ export function QldTransferAdmin({
               {workspace.latestSignedPack ? (
                 <a
                   href={transferDocumentPath(
-                    workspace.order.id,
+                    order.id,
                     workspace.latestSignedPack.id,
                   )}
                   className={tableSecondaryButtonClassName}
@@ -174,38 +173,39 @@ export function QldTransferAdmin({
         {workspace.latestUnsigned ? (
           <section className={panelClassName}>
             <h3 className="text-lg font-semibold text-ink">Signed pack</h3>
-          <p className="mt-1 text-sm text-ink-muted">
-            Upload the completed, witnessed PDF. This does not overwrite the
-            unsigned application.
-          </p>
-          <form action={uploadSignedPackAction} className="mt-4 space-y-3">
-            <input type="hidden" name="order_id" value={workspace.order.id} />
-            {queueFields(remaining)}
-            <div>
-              <label
-                htmlFor={`signed-pack-${workspace.order.id}`}
-                className="block text-sm text-ink"
+            <p className="mt-1 text-sm text-ink-muted">
+              Upload the completed, witnessed PDF. This does not overwrite the
+              unsigned application.
+            </p>
+            <form action={uploadSignedPackAction} className="mt-4 space-y-3">
+              <input type="hidden" name="order_id" value={order.id} />
+              {queueFields(remaining)}
+              <div>
+                <label
+                  htmlFor={`signed-pack-${order.id}`}
+                  className="block text-sm text-ink"
+                >
+                  Completed / signed PDF
+                </label>
+                <input
+                  id={`signed-pack-${order.id}`}
+                  name="signed_pack"
+                  type="file"
+                  accept="application/pdf"
+                  required
+                  className={fieldClassName}
+                />
+              </div>
+              <PendingSubmitButton
+                className={tableButtonClassName}
+                pendingLabel="Uploading…"
               >
-                Completed / signed PDF
-              </label>
-              <input
-                id={`signed-pack-${workspace.order.id}`}
-                name="signed_pack"
-                type="file"
-                accept="application/pdf"
-                required
-                className={fieldClassName}
-              />
-            </div>
-            <PendingSubmitButton
-              className={tableButtonClassName}
-              pendingLabel="Uploading…"
-            >
-              Upload signed pack
-            </PendingSubmitButton>
-          </form>
-        </section>
-      ) : null}
+                Upload signed pack
+              </PendingSubmitButton>
+            </form>
+          </section>
+        ) : null}
+      </div>
       {workspace.latestSignedPack ? (
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">
@@ -216,17 +216,14 @@ export function QldTransferAdmin({
             in this phase.
           </p>
           <form action={recordFqSubmissionAction} className="mt-4 space-y-3">
-            <input type="hidden" name="order_id" value={workspace.order.id} />
+            <input type="hidden" name="order_id" value={order.id} />
             {queueFields(remaining)}
             <div>
-              <label
-                htmlFor={`fq-method-${workspace.order.id}`}
-                className="block text-sm text-ink"
-              >
+              <label htmlFor={`fq-method-${order.id}`} className="block text-sm text-ink">
                 Submission method
               </label>
               <input
-                id={`fq-method-${workspace.order.id}`}
+                id={`fq-method-${order.id}`}
                 name="submission_method"
                 defaultValue={
                   workspace.application?.submission_method ?? "Manual"
@@ -235,28 +232,22 @@ export function QldTransferAdmin({
               />
             </div>
             <div>
-              <label
-                htmlFor={`fq-ref-${workspace.order.id}`}
-                className="block text-sm text-ink"
-              >
+              <label htmlFor={`fq-ref-${order.id}`} className="block text-sm text-ink">
                 Fisheries Queensland reference
               </label>
               <input
-                id={`fq-ref-${workspace.order.id}`}
+                id={`fq-ref-${order.id}`}
                 name="fq_reference"
                 defaultValue={workspace.application?.fq_reference ?? ""}
                 className={fieldClassName}
               />
             </div>
             <div>
-              <label
-                htmlFor={`fq-notes-${workspace.order.id}`}
-                className="block text-sm text-ink"
-              >
+              <label htmlFor={`fq-notes-${order.id}`} className="block text-sm text-ink">
                 Notes
               </label>
               <textarea
-                id={`fq-notes-${workspace.order.id}`}
+                id={`fq-notes-${order.id}`}
                 name="notes"
                 rows={3}
                 defaultValue={workspace.application?.notes ?? ""}
@@ -274,11 +265,7 @@ export function QldTransferAdmin({
             <div className="mt-4 flex flex-wrap gap-2">
               {status === "SUBMITTED" ? (
                 <form action={recordTransferProcessingAction}>
-                  <input
-                    type="hidden"
-                    name="order_id"
-                    value={workspace.order.id}
-                  />
+                  <input type="hidden" name="order_id" value={order.id} />
                   {queueFields(remaining)}
                   <PendingSubmitButton
                     className={tableButtonClassName}
@@ -289,11 +276,7 @@ export function QldTransferAdmin({
                 </form>
               ) : null}
               <form action={approveQldTransferAction}>
-                <input
-                  type="hidden"
-                  name="order_id"
-                  value={workspace.order.id}
-                />
+                <input type="hidden" name="order_id" value={order.id} />
                 {queueFields(remaining)}
                 <PendingSubmitButton
                   className={tableButtonClassName}
@@ -317,17 +300,17 @@ export function QldTransferAdmin({
             action={recordTransferActionRequiredAction}
             className="mt-4 space-y-3"
           >
-            <input type="hidden" name="order_id" value={workspace.order.id} />
+            <input type="hidden" name="order_id" value={order.id} />
             {queueFields(remaining)}
             <div>
               <label
-                htmlFor={`action-notes-${workspace.order.id}`}
+                htmlFor={`action-notes-${order.id}`}
                 className="block text-sm text-ink"
               >
                 Note
               </label>
               <textarea
-                id={`action-notes-${workspace.order.id}`}
+                id={`action-notes-${order.id}`}
                 name="notes"
                 rows={3}
                 className={fieldClassName}

@@ -3,6 +3,7 @@ import {
   tableButtonClassName,
 } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { panelClassName } from "@/components/surface";
 import {
   approveComplianceAction,
   rejectComplianceAction,
@@ -112,7 +113,7 @@ export function ReviewOrderForms({
   }
 
   if (order.status === "AWAITING_TRANSFER") {
-    return (
+    const form = (
       <form action={simulateTransferAction}>
         <input type="hidden" name="order_id" value={order.id} />
         {queueFields()}
@@ -124,10 +125,28 @@ export function ReviewOrderForms({
         </PendingSubmitButton>
       </form>
     );
+
+    if (reviewQueue.length === 0) {
+      return form;
+    }
+
+    return (
+      <section className={panelClassName}>
+        <h3 className="text-lg font-semibold text-ink">Simulated transfer</h3>
+        <p className="mt-1 text-sm text-ink-muted">
+          Order {order.id} · {order.buyer_name} / {order.seller_name}
+        </p>
+        <p className="mt-1 text-sm text-ink-muted">
+          This fishery uses simulated authority transfer. Run it when you are
+          ready to move the order to settlement.
+        </p>
+        <div className="mt-4">{form}</div>
+      </section>
+    );
   }
 
   if (order.status === "AWAITING_SETTLEMENT") {
-    return (
+    const form = (
       <form action={simulateSettlementAction}>
         <input type="hidden" name="order_id" value={order.id} />
         {queueFields()}
@@ -138,6 +157,24 @@ export function ReviewOrderForms({
           Simulate settlement
         </PendingSubmitButton>
       </form>
+    );
+
+    if (reviewQueue.length === 0) {
+      return form;
+    }
+
+    return (
+      <section className={panelClassName}>
+        <h3 className="text-lg font-semibold text-ink">Simulated settlement</h3>
+        <p className="mt-1 text-sm text-ink-muted">
+          Order {order.id} · {order.buyer_name} / {order.seller_name}
+        </p>
+        <p className="mt-1 text-sm text-ink-muted">
+          Transfers the seller’s share after the platform fee and writes the
+          quota ledger. Dummy tax invoices are emailed after settlement.
+        </p>
+        <div className="mt-4">{form}</div>
+      </section>
     );
   }
 
