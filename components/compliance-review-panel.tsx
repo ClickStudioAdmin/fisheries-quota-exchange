@@ -156,9 +156,19 @@ export function ComplianceReviewPanel({
 
   return (
     <div className="mt-2 space-y-6">
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div
+        className={
+          qld ? "grid items-start gap-6 lg:grid-cols-2" : undefined
+        }
+      >
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Order</h3>
+          {qld ? null : (
+            <p className="mt-1 text-sm text-ink-muted">
+              {workspace.process.title}. Quota is already reserved. Approving
+              starts the simulated transfer step, not a regulator submission.
+            </p>
+          )}
           <div className="mt-4">
             <LabeledFields
               items={[
@@ -185,24 +195,21 @@ export function ComplianceReviewPanel({
             />
           </div>
         </section>
-        <section className={panelClassName}>
-          <h3 className="text-lg font-semibold text-ink">
-            {qld ? "Queensland checks" : "Compliance checks"}
-          </h3>
-          <p className="mt-1 text-sm text-ink-muted">
-            {workspace.process.title}
-          </p>
-          <ul className="mt-4 space-y-3">
-            {workspace.process.complianceChecks.map((item) => (
-              <li
-                key={item}
-                className="border-l border-line pl-3 text-sm text-ink"
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
-        </section>
+        {qld ? (
+          <section className={panelClassName}>
+            <h3 className="text-lg font-semibold text-ink">
+              Queensland checks
+            </h3>
+            <p className="mt-1 text-sm text-ink-muted">
+              {workspace.process.title}
+            </p>
+            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-ink">
+              {workspace.process.complianceChecks.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <PartyDetails
