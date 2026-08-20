@@ -12,6 +12,8 @@ const order: Order = {
   buyer_organisation_id: 3,
   offering: "SALE",
   quantity: "40",
+  unused_quantity: null,
+  used_quantity: null,
   unit_price_aud: "18.75",
   amount_aud: "750",
   fee_percent: "5",

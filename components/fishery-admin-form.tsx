@@ -18,7 +18,13 @@ export function FisheryAdminForm({
   jurisdictions: Pick<Jurisdiction, "id" | "name">[];
   fishery?: Pick<
     Fishery,
-    "id" | "name" | "code" | "jurisdiction_id" | "quantity_type"
+    | "id"
+    | "name"
+    | "code"
+    | "jurisdiction_id"
+    | "quantity_type"
+    | "sale_allowed"
+    | "lease_allowed"
   >;
 }) {
   return (
@@ -59,6 +65,18 @@ export function FisheryAdminForm({
             { value: "KG", label: "Kg" },
             { value: "UNITS", label: "Units" },
           ],
+        },
+        {
+          name: "sale_allowed",
+          label: "Can be listed for sale",
+          type: "checkbox",
+          defaultChecked: fishery?.sale_allowed ?? true,
+        },
+        {
+          name: "lease_allowed",
+          label: "Can be listed for lease",
+          type: "checkbox",
+          defaultChecked: fishery?.lease_allowed ?? true,
         },
         {
           name: "logo",

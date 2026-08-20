@@ -5,6 +5,7 @@ const QLD_REQUIRED = [
   "legal_name",
   "abn",
   "acn",
+  "date_of_birth",
   "mobile",
   "registered_address",
   "postal_address",
@@ -14,7 +15,7 @@ const QLD_REQUIRED = [
 
 const QLD_SHARED_CHECKS = [
   "Confirm both parties have a Queensland fisheries client number and a primary commercial fishing licence.",
-  "Confirm entity kind, ABN, and ACN (companies) match the businesses named on this order.",
+  "Confirm entity kind, ABN, ACN (companies), and date of birth (individuals) match the businesses named on this order.",
   "Confirm registered addresses. If postal address is different, check that too.",
   "Quota is already reserved on this order. Approving compliance does not move quota. Fisheries Queensland approval later must not apply quota again.",
 ] as const;

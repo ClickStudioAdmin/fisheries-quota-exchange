@@ -1,13 +1,16 @@
 "use client";
 
 import { useActionState } from "react";
+import { OfferingField } from "@/components/offering-field";
 import { QuantityField } from "@/components/quantity-field";
+import { QldQuotaUsageFields } from "@/components/qld-quota-usage-fields";
 import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 import {
   createListingAction,
   type ListingFormState,
 } from "@/lib/listings/actions";
+import type { ListingOffering } from "@/lib/listings/types";
 import { SELLER_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: ListingFormState = {};
@@ -17,6 +20,8 @@ type CreateListingFormProps = {
   holdingId: number;
   maxQuantity: string;
   unitLabel: string;
+  offerings: ListingOffering[];
+  requireQldUsage?: boolean;
   autoPublish?: boolean;
   feeNote?: string | null;
 };
@@ -26,6 +31,8 @@ export function CreateListingForm({
   holdingId,
   maxQuantity,
   unitLabel,
+  offerings,
+  requireQldUsage = false,
   autoPublish = false,
   feeNote = null,
 }: CreateListingFormProps) {
@@ -43,21 +50,7 @@ export function CreateListingForm({
           {state.error}
         </p>
       ) : null}
-      <div>
-        <label htmlFor="offering" className="block text-sm text-ink">
-          Offering
-        </label>
-        <select
-          id="offering"
-          name="offering"
-          required
-          className={fieldClassName}
-          defaultValue="SALE"
-        >
-          <option value="SALE">Sale</option>
-          <option value="LEASE">Lease</option>
-        </select>
-      </div>
+      <OfferingField offerings={offerings} />
       <div>
         <label htmlFor="quantity" className="block text-sm text-ink">
           Quantity, max {maxQuantity}
@@ -69,6 +62,9 @@ export function CreateListingForm({
           max={maxQuantity}
         />
       </div>
+      {requireQldUsage ? (
+        <QldQuotaUsageFields unitLabel={unitLabel} maxQuantity={maxQuantity} />
+      ) : null}
       <div>
         <label htmlFor="unit_price_aud" className="block text-sm text-ink">
           Price per {unitLabel} (AUD)
@@ -100,7 +96,7 @@ export function CreateListingForm({
         title="Seller acknowledgements"
         items={SELLER_ACKNOWLEDGEMENTS}
       />
-      <button type="submit" className={buttonClassName} disabled={pending}>
+      <button type="submit" className={buttonClassName} disabled={pending || offerings.length === 0}>
         {pending
           ? "Submitting…"
           : autoPublish

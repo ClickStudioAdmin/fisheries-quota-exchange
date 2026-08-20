@@ -62,7 +62,29 @@ export type Fishery = {
   code: string | null;
   quantity_type: QuantityType;
   logo_path: string | null;
+  sale_allowed: boolean;
+  lease_allowed: boolean;
 };
+
+export function fisheryAllowsOffering(
+  fishery: Pick<Fishery, "sale_allowed" | "lease_allowed">,
+  offering: "SALE" | "LEASE",
+) {
+  return offering === "LEASE" ? fishery.lease_allowed : fishery.sale_allowed;
+}
+
+export function fisheryOfferingOptions(
+  fishery: Pick<Fishery, "sale_allowed" | "lease_allowed">,
+): Array<"SALE" | "LEASE"> {
+  const options: Array<"SALE" | "LEASE"> = [];
+  if (fishery.sale_allowed) {
+    options.push("SALE");
+  }
+  if (fishery.lease_allowed) {
+    options.push("LEASE");
+  }
+  return options;
+}
 
 export type QuotaType = {
   id: number;

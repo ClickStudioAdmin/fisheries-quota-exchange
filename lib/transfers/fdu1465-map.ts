@@ -7,13 +7,13 @@ import type {
 export const FDU1465_TEMPLATE_FILENAME = "fdu1465-v09-23.pdf";
 
 const QUOTA_ROWS = [
-  { unused: "Unused units", used: "Used units-0", match: /blue swimmer|\bbc1\b/i },
-  { unused: "Unused units-0", used: "Used units-1", match: /mud crab east|\bec1\b/i },
-  { unused: "Unused units-1", used: "Used units-2", match: /mud crab gulf|\bgc1\b/i },
+  { unused: "Unused units", used: "Used units-0", match: /blue swimmer|\bbc1-itq\b|\bbc1\b/i },
+  { unused: "Unused units-0", used: "Used units-1", match: /mud crab east|\bec1-itq\b|\bec1\b/i },
+  { unused: "Unused units-1", used: "Used units-2", match: /mud crab gulf|\bgc1-itq\b|\bgc1\b/i },
   { unused: "Unused units-2", used: "Used units-3", match: /spanner crab|\bc2-itq\b|\bc2\b/i },
-  { unused: "ECIFF-3", used: "ECIFF-4", match: /grey mackerel|\bgm5\b/i },
-  { unused: "ECIFF-6", used: "ECIFF-7", match: /sand whiting|\bwt5\b/i },
-  { unused: "ECIFF-9", used: "ECIFF-10", match: /school mackerel|\bscm5\b/i },
+  { unused: "ECIFF-3", used: "ECIFF-4", match: /grey mackerel region 5|\bgm5-itq\b|\bgm5\b/i },
+  { unused: "ECIFF-6", used: "ECIFF-7", match: /sand whiting|\bwt5-itq\b|\bwt5\b/i },
+  { unused: "ECIFF-9", used: "ECIFF-10", match: /school mackerel|\bscm5-itq\b|\bscm5\b/i },
   { unused: "ECIFF-12", used: "ECIFF-13", match: /coral trout|\bct line\b/i },
   { unused: "ECIFF-18", used: "ECIFF-19", match: /red throat|\brte\b/i },
   { unused: "ECIFF-21", used: "ECIFF-22", match: /other species|\bos line\b/i },
@@ -22,14 +22,22 @@ const QUOTA_ROWS = [
     used: "ECIFF-25",
     match: /spanish mackerel|\bsm units\b|\becsm\b/i,
   },
-  { unused: "ECIFF-27", used: "ECIFF-28", match: /northern trawl|trawl region 1/i },
-  { unused: "ECIFF-30", used: "ECIFF-31", match: /central trawl|trawl region 2/i },
+  {
+    unused: "ECIFF-27",
+    used: "ECIFF-28",
+    match: /northern trawl region 1|norther trawl|trawl region 1/i,
+  },
+  {
+    unused: "ECIFF-30",
+    used: "ECIFF-31",
+    match: /northern trawl region 2|central trawl|trawl region 2/i,
+  },
   {
     unused: "ECIFF-33",
     used: "ECIFF-34",
     match: /southern inshore|trawl region 3/i,
   },
-  { unused: "ECIFF-36", used: "ECIFF-37", match: /4a|trawl region 4a/i },
+  { unused: "ECIFF-36", used: "ECIFF-37", match: /region 4a|trawl region 4a/i },
   { unused: "Bechdemer-0", used: "Bechdemer-1", match: /black teatfish|\bb1b\b/i },
   { unused: "Bechdemer-3", used: "Bechdemer-4", match: /other beche|\bb1o\b/i },
   { unused: "Bechdemer-6", used: "Bechdemer-7", match: /white teatfish|\bb1w\b/i },
@@ -81,6 +89,14 @@ export function fduPersonName(legalName: string) {
   };
 }
 
+function fduDateOfBirth(value: string | null | undefined) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value?.trim() ?? "");
+  if (!match) {
+    return "";
+  }
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
 export function matchFdu1465QuotaRow(haystack: string) {
   const text = haystack.trim();
   if (!text) {
@@ -99,18 +115,14 @@ function postalAddress(party: TransferPartyDetails) {
 export function partyFieldValues(
   party: TransferPartyDetails,
   fields: {
-    surnameOrCompany: string;
-    given?: string;
-    company?: string;
     individualSurname?: string;
     individualGiven?: string;
+    individualDob?: string;
+    companyName?: string;
     postal: string;
     postalPostcode: string;
     registered: string;
     registeredPostcode: string;
-    home?: string;
-    work?: string;
-    fax?: string;
     mobile: string;
     email?: string;
     client: string;
@@ -118,26 +130,24 @@ export function partyFieldValues(
 ) {
   const values: Record<string, string> = {};
   const company = party.entity_kind === "COMPANY";
+  const individual = party.entity_kind === "INDIVIDUAL";
   const postal = fduAddressParts(postalAddress(party));
   const registered = fduAddressParts(party.registered_address);
   const person = fduPersonName(party.legal_name);
 
-  if (fields.surnameOrCompany) {
-    values[fields.surnameOrCompany] = company
-      ? party.legal_name
-      : person.surname;
-  }
-  if (fields.given && !company) {
-    values[fields.given] = person.given;
-  }
-  if (fields.company && company) {
-    values[fields.company] = party.legal_name;
-  }
-  if (fields.individualSurname && !company) {
-    values[fields.individualSurname] = person.surname;
+  if (individual) {
+    if (fields.individualSurname) {
+      values[fields.individualSurname] = person.surname;
+    }
     if (fields.individualGiven) {
       values[fields.individualGiven] = person.given;
     }
+    if (fields.individualDob && party.date_of_birth) {
+      values[fields.individualDob] = fduDateOfBirth(party.date_of_birth);
+    }
+  }
+  if (company && fields.companyName) {
+    values[fields.companyName] = party.legal_name;
   }
 
   if (fields.postal) {
@@ -157,20 +167,11 @@ export function partyFieldValues(
   if (fields.mobile) {
     values[fields.mobile] = party.mobile ?? "";
   }
+  if (fields.email) {
+    values[fields.email] = party.email ?? "";
+  }
   if (fields.client) {
     values[fields.client] = party.profile?.client_reference ?? "";
-  }
-  if (fields.home) {
-    values[fields.home] = "";
-  }
-  if (fields.work) {
-    values[fields.work] = "";
-  }
-  if (fields.fax) {
-    values[fields.fax] = "";
-  }
-  if (fields.email) {
-    values[fields.email] = "";
   }
   return values;
 }
@@ -178,31 +179,26 @@ export function partyFieldValues(
 export function fdu1465FieldValues(data: TransferApplicationPdfData) {
   const values = {
     ...partyFieldValues(data.seller, {
-      surnameOrCompany: "Textfield-2",
-      given: "Textfield-3",
+      individualSurname: "Textfield-0",
+      individualGiven: "Textfield-1",
+      companyName: "Textfield-2",
       postal: "Text10",
       postalPostcode: "Text12",
       registered: "Text13",
       registeredPostcode: "Text14",
-      home: "Textfield-4",
-      work: "Textfield-5",
-      fax: "Textfield-6",
       mobile: "Textfield-7",
       email: "Textfield-8",
       client: "Textfield-9",
     }),
     ...partyFieldValues(data.buyer, {
-      surnameOrCompany: "",
-      company: "Textfield-19",
       individualSurname: "Textfield-10",
       individualGiven: "Textfield-11",
+      individualDob: "Textfield-12",
+      companyName: "Textfield-19",
       postal: "Text6",
       postalPostcode: "Text7",
       registered: "Text8",
       registeredPostcode: "Text9",
-      home: "Textfield-20",
-      work: "Textfield-21",
-      fax: "Textfield-22",
       mobile: "Textfield-23",
       email: "Textfield-24",
       client: "Textfield-25",
@@ -213,7 +209,8 @@ export function fdu1465FieldValues(data: TransferApplicationPdfData) {
     `${data.fisheryName} ${data.quotaTypeName} ${data.unitLabel}`,
   );
   if (quota) {
-    values[quota.unused] = fduWholeUnits(data.quantity);
+    values[quota.unused] = fduWholeUnits(data.unusedQuantity || data.quantity);
+    values[quota.used] = fduWholeUnits(data.usedQuantity);
   }
 
   return Object.fromEntries(
@@ -235,14 +232,14 @@ const LEASE_QUOTA_ROWS = [
     unused: "Text15",
     match: /spanish mackerel|\bsm units\b|\becsm\b/i,
   },
-  { unused: "Text16", match: /northern trawl/i },
-  { unused: "Text17", match: /central trawl/i },
+  { unused: "Text16", match: /northern trawl region 1|norther trawl/i },
+  { unused: "Text17", match: /northern trawl region 2|central trawl/i },
   { unused: "Text18", match: /southern inshore/i },
   { unused: "Trawl  T4-0", match: /region a|4a|offshore trawl region a/i },
   { unused: "Trawl-10", match: /region b|4b|offshore trawl region b/i },
   { unused: "Trawl-8", match: /moreton/i },
   { unused: "Trawl-6", match: /t4-itq|prescribed whiting|\bt4\b/i },
-  { unused: "Trawl-4", match: /grey mackerel|\bgm5\b/i },
+  { unused: "Trawl-4", match: /grey mackerel region 5|\bgm5-itq\b|\bgm5\b/i },
   { unused: "Trawl-2", match: /sand whiting|\bwt5\b/i },
   { unused: "Trawl-0", match: /school mackerel|\bscm5\b/i },
   { unused: "Bechdemer-0", match: /black teatfish|\bb1b\b/i },
@@ -264,20 +261,22 @@ export function matchFdu1469QuotaRow(haystack: string) {
 export function fdu1469FieldValues(data: TransferApplicationPdfData) {
   const values = {
     ...partyFieldValues(data.seller, {
-      surnameOrCompany: "Textfield-3",
-      given: "Textfield-4",
+      individualSurname: "Textfield-1",
+      individualGiven: "Textfield-2",
+      companyName: "Textfield-3",
       postal: "Text2",
       postalPostcode: "Text3",
       registered: "Text4",
       registeredPostcode: "",
-      mobile: "Textfield-10",
-      client: "",
+      mobile: "Textfield-8",
+      email: "Textfield-9",
+      client: "Textfield-10",
     }),
     ...partyFieldValues(data.buyer, {
-      surnameOrCompany: "",
-      company: "Textfield-20",
       individualSurname: "Textfield-11",
       individualGiven: "Textfield-12",
+      individualDob: "Textfield-13",
+      companyName: "Textfield-20",
       postal: "Text7",
       postalPostcode: "Text9",
       registered: "",
@@ -292,7 +291,7 @@ export function fdu1469FieldValues(data: TransferApplicationPdfData) {
     `${data.fisheryName} ${data.quotaTypeName} ${data.unitLabel}`,
   );
   if (quota) {
-    values[quota.unused] = fduWholeUnits(data.quantity);
+    values[quota.unused] = fduWholeUnits(data.unusedQuantity || data.quantity);
   }
 
   return Object.fromEntries(

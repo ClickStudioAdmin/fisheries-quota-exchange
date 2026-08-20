@@ -22,6 +22,7 @@ export type Organisation = {
   updated_at: string;
   entity_kind: EntityKind | null;
   acn: string | null;
+  date_of_birth: string | null;
   mobile: string | null;
   registered_address: AustralianAddress | null;
   postal_address: AustralianAddress | null;

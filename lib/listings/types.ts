@@ -20,6 +20,8 @@ export type Listing = {
   listing_type: ListingType;
   offering: ListingOffering;
   quantity: string;
+  unused_quantity: string | null;
+  used_quantity: string | null;
   unit_price_aud: string;
   expires_at: string;
   status: ListingStatus;

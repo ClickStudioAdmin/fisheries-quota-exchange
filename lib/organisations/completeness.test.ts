@@ -30,6 +30,7 @@ const completeCompany: Organisation = {
   updated_at: "2026-01-01T00:00:00Z",
   entity_kind: "COMPANY",
   acn: "123456789",
+  date_of_birth: null,
   mobile: "0412345678",
   registered_address: completeAddress,
   postal_address: completeAddress,
@@ -47,12 +48,13 @@ test("missingBusinessDetailFields is empty for a complete company", () => {
   assert.deepEqual(missingBusinessDetailFields(completeCompany), []);
 });
 
-test("missingBusinessDetailFields requires ABN for individuals and skips ACN", () => {
+test("missingBusinessDetailFields requires ABN and date of birth for individuals and skips ACN", () => {
   assert.deepEqual(
     missingBusinessDetailFields({
       ...completeCompany,
       entity_kind: "INDIVIDUAL",
       acn: null,
+      date_of_birth: "1985-03-15",
     }),
     [],
   );
@@ -61,9 +63,19 @@ test("missingBusinessDetailFields requires ABN for individuals and skips ACN", (
       ...completeCompany,
       entity_kind: "INDIVIDUAL",
       acn: null,
+      date_of_birth: "1985-03-15",
       abn: null,
     }),
     ["abn"],
+  );
+  assert.deepEqual(
+    missingBusinessDetailFields({
+      ...completeCompany,
+      entity_kind: "INDIVIDUAL",
+      acn: null,
+      date_of_birth: null,
+    }),
+    ["date_of_birth"],
   );
 });
 

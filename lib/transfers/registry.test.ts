@@ -25,6 +25,7 @@ const completeOrg: Organisation = {
   updated_at: "2026-01-01T00:00:00Z",
   entity_kind: "COMPANY",
   acn: "123456789",
+  date_of_birth: null,
   mobile: "0412345678",
   registered_address: completeAddress,
   postal_address: completeAddress,
@@ -82,6 +83,7 @@ test("missingTransferProfileFields names QLD gaps and skips ACN for individuals"
       ...completeOrg,
       entity_kind: "INDIVIDUAL",
       acn: null,
+      date_of_birth: null,
       abn: null,
       mobile: null,
       registered_address: null,
@@ -91,6 +93,7 @@ test("missingTransferProfileFields names QLD gaps and skips ACN for individuals"
   });
   assert.equal(missing.includes("acn"), false);
   assert.equal(missing.includes("abn"), false);
+  assert.ok(missing.includes("date_of_birth"));
   assert.ok(missing.includes("mobile"));
   assert.ok(missing.includes("registered_address"));
   assert.ok(missing.includes("qld_client_number"));

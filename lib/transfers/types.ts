@@ -35,6 +35,7 @@ export const TRANSFER_PROFILE_FIELDS = [
   "legal_name",
   "abn",
   "acn",
+  "date_of_birth",
   "mobile",
   "registered_address",
   "postal_address",

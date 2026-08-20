@@ -79,7 +79,9 @@ export async function listFisheries() {
   if (!supabase) return [];
   const { data } = await supabase
     .from("fisheries")
-    .select("id, jurisdiction_id, name, code, quantity_type, logo_path")
+    .select(
+      "id, jurisdiction_id, name, code, quantity_type, logo_path, sale_allowed, lease_allowed",
+    )
     .order("name");
   return (data ?? []) as Fishery[];
 }
@@ -89,7 +91,9 @@ export async function getFishery(id: number) {
   if (!supabase) return null;
   const { data } = await supabase
     .from("fisheries")
-    .select("id, jurisdiction_id, name, code, quantity_type, logo_path")
+    .select(
+      "id, jurisdiction_id, name, code, quantity_type, logo_path, sale_allowed, lease_allowed",
+    )
     .eq("id", id)
     .maybeSingle();
   return (data as Fishery | null) ?? null;

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  fisheryAllowsOffering,
   fisheryNameWithJurisdiction,
+  fisheryOfferingOptions,
   fisherySelectLabel,
   holdingVerifyPath,
   parseHoldingIds,
@@ -35,5 +37,24 @@ test("fisherySelectLabel uses the jurisdiction code prefix", () => {
       [{ id: 1, code: "QLD" }],
     ),
     "QLD - East Coast Spanish Mackerel Fishery",
+  );
+});
+
+test("fisheryOfferingOptions follows sale and lease flags", () => {
+  assert.deepEqual(
+    fisheryOfferingOptions({ sale_allowed: true, lease_allowed: true }),
+    ["SALE", "LEASE"],
+  );
+  assert.deepEqual(
+    fisheryOfferingOptions({ sale_allowed: false, lease_allowed: true }),
+    ["LEASE"],
+  );
+  assert.equal(
+    fisheryAllowsOffering({ sale_allowed: false, lease_allowed: true }, "SALE"),
+    false,
+  );
+  assert.equal(
+    fisheryAllowsOffering({ sale_allowed: false, lease_allowed: true }, "LEASE"),
+    true,
   );
 });

@@ -9,7 +9,8 @@ import {
   requireCounterpartyTradeReadyError,
   requireTradeReadyError,
 } from "@/lib/organisations/eligibility";
-import { getHoldingJurisdictionCode } from "@/lib/fisheries/queries";
+import { getHoldingJurisdictionCode, getFishery, getHolding } from "@/lib/fisheries/queries";
+import { fisheryAllowsOffering } from "@/lib/fisheries/types";
 import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import {
@@ -23,6 +24,7 @@ import {
   requireAcknowledgements,
 } from "@/lib/terms/acknowledgements";
 import { requireTermsError } from "@/lib/terms/queries";
+import { qldListingUsage } from "@/lib/listings/quota-usage";
 import { userFacingError } from "@/lib/errors/user-message";
 import type { AuctionFormState, BidFormState } from "@/lib/auctions/types";
 import { getListing } from "@/lib/listings/queries";
@@ -74,6 +76,20 @@ export async function createAuctionAction(
     return { error: "Choose sale or lease." };
   }
 
+  const holding = await getHolding(holdingId);
+  const fishery = holding ? await getFishery(holding.fishery_id) : null;
+  if (
+    !fishery ||
+    !fisheryAllowsOffering(fishery, offering as (typeof LISTING_OFFERINGS)[number])
+  ) {
+    return {
+      error:
+        offering === "LEASE"
+          ? "This fishery cannot be listed for lease."
+          : "This fishery cannot be listed for sale.",
+    };
+  }
+
   if (!Number.isFinite(quantity) || quantity <= 0) {
     return { error: "Quantity must be greater than zero." };
   }
@@ -103,6 +119,19 @@ export async function createAuctionAction(
   }
 
   const jurisdictionCode = await getHoldingJurisdictionCode(holdingId);
+  const usage = tradeRequiresQldProfile(jurisdictionCode)
+    ? qldListingUsage({
+        quantity,
+        unusedRaw: read(formData, "unused_quantity"),
+        usedRaw: read(formData, "used_quantity"),
+        required: true,
+      })
+    : ({ unused: null, used: null } as const);
+
+  if ("error" in usage) {
+    return { error: usage.error };
+  }
+
   const accountError = await requireTradeReadyError(organisationId, {
     requireQldProfile: tradeRequiresQldProfile(jurisdictionCode),
   });
@@ -132,6 +161,8 @@ export async function createAuctionAction(
     p_reserve_price_aud: reserve,
     p_starts_at: startsAt ? new Date(startsAt).toISOString() : new Date().toISOString(),
     p_ends_at: new Date(endsAt).toISOString(),
+    p_unused_quantity: usage.unused,
+    p_used_quantity: usage.used,
   });
 
   if (error) {

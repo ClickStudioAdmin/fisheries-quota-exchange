@@ -16,8 +16,10 @@ import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { requireTradeReadyError } from "@/lib/organisations/eligibility";
-import { getHoldingJurisdictionCode } from "@/lib/fisheries/queries";
+import { getHoldingJurisdictionCode, getFishery, getHolding } from "@/lib/fisheries/queries";
+import { fisheryAllowsOffering } from "@/lib/fisheries/types";
 import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
+import { qldListingUsage } from "@/lib/listings/quota-usage";
 import { requireActiveOrganisationMatch } from "@/lib/organisations/active-session";
 import {
   SELLER_ACKNOWLEDGEMENTS,
@@ -68,6 +70,20 @@ export async function createListingAction(
     return { error: "Choose sale or lease." };
   }
 
+  const holding = await getHolding(holdingId);
+  const fishery = holding ? await getFishery(holding.fishery_id) : null;
+  if (
+    !fishery ||
+    !fisheryAllowsOffering(fishery, offering as (typeof LISTING_OFFERINGS)[number])
+  ) {
+    return {
+      error:
+        offering === "LEASE"
+          ? "This fishery cannot be listed for lease."
+          : "This fishery cannot be listed for sale.",
+    };
+  }
+
   if (!Number.isFinite(quantity) || quantity <= 0) {
     return { error: "Quantity must be greater than zero." };
   }
@@ -87,6 +103,19 @@ export async function createListingAction(
   }
 
   const jurisdictionCode = await getHoldingJurisdictionCode(holdingId);
+  const usage = tradeRequiresQldProfile(jurisdictionCode)
+    ? qldListingUsage({
+        quantity,
+        unusedRaw: read(formData, "unused_quantity"),
+        usedRaw: read(formData, "used_quantity"),
+        required: true,
+      })
+    : ({ unused: null, used: null } as const);
+
+  if ("error" in usage) {
+    return { error: usage.error };
+  }
+
   const accountError = await requireTradeReadyError(organisationId, {
     requireQldProfile: tradeRequiresQldProfile(jurisdictionCode),
   });
@@ -113,6 +142,8 @@ export async function createListingAction(
     p_quantity: quantity,
     p_unit_price_aud: unitPrice,
     p_expires_at: new Date(expiresAt).toISOString(),
+    p_unused_quantity: usage.unused,
+    p_used_quantity: usage.used,
   });
 
   if (error) {
@@ -167,10 +198,22 @@ export async function updateListingAction(
     return { error: "Price must be greater than zero." };
   }
 
+  const usage = qldListingUsage({
+    quantity,
+    unusedRaw: read(formData, "unused_quantity"),
+    usedRaw: read(formData, "used_quantity"),
+  });
+
+  if ("error" in usage) {
+    return { error: usage.error };
+  }
+
   const { error } = await supabase.rpc("update_listing", {
     p_listing_id: listingId,
     p_quantity: quantity,
     p_unit_price_aud: unitPrice,
+    p_unused_quantity: usage.unused,
+    p_used_quantity: usage.used,
   });
 
   if (error) {

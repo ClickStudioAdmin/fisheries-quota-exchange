@@ -18,6 +18,8 @@ export type Order = {
   buyer_organisation_id: number;
   offering: "SALE" | "LEASE";
   quantity: string;
+  unused_quantity: string | null;
+  used_quantity: string | null;
   unit_price_aud: string;
   amount_aud: string;
   fee_percent: string;

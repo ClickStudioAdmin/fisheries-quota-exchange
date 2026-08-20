@@ -12,6 +12,8 @@ export type TransferPartyDetails = {
   abn: string | null;
   entity_kind: "INDIVIDUAL" | "COMPANY" | null;
   acn: string | null;
+  date_of_birth: string | null;
+  email: string | null;
   mobile: string | null;
   registered_address: AustralianAddress | null;
   postal_address: AustralianAddress | null;
@@ -35,6 +37,8 @@ export type TransferApplicationPdfData = {
   fisheryName: string;
   quotaTypeName: string;
   quantity: string;
+  unusedQuantity: string;
+  usedQuantity: string;
   unitLabel: string;
   seller: TransferPartyDetails;
   buyer: TransferPartyDetails;

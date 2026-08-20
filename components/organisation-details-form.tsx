@@ -383,6 +383,23 @@ export function OrganisationDetailsForm({
               />
             </div>
           ) : null}
+          {entityKind === "INDIVIDUAL" ? (
+            <div>
+              <FieldLabel htmlFor="date_of_birth" required>
+                Date of birth
+              </FieldLabel>
+              <input
+                id="date_of_birth"
+                name="date_of_birth"
+                type="date"
+                defaultValue={organisation.date_of_birth ?? ""}
+                min="1900-01-01"
+                required={canEdit}
+                disabled={!canEdit}
+                className={fieldClassName}
+              />
+            </div>
+          ) : null}
           <div>
             <FieldLabel htmlFor="abn" required>
               ABN

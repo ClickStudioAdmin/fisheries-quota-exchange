@@ -10,6 +10,7 @@ export const TRANSFER_PROFILE_FIELD_LABELS: Record<TransferProfileField, string>
     legal_name: "Legal name",
     abn: "ABN",
     acn: "ACN",
+    date_of_birth: "Date of birth",
     mobile: "Phone",
     registered_address: "Registered address",
     postal_address: "Postal address",
@@ -40,6 +41,7 @@ export function missingTransferProfileFields(input: {
     | "entity_kind"
     | "abn"
     | "acn"
+    | "date_of_birth"
     | "mobile"
     | "registered_address"
     | "postal_address"
@@ -53,6 +55,7 @@ export function missingTransferProfileFields(input: {
 }): TransferProfileField[] {
   const missing: TransferProfileField[] = [];
   const company = input.organisation.entity_kind === "COMPANY";
+  const individual = input.organisation.entity_kind === "INDIVIDUAL";
 
   for (const field of input.process.requiredProfileFields) {
     switch (field) {
@@ -67,6 +70,11 @@ export function missingTransferProfileFields(input: {
         break;
       case "acn":
         if (company && !present(input.organisation.acn)) missing.push(field);
+        break;
+      case "date_of_birth":
+        if (individual && !present(input.organisation.date_of_birth)) {
+          missing.push(field);
+        }
         break;
       case "mobile":
         if (!present(input.organisation.mobile)) missing.push(field);

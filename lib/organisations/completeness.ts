@@ -11,6 +11,7 @@ export const TRADE_READY_FIELD_LABELS: Record<TradeReadyField, string> = {
   legal_name: "Legal name",
   abn: "ABN",
   acn: "ACN",
+  date_of_birth: "Date of birth",
   mobile: "Phone",
   registered_address: "Registered address",
   postal_address: "Postal address",
@@ -45,6 +46,7 @@ export function missingBusinessDetailFields(
     | "entity_kind"
     | "abn"
     | "acn"
+    | "date_of_birth"
     | "mobile"
     | "registered_address"
     | "postal_address"
@@ -53,11 +55,15 @@ export function missingBusinessDetailFields(
 ): TradeReadyField[] {
   const missing: TradeReadyField[] = [];
   const company = organisation.entity_kind === "COMPANY";
+  const individual = organisation.entity_kind === "INDIVIDUAL";
 
   if (!organisation.entity_kind) missing.push("entity_kind");
   if (!present(organisation.legal_name)) missing.push("legal_name");
   if (!present(organisation.abn)) missing.push("abn");
   if (company && !present(organisation.acn)) missing.push("acn");
+  if (individual && !present(organisation.date_of_birth)) {
+    missing.push("date_of_birth");
+  }
   if (!present(organisation.mobile)) missing.push("mobile");
   if (!addressComplete(organisation.registered_address)) {
     missing.push("registered_address");

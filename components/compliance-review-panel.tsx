@@ -8,6 +8,7 @@ import {
   panelClassName,
 } from "@/components/surface";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
+import { formatIsoDate } from "@/lib/format";
 import { formatAustralianAddress } from "@/lib/organisations/address";
 import {
   entityKindLabel,
@@ -90,10 +91,21 @@ function PartyDetails({
                 ...(company
                   ? [{ label: "ACN", value: display(party.acn) }]
                   : []),
+                ...(party.entity_kind === "INDIVIDUAL"
+                  ? [
+                      {
+                        label: "Date of birth",
+                        value: party.date_of_birth
+                          ? formatIsoDate(party.date_of_birth)
+                          : "—",
+                      },
+                    ]
+                  : []),
                 { label: "ABN", value: display(party.abn) },
                 { label: "Legal name", value: display(party.legal_name) },
                 { label: "Trading name", value: display(party.trading_name) },
                 { label: "Phone", value: display(party.mobile) },
+                { label: "Email", value: display(party.email) },
               ],
             },
             {

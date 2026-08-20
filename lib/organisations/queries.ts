@@ -10,6 +10,7 @@ import type {
 } from "@/lib/organisations/types";
 import { isEntityKind, isOrganisationRole } from "@/lib/organisations/types";
 import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
+import { parseIsoDate } from "@/lib/format";
 import { parseAustralianAddress } from "@/lib/organisations/address";
 import { parseEnabledJurisdictionCodes } from "@/lib/organisations/enabled-jurisdictions";
 import { parseDisabledProductEmails } from "@/lib/email/product-emails";
@@ -41,7 +42,7 @@ function asEntityKind(value: unknown): EntityKind | null {
 }
 
 const ORGANISATION_COLUMNS =
-  "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at, entity_kind, acn, mobile, registered_address, postal_address, postal_same_as_registered, enabled_jurisdiction_codes";
+  "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at, entity_kind, acn, date_of_birth, mobile, registered_address, postal_address, postal_same_as_registered, enabled_jurisdiction_codes";
 
 const JURISDICTION_PROFILE_COLUMNS =
   "organisation_id, jurisdiction_id, client_reference, licence_number, fishery_symbols";
@@ -66,6 +67,7 @@ function mapOrganisation(row: Record<string, unknown>): Organisation {
     updated_at: String(row.updated_at),
     entity_kind: asEntityKind(row.entity_kind),
     acn: asNullableText(row.acn),
+    date_of_birth: parseIsoDate(row.date_of_birth),
     mobile: asNullableText(row.mobile),
     registered_address: parseAustralianAddress(row.registered_address),
     postal_address: parseAustralianAddress(row.postal_address),
@@ -98,7 +100,7 @@ async function selectOrganisation(
     .eq("id", id)
     .maybeSingle();
 
-  if (error?.message?.includes("hide_identity") || error?.message?.includes("entity_kind") || error?.message?.includes("postal_same_as_registered") || error?.message?.includes("enabled_jurisdiction_codes")) {
+  if (error?.message?.includes("hide_identity") || error?.message?.includes("entity_kind") || error?.message?.includes("postal_same_as_registered") || error?.message?.includes("enabled_jurisdiction_codes") || error?.message?.includes("date_of_birth")) {
     const fallback = await supabase
       .from("organisations")
       .select(
@@ -116,6 +118,7 @@ async function selectOrganisation(
       hide_identity: false,
       entity_kind: null,
       acn: null,
+      date_of_birth: null,
       mobile: null,
       registered_address: null,
       postal_address: null,

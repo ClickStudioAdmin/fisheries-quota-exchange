@@ -8,7 +8,7 @@ import {
   quantityTypeLabel,
 } from "@/lib/fisheries/types";
 import { getHoldingVerificationWorkspace } from "@/lib/fisheries/verification";
-import { formatTableDateTime } from "@/lib/format";
+import { formatIsoDate, formatTableDateTime } from "@/lib/format";
 import { formatAustralianAddress } from "@/lib/organisations/address";
 import { entityKindLabel } from "@/lib/organisations/types";
 import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
@@ -130,6 +130,16 @@ export async function HoldingVerificationPanel({
                       },
                       ...(company
                         ? [{ label: "ACN", value: display(organisation.acn) }]
+                        : []),
+                      ...(organisation.entity_kind === "INDIVIDUAL"
+                        ? [
+                            {
+                              label: "Date of birth",
+                              value: organisation.date_of_birth
+                                ? formatIsoDate(organisation.date_of_birth)
+                                : "—",
+                            },
+                          ]
                         : []),
                       { label: "ABN", value: display(organisation.abn) },
                       {

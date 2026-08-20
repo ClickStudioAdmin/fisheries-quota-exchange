@@ -1,4 +1,5 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { formatIsoDate } from "@/lib/format";
 import { formatAustralianAddress } from "@/lib/organisations/address";
 import type {
   TransferApplicationPdfData,
@@ -133,7 +134,16 @@ function PartyBlock({
       {party.entity_kind === "COMPANY" ? (
         <Field label="ACN" value={party.acn} />
       ) : null}
+      {party.entity_kind === "INDIVIDUAL" ? (
+        <Field
+          label="Date of birth"
+          value={
+            party.date_of_birth ? formatIsoDate(party.date_of_birth) : null
+          }
+        />
+      ) : null}
       <Field label="Phone" value={party.mobile} />
+      <Field label="Email" value={party.email} />
       <Field
         label="Registered address"
         value={formatAustralianAddress(party.registered_address) || null}

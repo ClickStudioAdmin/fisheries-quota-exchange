@@ -12,7 +12,7 @@ import {
   listingOfferingLabel,
   listingTypeLabel,
 } from "@/lib/listings/types";
-import { formatTableDateTime } from "@/lib/format";
+import { formatIsoDate, formatTableDateTime } from "@/lib/format";
 import { jurisdictionLabel, quantityTypeLabel } from "@/lib/fisheries/types";
 import { formatAustralianAddress } from "@/lib/organisations/address";
 import { entityKindLabel } from "@/lib/organisations/types";
@@ -179,6 +179,16 @@ export async function ListingApprovalPanel({
                       },
                       ...(company
                         ? [{ label: "ACN", value: display(organisation.acn) }]
+                        : []),
+                      ...(organisation.entity_kind === "INDIVIDUAL"
+                        ? [
+                            {
+                              label: "Date of birth",
+                              value: organisation.date_of_birth
+                                ? formatIsoDate(organisation.date_of_birth)
+                                : "—",
+                            },
+                          ]
                         : []),
                       { label: "ABN", value: display(organisation.abn) },
                       {

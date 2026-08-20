@@ -146,6 +146,8 @@ export async function createFisheryAction(
   const code = read(formData, "code");
   const jurisdictionId = Number(formData.get("jurisdiction_id"));
   const quantityType = read(formData, "quantity_type");
+  const saleAllowed = read(formData, "sale_allowed") === "true";
+  const leaseAllowed = read(formData, "lease_allowed") === "true";
 
   if (!name || !Number.isInteger(jurisdictionId)) {
     return { error: "Jurisdiction and name are required." };
@@ -153,6 +155,10 @@ export async function createFisheryAction(
 
   if (!isQuantityType(quantityType)) {
     return { error: "Choose Kg or Units." };
+  }
+
+  if (!saleAllowed && !leaseAllowed) {
+    return { error: "Choose sale, lease, or both." };
   }
 
   const logo = readLogoFile(formData);
@@ -170,6 +176,8 @@ export async function createFisheryAction(
       code: code || null,
       jurisdiction_id: jurisdictionId,
       quantity_type: quantityType,
+      sale_allowed: saleAllowed,
+      lease_allowed: leaseAllowed,
     })
     .select("id")
     .single();
@@ -195,6 +203,8 @@ export async function updateFisheryAction(
   const code = read(formData, "code");
   const jurisdictionId = Number(formData.get("jurisdiction_id"));
   const quantityType = read(formData, "quantity_type");
+  const saleAllowed = read(formData, "sale_allowed") === "true";
+  const leaseAllowed = read(formData, "lease_allowed") === "true";
 
   if (!Number.isInteger(fisheryId) || !name || !Number.isInteger(jurisdictionId)) {
     return { error: "Title and jurisdiction are required." };
@@ -204,6 +214,10 @@ export async function updateFisheryAction(
     return { error: "Choose Kg or Units." };
   }
 
+  if (!saleAllowed && !leaseAllowed) {
+    return { error: "Choose sale, lease, or both." };
+  }
+
   const { error } = await admin.supabase
     .from("fisheries")
     .update({
@@ -211,6 +225,8 @@ export async function updateFisheryAction(
       code: code || null,
       jurisdiction_id: jurisdictionId,
       quantity_type: quantityType,
+      sale_allowed: saleAllowed,
+      lease_allowed: leaseAllowed,
     })
     .eq("id", fisheryId);
 

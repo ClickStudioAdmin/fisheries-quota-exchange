@@ -39,6 +39,8 @@ function party(
     abn: "12345678901",
     entity_kind: kind,
     acn: kind === "COMPANY" ? "123456789" : null,
+    date_of_birth: kind === "INDIVIDUAL" ? "1985-03-15" : null,
+    email: `${kind === "COMPANY" ? "office" : "person"}${id}@example.com`,
     mobile: "0412345678",
     registered_address: address,
     postal_address: address,
@@ -66,6 +68,8 @@ function pdfData(
     fisheryName: "East Coast Spanish Mackerel Fishery",
     quotaTypeName: "Quota",
     quantity: "5000.00",
+    unusedQuantity: "5000.00",
+    usedQuantity: "0",
     unitLabel: "kg",
     seller: party(1, "COMPANY", "Test Org"),
     buyer: party(2, "COMPANY", "Test Buyer Pty Ltd"),
@@ -101,31 +105,62 @@ test("matchFdu1465QuotaRow maps Spanish mackerel to SM units", () => {
   assert.equal(row?.used, "ECIFF-25");
 });
 
+test("matchFdu1465QuotaRow maps form-fishery names without matching other GM regions", () => {
+  const sm = matchFdu1465QuotaRow("Spanish Mackerel units units");
+  assert.equal(sm?.unused, "ECIFF-24");
+  const gm5 = matchFdu1465QuotaRow("Grey Mackerel Region 5 units units");
+  assert.equal(gm5?.unused, "ECIFF-3");
+  assert.equal(
+    matchFdu1465QuotaRow("Grey Mackerel Region 1 units units"),
+    null,
+  );
+});
+
 test("fdu1465FieldValues fills company transferor and transferee plus SM units", () => {
   const values = fdu1465FieldValues(pdfData());
   assert.equal(values["Textfield-2"], "Test Org");
+  assert.equal(values["Textfield-0"], undefined);
+  assert.equal(values["Textfield-1"], undefined);
   assert.equal(values["Textfield-3"], undefined);
   assert.equal(values["Text10"], "1 Wharf St, Brisbane, QLD");
   assert.equal(values["Text12"], "4000");
   assert.equal(values["Textfield-7"], "0412345678");
+  assert.equal(values["Textfield-8"], "office1@example.com");
   assert.equal(values["Textfield-9"], "QLD-1");
   assert.equal(values["Textfield-19"], "Test Buyer Pty Ltd");
   assert.equal(values["Textfield-10"], undefined);
   assert.equal(values["Text6"], "1 Wharf St, Brisbane, QLD");
   assert.equal(values["Textfield-23"], "0412345678");
+  assert.equal(values["Textfield-24"], "office2@example.com");
   assert.equal(values["Textfield-25"], "QLD-2");
   assert.equal(values["ECIFF-24"], "5000");
-  assert.equal(values["ECIFF-25"], undefined);
-  assert.equal(values["Textfield-0"], undefined);
+  assert.equal(values["ECIFF-25"], "0");
 });
 
-test("fdu1465FieldValues uses section 1 for an individual transferee", () => {
+test("fdu1465FieldValues fills unused and used quota columns", () => {
   const values = fdu1465FieldValues(
-    pdfData({ buyer: party(2, "INDIVIDUAL", "Jane Citizen") }),
+    pdfData({ unusedQuantity: "4000", usedQuantity: "1000" }),
   );
+  assert.equal(values["ECIFF-24"], "4000");
+  assert.equal(values["ECIFF-25"], "1000");
+});
+
+test("fdu1465FieldValues uses section 1 for an individual transferor and transferee", () => {
+  const values = fdu1465FieldValues(
+    pdfData({
+      seller: party(1, "INDIVIDUAL", "Alex Fisher"),
+      buyer: party(2, "INDIVIDUAL", "Jane Citizen"),
+    }),
+  );
+  assert.equal(values["Textfield-0"], "Fisher");
+  assert.equal(values["Textfield-1"], "Alex");
+  assert.equal(values["Textfield-2"], undefined);
+  assert.equal(values["Textfield-8"], "person1@example.com");
   assert.equal(values["Textfield-19"], undefined);
   assert.equal(values["Textfield-10"], "Citizen");
   assert.equal(values["Textfield-11"], "Jane");
+  assert.equal(values["Textfield-12"], "15/03/1985");
+  assert.equal(values["Textfield-24"], "person2@example.com");
 });
 
 test("official FDU1465 template accepts mapped field names", async () => {
@@ -161,15 +196,37 @@ test("fdu1469FieldValues fills company parties and SM unused units", () => {
     pdfData({ formType: "FDU1469", formVersion: "V02/26" }),
   );
   assert.equal(values["Textfield-3"], "Test Org");
+  assert.equal(values["Textfield-1"], undefined);
+  assert.equal(values["Textfield-2"], undefined);
   assert.equal(values["Text2"], "1 Wharf St, Brisbane, QLD");
   assert.equal(values["Text3"], "4000");
-  assert.equal(values["Textfield-10"], "0412345678");
+  assert.equal(values["Textfield-8"], "0412345678");
+  assert.equal(values["Textfield-9"], "office1@example.com");
+  assert.equal(values["Textfield-10"], "QLD-1");
   assert.equal(values["Textfield-20"], "Test Buyer Pty Ltd");
   assert.equal(values["Text7"], "1 Wharf St, Brisbane, QLD");
   assert.equal(values["Textfield-24"], "0412345678");
+  assert.equal(values["Textfield-25"], "office2@example.com");
   assert.equal(values["Textfield-26"], "QLD-2");
   assert.equal(values["Text15"], "5000");
-  assert.equal(values["Textfield-1"], undefined);
+});
+
+test("fdu1469FieldValues uses section 1 for an individual transferor and transferee", () => {
+  const values = fdu1469FieldValues(
+    pdfData({
+      formType: "FDU1469",
+      formVersion: "V02/26",
+      seller: party(1, "INDIVIDUAL", "Alex Fisher"),
+      buyer: party(2, "INDIVIDUAL", "Jane Citizen"),
+    }),
+  );
+  assert.equal(values["Textfield-1"], "Fisher");
+  assert.equal(values["Textfield-2"], "Alex");
+  assert.equal(values["Textfield-3"], undefined);
+  assert.equal(values["Textfield-20"], undefined);
+  assert.equal(values["Textfield-11"], "Citizen");
+  assert.equal(values["Textfield-12"], "Jane");
+  assert.equal(values["Textfield-13"], "15/03/1985");
 });
 
 test("official fill locks pre-filled FDU1465 fields", async () => {

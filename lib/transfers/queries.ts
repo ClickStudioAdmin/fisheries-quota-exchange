@@ -9,6 +9,7 @@ import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { canDownloadTransferDocument } from "@/lib/transfers/access";
 import { getOrder } from "@/lib/orders/queries";
 import type { Order } from "@/lib/orders/types";
+import { parseIsoDate } from "@/lib/format";
 import { isEntityKind } from "@/lib/organisations/types";
 import { parseAustralianAddress } from "@/lib/organisations/address";
 import { currentTransferDocuments } from "@/lib/transfers/filenames";
@@ -82,6 +83,8 @@ function parseParty(value: unknown): TransferPartyDetails | null {
         ? row.entity_kind
         : null,
     acn: asNullableText(row.acn),
+    date_of_birth: parseIsoDate(row.date_of_birth),
+    email: asNullableText(row.email),
     mobile: asNullableText(row.mobile),
     registered_address: parseAustralianAddress(row.registered_address),
     postal_address: parseAustralianAddress(row.postal_address),
@@ -395,6 +398,8 @@ export function transferPdfData(
     fisheryName: order.fishery_name,
     quotaTypeName: order.quota_type_name,
     quantity: String(order.quantity ?? ""),
+    unusedQuantity: String(order.unused_quantity ?? order.quantity ?? ""),
+    usedQuantity: String(order.used_quantity ?? "0"),
     unitLabel: order.unit_label,
     seller,
     buyer,

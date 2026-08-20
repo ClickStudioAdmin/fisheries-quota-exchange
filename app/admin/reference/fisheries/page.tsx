@@ -44,6 +44,12 @@ export default async function FisheriesAdminPage() {
             sortable: true,
             filter: "select",
           },
+          {
+            key: "offerings",
+            header: "Offerings",
+            sortable: true,
+            filter: "select",
+          },
         ]}
         rows={fisheries.map((fishery) => {
           const jurisdiction = jurisdictions.find(
@@ -58,6 +64,12 @@ export default async function FisheriesAdminPage() {
               code: fishery.code ?? "",
               jurisdiction: label,
               quantityType: fishery.quantity_type === "KG" ? "Kg" : "Units",
+              offerings:
+                fishery.sale_allowed && fishery.lease_allowed
+                  ? "Sale and lease"
+                  : fishery.sale_allowed
+                    ? "Sale"
+                    : "Lease",
             },
             display: {
               code: fishery.code ?? "—",

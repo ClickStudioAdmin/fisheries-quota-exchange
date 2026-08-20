@@ -5,7 +5,7 @@ import type { Listing } from "@/lib/listings/types";
 import { parseComplianceChecklist } from "@/lib/orders/checklist";
 
 const columns =
-  "id, organisation_id, holding_id, listing_type, offering, quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note, approval_checklist, starting_price_aud, reserve_price_aud, bid_increment_aud, starts_at";
+  "id, organisation_id, holding_id, listing_type, offering, quantity, unused_quantity, used_quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note, approval_checklist, starting_price_aud, reserve_price_aud, bid_increment_aud, starts_at";
 
 type ListingQuery = PromiseLike<{
   data: unknown;

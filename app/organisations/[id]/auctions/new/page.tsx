@@ -15,7 +15,7 @@ import { SwitchAccountNotice } from "@/components/switch-account-notice";
 import { loginPath } from "@/lib/auth/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
-import { holdingIsVerified, quantityTypeLabel } from "@/lib/fisheries/types";
+import { holdingIsVerified, quantityTypeLabel, fisheryOfferingOptions } from "@/lib/fisheries/types";
 import { getUser } from "@/lib/supabase/server";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
@@ -114,6 +114,7 @@ export default async function NewAuctionPage({
   const unitLabel = fishery
     ? quantityTypeLabel(fishery.quantity_type)
     : "units";
+  const offerings = fishery ? fisheryOfferingOptions(fishery) : [];
   const availableLabel = String(available);
   const autoPublish = verified && settings.auto_approve_listings;
   const feeNote = platformFeeDisclosure(settings);
@@ -156,6 +157,8 @@ export default async function NewAuctionPage({
             holdingId={holding.id}
             maxQuantity={availableLabel}
             unitLabel={unitLabel}
+            offerings={offerings}
+            requireQldUsage={requireQld}
             autoPublish={autoPublish}
             feeNote={feeNote}
           />

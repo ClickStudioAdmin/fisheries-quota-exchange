@@ -10,9 +10,10 @@ type Field =
   | {
       name: string;
       label: string;
-      type?: "text" | "date" | "number";
+      type?: "text" | "date" | "number" | "checkbox";
       required?: boolean;
       defaultValue?: string;
+      defaultChecked?: boolean;
     }
   | {
       name: string;
@@ -78,7 +79,7 @@ export function AdminCreateForm({
         <div key={field.name}>
           {field.type === "file" ? (
             <p className="text-sm text-ink">{field.label}</p>
-          ) : (
+          ) : field.type === "checkbox" ? null : (
             <label htmlFor={field.name} className="block text-sm text-ink">
               {field.label}
             </label>
@@ -120,6 +121,20 @@ export function AdminCreateForm({
                   : undefined
               }
             />
+          ) : field.type === "checkbox" ? (
+            <label
+              htmlFor={field.name}
+              className="flex items-center gap-2 text-sm text-ink"
+            >
+              <input
+                id={field.name}
+                name={field.name}
+                type="checkbox"
+                value="true"
+                defaultChecked={field.defaultChecked ?? false}
+              />
+              {field.label}
+            </label>
           ) : field.type === "textarea" ? (
             <textarea
               id={field.name}

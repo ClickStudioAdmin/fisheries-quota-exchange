@@ -74,6 +74,43 @@ function readAcn(value: string) {
   return { acn } as const;
 }
 
+function readDateOfBirth(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return { error: "Date of birth is required for an individual." } as const;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return { error: "Enter a valid date of birth." } as const;
+  }
+
+  const [year, month, day] = trimmed.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day ||
+    year < 1900
+  ) {
+    return { error: "Enter a valid date of birth." } as const;
+  }
+
+  const today = new Date();
+  const todayUtc = Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate(),
+  );
+
+  if (date.getTime() > todayUtc) {
+    return { error: "Date of birth cannot be in the future." } as const;
+  }
+
+  return { dateOfBirth: trimmed } as const;
+}
+
 function readMobile(value: string) {
   const mobile = value.trim();
 
@@ -156,9 +193,13 @@ export async function updateOrganisationDetailsAction(
   const fisherySymbols = readText(formData, "qld_fishery_symbols");
   const abnResult = readAbn(readText(formData, "abn"));
   const company = entityKindRaw === "COMPANY";
+  const individual = entityKindRaw === "INDIVIDUAL";
   const acnResult = company
     ? readAcn(readText(formData, "acn"))
     : ({ acn: null } as const);
+  const dateOfBirthResult = individual
+    ? readDateOfBirth(readText(formData, "date_of_birth"))
+    : ({ dateOfBirth: null } as const);
 
   if (!supabase || !Number.isInteger(organisationId)) {
     return { error: "Organisation not found." };
@@ -184,6 +225,10 @@ export async function updateOrganisationDetailsAction(
 
   if ("error" in acnResult) {
     return { error: acnResult.error };
+  }
+
+  if ("error" in dateOfBirthResult) {
+    return { error: dateOfBirthResult.error };
   }
 
   if ("error" in mobileResult) {
@@ -225,6 +270,7 @@ export async function updateOrganisationDetailsAction(
       hide_identity: hideIdentity,
       entity_kind: entityKindRaw || null,
       acn: acnResult.acn,
+      date_of_birth: dateOfBirthResult.dateOfBirth,
       mobile: mobileResult.mobile,
       registered_address: registeredResult.address,
       postal_address: postalDifferent ? postalAddress : registeredResult.address,
