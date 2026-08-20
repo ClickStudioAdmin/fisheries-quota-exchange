@@ -303,54 +303,52 @@ export function OrganisationDetailsForm({
               className={fieldClassName}
             />
           </div>
+          <AddressFields
+            prefix="registered"
+            legend="Registered address"
+            address={organisation.registered_address}
+            canEdit={canEdit}
+          />
+          <div className="divide-y divide-line border border-line bg-paper-raised">
+            <SettingsSwitchRow
+              name="postal_different"
+              checked={postalDifferent}
+              onCheckedChange={setPostalDifferent}
+              disabled={!canEdit}
+              title="Postal address is different"
+              description="Turn this on if mail should go to a different address from the registered address."
+            />
+          </div>
+          {postalDifferent ? (
+            <AddressFields
+              prefix="postal"
+              legend="Postal address"
+              address={organisation.postal_address}
+              canEdit={canEdit}
+            />
+          ) : null}
+          <div className="divide-y divide-line border border-line bg-paper-raised">
+            <SettingsSwitchRow
+              name="hide_identity"
+              defaultChecked={organisation.hide_identity}
+              disabled={!canEdit}
+              title="Hide my Identity"
+              description='Marketplace, fishery, and auction pages show “Private Seller” for listings and “Private Buyer” for bids instead of this business name, including when you are signed in as this business. Orders, invoices, and admin records still use the real name. Platform admins see the real name in a tooltip.'
+            />
+          </div>
+          {canEdit ? (
+            <button type="submit" className={buttonClassName} disabled={pending}>
+              {pending ? "Saving…" : "Save"}
+            </button>
+          ) : (
+            <p className="text-sm text-ink-muted">
+              Only owners and admins can edit business details.
+            </p>
+          )}
         </div>
         {qldJurisdictionId ? (
           <QldFisheriesFields profile={qldProfile} canEdit={canEdit} />
         ) : null}
-      </div>
-      <div className="max-w-lg space-y-4">
-        <AddressFields
-          prefix="registered"
-          legend="Registered address"
-          address={organisation.registered_address}
-          canEdit={canEdit}
-        />
-      <div className="divide-y divide-line border border-line bg-paper-raised">
-        <SettingsSwitchRow
-          name="postal_different"
-          checked={postalDifferent}
-          onCheckedChange={setPostalDifferent}
-          disabled={!canEdit}
-          title="Postal address is different"
-          description="Turn this on if mail should go to a different address from the registered address."
-        />
-      </div>
-      {postalDifferent ? (
-        <AddressFields
-          prefix="postal"
-          legend="Postal address"
-          address={organisation.postal_address}
-          canEdit={canEdit}
-        />
-      ) : null}
-      <div className="divide-y divide-line border border-line bg-paper-raised">
-        <SettingsSwitchRow
-          name="hide_identity"
-          defaultChecked={organisation.hide_identity}
-          disabled={!canEdit}
-          title="Hide my Identity"
-          description='Marketplace, fishery, and auction pages show “Private Seller” for listings and “Private Buyer” for bids instead of this business name, including when you are signed in as this business. Orders, invoices, and admin records still use the real name. Platform admins see the real name in a tooltip.'
-        />
-      </div>
-      {canEdit ? (
-        <button type="submit" className={buttonClassName} disabled={pending}>
-          {pending ? "Saving…" : "Save"}
-        </button>
-      ) : (
-        <p className="text-sm text-ink-muted">
-          Only owners and admins can edit business details.
-        </p>
-      )}
       </div>
     </form>
   );
