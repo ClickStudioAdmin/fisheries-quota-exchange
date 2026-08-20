@@ -57,6 +57,8 @@ export type DataTableRow = {
   needsAction?: boolean;
   details?: DataTableDetail[];
   detailsTitle?: string;
+  detailsQuote?: string | null;
+  detailsQuoteLabel?: string;
 };
 
 type DataTableRowExtrasProps = {
@@ -123,7 +125,7 @@ function rowText(row: DataTableRow) {
     item.label,
     item.value,
   ]);
-  return [...values, ...labels, ...details].join(" ").toLowerCase();
+  return [...values, ...labels, ...details, row.detailsQuote ?? ""].join(" ").toLowerCase();
 }
 
 function bulkActionEnabled(
@@ -174,11 +176,15 @@ function filterColumns(columns: DataTableColumn[]): DataTableColumn[] {
   });
 }
 
+function rowHasDetails(row: DataTableRow) {
+  return Boolean(row.details?.length || row.detailsQuote?.trim());
+}
+
 function detailsControl(
   row: DataTableRow,
   column: DataTableColumn,
 ) {
-  if (!column.details || !row.details?.length) {
+  if (!column.details || !rowHasDetails(row)) {
     return null;
   }
 
@@ -187,12 +193,14 @@ function detailsControl(
       <ViewMessageModal
         title={row.detailsTitle ?? "Message"}
         label={column.detailsLink}
-        message={row.details.map((item) => item.value).join("\n\n")}
+        quote={row.detailsQuote}
+        quoteLabel={row.detailsQuoteLabel}
+        message={row.details?.map((item) => item.value).join("\n\n") ?? ""}
       />
     );
   }
 
-  return <DetailsTooltip details={row.details} />;
+  return <DetailsTooltip details={row.details ?? []} />;
 }
 
 function DetailsTooltip({ details }: { details: DataTableDetail[] }) {
@@ -277,10 +285,7 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
               <div className="text-[10px] uppercase tracking-[0.12em] text-ink-muted">
                 {line.label}
               </div>
-              {column.details &&
-              line.key === "id" &&
-              row.details &&
-              row.details.length > 0 ? (
+              {column.details && line.key === "id" && rowHasDetails(row) ? (
                 <span className="inline-flex items-center gap-1.5">
                   <span>{text}</span>
                   {detailsControl(row, column)}
@@ -312,7 +317,7 @@ function cellContent(row: DataTableRow, column: DataTableColumn) {
     "—"
   );
 
-  if (!column.details || !row.details?.length) {
+  if (!column.details || !rowHasDetails(row)) {
     return content;
   }
 

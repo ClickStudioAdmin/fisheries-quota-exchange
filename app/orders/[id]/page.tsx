@@ -411,7 +411,7 @@ export default async function OrderPage({
                 <div className="mt-2">
                   <ViewMessageModal
                     title="Update requested"
-                    message={updateNotes.buyer ?? ""}
+                    quote={updateNotes.buyer}
                   />
                 </div>
                 {isBuyer && !admin ? (
@@ -433,7 +433,7 @@ export default async function OrderPage({
                 <div className="mt-2">
                   <ViewMessageModal
                     title="Update requested"
-                    message={updateNotes.seller ?? ""}
+                    quote={updateNotes.seller}
                   />
                 </div>
                 {isSeller && !admin ? (

@@ -5,6 +5,8 @@ export type NoticeEmailData = {
   preview: string;
   heading: string;
   paragraphs: string[];
+  highlight?: string;
+  highlightLabel?: string;
   actionLabel?: string;
   actionUrl?: string;
 };

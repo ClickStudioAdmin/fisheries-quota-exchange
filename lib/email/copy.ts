@@ -358,16 +358,18 @@ export const emailCopy = {
     orderId: number;
     orderUrl: string;
     note: string;
-  }) =>
-    notice(
+  }) => ({
+    ...notice(
       `FQX needs an update for order ${input.orderId}`,
       [
-        input.note,
         "Compliance review is still open. Payment is held and the quota reservation stays in place.",
         "Update your details on Business Settings → Details if needed, then FQX can continue this review.",
       ],
       { label: "View order", url: input.orderUrl },
     ),
+    highlight: input.note,
+    highlightLabel: "Message from FQX",
+  }),
   transfer_complete: (input: { orderId: number; orderUrl: string }) =>
     notice(
       `Quota transfer is complete for FQX order ${input.orderId}`,

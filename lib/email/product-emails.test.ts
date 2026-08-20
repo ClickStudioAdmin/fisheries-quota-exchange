@@ -217,9 +217,9 @@ test("cancelled-order copy differs for buyer and seller", () => {
     note: "Please update the Queensland fisheries client number.",
   });
   assert.match(
-    updateRequested.paragraphs[0] ?? "",
+    updateRequested.highlight ?? "",
     /Queensland fisheries client number/,
   );
-  assert.match(updateRequested.paragraphs[1] ?? "", /still open/);
+  assert.match(updateRequested.paragraphs[0] ?? "", /still open/);
   assert.doesNotMatch(updateRequested.paragraphs.join(" "), /cancelled/);
 });

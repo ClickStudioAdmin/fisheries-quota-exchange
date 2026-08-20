@@ -11,7 +11,10 @@ import {
   openNotificationAction,
 } from "@/lib/notifications/actions";
 import { inAppNotificationLinkLabel } from "@/lib/notifications/href";
-import type { InAppNotification } from "@/lib/notifications/types";
+import {
+  parseInAppMessage,
+  type InAppNotification,
+} from "@/lib/notifications/types";
 import { formatTableDateTime } from "@/lib/format";
 
 export function InAppNotificationList({
@@ -68,20 +71,28 @@ export function InAppNotificationList({
             ],
           },
         ]}
-        rows={notifications.map((item) => ({
-          id: item.id,
-          values: {
-            message: item.title,
-            when: item.created_at,
-            status: item.read_at ? "read" : "unread",
-          },
-          display: {
-            when: formatTableDateTime(item.created_at),
-            status: item.read_at ? "Read" : "Unread",
-          },
-          details: item.body ? [{ label: "Detail", value: item.body }] : [],
-          detailsTitle: item.title,
-        }))}
+        rows={notifications.map((item) => {
+          const parsed = parseInAppMessage(item.body, item.template);
+
+          return {
+            id: item.id,
+            values: {
+              message: item.title,
+              when: item.created_at,
+              status: item.read_at ? "read" : "unread",
+            },
+            display: {
+              when: formatTableDateTime(item.created_at),
+              status: item.read_at ? "Read" : "Unread",
+            },
+            details: parsed.message
+              ? [{ label: "Detail", value: parsed.message }]
+              : [],
+            detailsQuote: parsed.highlight,
+            detailsQuoteLabel: parsed.highlight ? "Message from FQX" : undefined,
+            detailsTitle: item.title,
+          };
+        })}
       >
         {notifications.map((item) => (
           <DataTableRowExtras

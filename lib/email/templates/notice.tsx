@@ -20,12 +20,16 @@ export function NoticeEmail({
   preview,
   heading,
   paragraphs,
+  highlight,
+  highlightLabel,
   actionLabel,
   actionUrl,
 }: {
   preview: string;
   heading: string;
   paragraphs: string[];
+  highlight?: string;
+  highlightLabel?: string;
   actionLabel?: string;
   actionUrl?: string;
   children?: ReactNode;
@@ -48,6 +52,41 @@ export function NoticeEmail({
           <Text style={{ fontSize: "16px", lineHeight: "24px", color: ink }}>
             {heading}
           </Text>
+          {highlight ? (
+            <Section
+              style={{
+                marginTop: "8px",
+                marginBottom: "8px",
+                border: `1px solid ${sea}`,
+                backgroundColor: "#e8f1f2",
+                padding: "12px 16px",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: "11px",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: muted,
+                  margin: "0 0 8px",
+                }}
+              >
+                {highlightLabel ?? "Message from FQX"}
+              </Text>
+              <Text
+                style={{
+                  fontSize: "16px",
+                  lineHeight: "24px",
+                  color: ink,
+                  fontWeight: 600,
+                  margin: 0,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {highlight}
+              </Text>
+            </Section>
+          ) : null}
           {paragraphs.map((paragraph, index) => (
             <Text
               key={`${index}-${paragraph.slice(0, 24)}`}
