@@ -205,10 +205,6 @@ export async function HoldingVerificationPanel({
       </div>
       <section id="review-decision" className={panelClassName}>
         <h3 className="text-lg font-semibold text-ink">Decision</h3>
-        <p className="mt-2 text-sm text-ink-muted">
-          Verifying lets this business list or auction this holding. It does
-          not move quota.
-        </p>
         <div className="mt-4">
           <VerifyHoldingForm
             holdingId={holding.id}

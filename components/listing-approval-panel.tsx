@@ -273,14 +273,12 @@ export async function ListingApprovalPanel({
       </div>
       <section id="review-decision" className={panelClassName}>
         <h3 className="text-lg font-semibold text-ink">Decision</h3>
-        <p className="mt-2 text-sm text-ink-muted">
-          Approving publishes this listing. It does not move quota.
-        </p>
         <div className="mt-4">
           <ReviewListingForms
             listingId={listing.id}
             reviewQueue={reviewQueue}
             canApprove={checklistIsComplete(checks, listing.approval_checklist)}
+            isAuction={auction}
           />
         </div>
       </section>
