@@ -7,6 +7,8 @@ import type {
   TransferPartyDetails,
 } from "./application-data.ts";
 import {
+  FDU1465_TEMPLATE_FILENAME,
+  FDU1469_TEMPLATE_FILENAME,
   fdu1465FieldValues,
   fdu1469FieldValues,
   fduAddressParts,
@@ -15,6 +17,7 @@ import {
   matchFdu1465QuotaRow,
   matchFdu1469QuotaRow,
 } from "./fdu1465-map.ts";
+import { fillOfficialPdf } from "./official-pdf.ts";
 
 const address = {
   line1: "1 Wharf St",
@@ -167,6 +170,36 @@ test("fdu1469FieldValues fills company parties and SM unused units", () => {
   assert.equal(values["Textfield-26"], "QLD-2");
   assert.equal(values["Text15"], "5000");
   assert.equal(values["Textfield-1"], undefined);
+});
+
+test("official fill locks pre-filled FDU1465 fields", async () => {
+  const values = fdu1465FieldValues(pdfData());
+  const form = (
+    await PDFDocument.load(
+      await fillOfficialPdf(FDU1465_TEMPLATE_FILENAME, values),
+    )
+  ).getForm();
+
+  for (const name of Object.keys(values)) {
+    assert.equal(form.getTextField(name).isReadOnly(), true, name);
+  }
+  assert.equal(form.getTextField("Textfield-0").isReadOnly(), false);
+});
+
+test("official fill locks pre-filled FDU1469 fields", async () => {
+  const values = fdu1469FieldValues(
+    pdfData({ formType: "FDU1469", formVersion: "V02/26" }),
+  );
+  const form = (
+    await PDFDocument.load(
+      await fillOfficialPdf(FDU1469_TEMPLATE_FILENAME, values),
+    )
+  ).getForm();
+
+  for (const name of Object.keys(values)) {
+    assert.equal(form.getTextField(name).isReadOnly(), true, name);
+  }
+  assert.equal(form.getTextField("Textfield-1").isReadOnly(), false);
 });
 
 test("official FDU1469 template accepts mapped field names", async () => {

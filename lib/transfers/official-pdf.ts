@@ -38,7 +38,9 @@ export async function fillOfficialPdf(
 
   for (const [name, value] of Object.entries(values)) {
     try {
-      form.getTextField(name).setText(value);
+      const field = form.getTextField(name);
+      field.setText(value);
+      field.enableReadOnly();
     } catch (error) {
       console.error(`Could not fill PDF field ${name}`, error);
     }

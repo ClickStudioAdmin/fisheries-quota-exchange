@@ -41,12 +41,12 @@ Embedded e-sign is a later phase, after a provider is chosen and checked against
 
 ## Forms
 
-PDF layout for Queensland **sales** fills official FDU1465 (`lib/transfers/forms/fdu1465-v09-23.pdf`). Queensland **leases** fill official FDU1469 (`lib/transfers/forms/fdu1469-v02-26.pdf`). Both are pre-filled from stored business and order data and stored in a private bucket. Signature, witness, date of birth, licence-transfer, quota-year, and fee-payment fields stay blank for offline completion. Dummy tax invoices stay on `@react-pdf/renderer`.
+PDF layout for Queensland **sales** fills official FDU1465 (`lib/transfers/forms/fdu1465-v09-23.pdf`). Queensland **leases** fill official FDU1469 (`lib/transfers/forms/fdu1469-v02-26.pdf`). Both are pre-filled from stored business and order data and stored in a private bucket. Pre-filled party and quota fields are read-only. Signature, witness, date of birth, licence-transfer, quota-year, and fee-payment fields stay blank and editable for offline completion. Dummy tax invoices stay on `@react-pdf/renderer`.
 
 | Offering | Form type | Version | Notes |
 | --- | --- | --- | --- |
-| Sale | `FDU1465` | `V09/23` | Official Register transfer of quota or effort unit application. FQX pre-fills party and quota fields; parties sign and witness offline. |
-| Lease | `FDU1469` | `V02/26` | Official Register temporary transfer of quota or effort unit application. FQX pre-fills party and unused-unit fields; parties sign and witness offline. |
+| Sale | `FDU1465` | `V09/23` | Official Register transfer of quota or effort unit application. FQX pre-fills and locks party and quota fields; parties sign and witness offline. |
+| Lease | `FDU1469` | `V02/26` | Official Register temporary transfer of quota or effort unit application. FQX pre-fills and locks party and unused-unit fields; parties sign and witness offline. |
 
 Child statuses (QLD only): `READY` → `AWAITING_SIGNED_PACK` (after generate) → `ADMIN_REVIEW` (after signed pack) → `SUBMITTED` → `PROCESSING` → `APPROVED` or `ACTION_REQUIRED`. Corrections regenerate a new unsigned PDF; previous files stay.
 
