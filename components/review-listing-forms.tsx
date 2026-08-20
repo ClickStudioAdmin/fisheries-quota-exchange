@@ -11,9 +11,11 @@ import {
 export function ReviewListingForms({
   listingId,
   reviewQueue = [],
+  canApprove = false,
 }: {
   listingId: number;
   reviewQueue?: number[];
+  canApprove?: boolean;
 }) {
   const remaining = reviewQueue.filter((id) => id !== listingId);
   const approveFormId = `approve-listing-${listingId}`;
@@ -25,9 +27,15 @@ export function ReviewListingForms({
         {remaining.map((id) => (
           <input key={id} type="hidden" name="review_queue" value={id} />
         ))}
+        {!canApprove ? (
+          <p className="mb-3 text-sm text-ink-muted">
+            Save all approval checks above before you can approve this listing.
+          </p>
+        ) : null}
         <PendingSubmitButton
           className={tableButtonClassName}
           pendingLabel="Approving…"
+          disabled={!canApprove}
         >
           Approve
         </PendingSubmitButton>

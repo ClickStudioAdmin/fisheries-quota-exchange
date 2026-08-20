@@ -13,6 +13,7 @@ import { formatAustralianAddress } from "@/lib/organisations/address";
 import { entityKindLabel } from "@/lib/organisations/types";
 import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { adminHoldingPath } from "@/lib/organisations/paths";
+import { checklistIsComplete } from "@/lib/orders/checklist";
 
 function display(value: string | null | undefined) {
   const text = value?.trim() ?? "";
@@ -107,7 +108,7 @@ export async function HoldingVerificationPanel({
               hidden={{ holding_id: String(holding.id) }}
               checks={checks}
               completed={holding.verification_checklist}
-              hint="Save as you work. Verifying still records the decision."
+              proceedMessage="All checks are saved. Continue to the Decision section below to verify this holding."
             />
           </div>
         </section>
@@ -202,7 +203,7 @@ export async function HoldingVerificationPanel({
           )}
         </section>
       </div>
-      <section className={panelClassName}>
+      <section id="review-decision" className={panelClassName}>
         <h3 className="text-lg font-semibold text-ink">Decision</h3>
         <p className="mt-2 text-sm text-ink-muted">
           Verifying lets this business list or auction this holding. It does
@@ -213,6 +214,10 @@ export async function HoldingVerificationPanel({
             holdingId={holding.id}
             reviewQueue={reviewQueue}
             withRequestChanges
+            canApprove={checklistIsComplete(
+              checks,
+              holding.verification_checklist,
+            )}
           />
         </div>
       </section>

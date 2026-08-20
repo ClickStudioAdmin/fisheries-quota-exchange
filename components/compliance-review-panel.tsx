@@ -1,6 +1,7 @@
 import { ReviewOrderForms } from "@/components/review-order-forms";
 import { ReviewChecklistForm } from "@/components/review-checklist-form";
 import { saveComplianceChecklistAction } from "@/lib/orders/actions";
+import { checklistIsComplete } from "@/lib/orders/checklist";
 import {
   LabeledFieldGroups,
   LabeledFields,
@@ -200,6 +201,7 @@ export function ComplianceReviewPanel({
               hidden={{ order_id: String(order.id) }}
               checks={workspace.process.complianceChecks}
               completed={order.compliance_checklist}
+              proceedMessage="All checks are saved. Continue to the Decision section below to approve compliance."
             />
           </div>
         </section>
@@ -220,7 +222,7 @@ export function ComplianceReviewPanel({
           fallbackName={order.buyer_name}
         />
       </div>
-      <section className={panelClassName}>
+      <section id="review-decision" className={panelClassName}>
         <h3 className="text-lg font-semibold text-ink">Decision</h3>
         {qld && incomplete ? (
           <p className="mt-2 text-sm text-ink-muted">
@@ -230,7 +232,14 @@ export function ComplianceReviewPanel({
           </p>
         ) : null}
         <div className="mt-4">
-          <ReviewOrderForms order={order} reviewQueue={reviewQueue} />
+          <ReviewOrderForms
+            order={order}
+            reviewQueue={reviewQueue}
+            canApprove={checklistIsComplete(
+              workspace.process.complianceChecks,
+              order.compliance_checklist,
+            )}
+          />
         </div>
       </section>
     </div>

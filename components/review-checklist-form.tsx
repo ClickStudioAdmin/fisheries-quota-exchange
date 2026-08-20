@@ -16,7 +16,8 @@ export function ReviewChecklistForm({
   hidden,
   checks,
   completed,
-  hint = "Save as you work. Approving still records the decision.",
+  hint = "Save as you work. You must save all checks before you can approve.",
+  proceedMessage = "All checks are saved. Continue to the Decision section below to approve.",
 }: {
   action: (
     prev: ReviewFormState,
@@ -26,6 +27,7 @@ export function ReviewChecklistForm({
   checks: readonly string[];
   completed: readonly string[];
   hint?: string;
+  proceedMessage?: string;
 }) {
   const [state, formAction] = useActionState(action, initialState);
   const [checked, setChecked] = useState(() => new Set(completed));
@@ -36,6 +38,8 @@ export function ReviewChecklistForm({
   }, [saved]);
 
   const done = checks.filter((item) => checked.has(item)).length;
+  const savedComplete =
+    checks.length > 0 && checks.every((item) => completed.includes(item));
 
   return (
     <form action={formAction} className="space-y-4">
@@ -75,12 +79,20 @@ export function ReviewChecklistForm({
           </li>
         ))}
       </ul>
+      {savedComplete ? (
+        <p className="text-sm text-sea" role="status">
+          {proceedMessage}{" "}
+          <a href="#review-decision" className="font-medium underline">
+            Go to Decision
+          </a>
+        </p>
+      ) : null}
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
         </p>
       ) : null}
-      {state.message ? (
+      {state.message && !savedComplete ? (
         <p className="text-sm text-sea" role="status">
           {state.message}
         </p>

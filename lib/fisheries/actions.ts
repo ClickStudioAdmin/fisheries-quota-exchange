@@ -17,7 +17,7 @@ import {
 } from "@/lib/email/events";
 import { userFacingError } from "@/lib/errors/user-message";
 import { requireActiveOrganisationMatch } from "@/lib/organisations/active-session";
-import { selectedComplianceChecks } from "@/lib/orders/checklist";
+import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
 import { holdingVerificationChecks } from "@/lib/fisheries/verification-checks";
 import {
   FISHERY_LOGO_BUCKET,
@@ -422,6 +422,21 @@ export async function verifyHoldingAction(formData: FormData) {
   }
 
   const holding = await getHolding(holdingId);
+
+  if (!holding || holding.verification_status !== "PENDING_VERIFICATION") {
+    return;
+  }
+
+  const jurisdictionCode = await getHoldingJurisdictionCode(holding.id);
+  if (
+    !checklistIsComplete(
+      holdingVerificationChecks(jurisdictionCode),
+      holding.verification_checklist,
+    )
+  ) {
+    return;
+  }
+
   await admin.supabase.rpc("verify_quota_holding", {
     p_holding_id: holdingId,
   });

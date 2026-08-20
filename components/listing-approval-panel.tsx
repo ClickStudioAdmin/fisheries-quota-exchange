@@ -18,6 +18,7 @@ import { formatAustralianAddress } from "@/lib/organisations/address";
 import { entityKindLabel } from "@/lib/organisations/types";
 import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { adminHoldingPath } from "@/lib/organisations/paths";
+import { checklistIsComplete } from "@/lib/orders/checklist";
 
 function display(value: string | null | undefined) {
   const text = value?.trim() ?? "";
@@ -156,7 +157,7 @@ export async function ListingApprovalPanel({
               hidden={{ listing_id: String(listing.id) }}
               checks={checks}
               completed={listing.approval_checklist}
-              hint="Save as you work. Approving still records the decision."
+              proceedMessage="All checks are saved. Continue to the Decision section below to approve this listing."
             />
           </div>
         </section>
@@ -270,13 +271,17 @@ export async function ListingApprovalPanel({
           )}
         </section>
       </div>
-      <section className={panelClassName}>
+      <section id="review-decision" className={panelClassName}>
         <h3 className="text-lg font-semibold text-ink">Decision</h3>
         <p className="mt-2 text-sm text-ink-muted">
           Approving publishes this listing. It does not move quota.
         </p>
         <div className="mt-4">
-          <ReviewListingForms listingId={listing.id} reviewQueue={reviewQueue} />
+          <ReviewListingForms
+            listingId={listing.id}
+            reviewQueue={reviewQueue}
+            canApprove={checklistIsComplete(checks, listing.approval_checklist)}
+          />
         </div>
       </section>
     </div>

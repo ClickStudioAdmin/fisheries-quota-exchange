@@ -15,6 +15,21 @@ test("auditEventLabel covers business and order events", () => {
   assert.equal(auditEventCategory("TRANSFER_APPROVED"), "Orders");
   assert.equal(auditEventLabel("PAYMENTS_SETUP_UPDATED"), "Payments setup updated");
   assert.equal(auditEventLabel("UNKNOWN_EVENT"), "Unknown Event");
+  assert.equal(
+    auditEventLabel("HOLDING_CHECK_COMPLETED"),
+    "Verification check completed",
+  );
+  assert.equal(
+    auditEventLabel("LISTING_CHECK_COMPLETED"),
+    "Listing check completed",
+  );
+  assert.equal(
+    auditEventLabel("COMPLIANCE_CHECK_COMPLETED"),
+    "Compliance check completed",
+  );
+  assert.equal(auditEventCategory("HOLDING_CHECK_COMPLETED"), "Holdings");
+  assert.equal(auditEventCategory("LISTING_CHECK_COMPLETED"), "Listings");
+  assert.equal(auditEventCategory("COMPLIANCE_CHECK_COMPLETED"), "Orders");
 });
 
 test("auditEventCategory groups people, listings, orders, and platform", () => {
@@ -71,6 +86,22 @@ test("auditEventSummary names people without emails", () => {
     }),
     "A user",
   );
+  assert.equal(
+    auditEventSummary({
+      event_type: "HOLDING_CHECK_COMPLETED",
+      entity_id: 3,
+      payload: { check: "Confirm the fishery and jurisdiction match." },
+    }),
+    "Confirm the fishery and jurisdiction match.",
+  );
+  assert.equal(
+    auditEventSummary({
+      event_type: "COMPLIANCE_CHECK_COMPLETED",
+      entity_id: 9,
+      payload: { check: "Confirm buyer and seller identities match this order." },
+    }),
+    "Confirm buyer and seller identities match this order.",
+  );
 });
 
 test("auditActorLabel never returns emails", () => {
@@ -113,6 +144,23 @@ test("auditActorLabel never returns emails", () => {
       personNames: { "click.studio.admin@gmail.com": "Click Admin" },
     }),
     "Click Admin",
+  );
+  assert.equal(
+    auditActorLabel(
+      { ...order, event_type: "HOLDING_CHECK_COMPLETED" },
+      {
+        viewer: "admin",
+        personNames: { "click.studio.admin@gmail.com": "Click Admin" },
+      },
+    ),
+    "Click Admin",
+  );
+  assert.equal(
+    auditActorLabel(
+      { ...order, event_type: "HOLDING_CHECK_COMPLETED" },
+      business,
+    ),
+    "FQX",
   );
 });
 

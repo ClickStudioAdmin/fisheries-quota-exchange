@@ -9,7 +9,7 @@ import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
 import { transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
 import { getOrder } from "@/lib/orders/queries";
-import { selectedComplianceChecks } from "@/lib/orders/checklist";
+import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
 import { getOrderJurisdictionCode } from "@/lib/transfers/queries";
 import { getTransferProcess } from "@/lib/transfers/registry";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
@@ -262,6 +262,17 @@ export async function approveComplianceAction(formData: FormData) {
   const note = read(formData, "review_note");
 
   if (order) {
+    const jurisdictionCode = await getOrderJurisdictionCode(order);
+    const process = getTransferProcess(jurisdictionCode, order.offering);
+    if (
+      !checklistIsComplete(
+        process.complianceChecks,
+        order.compliance_checklist,
+      )
+    ) {
+      return;
+    }
+
     await supabase.rpc("approve_compliance", {
       p_order_id: order.id,
       p_note: note || null,

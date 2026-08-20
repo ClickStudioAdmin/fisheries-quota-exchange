@@ -176,8 +176,11 @@ export function auditActorLabel(
 
   if (
     event.event_type === "HOLDING_VERIFIED" ||
+    event.event_type === "HOLDING_CHECK_COMPLETED" ||
     event.event_type === "LISTING_PUBLISHED" ||
-    event.event_type === "AUCTION_PUBLISHED"
+    event.event_type === "LISTING_CHECK_COMPLETED" ||
+    event.event_type === "AUCTION_PUBLISHED" ||
+    event.event_type === "COMPLIANCE_CHECK_COMPLETED"
   ) {
     return "FQX";
   }
@@ -217,12 +220,16 @@ export function auditEventLabel(eventType: string) {
       return "Holding adjusted";
     case "HOLDING_VERIFIED":
       return "Holding verified";
+    case "HOLDING_CHECK_COMPLETED":
+      return "Verification check completed";
     case "HOLDING_UNVERIFIED":
       return "Holding unverified";
     case "LISTING_CREATED":
       return "Listing created";
     case "LISTING_UPDATED":
       return "Listing updated";
+    case "LISTING_CHECK_COMPLETED":
+      return "Listing check completed";
     case "LISTING_PUBLISHED":
       return "Listing published";
     case "LISTING_CANCELLED":
@@ -247,6 +254,8 @@ export function auditEventLabel(eventType: string) {
       return "Payment received";
     case "PAYMENT_FAILED":
       return "Payment failed";
+    case "COMPLIANCE_CHECK_COMPLETED":
+      return "Compliance check completed";
     case "COMPLIANCE_APPROVED":
       return "Compliance approved";
     case "COMPLIANCE_REJECTED":
@@ -383,6 +392,14 @@ export function auditEventSummary(
     return payload.charges_enabled === true
       ? "Charges enabled"
       : "Charges not enabled";
+  }
+
+  if (
+    event.event_type === "HOLDING_CHECK_COMPLETED" ||
+    event.event_type === "LISTING_CHECK_COMPLETED" ||
+    event.event_type === "COMPLIANCE_CHECK_COMPLETED"
+  ) {
+    return safeLabel(payloadString(payload, "check")) || "—";
   }
 
   if (buyer || seller) {

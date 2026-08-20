@@ -14,9 +14,11 @@ import type { Order } from "@/lib/orders/types";
 export function ReviewOrderForms({
   order,
   reviewQueue = [],
+  canApprove = false,
 }: {
   order: Pick<Order, "id" | "status">;
   reviewQueue?: number[];
+  canApprove?: boolean;
 }) {
   const remaining = reviewQueue.filter((id) => id !== order.id);
 
@@ -32,9 +34,15 @@ export function ReviewOrderForms({
         <form action={approveComplianceAction} className="space-y-3">
           <input type="hidden" name="order_id" value={order.id} />
           {queueFields()}
+          {!canApprove ? (
+            <p className="text-sm text-ink-muted">
+              Save all compliance checks above before you can approve.
+            </p>
+          ) : null}
           <PendingSubmitButton
             className={tableButtonClassName}
             pendingLabel="Approving…"
+            disabled={!canApprove}
           >
             Approve
           </PendingSubmitButton>

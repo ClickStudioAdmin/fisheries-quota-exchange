@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   parseComplianceChecklist,
   selectedComplianceChecks,
+  checklistIsComplete,
 } from "./checklist.ts";
 
 test("parseComplianceChecklist keeps unique non-empty strings", () => {
@@ -22,4 +23,12 @@ test("selectedComplianceChecks keeps process order and drops unknown items", () 
     ),
     ["Confirm identities", "Quota is reserved"],
   );
+});
+
+test("checklistIsComplete requires every saved check", () => {
+  const checks = ["A", "B"];
+  assert.equal(checklistIsComplete(checks, ["A", "B"]), true);
+  assert.equal(checklistIsComplete(checks, ["A"]), false);
+  assert.equal(checklistIsComplete(checks, ["A", "B", "extra"]), true);
+  assert.equal(checklistIsComplete([], []), false);
 });

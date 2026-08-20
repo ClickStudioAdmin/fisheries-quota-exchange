@@ -12,10 +12,12 @@ export function VerifyHoldingForm({
   holdingId,
   reviewQueue = [],
   withRequestChanges = false,
+  canApprove = false,
 }: {
   holdingId: number;
   reviewQueue?: number[];
   withRequestChanges?: boolean;
+  canApprove?: boolean;
 }) {
   const remaining = reviewQueue.filter((id) => id !== holdingId);
   const noteId = `holding-changes-${holdingId}`;
@@ -30,9 +32,16 @@ export function VerifyHoldingForm({
         {remaining.map((id) => (
           <input key={id} type="hidden" name="review_queue" value={id} />
         ))}
+        {!canApprove ? (
+          <p className="mb-3 text-sm text-ink-muted">
+            Save all verification checks above before you can verify this
+            holding.
+          </p>
+        ) : null}
         <PendingSubmitButton
           className={tableButtonClassName}
           pendingLabel="Verifying…"
+          disabled={!canApprove}
         >
           Verify holding
         </PendingSubmitButton>

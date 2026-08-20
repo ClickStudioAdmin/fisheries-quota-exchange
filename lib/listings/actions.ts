@@ -11,7 +11,7 @@ import {
 } from "@/lib/listings/types";
 import { getListing, listAllListings } from "@/lib/listings/queries";
 import { listingApprovalChecks } from "@/lib/listings/approval-checks";
-import { selectedComplianceChecks } from "@/lib/orders/checklist";
+import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
 import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
@@ -295,6 +295,22 @@ export async function approveListingAction(formData: FormData) {
     return;
   }
 
+  const listing = await getListing(listingId);
+
+  if (!listing || listing.status !== "PENDING_APPROVAL") {
+    return;
+  }
+
+  const jurisdictionCode = await getHoldingJurisdictionCode(listing.holding_id);
+  if (
+    !checklistIsComplete(
+      listingApprovalChecks(jurisdictionCode, listing.listing_type),
+      listing.approval_checklist,
+    )
+  ) {
+    return;
+  }
+
   const { error } = await supabase.rpc("approve_listing", {
     p_listing_id: listingId,
     p_note: note || null,
@@ -304,7 +320,6 @@ export async function approveListingAction(formData: FormData) {
     return;
   }
 
-  const listing = await getListing(listingId);
   if (listing) {
     await notifyListingPublished(listing);
   }

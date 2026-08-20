@@ -20,3 +20,15 @@ export function selectedComplianceChecks(
   const chosen = new Set(submitted);
   return processChecks.filter((item) => chosen.has(item));
 }
+
+export function checklistIsComplete(
+  required: readonly string[],
+  completed: readonly string[],
+) {
+  if (required.length === 0) {
+    return false;
+  }
+
+  const done = new Set(completed);
+  return required.every((item) => done.has(item));
+}

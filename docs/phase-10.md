@@ -14,7 +14,7 @@ Never trust the browser for payment status, bid time, quota availability, or tra
 
 ## Flow
 
-1. Payment stays as it is. Compliance review shows the order, buyer and seller business details, and a checklist of jurisdiction steps (Queensland instructions on QLD orders). Admins tick steps and save progress. Approving still moves the order to `AWAITING_TRANSFER`.
+1. Payment stays as it is. Compliance review shows the order, buyer and seller business details, and a checklist of jurisdiction steps (Queensland instructions on QLD orders). Admins tick steps and save progress. Each newly saved check writes an audit event. Approve stays disabled until every required check is saved; the browser is not trusted. Approving then moves the order to `AWAITING_TRANSFER` and writes the existing compliance-approved audit event.
 2. FQX resolves the process from the listing holding’s fishery jurisdiction plus offering (`SALE` or `LEASE`). Queensland uses `QLD_SALE` (FDU1465) or `QLD_LEASE`. Everything else uses `SIMULATED`.
 3. A `transfer_applications` row holds **child** status. It does not replace `orders.status`.
 4. Shared transfer fields live on the business (entity kind, ACN for companies, phone, structured Australian addresses). Queensland-only fields live on `organisation_jurisdiction_profiles`. Owners and admins select jurisdictions on **Business Settings → Details**; Queensland fields appear when Queensland is selected. There is no second onboarding form.
@@ -57,20 +57,20 @@ Child statuses (QLD only): `READY` → `AWAITING_SIGNED_PACK` (after generate) �
 | `/dashboard/account` | Business Details includes entity, ACN (companies), phone, structured Australian addresses, a jurisdiction multi-select (Queensland selectable now), and Queensland Fisheries fields when Queensland is selected |
 | `/orders/[id]` | During `AWAITING_TRANSFER` on a QLD order: status, missing fields, prepare/download unsigned PDF |
 | `/orders/[id]/transfer/[documentId]` | Auth-checked download of a stored transfer PDF |
-| `/admin/orders` | Compliance review shows order, buyer and seller details, and a saveable checklist of jurisdiction steps. Cancel is admin-only (awaiting payment or compliance). QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
-| `/admin/holdings` | Holding verification review shows holding, business details, recent ledger, and a saveable checklist. Queensland holdings add client-number and licence checks. Verify still records the decision; the checklist is a working aid |
-| `/admin/listings` | Listing approval review shows listing, seller, covering holding, and a saveable checklist. Auctions add start/reserve/increment checks. Queensland listings add client-number and licence checks. Approve still publishes the listing; the checklist is a working aid |
+| `/admin/orders` | Compliance review shows order, buyer and seller details, and a saveable checklist of jurisdiction steps. Approve stays disabled until every required check is saved. Cancel is admin-only (awaiting payment or compliance). QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
+| `/admin/holdings` | Holding verification review shows holding, business details, recent ledger, and a saveable checklist. Queensland holdings add client-number and licence checks. Verify stays disabled until every required check is saved; each saved check and the final verify write audit events |
+| `/admin/listings` | Listing approval review shows listing, seller, covering holding, and a saveable checklist. Auctions add start/reserve/increment checks. Queensland listings add client-number and licence checks. Approve stays disabled until every required check is saved; each saved check and the final publish write audit events |
 
 ## Database
 
-Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260820020000_organisation_structured_address.sql`, `20260820030000_admin_cancel_order.sql`, `20260820040000_organisation_trade_ready.sql`, `20260820050000_order_compliance_checklist.sql`, `20260820060000_holding_verification_checklist.sql`, `20260820070000_listing_approval_checklist.sql`, `20260820080000_organisation_enabled_jurisdictions.sql`
+Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260820020000_organisation_structured_address.sql`, `20260820030000_admin_cancel_order.sql`, `20260820040000_organisation_trade_ready.sql`, `20260820050000_order_compliance_checklist.sql`, `20260820060000_holding_verification_checklist.sql`, `20260820070000_listing_approval_checklist.sql`, `20260820080000_organisation_enabled_jurisdictions.sql`, `20260820090000_review_checklist_audit.sql`
 
 - `organisations`: `entity_kind`, `acn`, `mobile`, structured `registered_address` / `postal_address` (street, suburb, state, postcode), `postal_same_as_registered`, `enabled_jurisdiction_codes` (Queensland is the only selectable code in this phase)
 - `organisation_jurisdiction_profiles`: per business and jurisdiction (QLD client number, commercial fishing licence, symbols)
 - `organisation_is_trade_ready`: security-definer boolean for buy/list gating (identity plus QLD licence pair when the fishery is Queensland). Does not return field values.
-- `orders.compliance_checklist`: jsonb array of completed compliance-check labels. Platform admins save it during `AWAITING_COMPLIANCE`; it is not a legal sign-off.
-- `quota_holdings.verification_checklist`: jsonb array of completed verification-check labels. Platform admins save it during `PENDING_VERIFICATION`; it is not a legal sign-off.
-- `listings.approval_checklist`: jsonb array of completed approval-check labels. Platform admins save it during `PENDING_APPROVAL`; it is not a legal sign-off.
+- `orders.compliance_checklist`: jsonb array of completed compliance-check labels. Platform admins save it during `AWAITING_COMPLIANCE`. Approve compliance requires every required check to be saved. Each newly saved check writes `COMPLIANCE_CHECK_COMPLETED`. It is not a legal sign-off.
+- `quota_holdings.verification_checklist`: jsonb array of completed verification-check labels. Platform admins save it during `PENDING_VERIFICATION`. Verify requires every required check to be saved. Each newly saved check writes `HOLDING_CHECK_COMPLETED`. It is not a legal sign-off.
+- `listings.approval_checklist`: jsonb array of completed approval-check labels. Platform admins save it during `PENDING_APPROVAL`. Approve requires every required check to be saved. Each newly saved check writes `LISTING_CHECK_COMPLETED`. It is not a legal sign-off.
 - `transfer_applications`: one per order; process code; child status; FQ submission fields
 - `transfer_documents`: `UNSIGNED_APPLICATION`, `SIGNED_PACK`, `SUPPORTING`; storage path; never mutated
 - Private storage bucket `transfer-documents`
