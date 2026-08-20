@@ -102,30 +102,32 @@ export function QldTransferAdmin({
             Generate the unsigned application from stored business details.
             Parties sign and witness it offline.
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {workspace.latestUnsigned ? (
-              <a
-                href={transferDocumentPath(
-                  workspace.order.id,
-                  workspace.latestUnsigned.id,
-                )}
-                className={tableSecondaryButtonClassName}
-              >
-                Download unsigned PDF
-              </a>
-            ) : null}
-            {workspace.latestSignedPack ? (
-              <a
-                href={transferDocumentPath(
-                  workspace.order.id,
-                  workspace.latestSignedPack.id,
-                )}
-                className={tableSecondaryButtonClassName}
-              >
-                Download signed pack
-              </a>
-            ) : null}
-          </div>
+          {workspace.latestUnsigned || workspace.latestSignedPack ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {workspace.latestUnsigned ? (
+                <a
+                  href={transferDocumentPath(
+                    workspace.order.id,
+                    workspace.latestUnsigned.id,
+                  )}
+                  className={tableSecondaryButtonClassName}
+                >
+                  Download unsigned PDF
+                </a>
+              ) : null}
+              {workspace.latestSignedPack ? (
+                <a
+                  href={transferDocumentPath(
+                    workspace.order.id,
+                    workspace.latestSignedPack.id,
+                  )}
+                  className={tableSecondaryButtonClassName}
+                >
+                  Download signed pack
+                </a>
+              ) : null}
+            </div>
+          ) : null}
           {canGenerate ? (
             <form action={generateTransferDocumentAdminAction} className="mt-4">
               <input type="hidden" name="order_id" value={workspace.order.id} />
