@@ -47,3 +47,36 @@ test("buyer cannot download the seller-signed form until FQX accepts it", () => 
     true,
   );
 });
+
+test("buyer and seller can download the completed pack after it is uploaded", () => {
+  assert.equal(
+    canDownloadTransferDocument({
+      documentType: "SIGNED_PACK",
+      applicationStatus: "ADMIN_REVIEW",
+      isAdmin: false,
+      isBuyer: true,
+      isSeller: false,
+    }),
+    true,
+  );
+  assert.equal(
+    canDownloadTransferDocument({
+      documentType: "SIGNED_PACK",
+      applicationStatus: "ADMIN_REVIEW",
+      isAdmin: false,
+      isBuyer: false,
+      isSeller: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canDownloadTransferDocument({
+      documentType: "SIGNED_PACK",
+      applicationStatus: "AWAITING_BUYER_SIGNATURE",
+      isAdmin: false,
+      isBuyer: true,
+      isSeller: false,
+    }),
+    false,
+  );
+});

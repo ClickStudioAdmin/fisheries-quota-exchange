@@ -43,10 +43,19 @@ export function TransferOrderPanel({
     isBuyer &&
     status === "AWAITING_BUYER_SIGNATURE" &&
     workspace.latestSellerSigned;
+  const signedPackDownload =
+    Boolean(workspace.latestSignedPack) &&
+    (isBuyer || isSeller) &&
+    (status === "ADMIN_REVIEW" ||
+      status === "SUBMITTED" ||
+      status === "PROCESSING" ||
+      status === "APPROVED");
   const sellerUpload =
     canPrepare && isSeller && status === "AWAITING_SELLER_SIGNATURE";
   const buyerUpload =
     canPrepare && isBuyer && status === "AWAITING_BUYER_SIGNATURE";
+  const showDocuments =
+    Boolean(sellerDownload || buyerDownload || signedPackDownload);
 
   return (
     <div>
@@ -92,7 +101,7 @@ export function TransferOrderPanel({
           <TransferPrepareForm orderId={workspace.order.id} />
         </div>
       ) : null}
-      {sellerDownload || buyerDownload ? (
+      {showDocuments ? (
         <div className="mt-6">
           <div className="flex max-w-lg flex-col gap-2">
           {sellerDownload ? (
@@ -116,6 +125,20 @@ export function TransferOrderPanel({
               Download seller-signed PDF
             </PdfDownloadLink>
           ) : null}
+          {signedPackDownload && workspace.latestSignedPack ? (
+            <PdfDownloadLink
+              href={transferDocumentPath(
+                workspace.order.id,
+                workspace.latestSignedPack.id,
+              )}
+              hint={
+                workspace.latestSignedPack.original_filename ??
+                "Signed application"
+              }
+            >
+              Download signed application
+            </PdfDownloadLink>
+          ) : null}
           </div>
           {sellerUpload ? (
             <TransferPartyUploadForm
@@ -130,6 +153,7 @@ export function TransferOrderPanel({
             />
           ) : null}
           {canPrepare &&
+          isSeller &&
           (status === "ACTION_REQUIRED" || status === "ADMIN_REVIEW") ? (
             <div className="mt-4">
               <TransferPrepareForm orderId={workspace.order.id} />
@@ -150,6 +174,18 @@ export function TransferOrderPanel({
         <p className="mt-4 text-sm text-ink-muted">
           FQX has your signed form and is checking it before the buyer can
           download it.
+        </p>
+      ) : null}
+      {isBuyer &&
+      (status === "ADMIN_REVIEW" ||
+        status === "SUBMITTED" ||
+        status === "PROCESSING") ? (
+        <p className="mt-4 text-sm text-ink-muted">
+          FQX has the completed pack
+          {status === "ADMIN_REVIEW"
+            ? " and is reviewing it."
+            : " and has sent it to Fisheries Queensland."}{" "}
+          You do not need to do anything.
         </p>
       ) : null}
     </div>

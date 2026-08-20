@@ -1,18 +1,17 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  buttonClassName,
-  fieldClassName,
-  tableButtonClassName,
-} from "@/components/auth-card";
+import { buttonClassName, tableButtonClassName } from "@/components/auth-card";
+import { FileDropzone } from "@/components/file-dropzone";
 import {
   removeFisheryLogoAction,
   updateFisheryLogoAction,
   type AdminFormState,
 } from "@/lib/fisheries/actions";
+import { FISHERY_LOGO_MAX_BYTES } from "@/lib/fisheries/logo";
 
 const initialState: AdminFormState = {};
+const logoAccept = "image/jpeg,image/png,image/webp,image/gif";
 
 export function FisheryLogoForm({
   fisheryId,
@@ -50,20 +49,18 @@ export function FisheryLogoForm({
         <form action={saveAction} className="space-y-3">
           <input type="hidden" name="fishery_id" value={String(fisheryId)} />
           <div>
-            <label htmlFor="logo" className="block text-sm text-ink">
+            <p className="text-sm text-ink">
               {hasLogo ? "Replace logo" : "Upload logo"}
-            </label>
-            <input
+            </p>
+            <FileDropzone
               id="logo"
               name="logo"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              accept={logoAccept}
               required
-              className={fieldClassName}
+              emptyTitle="Drop image here or click to browse"
+              hint="JPEG, PNG, WebP, or GIF. 2 MB max"
+              maxBytes={FISHERY_LOGO_MAX_BYTES}
             />
-            <p className="mt-1 text-sm text-ink-muted">
-              JPEG, PNG, WebP, or GIF. 2 MB max.
-            </p>
           </div>
           <button type="submit" className={buttonClassName} disabled={saving}>
             {saving ? "Saving…" : hasLogo ? "Replace logo" : "Save logo"}

@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import type { AdminFormState } from "@/lib/fisheries/actions";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { FileDropzone } from "@/components/file-dropzone";
+import { FISHERY_LOGO_MAX_BYTES } from "@/lib/fisheries/logo";
 
 type Field =
   | {
@@ -74,9 +76,13 @@ export function AdminCreateForm({
       ) : null}
       {fields.map((field) => (
         <div key={field.name}>
-          <label htmlFor={field.name} className="block text-sm text-ink">
-            {field.label}
-          </label>
+          {field.type === "file" ? (
+            <p className="text-sm text-ink">{field.label}</p>
+          ) : (
+            <label htmlFor={field.name} className="block text-sm text-ink">
+              {field.label}
+            </label>
+          )}
           {field.type === "select" ? (
             <select
               id={field.name}
@@ -93,13 +99,26 @@ export function AdminCreateForm({
               ))}
             </select>
           ) : field.type === "file" ? (
-            <input
+            <FileDropzone
               id={field.name}
               name={field.name}
-              type="file"
-              accept={field.accept}
+              accept={field.accept ?? ""}
               required={field.required}
-              className={fieldClassName}
+              emptyTitle={
+                field.accept?.includes("image/")
+                  ? "Drop image here or click to browse"
+                  : "Drop file here or click to browse"
+              }
+              hint={
+                field.accept?.includes("image/")
+                  ? "JPEG, PNG, WebP, or GIF. 2 MB max"
+                  : "Click to browse"
+              }
+              maxBytes={
+                field.accept?.includes("image/")
+                  ? FISHERY_LOGO_MAX_BYTES
+                  : undefined
+              }
             />
           ) : field.type === "textarea" ? (
             <textarea
