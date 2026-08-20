@@ -1,4 +1,5 @@
 import type { ProductEmailId } from "@/lib/email/product-emails";
+import type { AustralianAddress } from "@/lib/organisations/address";
 
 export const ORGANISATION_ROLES = ["OWNER", "ADMIN", "MEMBER"] as const;
 
@@ -21,10 +22,10 @@ export type Organisation = {
   updated_at: string;
   entity_kind: EntityKind | null;
   acn: string | null;
-  phone: string | null;
   mobile: string | null;
-  registered_address: string | null;
-  postal_address: string | null;
+  registered_address: AustralianAddress | null;
+  postal_address: AustralianAddress | null;
+  postal_same_as_registered: boolean;
 };
 
 export type OrganisationJurisdictionProfile = {

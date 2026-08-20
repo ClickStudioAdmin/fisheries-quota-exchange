@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   updateOrganisationDetailsAction,
   type OrganisationFormState,
@@ -11,8 +11,109 @@ import type {
   Organisation,
   OrganisationJurisdictionProfile,
 } from "@/lib/organisations/types";
+import {
+  AU_STATES,
+  type AustralianAddress,
+} from "@/lib/organisations/address";
 
 const initialState: OrganisationFormState = {};
+
+function AddressFields({
+  prefix,
+  legend,
+  address,
+  canEdit,
+}: {
+  prefix: "registered" | "postal";
+  legend: string;
+  address: AustralianAddress | null;
+  canEdit: boolean;
+}) {
+  return (
+    <fieldset className="space-y-4">
+      <legend className="text-sm font-semibold text-ink">{legend}</legend>
+      <div>
+        <label htmlFor={`${prefix}_line1`} className="block text-sm text-ink">
+          Street address
+        </label>
+        <input
+          id={`${prefix}_line1`}
+          name={`${prefix}_line1`}
+          autoComplete="address-line1"
+          defaultValue={address?.line1 ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+      <div>
+        <label htmlFor={`${prefix}_line2`} className="block text-sm text-ink">
+          Address line 2
+        </label>
+        <input
+          id={`${prefix}_line2`}
+          name={`${prefix}_line2`}
+          autoComplete="address-line2"
+          defaultValue={address?.line2 ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+      <div>
+        <label htmlFor={`${prefix}_suburb`} className="block text-sm text-ink">
+          Suburb
+        </label>
+        <input
+          id={`${prefix}_suburb`}
+          name={`${prefix}_suburb`}
+          autoComplete="address-level2"
+          defaultValue={address?.suburb ?? ""}
+          disabled={!canEdit}
+          className={fieldClassName}
+        />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor={`${prefix}_state`} className="block text-sm text-ink">
+            State
+          </label>
+          <select
+            id={`${prefix}_state`}
+            name={`${prefix}_state`}
+            autoComplete="address-level1"
+            defaultValue={address?.state ?? ""}
+            disabled={!canEdit}
+            className={fieldClassName}
+          >
+            <option value="">Select…</option>
+            {AU_STATES.map((state) => (
+              <option key={state.code} value={state.code}>
+                {state.code} — {state.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor={`${prefix}_postcode`}
+            className="block text-sm text-ink"
+          >
+            Postcode
+          </label>
+          <input
+            id={`${prefix}_postcode`}
+            name={`${prefix}_postcode`}
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={4}
+            defaultValue={address?.postcode ?? ""}
+            disabled={!canEdit}
+            className={fieldClassName}
+          />
+        </div>
+      </div>
+    </fieldset>
+  );
+}
 
 export function OrganisationDetailsForm({
   organisation,
@@ -28,6 +129,10 @@ export function OrganisationDetailsForm({
   const [state, formAction, pending] = useActionState(
     updateOrganisationDetailsAction,
     initialState,
+  );
+  const [entityKind, setEntityKind] = useState(organisation.entity_kind ?? "");
+  const [postalDifferent, setPostalDifferent] = useState(
+    organisation.postal_same_as_registered === false,
   );
 
   return (
@@ -82,7 +187,8 @@ export function OrganisationDetailsForm({
         <select
           id="entity_kind"
           name="entity_kind"
-          defaultValue={organisation.entity_kind ?? ""}
+          value={entityKind}
+          onChange={(event) => setEntityKind(event.target.value)}
           disabled={!canEdit}
           className={fieldClassName}
         >
@@ -104,31 +210,21 @@ export function OrganisationDetailsForm({
           className={fieldClassName}
         />
       </div>
-      <div>
-        <label htmlFor="acn" className="block text-sm text-ink">
-          ACN
-        </label>
-        <input
-          id="acn"
-          name="acn"
-          inputMode="numeric"
-          defaultValue={organisation.acn ?? ""}
-          disabled={!canEdit}
-          className={fieldClassName}
-        />
-      </div>
-      <div>
-        <label htmlFor="phone" className="block text-sm text-ink">
-          Phone
-        </label>
-        <input
-          id="phone"
-          name="phone"
-          defaultValue={organisation.phone ?? ""}
-          disabled={!canEdit}
-          className={fieldClassName}
-        />
-      </div>
+      {entityKind === "COMPANY" ? (
+        <div>
+          <label htmlFor="acn" className="block text-sm text-ink">
+            ACN
+          </label>
+          <input
+            id="acn"
+            name="acn"
+            inputMode="numeric"
+            defaultValue={organisation.acn ?? ""}
+            disabled={!canEdit}
+            className={fieldClassName}
+          />
+        </div>
+      ) : null}
       <div>
         <label htmlFor="mobile" className="block text-sm text-ink">
           Mobile
@@ -136,37 +232,37 @@ export function OrganisationDetailsForm({
         <input
           id="mobile"
           name="mobile"
+          inputMode="tel"
+          autoComplete="tel"
           defaultValue={organisation.mobile ?? ""}
           disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
-      <div>
-        <label htmlFor="registered_address" className="block text-sm text-ink">
-          Registered address
-        </label>
-        <textarea
-          id="registered_address"
-          name="registered_address"
-          rows={3}
-          defaultValue={organisation.registered_address ?? ""}
+      <AddressFields
+        prefix="registered"
+        legend="Registered address"
+        address={organisation.registered_address}
+        canEdit={canEdit}
+      />
+      <div className="divide-y divide-line border border-line bg-paper-raised">
+        <SettingsSwitchRow
+          name="postal_different"
+          checked={postalDifferent}
+          onCheckedChange={setPostalDifferent}
           disabled={!canEdit}
-          className={fieldClassName}
+          title="Postal address is different"
+          description="Turn this on if mail should go to a different address from the registered address."
         />
       </div>
-      <div>
-        <label htmlFor="postal_address" className="block text-sm text-ink">
-          Postal address
-        </label>
-        <textarea
-          id="postal_address"
-          name="postal_address"
-          rows={3}
-          defaultValue={organisation.postal_address ?? ""}
-          disabled={!canEdit}
-          className={fieldClassName}
+      {postalDifferent ? (
+        <AddressFields
+          prefix="postal"
+          legend="Postal address"
+          address={organisation.postal_address}
+          canEdit={canEdit}
         />
-      </div>
+      ) : null}
       {qldJurisdictionId ? (
         <fieldset className="space-y-4 border border-line p-4">
           <legend className="px-1 text-sm font-semibold text-ink">

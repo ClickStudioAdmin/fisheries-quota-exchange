@@ -10,6 +10,7 @@ import type {
 } from "@/lib/organisations/types";
 import { isEntityKind, isOrganisationRole } from "@/lib/organisations/types";
 import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
+import { parseAustralianAddress } from "@/lib/organisations/address";
 import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
 import { isPlatformAdmin } from "@/lib/admin/access";
@@ -39,7 +40,7 @@ function asEntityKind(value: unknown): EntityKind | null {
 }
 
 const ORGANISATION_COLUMNS =
-  "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at, entity_kind, acn, phone, mobile, registered_address, postal_address";
+  "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at, entity_kind, acn, mobile, registered_address, postal_address, postal_same_as_registered";
 
 function mapOrganisation(row: Record<string, unknown>): Organisation {
   return {
@@ -59,10 +60,10 @@ function mapOrganisation(row: Record<string, unknown>): Organisation {
     updated_at: String(row.updated_at),
     entity_kind: asEntityKind(row.entity_kind),
     acn: asNullableText(row.acn),
-    phone: asNullableText(row.phone),
     mobile: asNullableText(row.mobile),
-    registered_address: asNullableText(row.registered_address),
-    postal_address: asNullableText(row.postal_address),
+    registered_address: parseAustralianAddress(row.registered_address),
+    postal_address: parseAustralianAddress(row.postal_address),
+    postal_same_as_registered: row.postal_same_as_registered !== false,
   };
 }
 
@@ -146,7 +147,7 @@ export async function getOrganisation(
     .eq("id", id)
     .maybeSingle();
 
-  if (error?.message?.includes("hide_identity") || error?.message?.includes("entity_kind")) {
+  if (error?.message?.includes("hide_identity") || error?.message?.includes("entity_kind") || error?.message?.includes("postal_same_as_registered")) {
     const fallback = await supabase
       .from("organisations")
       .select(
@@ -165,10 +166,10 @@ export async function getOrganisation(
         hide_identity: false,
         entity_kind: null,
         acn: null,
-        phone: null,
         mobile: null,
         registered_address: null,
         postal_address: null,
+        postal_same_as_registered: true,
       }),
       role,
     };

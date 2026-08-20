@@ -33,7 +33,7 @@ export const TRANSFER_PROFILE_FIELDS = [
   "legal_name",
   "abn",
   "acn",
-  "phone_or_mobile",
+  "mobile",
   "registered_address",
   "postal_address",
   "qld_client_number",
@@ -51,6 +51,7 @@ export type JurisdictionTransferProcess = {
   title: string;
   usesSimulatedTransfer: boolean;
   requiredProfileFields: readonly TransferProfileField[];
+  complianceChecks: readonly string[];
 };
 
 export type TransferApplication = {

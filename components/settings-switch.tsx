@@ -71,6 +71,8 @@ export function SettingsSwitch({
 export function SettingsSwitchRow({
   name,
   defaultChecked,
+  checked,
+  onCheckedChange,
   title,
   description,
   className,
@@ -78,6 +80,8 @@ export function SettingsSwitchRow({
 }: {
   name: string;
   defaultChecked?: boolean;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
   title: string;
   description: string;
   className?: string;
@@ -98,6 +102,8 @@ export function SettingsSwitchRow({
       <SwitchTrack
         name={name}
         defaultChecked={defaultChecked}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
         disabled={disabled}
       />
     </label>

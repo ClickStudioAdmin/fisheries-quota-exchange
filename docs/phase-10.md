@@ -14,10 +14,10 @@ Never trust the browser for payment status, bid time, quota availability, or tra
 
 ## Flow
 
-1. Payment and compliance stay as they are. The order remains `AWAITING_TRANSFER`.
+1. Payment stays as it is. Compliance review shows the order, buyer and seller business details, and jurisdiction checks (Queensland instructions on QLD orders). Approving still moves the order to `AWAITING_TRANSFER`.
 2. FQX resolves the process from the listing holding’s fishery jurisdiction plus offering (`SALE` or `LEASE`). Queensland uses `QLD_SALE` (FDU1465) or `QLD_LEASE`. Everything else uses `SIMULATED`.
 3. A `transfer_applications` row holds **child** status. It does not replace `orders.status`.
-4. Shared transfer fields live on the business (entity kind, ACN, phone, addresses). Queensland-only fields live on `organisation_jurisdiction_profiles`. Owners and admins edit them on **Business Settings → Details**. There is no second onboarding form.
+4. Shared transfer fields live on the business (entity kind, ACN for companies, mobile, structured Australian addresses). Queensland-only fields live on `organisation_jurisdiction_profiles`. Owners and admins edit them on **Business Settings → Details**. There is no second onboarding form.
 5. If required fields are missing, FQX does not generate a PDF. The order page lists what is missing and links this business to Details.
 6. When both businesses are complete, FQX generates an unsigned PDF from stored data, stores it, and emails it to buyer and seller notification roles. Parties download the same file from the order. They sign and witness **offline**.
 7. There is no party upload UI. Admin uploads the completed/signed PDF as a new document version. The unsigned original is not overwritten.
@@ -53,16 +53,16 @@ Child statuses (QLD only): `READY` → `AWAITING_SIGNED_PACK` (after generate) �
 
 | Path | Purpose |
 | --- | --- |
-| `/dashboard/account` | Business Details includes entity, ACN, phone, addresses, and Queensland Fisheries fields |
+| `/dashboard/account` | Business Details includes entity, ACN (companies), mobile, structured Australian addresses, and Queensland Fisheries fields |
 | `/orders/[id]` | During `AWAITING_TRANSFER` on a QLD order: status, missing fields, prepare/download unsigned PDF |
 | `/orders/[id]/transfer/[documentId]` | Auth-checked download of a stored transfer PDF |
-| `/admin/orders` | QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
+| `/admin/orders` | Compliance review shows order, buyer and seller details, and Queensland checks. QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
 
 ## Database
 
-Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`
+Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260820020000_organisation_structured_address.sql`
 
-- `organisations`: `entity_kind`, `acn`, `phone`, `mobile`, `registered_address`, `postal_address`
+- `organisations`: `entity_kind`, `acn`, `mobile`, structured `registered_address` / `postal_address` (street, suburb, state, postcode), `postal_same_as_registered`
 - `organisation_jurisdiction_profiles`: per business and jurisdiction (QLD client number, commercial fishing licence, symbols)
 - `transfer_form_templates`: versioned form metadata
 - `transfer_applications`: one per order; process code; child status; FQ submission fields

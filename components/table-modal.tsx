@@ -15,12 +15,14 @@ import {
 type TableModalProps = {
   title: string;
   label?: string;
+  wide?: boolean;
   children: ReactNode | ((close: () => void) => ReactNode);
 };
 
 export function TableModal({
   title,
   label = "Edit",
+  wide = false,
   children,
 }: TableModalProps) {
   const [open, setOpen] = useState(false);
@@ -60,7 +62,9 @@ export function TableModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="w-full max-w-md border border-line bg-paper-raised p-6"
+            className={`mb-16 w-full border border-line bg-paper-raised p-6 ${
+              wide ? "max-w-3xl" : "max-w-md"
+            }`}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">

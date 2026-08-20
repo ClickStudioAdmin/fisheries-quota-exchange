@@ -1,5 +1,6 @@
 import { ReviewOrderForms } from "@/components/review-order-forms";
 import { QldTransferAdmin } from "@/components/qld-transfer-admin";
+import { ComplianceReviewPanel } from "@/components/compliance-review-panel";
 import type { Order } from "@/lib/orders/types";
 import { getTransferWorkspace } from "@/lib/transfers/queries";
 
@@ -10,6 +11,21 @@ export async function ReviewTransferForms({
   order: Pick<Order, "id" | "status">;
   reviewQueue?: number[];
 }) {
+  if (order.status === "AWAITING_COMPLIANCE") {
+    const workspace = await getTransferWorkspace(order.id);
+
+    if (!workspace) {
+      return <ReviewOrderForms order={order} reviewQueue={reviewQueue} />;
+    }
+
+    return (
+      <ComplianceReviewPanel
+        workspace={workspace}
+        reviewQueue={reviewQueue}
+      />
+    );
+  }
+
   if (order.status !== "AWAITING_TRANSFER") {
     return <ReviewOrderForms order={order} reviewQueue={reviewQueue} />;
   }

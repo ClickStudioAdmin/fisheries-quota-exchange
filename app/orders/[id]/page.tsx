@@ -29,7 +29,6 @@ import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getStripePublishableKey } from "@/lib/payments/env";
 import {
   buyerCardFeeAud,
-  buyerPaidPlatformFeeOnTop,
   orderChargeAud,
   orderSellerPayoutAud,
   stripeCardFeeAud,
@@ -186,13 +185,6 @@ export default async function OrderPage({
       payment?.status === "PAID" ? payment.amount_aud : order.amount_aud,
     ),
   );
-  const buyerPaidFeeOnTop =
-    payment?.status === "PAID" &&
-    buyerPaidPlatformFeeOnTop(
-      order.amount_aud,
-      order.fee_amount_aud,
-      payment.amount_aud,
-    );
   const progressSteps = buildOrderSteps({
     orderStatus: order.status,
     reservationStatus: reservation?.status ?? null,
@@ -202,9 +194,7 @@ export default async function OrderPage({
   });
   const feeLabel =
     Number(order.fee_percent) > 0
-      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%, ${
-          buyerPaidFeeOnTop ? "added to buyer payment" : "deducted from seller"
-        })`
+      ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
       : "None";
   const unitPriceItem = {
     label: "Price",

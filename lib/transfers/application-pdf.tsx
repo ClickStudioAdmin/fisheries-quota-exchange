@@ -1,4 +1,5 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { formatAustralianAddress } from "@/lib/organisations/address";
 import type {
   TransferApplicationPdfData,
   TransferPartyDetails,
@@ -129,11 +130,22 @@ function PartyBlock({
       <Field label="Trading name" value={party.trading_name} />
       <Field label="Entity" value={kind} />
       <Field label="ABN" value={party.abn} />
-      <Field label="ACN" value={party.acn} />
-      <Field label="Phone" value={party.phone} />
+      {party.entity_kind === "COMPANY" ? (
+        <Field label="ACN" value={party.acn} />
+      ) : null}
       <Field label="Mobile" value={party.mobile} />
-      <Field label="Registered address" value={party.registered_address} />
-      <Field label="Postal address" value={party.postal_address} />
+      <Field
+        label="Registered address"
+        value={formatAustralianAddress(party.registered_address) || null}
+      />
+      <Field
+        label="Postal address"
+        value={
+          party.postal_same_as_registered
+            ? formatAustralianAddress(party.registered_address) || null
+            : formatAustralianAddress(party.postal_address) || null
+        }
+      />
       <Field
         label="QLD fisheries client no."
         value={party.profile?.client_reference ?? null}

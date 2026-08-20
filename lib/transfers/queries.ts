@@ -7,6 +7,7 @@ import { listingOfferingLabel } from "@/lib/listings/types";
 import { getOrder } from "@/lib/orders/queries";
 import type { Order } from "@/lib/orders/types";
 import { isEntityKind } from "@/lib/organisations/types";
+import { parseAustralianAddress } from "@/lib/organisations/address";
 import { getTransferProcess } from "@/lib/transfers/registry";
 import { missingTransferProfileFields } from "@/lib/transfers/profile";
 import type { TransferApplicationPdfData, TransferPartyDetails, TransferSignatory } from "@/lib/transfers/application-data";
@@ -40,9 +41,9 @@ function asSignatories(value: unknown): TransferSignatory[] {
       return [];
     }
     const row = item as Record<string, unknown>;
-    const fullName = asNullableText(row.full_name);
+    const fullName = asNullableText(row.full_name) ?? "";
     const role = asNullableText(row.role);
-    if (!fullName || !role) {
+    if (!role) {
       return [];
     }
     return [{ full_name: fullName, role }];
@@ -56,9 +57,9 @@ function parseParty(value: unknown): TransferPartyDetails | null {
 
   const row = value as Record<string, unknown>;
   const id = Number(row.id);
-  const legalName = asNullableText(row.legal_name);
+  const legalName = asNullableText(row.legal_name) ?? "";
 
-  if (!Number.isInteger(id) || !legalName) {
+  if (!Number.isInteger(id) || id <= 0) {
     return null;
   }
 
@@ -77,10 +78,10 @@ function parseParty(value: unknown): TransferPartyDetails | null {
         ? row.entity_kind
         : null,
     acn: asNullableText(row.acn),
-    phone: asNullableText(row.phone),
     mobile: asNullableText(row.mobile),
-    registered_address: asNullableText(row.registered_address),
-    postal_address: asNullableText(row.postal_address),
+    registered_address: parseAustralianAddress(row.registered_address),
+    postal_address: parseAustralianAddress(row.postal_address),
+    postal_same_as_registered: row.postal_same_as_registered !== false,
     signatories: asSignatories(row.signatories),
     profile: profileRaw
       ? {
@@ -265,6 +266,7 @@ export async function ensureTransferApplication(
 export type TransferWorkspace = {
   order: Order;
   process: JurisdictionTransferProcess;
+  jurisdictionCode: string | null;
   application: TransferApplication | null;
   documents: TransferDocument[];
   buyer: TransferPartyDetails | null;
@@ -290,31 +292,26 @@ export async function getTransferWorkspace(
     ? await loadApplication(order.id)
     : await ensureTransferApplication(order, process);
   const documents = application ? await loadDocuments(application.id) : [];
-  const parties = process.usesSimulatedTransfer
-    ? { buyer: null, seller: null }
-    : await loadPartyProfiles(order.id);
+  const parties = await loadPartyProfiles(order.id);
   const buyerMissing = parties.buyer
     ? missingTransferProfileFields({
         organisation: parties.buyer,
         profile: parties.buyer.profile,
         process,
       })
-    : process.usesSimulatedTransfer
-      ? []
-      : [...process.requiredProfileFields];
+    : [...process.requiredProfileFields];
   const sellerMissing = parties.seller
     ? missingTransferProfileFields({
         organisation: parties.seller,
         profile: parties.seller.profile,
         process,
       })
-    : process.usesSimulatedTransfer
-      ? []
-      : [...process.requiredProfileFields];
+    : [...process.requiredProfileFields];
 
   return {
     order,
     process,
+    jurisdictionCode,
     application,
     documents,
     buyer: parties.buyer,

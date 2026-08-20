@@ -5,11 +5,18 @@ const QLD_REQUIRED = [
   "legal_name",
   "abn",
   "acn",
-  "phone_or_mobile",
+  "mobile",
   "registered_address",
   "postal_address",
   "qld_client_number",
   "qld_licence_number",
+] as const;
+
+const QLD_SHARED_CHECKS = [
+  "Confirm both parties have a Queensland fisheries client number and a primary commercial fishing licence.",
+  "Confirm entity kind, ABN, and ACN (companies) match the businesses named on this order.",
+  "Confirm registered addresses. If postal address is different, check that too.",
+  "Quota is already reserved on this order. Approving compliance does not move quota. Fisheries Queensland approval later must not apply quota again.",
 ] as const;
 
 export const qldSaleProcess: JurisdictionTransferProcess = {
@@ -21,6 +28,11 @@ export const qldSaleProcess: JurisdictionTransferProcess = {
   title: "Permanent transfer of quota and/or effort units (FDU1465)",
   usesSimulatedTransfer: false,
   requiredProfileFields: QLD_REQUIRED,
+  complianceChecks: [
+    ...QLD_SHARED_CHECKS,
+    "After approval, FQX prepares an unsigned FDU1465 (V02/26) from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX. A checkbox is not a witness.",
+    "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the signed pack is uploaded.",
+  ],
 };
 
 export const qldLeaseProcess: JurisdictionTransferProcess = {
@@ -32,6 +44,11 @@ export const qldLeaseProcess: JurisdictionTransferProcess = {
   title: "Queensland lease / temporary transfer application",
   usesSimulatedTransfer: false,
   requiredProfileFields: QLD_REQUIRED,
+  complianceChecks: [
+    ...QLD_SHARED_CHECKS,
+    "After approval, FQX prepares an unsigned Queensland lease / temporary transfer application from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX.",
+    "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the signed pack is uploaded.",
+  ],
 };
 
 export const simulatedProcess: JurisdictionTransferProcess = {
@@ -43,6 +60,11 @@ export const simulatedProcess: JurisdictionTransferProcess = {
   title: "Simulated authority transfer",
   usesSimulatedTransfer: true,
   requiredProfileFields: [],
+  complianceChecks: [
+    "Confirm buyer and seller identities match this order.",
+    "Confirm the fishery, offering, and quantity.",
+    "Quota is already reserved. Approving compliance starts the simulated transfer step, not a regulator submission.",
+  ],
 };
 
 export function getTransferProcess(

@@ -10,7 +10,7 @@ export const TRANSFER_PROFILE_FIELD_LABELS: Record<TransferProfileField, string>
     legal_name: "Legal name",
     abn: "ABN",
     acn: "ACN",
-    phone_or_mobile: "Phone or mobile",
+    mobile: "Mobile",
     registered_address: "Registered address",
     postal_address: "Postal address",
     qld_client_number: "Queensland fisheries client number",
@@ -21,6 +21,18 @@ function present(value: string | null | undefined) {
   return Boolean(value?.trim());
 }
 
+function addressComplete(
+  address: Organisation["registered_address"],
+) {
+  return Boolean(
+    address &&
+      address.line1.trim() &&
+      address.suburb.trim() &&
+      address.state &&
+      /^\d{4}$/.test(address.postcode),
+  );
+}
+
 export function missingTransferProfileFields(input: {
   organisation: Pick<
     Organisation,
@@ -28,10 +40,10 @@ export function missingTransferProfileFields(input: {
     | "entity_kind"
     | "abn"
     | "acn"
-    | "phone"
     | "mobile"
     | "registered_address"
     | "postal_address"
+    | "postal_same_as_registered"
   >;
   profile: Pick<
     OrganisationJurisdictionProfile,
@@ -56,19 +68,21 @@ export function missingTransferProfileFields(input: {
       case "acn":
         if (company && !present(input.organisation.acn)) missing.push(field);
         break;
-      case "phone_or_mobile":
-        if (
-          !present(input.organisation.phone) &&
-          !present(input.organisation.mobile)
-        ) {
+      case "mobile":
+        if (!present(input.organisation.mobile)) missing.push(field);
+        break;
+      case "registered_address":
+        if (!addressComplete(input.organisation.registered_address)) {
           missing.push(field);
         }
         break;
-      case "registered_address":
-        if (!present(input.organisation.registered_address)) missing.push(field);
-        break;
       case "postal_address":
-        if (!present(input.organisation.postal_address)) missing.push(field);
+        if (
+          !input.organisation.postal_same_as_registered &&
+          !addressComplete(input.organisation.postal_address)
+        ) {
+          missing.push(field);
+        }
         break;
       case "qld_client_number":
         if (!present(input.profile?.client_reference)) missing.push(field);

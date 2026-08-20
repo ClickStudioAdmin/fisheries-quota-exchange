@@ -7,7 +7,7 @@ Current tables:
 | Table | Phase | Purpose |
 | --- | --- | --- |
 | `system_health` | 0 | Pipeline proof. One row: `FQX`. |
-| `organisations` | 1 | Legal entity (shown as a business). `notification_roles` (Phase 9) is which membership roles receive business email. `hide_identity` (Phase 9) replaces the business name with “Private Seller” on public listing pages and “Private Buyer” on public auction bids. Phase 10 adds `entity_kind`, `acn`, phone, and addresses used on transfer applications. |
+| `organisations` | 1 | Legal entity (shown as a business). `notification_roles` (Phase 9) is which membership roles receive business email. `hide_identity` (Phase 9) replaces the business name with “Private Seller” on public listing pages and “Private Buyer” on public auction bids. Phase 10 adds `entity_kind`, `acn` (companies), `mobile`, and structured Australian `registered_address` / `postal_address` used on transfer applications. |
 | `organisation_jurisdiction_profiles` | 10 | Per-business regulator fields (Queensland fisheries client number, commercial fishing licence, symbols). Edited on Business Settings → Details. |
 | `transfer_form_templates` | 10 | Versioned transfer form metadata (e.g. FDU1465 `V02/26`). |
 | `transfer_applications` | 10 | One per order. Child status for jurisdiction transfer while `orders.status` stays `AWAITING_TRANSFER`. |

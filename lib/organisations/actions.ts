@@ -27,6 +27,7 @@ import {
   isOrganisationRole,
   organisationRoleLabel,
 } from "@/lib/organisations/types";
+import { readAustralianAddress } from "@/lib/organisations/address";
 import { emailCopy } from "@/lib/email/copy";
 import {
   ACCOUNT_NOTIFICATION_EMAIL_IDS,
@@ -70,6 +71,22 @@ function readAcn(value: string) {
   }
 
   return { acn } as const;
+}
+
+function readMobile(value: string) {
+  const mobile = value.trim();
+
+  if (!mobile) {
+    return { mobile: null } as const;
+  }
+
+  const digits = mobile.replace(/\D/g, "");
+
+  if (digits.length < 8) {
+    return { error: "Enter a valid mobile number." } as const;
+  }
+
+  return { mobile } as const;
 }
 
 export async function createOrganisationAction(
@@ -127,16 +144,18 @@ export async function updateOrganisationDetailsAction(
   const tradingName = readText(formData, "trading_name");
   const hideIdentity = formData.get("hide_identity") === "on";
   const entityKindRaw = readText(formData, "entity_kind");
-  const phone = readText(formData, "phone");
-  const mobile = readText(formData, "mobile");
-  const registeredAddress = readText(formData, "registered_address");
-  const postalAddress = readText(formData, "postal_address");
+  const mobileResult = readMobile(readText(formData, "mobile"));
+  const registeredResult = readAustralianAddress(formData, "registered");
+  const postalDifferent = formData.get("postal_different") === "on";
   const qldJurisdictionId = Number(formData.get("qld_jurisdiction_id"));
   const clientReference = readText(formData, "qld_client_reference");
   const licenceNumber = readText(formData, "qld_licence_number");
   const fisherySymbols = readText(formData, "qld_fishery_symbols");
   const abnResult = readAbn(readText(formData, "abn"));
-  const acnResult = readAcn(readText(formData, "acn"));
+  const company = entityKindRaw === "COMPANY";
+  const acnResult = company
+    ? readAcn(readText(formData, "acn"))
+    : ({ acn: null } as const);
 
   if (!supabase || !Number.isInteger(organisationId)) {
     return { error: "Organisation not found." };
@@ -164,6 +183,23 @@ export async function updateOrganisationDetailsAction(
     return { error: acnResult.error };
   }
 
+  if ("error" in mobileResult) {
+    return { error: mobileResult.error };
+  }
+
+  if ("error" in registeredResult) {
+    return { error: registeredResult.error };
+  }
+
+  let postalAddress = registeredResult.address;
+  if (postalDifferent) {
+    const postalResult = readAustralianAddress(formData, "postal");
+    if ("error" in postalResult) {
+      return { error: postalResult.error };
+    }
+    postalAddress = postalResult.address;
+  }
+
   const actorRole = await getMyRole(organisationId);
 
   if (!actorRole || !canEditOrganisation(actorRole)) {
@@ -179,10 +215,10 @@ export async function updateOrganisationDetailsAction(
       hide_identity: hideIdentity,
       entity_kind: entityKindRaw || null,
       acn: acnResult.acn,
-      phone: phone || null,
-      mobile: mobile || null,
-      registered_address: registeredAddress || null,
-      postal_address: postalAddress || null,
+      mobile: mobileResult.mobile,
+      registered_address: registeredResult.address,
+      postal_address: postalDifferent ? postalAddress : registeredResult.address,
+      postal_same_as_registered: !postalDifferent,
     })
     .eq("id", organisationId);
 

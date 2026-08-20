@@ -214,7 +214,7 @@ export default async function AdminOrdersPage({
             actions={
               <>
                 {order.status === "AWAITING_COMPLIANCE" ? (
-                  <TableModal title="Review compliance" label="Review">
+                  <TableModal title="Review compliance" label="Review" wide>
                     <ReviewTransferForms order={order} />
                   </TableModal>
                 ) : null}
