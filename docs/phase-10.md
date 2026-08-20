@@ -41,11 +41,11 @@ Embedded e-sign is a later phase, after a provider is chosen and checked against
 
 ## Forms
 
-PDF layout is generated in-app (`@react-pdf/renderer`), same family as tax invoices, and **stored** in a private bucket. Official FDU1465 / lease field lists from Fisheries Queensland can replace the layout later without changing the data model.
+PDF layout for Queensland **sales** fills the official Fisheries Queensland FDU1465 form (`lib/transfers/forms/fdu1465-v09-23.pdf`) from stored business and order data, then stores the filled PDF in a private bucket. Signature, witness, date of birth, licence-transfer, and fee-payment fields stay blank for offline completion. Queensland **leases** still use an in-app layout (`@react-pdf/renderer`) until an official lease PDF is supplied. Dummy tax invoices stay on `@react-pdf/renderer`.
 
 | Offering | Form type | Version | Notes |
 | --- | --- | --- | --- |
-| Sale | `FDU1465` | `V02/26` | Permanent transfer of quota and/or effort units. Layout pending official PDF mapping. |
+| Sale | `FDU1465` | `V09/23` | Official Register transfer of quota or effort unit application. FQX pre-fills party and quota fields; parties sign and witness offline. |
 | Lease | `FDU_LEASE` | `V01/26` | Queensland lease / temporary transfer. Official form code pending. |
 
 Child statuses (QLD only): `READY` → `AWAITING_SIGNED_PACK` (after generate) → `ADMIN_REVIEW` (after signed pack) → `SUBMITTED` → `PROCESSING` → `APPROVED` or `ACTION_REQUIRED`. Corrections regenerate a new unsigned PDF; previous files stay.

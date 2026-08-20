@@ -24,13 +24,13 @@ export const qldSaleProcess: JurisdictionTransferProcess = {
   jurisdictionCode: "QLD",
   offering: "SALE",
   formType: "FDU1465",
-  formVersion: "V02/26",
+  formVersion: "V09/23",
   title: "Permanent transfer of quota and/or effort units (FDU1465)",
   usesSimulatedTransfer: false,
   requiredProfileFields: QLD_REQUIRED,
   complianceChecks: [
     ...QLD_SHARED_CHECKS,
-    "After approval, FQX prepares an unsigned FDU1465 (V02/26) from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX. A checkbox is not a witness.",
+    "After approval, FQX prepares an unsigned FDU1465 (V09/23) from these details. Parties download it, sign and witness it offline, then return the completed pack to FQX. A checkbox is not a witness.",
     "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the signed pack is uploaded.",
   ],
 };

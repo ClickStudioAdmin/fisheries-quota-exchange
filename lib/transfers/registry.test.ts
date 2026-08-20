@@ -35,6 +35,7 @@ const completeOrg: Organisation = {
 test("getTransferProcess routes QLD sale and lease separately from simulated", () => {
   assert.equal(getTransferProcess("QLD", "SALE").code, "QLD_SALE");
   assert.equal(getTransferProcess("QLD", "SALE").formType, "FDU1465");
+  assert.equal(getTransferProcess("QLD", "SALE").formVersion, "V09/23");
   assert.ok(
     getTransferProcess("QLD", "SALE").complianceChecks.some((item) =>
       item.includes("FDU1465"),

@@ -101,6 +101,7 @@ Database migrations must be executed by CI/CD rather than requiring the develope
 - Resend for transactional email (server only)
 - Stripe Connect in test mode
 - `@react-pdf/renderer` for dummy tax invoice PDFs
+- `pdf-lib` to pre-fill the official Queensland FDU1465 transfer application
 - Vercel
 - GitHub and GitHub Actions
 - Cursor

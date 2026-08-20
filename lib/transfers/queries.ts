@@ -387,6 +387,7 @@ export function transferPdfData(
     title: process.title,
     offeringLabel: listingOfferingLabel(order.offering),
     fisheryName: order.fishery_name,
+    quotaTypeName: order.quota_type_name,
     quantity: order.quantity,
     unitLabel: order.unit_label,
     seller,

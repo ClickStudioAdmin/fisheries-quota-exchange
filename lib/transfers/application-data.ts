@@ -33,6 +33,7 @@ export type TransferApplicationPdfData = {
   title: string;
   offeringLabel: string;
   fisheryName: string;
+  quotaTypeName: string;
   quantity: string;
   unitLabel: string;
   seller: TransferPartyDetails;

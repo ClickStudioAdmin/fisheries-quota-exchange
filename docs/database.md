@@ -9,7 +9,7 @@ Current tables:
 | `system_health` | 0 | Pipeline proof. One row: `FQX`. |
 | `organisations` | 1 | Legal entity (shown as a business). `notification_roles` (Phase 9) is which membership roles receive business email. `hide_identity` (Phase 9) replaces the business name with “Private Seller” on public listing pages and “Private Buyer” on public auction bids. Phase 10 adds `entity_kind`, `acn` (companies), `mobile`, structured Australian `registered_address` / `postal_address`, and `enabled_jurisdiction_codes` (which jurisdictions the business trades in; Queensland is the only selectable code in this phase). Buying, bidding, and listing require those identity fields (plus ABN for every entity kind). Queensland profile fields are required when Queensland is selected and for Queensland trades. `organisation_is_trade_ready` returns only a boolean so a buyer can check a seller without reading the row. |
 | `organisation_jurisdiction_profiles` | 10 | Per-business regulator fields (Queensland fisheries client number, commercial fishing licence, symbols). Shown on Business Settings → Details when Queensland is selected. Client number and licence are required to buy or list Queensland quota; symbols stay optional. |
-| `transfer_form_templates` | 10 | Versioned transfer form metadata (e.g. FDU1465 `V02/26`). |
+| `transfer_form_templates` | 10 | Versioned transfer form metadata (FDU1465 `V09/23` for Queensland sales). |
 | `transfer_applications` | 10 | One per order. Child status for jurisdiction transfer while `orders.status` stays `AWAITING_TRANSFER`. |
 | `transfer_documents` | 10 | Stored unsigned applications, signed packs, and supporting files. Rows are not updated in place. |
 | `organisation_users` | 1 | Email membership, role, and display name. |
