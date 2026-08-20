@@ -7,6 +7,7 @@ import { QldGenerateApplicationForm } from "@/components/qld-generate-applicatio
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { StatusBadge } from "@/components/status-badge";
 import { LabeledFields, panelClassName } from "@/components/surface";
+import { PdfDownloadLink } from "@/components/pdf-download-link";
 import { ReviewChecklistForm } from "@/components/review-checklist-form";
 import { checklistIsComplete } from "@/lib/orders/checklist";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
@@ -147,36 +148,33 @@ export function QldTransferAdmin({
           {workspace.latestUnsigned ||
           workspace.latestSellerSigned ||
           workspace.latestSignedPack ? (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex max-w-lg flex-col gap-2">
               {workspace.latestUnsigned ? (
-                <a
+                <PdfDownloadLink
                   href={transferDocumentPath(order.id, workspace.latestUnsigned.id)}
-                  className={tableSecondaryButtonClassName}
                 >
                   Download unsigned PDF
-                </a>
+                </PdfDownloadLink>
               ) : null}
               {workspace.latestSellerSigned ? (
-                <a
+                <PdfDownloadLink
                   href={transferDocumentPath(
                     order.id,
                     workspace.latestSellerSigned.id,
                   )}
-                  className={tableSecondaryButtonClassName}
                 >
                   Download seller-signed PDF
-                </a>
+                </PdfDownloadLink>
               ) : null}
               {workspace.latestSignedPack ? (
-                <a
+                <PdfDownloadLink
                   href={transferDocumentPath(
                     order.id,
                     workspace.latestSignedPack.id,
                   )}
-                  className={tableSecondaryButtonClassName}
                 >
                   Download completed pack
-                </a>
+                </PdfDownloadLink>
               ) : null}
             </div>
           ) : null}

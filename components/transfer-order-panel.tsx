@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { tableLinkClassName } from "@/components/data-table";
+import { PdfDownloadLink } from "@/components/pdf-download-link";
 import { StatusBadge } from "@/components/status-badge";
 import { TransferPrepareForm } from "@/components/transfer-prepare-form";
 import { TransferPartyUploadForm } from "@/components/transfer-party-upload-form";
@@ -94,6 +94,7 @@ export function TransferOrderPanel({
       ) : null}
       {sellerDownload || buyerDownload ? (
         <div className="mt-6">
+          <div className="flex max-w-lg flex-col gap-2">
           {sellerDownload ? (
             <PdfDownloadLink
               href={transferDocumentPath(workspace.order.id, sellerDownload.id)}
@@ -111,6 +112,7 @@ export function TransferOrderPanel({
               Download seller-signed PDF
             </PdfDownloadLink>
           ) : null}
+          </div>
           {sellerUpload ? (
             <TransferPartyUploadForm
               orderId={workspace.order.id}
@@ -147,42 +149,5 @@ export function TransferOrderPanel({
         </p>
       ) : null}
     </div>
-  );
-}
-
-function PdfDownloadLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: string;
-}) {
-  return (
-    <a
-      href={href}
-      className={`${tableLinkClassName} inline-flex items-center gap-1.5`}
-    >
-      <PdfFileIcon className="h-4 w-4 shrink-0" />
-      {children}
-    </a>
-  );
-}
-
-function PdfFileIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M14 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9z" />
-      <path d="M14 3v6h6" />
-      <path d="M9.5 16.5h5M9.5 13h5" />
-    </svg>
   );
 }
