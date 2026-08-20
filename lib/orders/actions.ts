@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -8,6 +9,9 @@ import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
 import { transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
 import { getOrder } from "@/lib/orders/queries";
+import { selectedComplianceChecks } from "@/lib/orders/checklist";
+import { getOrderJurisdictionCode } from "@/lib/transfers/queries";
+import { getTransferProcess } from "@/lib/transfers/registry";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 import {
   notifyOrderCreated,
@@ -25,7 +29,12 @@ import {
   type OrderStatus,
 } from "@/lib/orders/types";
 import { userFacingError } from "@/lib/errors/user-message";
-import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import {
+  requireCounterpartyTradeReadyError,
+  requireTradeReadyError,
+} from "@/lib/organisations/eligibility";
+import { getHoldingJurisdictionCode } from "@/lib/fisheries/queries";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import {
   ACTIVE_ORGANISATION_REQUIRED_MESSAGE,
@@ -108,10 +117,23 @@ export async function createOrderAction(
     return { error: termsError };
   }
 
-  const accountError = await requireBusinessAccountError();
+  const jurisdictionCode = await getHoldingJurisdictionCode(listing.holding_id);
+  const requireQld = tradeRequiresQldProfile(jurisdictionCode);
+  const accountError = await requireTradeReadyError(buyerOrganisationId, {
+    requireQldProfile: requireQld,
+  });
 
   if (accountError) {
     return { error: accountError };
+  }
+
+  const sellerError = await requireCounterpartyTradeReadyError(
+    listing.organisation_id,
+    { requireQldProfile: requireQld },
+  );
+
+  if (sellerError) {
+    return { error: sellerError };
   }
 
   const ackError = requireAcknowledgements(
@@ -191,6 +213,42 @@ export async function startOrderQueueAction(formData: FormData) {
   }
 
   redirect(orderQueuePath(selected));
+}
+
+export async function saveComplianceChecklistAction(
+  _prev: OrderFormState,
+  formData: FormData,
+): Promise<OrderFormState> {
+  const supabase = await createClient();
+
+  if (!supabase || !(await isPlatformAdmin())) {
+    return { error: "Not a platform admin." };
+  }
+
+  const order = await currentOrderForStatus(formData, "AWAITING_COMPLIANCE");
+
+  if (!order) {
+    return { error: "Order is not waiting for compliance review." };
+  }
+
+  const jurisdictionCode = await getOrderJurisdictionCode(order);
+  const process = getTransferProcess(jurisdictionCode, order.offering);
+  const completed = selectedComplianceChecks(
+    process.complianceChecks,
+    formData.getAll("checks").map(String),
+  );
+
+  const { error } = await supabase.rpc("save_compliance_checklist", {
+    p_order_id: order.id,
+    p_completed: completed,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/admin/orders");
+  return { message: "Progress saved." };
 }
 
 export async function approveComplianceAction(formData: FormData) {

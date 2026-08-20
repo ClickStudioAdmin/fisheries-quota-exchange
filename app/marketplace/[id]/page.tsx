@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
 import { SwitchAccountLink } from "@/components/switch-account-notice";
 import { TermsRequiredNotice } from "@/components/terms-required-notice";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -16,6 +17,7 @@ import {
   getHolding,
   listFisheries,
   listHoldingCommitments,
+  listJurisdictions,
 } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
 import {
@@ -28,6 +30,12 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { listMyOrganisations, getMyRole, loadPublicSellerDisplays } from "@/lib/organisations/queries";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import {
+  ownMissingTradeReadyFields,
+  ownMissingTradeReadyLabels,
+  requireCounterpartyTradeReadyError,
+} from "@/lib/organisations/eligibility";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { getUser } from "@/lib/supabase/server";
 import { isPaymentsConfigured } from "@/lib/payments/env";
 import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
@@ -59,13 +67,18 @@ export default async function ListingPage({
     redirect(`/auctions/${listing.id}`);
   }
 
-  const [user, fisheries, holding, commitments] = await Promise.all([
+  const [user, fisheries, jurisdictions, holding, commitments] = await Promise.all([
     getUser(),
     listFisheries(),
+    listJurisdictions(),
     getHolding(listing.holding_id),
     listHoldingCommitments([listing.holding_id]),
   ]);
   const fishery = fisheries.find((item) => item.name === listing.fishery_name);
+  const jurisdictionCode =
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code ??
+    null;
+  const requireQld = tradeRequiresQldProfile(jurisdictionCode);
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
   const organisations = user ? await listMyOrganisations() : [];
@@ -89,6 +102,20 @@ export default async function ListingPage({
     ? await organisationAcceptsCardPayments(listing.organisation_id)
     : true;
   const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
+  const buyerMissing =
+    active && !operatingAsSeller
+      ? await ownMissingTradeReadyFields(active.id, {
+          requireQldProfile: requireQld,
+        })
+      : [];
+  const sellerIncomplete =
+    Boolean(user) && !operatingAsSeller
+      ? Boolean(
+          await requireCounterpartyTradeReadyError(listing.organisation_id, {
+            requireQldProfile: requireQld,
+          }),
+        )
+      : false;
   const sellerDisplays = await loadPublicSellerDisplays([listing]);
   const sellerDisplay = sellerDisplays[listing.id] ?? {
     label: listing.seller_name,
@@ -100,6 +127,8 @@ export default async function ListingPage({
     active != null &&
     !operatingAsSeller &&
     sellerAcceptsCards &&
+    !sellerIncomplete &&
+    buyerMissing.length === 0 &&
     canBuyForOrganisation(active.role);
 
   return (
@@ -159,6 +188,16 @@ export default async function ListingPage({
               </p>
             ) : !acceptedTerms ? (
               <TermsRequiredNotice action="buy" />
+            ) : buyerMissing.length > 0 ? (
+              <BusinessDetailsRequiredNotice
+                action="buy"
+                missingLabels={ownMissingTradeReadyLabels(buyerMissing)}
+              />
+            ) : sellerIncomplete ? (
+              <p className="text-sm text-ink-muted">
+                This seller has not completed business details, so the listing
+                cannot be purchased yet.
+              </p>
             ) : !sellerAcceptsCards ? (
               <p className="text-sm text-ink-muted">
                 This seller has not completed payment setup, so the listing

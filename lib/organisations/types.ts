@@ -26,6 +26,7 @@ export type Organisation = {
   registered_address: AustralianAddress | null;
   postal_address: AustralianAddress | null;
   postal_same_as_registered: boolean;
+  enabled_jurisdiction_codes: string[];
 };
 
 export type OrganisationJurisdictionProfile = {

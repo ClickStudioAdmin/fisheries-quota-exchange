@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
 import { SwitchAccountLink } from "@/components/switch-account-notice";
 import { TermsRequiredNotice } from "@/components/terms-required-notice";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
 import { buttonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { AuctionCountdown } from "@/components/auction-countdown";
@@ -30,7 +31,7 @@ import {
   minimumBid,
 } from "@/lib/auctions/types";
 import { cancelListingAction } from "@/lib/listings/actions";
-import { listFisheries } from "@/lib/fisheries/queries";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
 import {
   canCancelOpenListing,
@@ -43,6 +44,12 @@ import { listMyOrganisations, getMyRole, loadPublicBuyerDisplays, loadPublicSell
 import { PublicSellerName } from "@/components/public-seller-name";
 import { PRIVATE_BUYER_LABEL } from "@/lib/organisations/public-seller";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import {
+  ownMissingTradeReadyFields,
+  ownMissingTradeReadyLabels,
+  requireCounterpartyTradeReadyError,
+} from "@/lib/organisations/eligibility";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
@@ -70,12 +77,17 @@ export default async function AuctionPage({
   }
 
   const listing = await ensureAuctionClosed(initial);
-  const [bids, order, fisheries] = await Promise.all([
+  const [bids, order, fisheries, jurisdictions] = await Promise.all([
     listBids(listing.id),
     getOrderForListing(listing.id),
     listFisheries(),
+    listJurisdictions(),
   ]);
   const fishery = fisheries.find((item) => item.name === listing.fishery_name);
+  const jurisdictionCode =
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code ??
+    null;
+  const requireQld = tradeRequiresQldProfile(jurisdictionCode);
   const user = await getUser();
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
@@ -85,6 +97,20 @@ export default async function AuctionPage({
   const canSwitch = organisations.length > 1;
   const operatingAsSeller = active?.id === listing.organisation_id;
   const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
+  const buyerMissing =
+    active && !operatingAsSeller
+      ? await ownMissingTradeReadyFields(active.id, {
+          requireQldProfile: requireQld,
+        })
+      : [];
+  const sellerIncomplete =
+    Boolean(user) && !operatingAsSeller
+      ? Boolean(
+          await requireCounterpartyTradeReadyError(listing.organisation_id, {
+            requireQldProfile: requireQld,
+          }),
+        )
+      : false;
   const sellerDisplays = await loadPublicSellerDisplays([listing]);
   const sellerDisplay = sellerDisplays[listing.id] ?? {
     label: listing.seller_name,
@@ -158,6 +184,16 @@ export default async function AuctionPage({
               </p>
             ) : !acceptedTerms ? (
               <TermsRequiredNotice action="bid" />
+            ) : buyerMissing.length > 0 ? (
+              <BusinessDetailsRequiredNotice
+                action="bid"
+                missingLabels={ownMissingTradeReadyLabels(buyerMissing)}
+              />
+            ) : sellerIncomplete ? (
+              <p className="text-sm text-ink-muted">
+                This seller has not completed business details, so this auction
+                cannot be bid on yet.
+              </p>
             ) : (
               <BidForm listingId={listing.id} minimumBid={minBid} />
             )

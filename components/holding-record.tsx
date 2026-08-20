@@ -11,7 +11,8 @@ import { EditHoldingButton } from "@/components/holding-actions";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import { LedgerTable } from "@/components/ledger-table";
 import { LabeledFields } from "@/components/surface";
-import { VerifyHoldingForm } from "@/components/verify-holding-form";
+import { TableModal } from "@/components/table-modal";
+import { HoldingVerificationPanel } from "@/components/holding-verification-panel";
 import {
   getFishery,
   listHoldingCommitments,
@@ -46,9 +47,15 @@ import { listOrdersByHolding } from "@/lib/orders/queries";
 import { orderStatusLabel } from "@/lib/orders/types";
 import { getOrganisation, getOrganisationLegalName } from "@/lib/organisations/queries";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
-import { accountPath, accountPaymentsPath } from "@/lib/organisations/paths";
+import { accountPaymentsPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
+import {
+  ownMissingTradeReadyFields,
+  ownMissingTradeReadyLabels,
+} from "@/lib/organisations/eligibility";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 
 export async function HoldingRecord({
   holding,
@@ -101,6 +108,14 @@ export async function HoldingRecord({
   const jurisdiction = jurisdictions.find(
     (item) => item.id === fishery?.jurisdiction_id,
   );
+  const detailsMissing =
+    variant === "account"
+      ? await ownMissingTradeReadyFields(holding.organisation_id, {
+          requireQldProfile: tradeRequiresQldProfile(jurisdiction?.code),
+        })
+      : [];
+  const detailsIncomplete = detailsMissing.length > 0;
+  const listingBlocked = Boolean(sellError) || detailsIncomplete;
 
   return (
     <div className="space-y-10">
@@ -122,7 +137,9 @@ export async function HoldingRecord({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {variant === "admin" && !verified ? (
-              <VerifyHoldingForm holdingId={holding.id} withRequestChanges />
+              <TableModal title="Review holding" label="Review" wide>
+                <HoldingVerificationPanel holdingId={holding.id} />
+              </TableModal>
             ) : null}
             {canManage ? (
               <EditHoldingButton
@@ -191,13 +208,18 @@ export async function HoldingRecord({
         </div>
         {canManage && verified && available > 0 ? (
           <div className="mt-4 space-y-3">
-            {sellError ? (
+            {detailsIncomplete ? (
+              <BusinessDetailsRequiredNotice
+                action="list"
+                missingLabels={ownMissingTradeReadyLabels(detailsMissing)}
+              />
+            ) : sellError ? (
               <PaymentsSetupNotice
                 href={accountPaymentsPath(holding.organisation_id)}
               />
             ) : null}
             <TableActionRow>
-              {sellError ? (
+              {listingBlocked ? (
                 <>
                   <button type="button" disabled className={tableButtonClassName}>
                     Create listing

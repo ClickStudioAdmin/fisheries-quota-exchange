@@ -28,6 +28,7 @@ import {
   organisationRoleLabel,
 } from "@/lib/organisations/types";
 import { readAustralianAddress } from "@/lib/organisations/address";
+import { enabledJurisdictionCodesFromForm } from "@/lib/organisations/enabled-jurisdictions";
 import { emailCopy } from "@/lib/email/copy";
 import {
   ACCOUNT_NOTIFICATION_EMAIL_IDS,
@@ -148,6 +149,8 @@ export async function updateOrganisationDetailsAction(
   const registeredResult = readAustralianAddress(formData, "registered");
   const postalDifferent = formData.get("postal_different") === "on";
   const qldJurisdictionId = Number(formData.get("qld_jurisdiction_id"));
+  const enabledJurisdictionCodes = enabledJurisdictionCodesFromForm(formData);
+  const qldEnabled = enabledJurisdictionCodes.includes("QLD");
   const clientReference = readText(formData, "qld_client_reference");
   const licenceNumber = readText(formData, "qld_licence_number");
   const fisherySymbols = readText(formData, "qld_fishery_symbols");
@@ -200,6 +203,13 @@ export async function updateOrganisationDetailsAction(
     postalAddress = postalResult.address;
   }
 
+  if (qldEnabled && (!clientReference || !licenceNumber)) {
+    return {
+      error:
+        "Queensland fisheries client number and primary commercial fishing licence are required.",
+    };
+  }
+
   const actorRole = await getMyRole(organisationId);
 
   if (!actorRole || !canEditOrganisation(actorRole)) {
@@ -219,6 +229,7 @@ export async function updateOrganisationDetailsAction(
       registered_address: registeredResult.address,
       postal_address: postalDifferent ? postalAddress : registeredResult.address,
       postal_same_as_registered: !postalDifferent,
+      enabled_jurisdiction_codes: enabledJurisdictionCodes,
     })
     .eq("id", organisationId);
 
@@ -226,7 +237,11 @@ export async function updateOrganisationDetailsAction(
     return { error: userFacingError(error) };
   }
 
-  if (Number.isInteger(qldJurisdictionId) && qldJurisdictionId > 0) {
+  if (
+    qldEnabled &&
+    Number.isInteger(qldJurisdictionId) &&
+    qldJurisdictionId > 0
+  ) {
     const { error: profileError } = await supabase
       .from("organisation_jurisdiction_profiles")
       .upsert(

@@ -64,6 +64,11 @@ import { canAddMember, canEditOrganisation } from "@/lib/organisations/permissio
 import { getOrganisation, getOrganisationJurisdictionProfile, listMembers, listOrganisationInvitations } from "@/lib/organisations/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
+import {
+  missingBusinessDetailFields,
+  tradeReadyFieldLabels,
+} from "@/lib/organisations/completeness";
 import { SuccessNotice } from "@/components/notices";
 
 type AccountSectionProps = {
@@ -111,8 +116,9 @@ export async function AccountBusinessSection({
     return (
       <div className="max-w-md space-y-4">
         <p className="text-sm text-ink-muted">
-          Legal name is required. Trading name and ABN are optional. This
-          creates your business. You can own one business.
+          Legal name is required to create a business. You can own one business.
+          Complete the remaining required fields on this page before you can buy
+          or list quota.
         </p>
         <BusinessDetailsForm />
       </div>
@@ -122,14 +128,15 @@ export async function AccountBusinessSection({
   return (
     <div className="max-w-4xl space-y-4">
       <p className="max-w-2xl text-sm text-ink-muted">
-        Business details for this business, including fields used on Queensland
-        transfer applications. Hide my identity if you do not want this name on
-        public listings.
+        Fields marked required must be completed before you can buy or list
+        quota. Select Queensland to show fisheries client number and primary
+        licence, which are required for Queensland trades. Trading name, address
+        line 2, fishery symbols, and Hide my Identity are optional.
       </p>
       <OrganisationDetailsForm
         organisation={result.organisation}
+        jurisdictions={jurisdictions}
         qldProfile={qldProfile}
-        qldJurisdictionId={qldJurisdiction?.id ?? null}
         canEdit={canEdit}
       />
     </div>
@@ -315,6 +322,9 @@ export async function AccountHoldingsSection({
     holdings.map((holding) => holding.id),
   );
   const lastSale = latestSalePriceMap(prices);
+  const detailsMissing = missingBusinessDetailFields(result.organisation);
+  const detailsIncomplete = detailsMissing.length > 0;
+  const listingBlocked = Boolean(sellError) || detailsIncomplete;
   const valued = holdings.map((holding) => {
     const sale = lastSale.get(holding.fishery_id);
     if (!sale) {
@@ -361,7 +371,14 @@ export async function AccountHoldingsSection({
               : null}
           </SuccessNotice>
         ) : null}
-        {canManage && sellError ? (
+        {canManage && detailsIncomplete ? (
+          <div className="mt-4">
+            <BusinessDetailsRequiredNotice
+              action="list"
+              missingLabels={tradeReadyFieldLabels(detailsMissing)}
+            />
+          </div>
+        ) : canManage && sellError ? (
           <div className="mt-4">
             <PaymentsSetupNotice
               href={accountPaymentsPath(organisationId)}
@@ -469,7 +486,7 @@ export async function AccountHoldingsSection({
                   <>
                     {verified && available > 0 ? (
                       <>
-                        {sellError ? (
+                        {listingBlocked ? (
                           <>
                             <button
                               type="button"
@@ -571,13 +588,20 @@ export async function AccountListingsSection({
       listHoldingCommitments(listings.map((listing) => listing.holding_id)),
     ]);
   const canList = canEditOrganisation(result.role);
+  const detailsMissing = missingBusinessDetailFields(result.organisation);
+  const detailsIncomplete = detailsMissing.length > 0;
 
   return (
     <div className="space-y-4">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         Listings
       </h1>
-      {canList && sellError ? (
+      {canList && detailsIncomplete ? (
+        <BusinessDetailsRequiredNotice
+          action="list"
+          missingLabels={tradeReadyFieldLabels(detailsMissing)}
+        />
+      ) : canList && sellError ? (
         <PaymentsSetupNotice
           href={accountPaymentsPath(organisationId)}
         />

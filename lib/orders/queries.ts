@@ -6,9 +6,35 @@ import type {
   QuotaReservation,
   SimulatedTransaction,
 } from "@/lib/orders/types";
+import { parseComplianceChecklist } from "@/lib/orders/checklist";
 
 const orderColumns =
-  "id, listing_id, holding_id, seller_organisation_id, buyer_organisation_id, offering, quantity, unit_price_aud, amount_aud, fee_percent, fee_amount_aud, status, seller_name, buyer_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, updated_at, review_note";
+  "id, listing_id, holding_id, seller_organisation_id, buyer_organisation_id, offering, quantity, unit_price_aud, amount_aud, fee_percent, fee_amount_aud, status, seller_name, buyer_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, updated_at, review_note, compliance_checklist";
+
+function mapOrder(row: Record<string, unknown> | null): Order | null {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...(row as Order),
+    compliance_checklist: parseComplianceChecklist(row.compliance_checklist),
+  };
+}
+
+function mapOrders(data: unknown): Order[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map((row) =>
+      row && typeof row === "object"
+        ? mapOrder(row as Record<string, unknown>)
+        : null,
+    )
+    .filter((row): row is Order => row != null);
+}
 
 export async function listMyOrders() {
   const supabase = await createClient();
@@ -19,7 +45,7 @@ export async function listMyOrders() {
     .select(orderColumns)
     .order("created_at", { ascending: false });
 
-  return (data ?? []) as Order[];
+  return mapOrders(data);
 }
 
 export async function listOrganisationOrders(organisationId: number) {
@@ -34,7 +60,7 @@ export async function listOrganisationOrders(organisationId: number) {
     )
     .order("created_at", { ascending: false });
 
-  return (data ?? []) as Order[];
+  return mapOrders(data);
 }
 
 export async function listAllOrders() {
@@ -46,7 +72,7 @@ export async function listAllOrders() {
     .select(orderColumns)
     .order("created_at", { ascending: false });
 
-  return (data ?? []) as Order[];
+  return mapOrders(data);
 }
 
 export async function listAdminQueueOrders() {
@@ -63,7 +89,7 @@ export async function listAdminQueueOrders() {
     ])
     .order("id", { ascending: false });
 
-  return (data ?? []) as Order[];
+  return mapOrders(data);
 }
 
 export async function listOrdersByCreator(email: string) {
@@ -76,7 +102,7 @@ export async function listOrdersByCreator(email: string) {
     .eq("created_by_email", email.trim().toLowerCase())
     .order("created_at", { ascending: false });
 
-  return (data ?? []) as Order[];
+  return mapOrders(data);
 }
 
 export async function listOrdersByHolding(holdingId: number) {
@@ -89,7 +115,7 @@ export async function listOrdersByHolding(holdingId: number) {
     .eq("holding_id", holdingId)
     .order("id", { ascending: false });
 
-  return (data ?? []) as Order[];
+  return mapOrders(data);
 }
 
 export async function getOrderForListing(listingId: number) {
@@ -111,7 +137,7 @@ export async function getOrderForListing(listingId: number) {
     .limit(1)
     .maybeSingle();
 
-  return (data as Order | null) ?? null;
+  return mapOrder((data as Record<string, unknown> | null) ?? null);
 }
 
 async function fetchOrder(
@@ -124,7 +150,7 @@ async function fetchOrder(
     .eq("id", id)
     .maybeSingle();
 
-  return (data as Order | null) ?? null;
+  return mapOrder((data as Record<string, unknown> | null) ?? null);
 }
 
 export async function getOrder(id: number) {

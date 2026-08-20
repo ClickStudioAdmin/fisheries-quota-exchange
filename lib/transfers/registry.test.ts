@@ -29,6 +29,7 @@ const completeOrg: Organisation = {
   registered_address: completeAddress,
   postal_address: completeAddress,
   postal_same_as_registered: true,
+  enabled_jurisdiction_codes: ["QLD"],
 };
 
 test("getTransferProcess routes QLD sale and lease separately from simulated", () => {

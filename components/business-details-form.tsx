@@ -24,7 +24,8 @@ export function BusinessDetailsForm() {
       ) : null}
       <div>
         <label htmlFor="legal_name" className="block text-sm text-ink">
-          Legal name
+          Legal name{" "}
+          <span className="font-normal text-ink-muted">(required)</span>
         </label>
         <input
           id="legal_name"

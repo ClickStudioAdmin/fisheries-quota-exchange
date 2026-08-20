@@ -2,14 +2,37 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { userFacingError } from "@/lib/errors/user-message";
 import type { Listing } from "@/lib/listings/types";
+import { parseComplianceChecklist } from "@/lib/orders/checklist";
 
 const columns =
-  "id, organisation_id, holding_id, listing_type, offering, quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note, starting_price_aud, reserve_price_aud, bid_increment_aud, starts_at";
+  "id, organisation_id, holding_id, listing_type, offering, quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note, approval_checklist, starting_price_aud, reserve_price_aud, bid_increment_aud, starts_at";
 
 type ListingQuery = PromiseLike<{
   data: unknown;
   error: { message: string } | null;
 }>;
+
+function mapListing(row: unknown): Listing | null {
+  if (!row || typeof row !== "object") {
+    return null;
+  }
+
+  const record = row as Record<string, unknown>;
+  return {
+    ...(row as Listing),
+    approval_checklist: parseComplianceChecklist(record.approval_checklist),
+  };
+}
+
+function mapListings(data: unknown): Listing[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map(mapListing)
+    .filter((row): row is Listing => row != null);
+}
 
 async function listingRows(query: ListingQuery): Promise<Listing[]> {
   const { data, error } = await query;
@@ -19,7 +42,7 @@ async function listingRows(query: ListingQuery): Promise<Listing[]> {
     return [];
   }
 
-  return (data ?? []) as Listing[];
+  return mapListings(data);
 }
 
 export async function listMarketplaceListings() {
@@ -50,7 +73,7 @@ export async function getListing(id: number) {
     return null;
   }
 
-  return (data as Listing | null) ?? null;
+  return mapListing(data);
 }
 
 export async function listOrganisationListings(organisationId: number) {
@@ -79,7 +102,7 @@ export async function listAllListings() {
     return { listings: [] as Listing[], error: userFacingError(error) };
   }
 
-  return { listings: (data ?? []) as Listing[] };
+  return { listings: mapListings(data) };
 }
 
 export async function listListingsByCreator(email: string) {

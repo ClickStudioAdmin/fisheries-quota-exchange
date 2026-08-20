@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CreateAuctionForm } from "@/components/create-auction-form";
 import { TermsRequiredNotice } from "@/components/terms-required-notice";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
 import {
   listFisheries,
   listHoldingCommitments,
   listHoldingsForOrganisation,
+  listJurisdictions,
 } from "@/lib/fisheries/queries";
 import { accountPaymentsPath } from "@/lib/organisations/paths";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
@@ -20,6 +22,11 @@ import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { getPlatformSettings, isVerifiedUser } from "@/lib/settings/queries";
 import { platformFeeDisclosure } from "@/lib/settings/types";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
+import {
+  ownMissingTradeReadyFields,
+  ownMissingTradeReadyLabels,
+} from "@/lib/organisations/eligibility";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 
 export const metadata = {
   title: "Create auction",
@@ -69,10 +76,11 @@ export default async function NewAuctionPage({
     );
   }
 
-  const [holdings, fisheries, settings, verified, sellError, acceptedTerms] =
+  const [holdings, fisheries, jurisdictions, settings, verified, sellError, acceptedTerms] =
     await Promise.all([
       listHoldingsForOrganisation(organisationId),
       listFisheries(),
+      listJurisdictions(),
       getPlatformSettings(),
       isVerifiedUser(),
       organisationCanSellError(organisationId),
@@ -96,6 +104,13 @@ export default async function NewAuctionPage({
   }
 
   const fishery = fisheries.find((item) => item.id === holding.fishery_id);
+  const requireQld = tradeRequiresQldProfile(
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code,
+  );
+  const detailsMissing = await ownMissingTradeReadyFields(organisationId, {
+    requireQldProfile: requireQld,
+  });
+  const detailsIncomplete = detailsMissing.length > 0;
   const unitLabel = fishery
     ? quantityTypeLabel(fishery.quantity_type)
     : "units";
@@ -123,9 +138,14 @@ export default async function NewAuctionPage({
       <p className="mt-4 text-sm text-ink">
         {fishery?.name ?? "Fishery"} · {availableLabel} {unitLabel} available
       </p>
-      <div className={`mt-6 ${!acceptedTerms || sellError ? "max-w-2xl" : "max-w-md"}`}>
+      <div className={`mt-6 ${!acceptedTerms || detailsIncomplete || sellError ? "max-w-2xl" : "max-w-md"}`}>
         {!acceptedTerms ? (
           <TermsRequiredNotice action="list" />
+        ) : detailsIncomplete ? (
+          <BusinessDetailsRequiredNotice
+            action="list"
+            missingLabels={ownMissingTradeReadyLabels(detailsMissing)}
+          />
         ) : sellError ? (
           <PaymentsSetupNotice
             href={accountPaymentsPath(organisationId)}

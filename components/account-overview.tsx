@@ -17,6 +17,11 @@ import { OverviewNotifications } from "@/components/overview-notifications";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { StatusBadge } from "@/components/status-badge";
 import { ActionNotice } from "@/components/notices";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
+import {
+  missingBusinessDetailFields,
+  tradeReadyFieldLabels,
+} from "@/lib/organisations/completeness";
 import {
   LabeledFields,
   panelClassName,
@@ -56,8 +61,12 @@ export async function AccountOverviewSection({
       listMyPendingInvitations(),
     ]);
   const hasAccount = Boolean(result);
+  const detailsMissing = result
+    ? missingBusinessDetailFields(result.organisation)
+    : [];
+  const detailsComplete = detailsMissing.length === 0;
   const canManage = result ? canBuyForOrganisation(result.role) : false;
-  const canBuy = acceptedTerms && hasAccount && canManage;
+  const canBuy = acceptedTerms && hasAccount && canManage && detailsComplete;
   const canSell = canBuy && !sellError;
   const href = (path: string) => path;
   const pendingHoldings = holdings.filter(
@@ -113,7 +122,21 @@ export async function AccountOverviewSection({
         <div className="mt-4 space-y-3">
           {acceptedTerms ? null : <AcceptTermsForm />}
           {hasAccount ? (
-            acceptedTerms && sellError ? (
+            acceptedTerms && detailsMissing.length > 0 ? (
+              <>
+                <p className="text-sm text-ink-muted">
+                  You have agreed to the{" "}
+                  <Link href="/terms" className="underline">
+                    terms of service
+                  </Link>
+                  .
+                </p>
+                <BusinessDetailsRequiredNotice
+                  action="trade"
+                  missingLabels={tradeReadyFieldLabels(detailsMissing)}
+                />
+              </>
+            ) : acceptedTerms && sellError ? (
               <>
                 <p className="text-sm text-ink-muted">
                   You have agreed to the{" "}

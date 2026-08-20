@@ -10,10 +10,14 @@ import {
   parseListingReviewIds,
 } from "@/lib/listings/types";
 import { getListing, listAllListings } from "@/lib/listings/queries";
+import { listingApprovalChecks } from "@/lib/listings/approval-checks";
+import { selectedComplianceChecks } from "@/lib/orders/checklist";
 import { userFacingError } from "@/lib/errors/user-message";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
-import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import { requireTradeReadyError } from "@/lib/organisations/eligibility";
+import { getHoldingJurisdictionCode } from "@/lib/fisheries/queries";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { requireActiveOrganisationMatch } from "@/lib/organisations/active-session";
 import {
   SELLER_ACKNOWLEDGEMENTS,
@@ -82,7 +86,10 @@ export async function createListingAction(
     return { error: termsError };
   }
 
-  const accountError = await requireBusinessAccountError();
+  const jurisdictionCode = await getHoldingJurisdictionCode(holdingId);
+  const accountError = await requireTradeReadyError(organisationId, {
+    requireQldProfile: tradeRequiresQldProfile(jurisdictionCode),
+  });
 
   if (accountError) {
     return { error: accountError };
@@ -231,6 +238,47 @@ export async function startListingReviewAction(formData: FormData) {
   redirect(
     listingReviewPath(selected.filter((id) => pending.has(id))),
   );
+}
+
+export async function saveListingApprovalChecklistAction(
+  _prev: ListingFormState,
+  formData: FormData,
+): Promise<ListingFormState> {
+  const supabase = await createClient();
+
+  if (!supabase || !(await isPlatformAdmin())) {
+    return { error: "Not a platform admin." };
+  }
+
+  const listingId = Number(formData.get("listing_id"));
+
+  if (!Number.isInteger(listingId)) {
+    return { error: "Listing not found." };
+  }
+
+  const listing = await getListing(listingId);
+
+  if (!listing || listing.status !== "PENDING_APPROVAL") {
+    return { error: "Listing is not waiting for approval." };
+  }
+
+  const jurisdictionCode = await getHoldingJurisdictionCode(listing.holding_id);
+  const completed = selectedComplianceChecks(
+    listingApprovalChecks(jurisdictionCode, listing.listing_type),
+    formData.getAll("checks").map(String),
+  );
+
+  const { error } = await supabase.rpc("save_listing_approval_checklist", {
+    p_listing_id: listing.id,
+    p_completed: completed,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/admin/listings");
+  return { message: "Progress saved." };
 }
 
 export async function approveListingAction(formData: FormData) {

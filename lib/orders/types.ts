@@ -33,6 +33,7 @@ export type Order = {
   created_at: string;
   updated_at: string;
   review_note: string | null;
+  compliance_checklist: string[];
 };
 
 export type QuotaReservation = {
@@ -59,6 +60,7 @@ export type { AuditEvent } from "../audit/types";
 
 export type OrderFormState = {
   error?: string;
+  message?: string;
 };
 
 export function parseOrderIds(value?: string | null) {

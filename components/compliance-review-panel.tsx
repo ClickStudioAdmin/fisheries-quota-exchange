@@ -1,4 +1,6 @@
 import { ReviewOrderForms } from "@/components/review-order-forms";
+import { ReviewChecklistForm } from "@/components/review-checklist-form";
+import { saveComplianceChecklistAction } from "@/lib/orders/actions";
 import {
   LabeledFieldGroups,
   LabeledFields,
@@ -156,19 +158,9 @@ export function ComplianceReviewPanel({
 
   return (
     <div className="mt-2 space-y-6">
-      <div
-        className={
-          qld ? "grid items-start gap-6 lg:grid-cols-2" : undefined
-        }
-      >
+      <div className="grid items-start gap-6 lg:grid-cols-2">
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Order</h3>
-          {qld ? null : (
-            <p className="mt-1 text-sm text-ink-muted">
-              {workspace.process.title}. Quota is already reserved. Approving
-              starts the simulated transfer step, not a regulator submission.
-            </p>
-          )}
           <div className="mt-4">
             <LabeledFields
               items={[
@@ -195,21 +187,22 @@ export function ComplianceReviewPanel({
             />
           </div>
         </section>
-        {qld ? (
-          <section className={panelClassName}>
-            <h3 className="text-lg font-semibold text-ink">
-              Queensland checks
-            </h3>
-            <p className="mt-1 text-sm text-ink-muted">
-              {workspace.process.title}
-            </p>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-ink">
-              {workspace.process.complianceChecks.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        <section className={panelClassName}>
+          <h3 className="text-lg font-semibold text-ink">
+            {qld ? "Queensland checks" : "Compliance checks"}
+          </h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            {workspace.process.title}
+          </p>
+          <div className="mt-4">
+            <ReviewChecklistForm
+              action={saveComplianceChecklistAction}
+              hidden={{ order_id: String(order.id) }}
+              checks={workspace.process.complianceChecks}
+              completed={order.compliance_checklist}
+            />
+          </div>
+        </section>
       </div>
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <PartyDetails

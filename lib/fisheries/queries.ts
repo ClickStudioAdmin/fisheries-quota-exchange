@@ -5,6 +5,47 @@ import type {
   QuotaHolding,
   QuotaLedgerEntry,
 } from "@/lib/fisheries/types";
+import { isHoldingVerificationStatus } from "@/lib/fisheries/types";
+import { parseComplianceChecklist } from "@/lib/orders/checklist";
+
+const HOLDING_COLUMNS =
+  "id, organisation_id, fishery_id, quantity, verification_status, verification_checklist";
+
+function mapHolding(row: Record<string, unknown> | null): QuotaHolding | null {
+  if (!row) {
+    return null;
+  }
+
+  const status = String(row.verification_status ?? "");
+  if (!isHoldingVerificationStatus(status)) {
+    return null;
+  }
+
+  return {
+    id: Number(row.id),
+    organisation_id: Number(row.organisation_id),
+    fishery_id: Number(row.fishery_id),
+    quantity: String(row.quantity),
+    verification_status: status,
+    verification_checklist: parseComplianceChecklist(
+      row.verification_checklist,
+    ),
+  };
+}
+
+function mapHoldings(data: unknown): QuotaHolding[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map((row) =>
+      row && typeof row === "object"
+        ? mapHolding(row as Record<string, unknown>)
+        : null,
+    )
+    .filter((row): row is QuotaHolding => row != null);
+}
 
 export async function listJurisdictions() {
   const supabase = await createClient();
@@ -14,6 +55,23 @@ export async function listJurisdictions() {
     .select("id, code, name")
     .order("code");
   return (data ?? []) as Jurisdiction[];
+}
+
+export async function getQldJurisdictionId() {
+  const jurisdictions = await listJurisdictions();
+  return jurisdictions.find((item) => item.code === "QLD")?.id ?? null;
+}
+
+export async function getHoldingJurisdictionCode(holdingId: number) {
+  const holding = await getHolding(holdingId);
+  if (!holding) return null;
+  const fishery = await getFishery(holding.fishery_id);
+  if (!fishery) return null;
+  const jurisdictions = await listJurisdictions();
+  return (
+    jurisdictions.find((item) => item.id === fishery.jurisdiction_id)?.code ??
+    null
+  );
 }
 
 export async function listFisheries() {
@@ -43,11 +101,11 @@ export async function listHoldingsForOrganisation(organisationId: number) {
   const { data } = await supabase
     .from("quota_holdings")
     .select(
-      "id, organisation_id, fishery_id, quantity, verification_status",
+      HOLDING_COLUMNS,
     )
     .eq("organisation_id", organisationId)
     .order("id");
-  return (data ?? []) as QuotaHolding[];
+  return mapHoldings(data);
 }
 
 export async function listHoldingsForOrganisations(organisationIds: number[]) {
@@ -56,11 +114,11 @@ export async function listHoldingsForOrganisations(organisationIds: number[]) {
   const { data } = await supabase
     .from("quota_holdings")
     .select(
-      "id, organisation_id, fishery_id, quantity, verification_status",
+      HOLDING_COLUMNS,
     )
     .in("organisation_id", organisationIds)
     .order("id", { ascending: false });
-  return (data ?? []) as QuotaHolding[];
+  return mapHoldings(data);
 }
 
 export async function getHolding(id: number) {
@@ -69,11 +127,11 @@ export async function getHolding(id: number) {
   const { data } = await supabase
     .from("quota_holdings")
     .select(
-      "id, organisation_id, fishery_id, quantity, verification_status",
+      HOLDING_COLUMNS,
     )
     .eq("id", id)
     .maybeSingle();
-  return (data as QuotaHolding | null) ?? null;
+  return mapHolding((data as Record<string, unknown> | null) ?? null);
 }
 
 export async function listHoldingCommitments(holdingIds: number[]) {
@@ -164,8 +222,8 @@ export async function listAllHoldings() {
   const { data } = await supabase
     .from("quota_holdings")
     .select(
-      "id, organisation_id, fishery_id, quantity, verification_status",
+      HOLDING_COLUMNS,
     )
     .order("id", { ascending: false });
-  return (data ?? []) as QuotaHolding[];
+  return mapHoldings(data);
 }

@@ -33,6 +33,7 @@ export type Listing = {
   reviewed_by_email: string | null;
   reviewed_at: string | null;
   review_note: string | null;
+  approval_checklist: string[];
   starting_price_aud: string | null;
   reserve_price_aud: string | null;
   bid_increment_aud: string | null;

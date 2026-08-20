@@ -11,6 +11,7 @@ import type {
 import { isEntityKind, isOrganisationRole } from "@/lib/organisations/types";
 import { parseNotificationRoles } from "@/lib/organisations/notification-roles";
 import { parseAustralianAddress } from "@/lib/organisations/address";
+import { parseEnabledJurisdictionCodes } from "@/lib/organisations/enabled-jurisdictions";
 import { parseDisabledProductEmails } from "@/lib/email/product-emails";
 import { isInvitationToken } from "@/lib/organisations/paths";
 import { isPlatformAdmin } from "@/lib/admin/access";
@@ -40,7 +41,12 @@ function asEntityKind(value: unknown): EntityKind | null {
 }
 
 const ORGANISATION_COLUMNS =
-  "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at, entity_kind, acn, mobile, registered_address, postal_address, postal_same_as_registered";
+  "id, legal_name, trading_name, abn, hide_identity, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at, entity_kind, acn, mobile, registered_address, postal_address, postal_same_as_registered, enabled_jurisdiction_codes";
+
+const JURISDICTION_PROFILE_COLUMNS =
+  "organisation_id, jurisdiction_id, client_reference, licence_number, fishery_symbols";
+
+type OrganisationDbClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
 
 function mapOrganisation(row: Record<string, unknown>): Organisation {
   return {
@@ -64,7 +70,84 @@ function mapOrganisation(row: Record<string, unknown>): Organisation {
     registered_address: parseAustralianAddress(row.registered_address),
     postal_address: parseAustralianAddress(row.postal_address),
     postal_same_as_registered: row.postal_same_as_registered !== false,
+    enabled_jurisdiction_codes: parseEnabledJurisdictionCodes(
+      row.enabled_jurisdiction_codes,
+    ),
   };
+}
+
+function mapJurisdictionProfile(
+  row: Record<string, unknown>,
+): OrganisationJurisdictionProfile {
+  return {
+    organisation_id: Number(row.organisation_id),
+    jurisdiction_id: Number(row.jurisdiction_id),
+    client_reference: asNullableText(row.client_reference),
+    licence_number: asNullableText(row.licence_number),
+    fishery_symbols: asNullableText(row.fishery_symbols),
+  };
+}
+
+async function selectOrganisation(
+  supabase: OrganisationDbClient,
+  id: number,
+): Promise<Organisation | null> {
+  const { data, error } = await supabase
+    .from("organisations")
+    .select(ORGANISATION_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error?.message?.includes("hide_identity") || error?.message?.includes("entity_kind") || error?.message?.includes("postal_same_as_registered") || error?.message?.includes("enabled_jurisdiction_codes")) {
+    const fallback = await supabase
+      .from("organisations")
+      .select(
+        "id, legal_name, trading_name, abn, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at",
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fallback.error || !fallback.data) {
+      return null;
+    }
+
+    return mapOrganisation({
+      ...fallback.data,
+      hide_identity: false,
+      entity_kind: null,
+      acn: null,
+      mobile: null,
+      registered_address: null,
+      postal_address: null,
+      postal_same_as_registered: true,
+      enabled_jurisdiction_codes: [],
+    });
+  }
+
+  if (error || !data) {
+    return null;
+  }
+
+  return mapOrganisation(data as Record<string, unknown>);
+}
+
+async function selectJurisdictionProfile(
+  supabase: OrganisationDbClient,
+  organisationId: number,
+  jurisdictionId: number,
+): Promise<OrganisationJurisdictionProfile | null> {
+  const { data, error } = await supabase
+    .from("organisation_jurisdiction_profiles")
+    .select(JURISDICTION_PROFILE_COLUMNS)
+    .eq("organisation_id", organisationId)
+    .eq("jurisdiction_id", jurisdictionId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return mapJurisdictionProfile(data as Record<string, unknown>);
 }
 
 export async function listMyOrganisations(): Promise<OrganisationSummary[]> {
@@ -141,48 +224,32 @@ export async function getOrganisation(
     return null;
   }
 
-  const { data, error } = await supabase
-    .from("organisations")
-    .select(ORGANISATION_COLUMNS)
-    .eq("id", id)
-    .maybeSingle();
+  const organisation = await selectOrganisation(supabase, id);
 
-  if (error?.message?.includes("hide_identity") || error?.message?.includes("entity_kind") || error?.message?.includes("postal_same_as_registered")) {
-    const fallback = await supabase
-      .from("organisations")
-      .select(
-        "id, legal_name, trading_name, abn, notification_roles, disabled_notification_emails, disabled_notification_in_app, created_at, updated_at",
-      )
-      .eq("id", id)
-      .maybeSingle();
-
-    if (fallback.error || !fallback.data) {
-      return null;
-    }
-
-    return {
-      organisation: mapOrganisation({
-        ...fallback.data,
-        hide_identity: false,
-        entity_kind: null,
-        acn: null,
-        mobile: null,
-        registered_address: null,
-        postal_address: null,
-        postal_same_as_registered: true,
-      }),
-      role,
-    };
-  }
-
-  if (error || !data) {
+  if (!organisation) {
     return null;
   }
 
   return {
-    organisation: mapOrganisation(data as Record<string, unknown>),
+    organisation,
     role,
   };
+}
+
+export async function getOrganisationForAdmin(
+  id: number,
+): Promise<Organisation | null> {
+  if (!(await isPlatformAdmin())) {
+    return null;
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  return selectOrganisation(supabase, id);
 }
 
 export async function getOrganisationJurisdictionProfile(
@@ -195,26 +262,7 @@ export async function getOrganisationJurisdictionProfile(
     return null;
   }
 
-  const { data, error } = await supabase
-    .from("organisation_jurisdiction_profiles")
-    .select(
-      "organisation_id, jurisdiction_id, client_reference, licence_number, fishery_symbols",
-    )
-    .eq("organisation_id", organisationId)
-    .eq("jurisdiction_id", jurisdictionId)
-    .maybeSingle();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return {
-    organisation_id: Number(data.organisation_id),
-    jurisdiction_id: Number(data.jurisdiction_id),
-    client_reference: asNullableText(data.client_reference),
-    licence_number: asNullableText(data.licence_number),
-    fishery_symbols: asNullableText(data.fishery_symbols),
-  };
+  return selectJurisdictionProfile(supabase, organisationId, jurisdictionId);
 }
 
 export async function listOrganisationHideIdentity(

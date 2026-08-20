@@ -16,7 +16,7 @@ import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { fisherySelectLabelForName } from "@/lib/fisheries/types";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { TableModal } from "@/components/table-modal";
-import { ReviewListingForms } from "@/components/review-listing-forms";
+import { ListingApprovalPanel } from "@/components/listing-approval-panel";
 import { BulkReviewListingsModal } from "@/components/bulk-review-listings-modal";
 import { formatTableDate } from "@/lib/format";
 
@@ -170,8 +170,8 @@ export default async function AdminListingsPage({
             }
             actions={
               listing.status === "PENDING_APPROVAL" ? (
-                <TableModal title="Review listing" label="Review">
-                  <ReviewListingForms listingId={listing.id} />
+                <TableModal title="Review listing" label="Review" wide>
+                  <ListingApprovalPanel listingId={listing.id} />
                 </TableModal>
               ) : null
             }
@@ -183,29 +183,10 @@ export default async function AdminListingsPage({
         <BulkReviewListingsModal count={reviewListings.length}>
           {reviewListings.map((listing, index) => (
             <section key={listing.id} className="space-y-4 py-6 first:pt-0 last:pb-0">
-              <div>
-                <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-                  {index + 1} of {reviewListings.length}
-                </p>
-                <h3 className="mt-1 text-lg font-semibold text-ink">
-                  Listing {listing.id} · {listing.seller_name}
-                </h3>
-                <p className="mt-1 text-sm text-ink-muted">
-                  {listingTypeLabel(listing.listing_type)} ·{" "}
-                  {listingOfferingLabel(listing.offering)} ·{" "}
-                  {fisherySelectLabelForName(
-                    listing.fishery_name,
-                    fisheries,
-                    jurisdictions,
-                  )}{" "}
-                  · {listing.quantity} {listing.unit_label} ·{" "}
-                  {formatAud(listing.unit_price_aud)}
-                </p>
-                <p className="mt-1 text-sm text-ink-muted">
-                  Expires {formatTableDate(listing.expires_at)}
-                </p>
-              </div>
-              <ReviewListingForms
+              <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+                {index + 1} of {reviewListings.length}
+              </p>
+              <ListingApprovalPanel
                 listingId={listing.id}
                 reviewQueue={reviewListings.map((item) => item.id)}
               />

@@ -5,7 +5,12 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
 import { accountPath } from "@/lib/organisations/paths";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
-import { requireBusinessAccountError } from "@/lib/organisations/eligibility";
+import {
+  requireCounterpartyTradeReadyError,
+  requireTradeReadyError,
+} from "@/lib/organisations/eligibility";
+import { getHoldingJurisdictionCode } from "@/lib/fisheries/queries";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
 import {
   ACTIVE_ORGANISATION_REQUIRED_MESSAGE,
@@ -96,7 +101,10 @@ export async function createAuctionAction(
     return { error: termsError };
   }
 
-  const accountError = await requireBusinessAccountError();
+  const jurisdictionCode = await getHoldingJurisdictionCode(holdingId);
+  const accountError = await requireTradeReadyError(organisationId, {
+    requireQldProfile: tradeRequiresQldProfile(jurisdictionCode),
+  });
 
   if (accountError) {
     return { error: accountError };
@@ -182,10 +190,28 @@ export async function placeBidAction(
     return { error: termsError };
   }
 
-  const accountError = await requireBusinessAccountError();
+  const listing = await getListing(listingId);
+  const jurisdictionCode = listing
+    ? await getHoldingJurisdictionCode(listing.holding_id)
+    : null;
+  const requireQld = tradeRequiresQldProfile(jurisdictionCode);
+  const accountError = await requireTradeReadyError(organisationId, {
+    requireQldProfile: requireQld,
+  });
 
   if (accountError) {
     return { error: accountError };
+  }
+
+  if (listing) {
+    const sellerError = await requireCounterpartyTradeReadyError(
+      listing.organisation_id,
+      { requireQldProfile: requireQld },
+    );
+
+    if (sellerError) {
+      return { error: sellerError };
+    }
   }
 
   const ackError = requireAcknowledgements(formData, BUYER_BID_ACKNOWLEDGEMENTS);
@@ -194,7 +220,6 @@ export async function placeBidAction(
     return { error: ackError };
   }
 
-  const listing = await getListing(listingId);
   const previous = (await listBids(listingId))[0] ?? null;
 
   if (listing?.organisation_id === organisationId) {

@@ -9,7 +9,7 @@ import {
   isQuantityType,
   parseHoldingIds,
 } from "@/lib/fisheries/types";
-import { getHolding, getFishery } from "@/lib/fisheries/queries";
+import { getHolding, getFishery, getHoldingJurisdictionCode } from "@/lib/fisheries/queries";
 import {
   notifyHoldingNeedsChanges,
   notifyHoldingPending,
@@ -17,6 +17,8 @@ import {
 } from "@/lib/email/events";
 import { userFacingError } from "@/lib/errors/user-message";
 import { requireActiveOrganisationMatch } from "@/lib/organisations/active-session";
+import { selectedComplianceChecks } from "@/lib/orders/checklist";
+import { holdingVerificationChecks } from "@/lib/fisheries/verification-checks";
 import {
   FISHERY_LOGO_BUCKET,
   fisheryLogoExtension,
@@ -363,6 +365,50 @@ export async function startHoldingVerifyAction(formData: FormData) {
   }
 
   redirect(holdingVerifyPath(selected));
+}
+
+export async function saveHoldingVerificationChecklistAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const admin = await requireAdmin();
+  if (admin.error || !admin.supabase) {
+    return { error: admin.error ?? "Not a platform admin." };
+  }
+
+  const holdingId = Number(formData.get("holding_id"));
+
+  if (!Number.isInteger(holdingId)) {
+    return { error: "Holding not found." };
+  }
+
+  const holding = await getHolding(holdingId);
+
+  if (!holding || holding.verification_status !== "PENDING_VERIFICATION") {
+    return { error: "Holding is not waiting for verification." };
+  }
+
+  const jurisdictionCode = await getHoldingJurisdictionCode(holding.id);
+  const completed = selectedComplianceChecks(
+    holdingVerificationChecks(jurisdictionCode),
+    formData.getAll("checks").map(String),
+  );
+
+  const { error } = await admin.supabase.rpc(
+    "save_holding_verification_checklist",
+    {
+      p_holding_id: holding.id,
+      p_completed: completed,
+    },
+  );
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/admin/holdings");
+  revalidatePath(`/admin/holdings/${holding.id}`);
+  return { message: "Progress saved." };
 }
 
 export async function verifyHoldingAction(formData: FormData) {

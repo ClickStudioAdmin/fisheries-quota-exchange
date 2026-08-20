@@ -14,15 +14,16 @@ Never trust the browser for payment status, bid time, quota availability, or tra
 
 ## Flow
 
-1. Payment stays as it is. Compliance review shows the order, buyer and seller business details, and jurisdiction checks (Queensland instructions on QLD orders). Approving still moves the order to `AWAITING_TRANSFER`.
+1. Payment stays as it is. Compliance review shows the order, buyer and seller business details, and a checklist of jurisdiction steps (Queensland instructions on QLD orders). Admins tick steps and save progress. Approving still moves the order to `AWAITING_TRANSFER`.
 2. FQX resolves the process from the listing holding’s fishery jurisdiction plus offering (`SALE` or `LEASE`). Queensland uses `QLD_SALE` (FDU1465) or `QLD_LEASE`. Everything else uses `SIMULATED`.
 3. A `transfer_applications` row holds **child** status. It does not replace `orders.status`.
-4. Shared transfer fields live on the business (entity kind, ACN for companies, phone, structured Australian addresses). Queensland-only fields live on `organisation_jurisdiction_profiles`. Owners and admins edit them on **Business Settings → Details**. There is no second onboarding form.
-5. If required fields are missing, FQX does not generate a PDF. The order page lists what is missing and links this business to Details.
-6. When both businesses are complete, FQX generates an unsigned PDF from stored data, stores it, and emails it to buyer and seller notification roles. Parties download the same file from the order. They sign and witness **offline**.
-7. There is no party upload UI. Admin uploads the completed/signed PDF as a new document version. The unsigned original is not overwritten.
-8. Admin records Fisheries Queensland submission (method, date, reference, notes) and later processing / action required / approved. There is no FQ API.
-9. On **approved**, FQX calls the existing `simulate_transfer` so the order becomes `AWAITING_SETTLEMENT`. Settlement still moves the quota ledger and creates the Stripe Transfer. Do not apply quota again at FQ approval.
+4. Shared transfer fields live on the business (entity kind, ACN for companies, phone, structured Australian addresses). Queensland-only fields live on `organisation_jurisdiction_profiles`. Owners and admins select jurisdictions on **Business Settings → Details**; Queensland fields appear when Queensland is selected. There is no second onboarding form.
+5. Buying, bidding, and listing require complete identity fields (entity kind, legal name, ABN, ACN for companies, phone, registered address; postal address if it differs). Queensland client number and primary licence are required only for Queensland trades, which also requires Queensland to be selected. The browser is not trusted: server actions check the signed-in business and call `organisation_is_trade_ready` for the other party. Incomplete details block the form and name the missing fields.
+6. If required transfer-application fields are missing, FQX does not generate a PDF. The order page lists what is missing and links this business to Details.
+7. When both businesses are complete, FQX generates an unsigned PDF from stored data, stores it, and emails it to buyer and seller notification roles. Parties download the same file from the order. They sign and witness **offline**.
+8. There is no party upload UI. Admin uploads the completed/signed PDF as a new document version. The unsigned original is not overwritten.
+9. Admin records Fisheries Queensland submission (method, date, reference, notes) and later processing / action required / approved. There is no FQ API.
+10. On **approved**, FQX calls the existing `simulate_transfer` so the order becomes `AWAITING_SETTLEMENT`. Settlement still moves the quota ledger and creates the Stripe Transfer. Do not apply quota again at FQ approval.
 
 Non-Queensland orders still show **Simulate transfer**.
 
@@ -53,18 +54,23 @@ Child statuses (QLD only): `READY` → `AWAITING_SIGNED_PACK` (after generate) �
 
 | Path | Purpose |
 | --- | --- |
-| `/dashboard/account` | Business Details includes entity, ACN (companies), phone, structured Australian addresses, and Queensland Fisheries fields |
+| `/dashboard/account` | Business Details includes entity, ACN (companies), phone, structured Australian addresses, a jurisdiction multi-select (Queensland selectable now), and Queensland Fisheries fields when Queensland is selected |
 | `/orders/[id]` | During `AWAITING_TRANSFER` on a QLD order: status, missing fields, prepare/download unsigned PDF |
 | `/orders/[id]/transfer/[documentId]` | Auth-checked download of a stored transfer PDF |
-| `/admin/orders` | Compliance review shows order, buyer and seller details, and Queensland checks. Cancel is admin-only (awaiting payment or compliance). QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
+| `/admin/orders` | Compliance review shows order, buyer and seller details, and a saveable checklist of jurisdiction steps. Cancel is admin-only (awaiting payment or compliance). QLD transfer workspace instead of Simulate transfer: generate, upload signed pack, record FQ outcome |
+| `/admin/holdings` | Holding verification review shows holding, business details, recent ledger, and a saveable checklist. Queensland holdings add client-number and licence checks. Verify still records the decision; the checklist is a working aid |
+| `/admin/listings` | Listing approval review shows listing, seller, covering holding, and a saveable checklist. Auctions add start/reserve/increment checks. Queensland listings add client-number and licence checks. Approve still publishes the listing; the checklist is a working aid |
 
 ## Database
 
-Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260820020000_organisation_structured_address.sql`, `20260820030000_admin_cancel_order.sql`
+Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260820020000_organisation_structured_address.sql`, `20260820030000_admin_cancel_order.sql`, `20260820040000_organisation_trade_ready.sql`, `20260820050000_order_compliance_checklist.sql`, `20260820060000_holding_verification_checklist.sql`, `20260820070000_listing_approval_checklist.sql`, `20260820080000_organisation_enabled_jurisdictions.sql`
 
-- `organisations`: `entity_kind`, `acn`, `mobile`, structured `registered_address` / `postal_address` (street, suburb, state, postcode), `postal_same_as_registered`
+- `organisations`: `entity_kind`, `acn`, `mobile`, structured `registered_address` / `postal_address` (street, suburb, state, postcode), `postal_same_as_registered`, `enabled_jurisdiction_codes` (Queensland is the only selectable code in this phase)
 - `organisation_jurisdiction_profiles`: per business and jurisdiction (QLD client number, commercial fishing licence, symbols)
-- `transfer_form_templates`: versioned form metadata
+- `organisation_is_trade_ready`: security-definer boolean for buy/list gating (identity plus QLD licence pair when the fishery is Queensland). Does not return field values.
+- `orders.compliance_checklist`: jsonb array of completed compliance-check labels. Platform admins save it during `AWAITING_COMPLIANCE`; it is not a legal sign-off.
+- `quota_holdings.verification_checklist`: jsonb array of completed verification-check labels. Platform admins save it during `PENDING_VERIFICATION`; it is not a legal sign-off.
+- `listings.approval_checklist`: jsonb array of completed approval-check labels. Platform admins save it during `PENDING_APPROVAL`; it is not a legal sign-off.
 - `transfer_applications`: one per order; process code; child status; FQ submission fields
 - `transfer_documents`: `UNSIGNED_APPLICATION`, `SIGNED_PACK`, `SUPPORTING`; storage path; never mutated
 - Private storage bucket `transfer-documents`
@@ -77,7 +83,7 @@ Migration: `supabase/migrations/20260820010000_qld_transfer_process.sql`, `20260
 4. A generated PDF is stored, downloadable by buyer, seller, and admin, and emailed once per document version.
 5. Admin can upload a signed pack without overwriting the unsigned file.
 6. Recording FQ approved calls existing `simulate_transfer`. Quota ledger quantity does not change until Simulate settlement.
-7. Lint and production build pass. Tests cover process routing and required-field gating.
+7. Lint and production build pass. Tests cover process routing, required-field gating, and buy/list completeness.
 
 ## What this phase will not do
 

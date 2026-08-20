@@ -36,7 +36,7 @@ export function BulkReviewListingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="bulk-review-listings-title"
-        className="mb-16 w-full max-w-2xl border border-line bg-paper-raised p-6"
+        className="mb-16 w-full max-w-5xl border border-line bg-paper p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">

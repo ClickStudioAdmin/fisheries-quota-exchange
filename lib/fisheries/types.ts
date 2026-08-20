@@ -89,6 +89,7 @@ export type QuotaHolding = {
   fishery_id: number;
   quantity: string;
   verification_status: HoldingVerificationStatus;
+  verification_checklist: string[];
 };
 
 export function isHoldingVerificationStatus(

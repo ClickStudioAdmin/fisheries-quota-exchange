@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import {
   updateOrganisationDetailsAction,
   type OrganisationFormState,
@@ -15,40 +15,72 @@ import {
   AU_STATES,
   type AustralianAddress,
 } from "@/lib/organisations/address";
+import {
+  isSelectableJurisdictionCode,
+  organisationEnablesJurisdiction,
+} from "@/lib/organisations/enabled-jurisdictions";
+import type { Jurisdiction } from "@/lib/fisheries/types";
 
 const initialState: OrganisationFormState = {};
+
+function FieldLabel({
+  htmlFor,
+  required,
+  children,
+}: {
+  htmlFor: string;
+  required?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label htmlFor={htmlFor} className="block text-sm text-ink">
+      {children}
+      {required ? (
+        <span className="font-normal text-ink-muted"> (required)</span>
+      ) : null}
+    </label>
+  );
+}
 
 function AddressFields({
   prefix,
   legend,
   address,
   canEdit,
+  required,
 }: {
   prefix: "registered" | "postal";
   legend: string;
   address: AustralianAddress | null;
   canEdit: boolean;
+  required?: boolean;
 }) {
+  const markRequired = Boolean(required && canEdit);
+
   return (
     <fieldset className="space-y-4">
-      <legend className="text-sm font-semibold text-ink">{legend}</legend>
+      <legend className="text-sm font-semibold text-ink">
+        {legend}
+        {required ? (
+          <span className="font-normal text-ink-muted"> (required)</span>
+        ) : null}
+      </legend>
       <div>
-        <label htmlFor={`${prefix}_line1`} className="block text-sm text-ink">
+        <FieldLabel htmlFor={`${prefix}_line1`} required={required}>
           Street address
-        </label>
+        </FieldLabel>
         <input
           id={`${prefix}_line1`}
           name={`${prefix}_line1`}
           autoComplete="address-line1"
           defaultValue={address?.line1 ?? ""}
+          required={markRequired}
           disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
       <div>
-        <label htmlFor={`${prefix}_line2`} className="block text-sm text-ink">
-          Address line 2
-        </label>
+        <FieldLabel htmlFor={`${prefix}_line2`}>Address line 2</FieldLabel>
         <input
           id={`${prefix}_line2`}
           name={`${prefix}_line2`}
@@ -59,28 +91,30 @@ function AddressFields({
         />
       </div>
       <div>
-        <label htmlFor={`${prefix}_suburb`} className="block text-sm text-ink">
+        <FieldLabel htmlFor={`${prefix}_suburb`} required={required}>
           Suburb
-        </label>
+        </FieldLabel>
         <input
           id={`${prefix}_suburb`}
           name={`${prefix}_suburb`}
           autoComplete="address-level2"
           defaultValue={address?.suburb ?? ""}
+          required={markRequired}
           disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor={`${prefix}_state`} className="block text-sm text-ink">
+          <FieldLabel htmlFor={`${prefix}_state`} required={required}>
             State
-          </label>
+          </FieldLabel>
           <select
             id={`${prefix}_state`}
             name={`${prefix}_state`}
             autoComplete="address-level1"
             defaultValue={address?.state ?? ""}
+            required={markRequired}
             disabled={!canEdit}
             className={fieldClassName}
           >
@@ -93,12 +127,9 @@ function AddressFields({
           </select>
         </div>
         <div>
-          <label
-            htmlFor={`${prefix}_postcode`}
-            className="block text-sm text-ink"
-          >
+          <FieldLabel htmlFor={`${prefix}_postcode`} required={required}>
             Postcode
-          </label>
+          </FieldLabel>
           <input
             id={`${prefix}_postcode`}
             name={`${prefix}_postcode`}
@@ -106,6 +137,7 @@ function AddressFields({
             autoComplete="postal-code"
             maxLength={4}
             defaultValue={address?.postcode ?? ""}
+            required={markRequired}
             disabled={!canEdit}
             className={fieldClassName}
           />
@@ -118,47 +150,52 @@ function AddressFields({
 function QldFisheriesFields({
   profile,
   canEdit,
+  required,
 }: {
   profile: OrganisationJurisdictionProfile | null;
   canEdit: boolean;
+  required?: boolean;
 }) {
+  const markRequired = Boolean(required && canEdit);
+
   return (
     <fieldset className="min-w-0 space-y-4 border border-line p-4">
       <legend className="px-1 text-sm font-semibold text-ink">
         Queensland Fisheries
       </legend>
       <p className="text-sm text-ink-muted">
-        Required for Queensland quota sales and leases. Used to prepare the
-        transfer application after payment and compliance.
+        Client number and primary licence are required for Queensland trades.
+        They are also used to prepare the transfer application after payment
+        and compliance. Fishery symbols are optional.
       </p>
       <div>
-        <label htmlFor="qld_client_reference" className="block text-sm text-ink">
+        <FieldLabel htmlFor="qld_client_reference" required={required}>
           Fisheries client number
-        </label>
+        </FieldLabel>
         <input
           id="qld_client_reference"
           name="qld_client_reference"
           defaultValue={profile?.client_reference ?? ""}
+          required={markRequired}
           disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
       <div>
-        <label htmlFor="qld_licence_number" className="block text-sm text-ink">
+        <FieldLabel htmlFor="qld_licence_number" required={required}>
           Primary commercial fishing licence
-        </label>
+        </FieldLabel>
         <input
           id="qld_licence_number"
           name="qld_licence_number"
           defaultValue={profile?.licence_number ?? ""}
+          required={markRequired}
           disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
       <div>
-        <label htmlFor="qld_fishery_symbols" className="block text-sm text-ink">
-          Fishery symbols
-        </label>
+        <FieldLabel htmlFor="qld_fishery_symbols">Fishery symbols</FieldLabel>
         <input
           id="qld_fishery_symbols"
           name="qld_fishery_symbols"
@@ -173,13 +210,13 @@ function QldFisheriesFields({
 
 export function OrganisationDetailsForm({
   organisation,
+  jurisdictions,
   qldProfile,
-  qldJurisdictionId,
   canEdit,
 }: {
   organisation: Organisation;
+  jurisdictions: Jurisdiction[];
   qldProfile: OrganisationJurisdictionProfile | null;
-  qldJurisdictionId: number | null;
   canEdit: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -190,15 +227,20 @@ export function OrganisationDetailsForm({
   const [postalDifferent, setPostalDifferent] = useState(
     organisation.postal_same_as_registered === false,
   );
+  const [enabledCodes, setEnabledCodes] = useState(
+    organisation.enabled_jurisdiction_codes,
+  );
+  const qldJurisdiction = jurisdictions.find((item) => item.code === "QLD") ?? null;
+  const qldEnabled = organisationEnablesJurisdiction(enabledCodes, "QLD");
 
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="organisation_id" value={organisation.id} />
-      {qldJurisdictionId ? (
+      {qldJurisdiction ? (
         <input
           type="hidden"
           name="qld_jurisdiction_id"
-          value={qldJurisdictionId}
+          value={qldJurisdiction.id}
         />
       ) : null}
       {state.error ? (
@@ -214,14 +256,15 @@ export function OrganisationDetailsForm({
       <div className="grid items-start gap-8 lg:grid-cols-2">
         <div className="min-w-0 space-y-4">
           <div>
-            <label htmlFor="entity_kind" className="block text-sm text-ink">
+            <FieldLabel htmlFor="entity_kind" required>
               Entity kind
-            </label>
+            </FieldLabel>
             <select
               id="entity_kind"
               name="entity_kind"
               value={entityKind}
               onChange={(event) => setEntityKind(event.target.value)}
+              required={canEdit}
               disabled={!canEdit}
               className={fieldClassName}
             >
@@ -232,36 +275,38 @@ export function OrganisationDetailsForm({
           </div>
           {entityKind === "COMPANY" ? (
             <div>
-              <label htmlFor="acn" className="block text-sm text-ink">
+              <FieldLabel htmlFor="acn" required>
                 ACN
-              </label>
+              </FieldLabel>
               <input
                 id="acn"
                 name="acn"
                 inputMode="numeric"
                 defaultValue={organisation.acn ?? ""}
+                required={canEdit}
                 disabled={!canEdit}
                 className={fieldClassName}
               />
             </div>
           ) : null}
           <div>
-            <label htmlFor="abn" className="block text-sm text-ink">
+            <FieldLabel htmlFor="abn" required>
               ABN
-            </label>
+            </FieldLabel>
             <input
               id="abn"
               name="abn"
               inputMode="numeric"
               defaultValue={organisation.abn ?? ""}
+              required={canEdit}
               disabled={!canEdit}
               className={fieldClassName}
             />
           </div>
           <div>
-            <label htmlFor="legal_name" className="block text-sm text-ink">
+            <FieldLabel htmlFor="legal_name" required>
               Legal name
-            </label>
+            </FieldLabel>
             <input
               id="legal_name"
               name="legal_name"
@@ -272,9 +317,7 @@ export function OrganisationDetailsForm({
             />
           </div>
           <div>
-            <label htmlFor="trading_name" className="block text-sm text-ink">
-              Trading name
-            </label>
+            <FieldLabel htmlFor="trading_name">Trading name</FieldLabel>
             <input
               id="trading_name"
               name="trading_name"
@@ -284,15 +327,16 @@ export function OrganisationDetailsForm({
             />
           </div>
           <div>
-            <label htmlFor="mobile" className="block text-sm text-ink">
+            <FieldLabel htmlFor="mobile" required>
               Phone
-            </label>
+            </FieldLabel>
             <input
               id="mobile"
               name="mobile"
               inputMode="tel"
               autoComplete="tel"
               defaultValue={organisation.mobile ?? ""}
+              required={canEdit}
               disabled={!canEdit}
               className={fieldClassName}
             />
@@ -302,6 +346,7 @@ export function OrganisationDetailsForm({
             legend="Registered address"
             address={organisation.registered_address}
             canEdit={canEdit}
+            required
           />
           <div className="divide-y divide-line border border-line bg-paper-raised">
             <SettingsSwitchRow
@@ -319,12 +364,83 @@ export function OrganisationDetailsForm({
               legend="Postal address"
               address={organisation.postal_address}
               canEdit={canEdit}
+              required
             />
           ) : null}
         </div>
         <div className="min-w-0 space-y-4">
-          {qldJurisdictionId ? (
-            <QldFisheriesFields profile={qldProfile} canEdit={canEdit} />
+          {jurisdictions.length > 0 ? (
+            <fieldset className="min-w-0 space-y-3 border border-line p-4">
+              <legend className="px-1 text-sm font-semibold text-ink">
+                Jurisdictions
+              </legend>
+              <p className="text-sm text-ink-muted">
+                Select every jurisdiction this business trades in. Required
+                fields for that jurisdiction appear below. Only Queensland can
+                be selected now; others will open as we add them.
+              </p>
+              <ul className="space-y-2">
+                {jurisdictions.map((jurisdiction) => {
+                  const selectable = isSelectableJurisdictionCode(
+                    jurisdiction.code,
+                  );
+                  const checked = organisationEnablesJurisdiction(
+                    enabledCodes,
+                    jurisdiction.code,
+                  );
+
+                  return (
+                    <li key={jurisdiction.id}>
+                      <label
+                        className={`flex items-start gap-2 text-sm text-ink ${
+                          !canEdit || !selectable
+                            ? "cursor-default"
+                            : "cursor-pointer"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          name="jurisdiction_code"
+                          value={jurisdiction.code}
+                          checked={checked}
+                          disabled={!canEdit || !selectable}
+                          onChange={(event) => {
+                            const selected = event.target.checked;
+                            setEnabledCodes((current) => {
+                              if (selected) {
+                                return current.includes(jurisdiction.code)
+                                  ? current
+                                  : [...current, jurisdiction.code];
+                              }
+                              return current.filter(
+                                (code) => code !== jurisdiction.code,
+                              );
+                            });
+                          }}
+                          className="mt-1 h-4 w-4 shrink-0 border-line accent-sea"
+                        />
+                        <span>
+                          {jurisdiction.name}
+                          {selectable ? null : (
+                            <span className="font-normal text-ink-muted">
+                              {" "}
+                              (coming later)
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </fieldset>
+          ) : null}
+          {qldEnabled && qldJurisdiction ? (
+            <QldFisheriesFields
+              profile={qldProfile}
+              canEdit={canEdit}
+              required
+            />
           ) : null}
           <div className="divide-y divide-line border border-line bg-paper-raised">
             <SettingsSwitchRow
@@ -332,7 +448,7 @@ export function OrganisationDetailsForm({
               defaultChecked={organisation.hide_identity}
               disabled={!canEdit}
               title="Hide my Identity"
-              description='Marketplace, fishery, and auction pages show “Private Seller” for listings and “Private Buyer” for bids instead of this business name, including when you are signed in as this business. Orders, invoices, and admin records still use the real name. Platform admins see the real name in a tooltip.'
+              description='Marketplace, fishery, and auction pages show “Private Seller” for listings and “Private Buyer” for bids instead of this business name, including when you are signed in as this business. Orders, invoices, and admin records still use the real name. Platform admins can still see your name everywhere.'
             />
           </div>
         </div>

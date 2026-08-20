@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
 import { HoldingForm } from "@/components/holding-form";
-import { VerifyHoldingForm } from "@/components/verify-holding-form";
+import { TableModal } from "@/components/table-modal";
+import { HoldingVerificationPanel } from "@/components/holding-verification-panel";
 import { BulkReviewHoldingsModal } from "@/components/bulk-review-holdings-modal";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { startHoldingVerifyAction } from "@/lib/fisheries/actions";
@@ -150,7 +151,9 @@ export default async function HoldingsAdminPage({
             }
             actions={
               holdingIsVerified(holding) ? null : (
-                <VerifyHoldingForm holdingId={holding.id} />
+                <TableModal title="Review holding" label="Review" wide>
+                  <HoldingVerificationPanel holdingId={holding.id} />
+                </TableModal>
               )
             }
           />
@@ -158,43 +161,20 @@ export default async function HoldingsAdminPage({
       </DataTable>
       {queueHoldings.length > 0 ? (
         <BulkReviewHoldingsModal count={queueHoldings.length}>
-          {queueHoldings.map((holding, index) => {
-            const organisation = organisations.find(
-              (item) => item.id === holding.organisation_id,
-            );
-            const fishery = fisheries.find(
-              (item) => item.id === holding.fishery_id,
-            );
-            const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "";
-
-            return (
-              <section
-                key={holding.id}
-                className="space-y-4 py-6 first:pt-0 last:pb-0"
-              >
-                <div>
-                  <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
-                    {index + 1} of {queueHoldings.length}
-                  </p>
-                  <h3 className="mt-1 text-lg font-semibold text-ink">
-                    Holding {holding.id} ·{" "}
-                    {organisation?.legal_name ?? "Business"}
-                  </h3>
-                  <p className="mt-1 text-sm text-ink-muted">
-                    {fishery
-                      ? fisherySelectLabel(fishery, jurisdictions)
-                      : "Fishery"}{" "}
-                    · {holding.quantity} {unit}
-                  </p>
-                </div>
-                <VerifyHoldingForm
-                  holdingId={holding.id}
-                  reviewQueue={queueHoldings.map((item) => item.id)}
-                  withRequestChanges
-                />
-              </section>
-            );
-          })}
+          {queueHoldings.map((holding, index) => (
+            <section
+              key={holding.id}
+              className="space-y-4 py-6 first:pt-0 last:pb-0"
+            >
+              <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+                {index + 1} of {queueHoldings.length}
+              </p>
+              <HoldingVerificationPanel
+                holdingId={holding.id}
+                reviewQueue={queueHoldings.map((item) => item.id)}
+              />
+            </section>
+          ))}
         </BulkReviewHoldingsModal>
       ) : null}
       <div className="max-w-md">
