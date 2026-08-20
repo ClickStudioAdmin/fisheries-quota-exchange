@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { userFacingError } from "@/lib/errors/user-message";
@@ -10,6 +9,7 @@ import {
   notifyTransferException,
 } from "@/lib/email/events";
 import { getOrder } from "@/lib/orders/queries";
+import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import { orderQueuePath } from "@/lib/orders/types";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
@@ -36,6 +36,10 @@ function read(formData: FormData, name: string) {
 }
 
 function redirectAfterQueue(formData: FormData): never {
+  const orderId = Number(formData.get("order_id"));
+  revalidateOrderSurfaces(
+    Number.isInteger(orderId) && orderId > 0 ? orderId : undefined,
+  );
   redirect(orderQueuePath(formData.getAll("review_queue").map(String)));
 }
 
@@ -61,8 +65,7 @@ async function canManageTransfer(order: {
 }
 
 function revalidateTransfer(orderId: number) {
-  revalidatePath(`/orders/${orderId}`);
-  revalidatePath("/admin/orders");
+  revalidateOrderSurfaces(orderId);
 }
 
 async function storeTransferFile(input: {

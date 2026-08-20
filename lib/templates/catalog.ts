@@ -285,7 +285,8 @@ const EMAIL_CATALOG: Record<
   },
   transfer_in_progress: {
     summary: "After compliance is approved",
-    description: "Tells parties the authority transfer step has started.",
+    description:
+      "On Queensland orders, tells buyer and seller to prepare transfer documents. On simulated orders, says the authority transfer has started.",
     sentWhen: "After approve_compliance.",
     trigger: "approveComplianceAction then notifyTransferInProgress.",
     recipient: buyerAndSellerRolesRecipient,

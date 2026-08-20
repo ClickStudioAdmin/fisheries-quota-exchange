@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { AreaShell } from "@/components/area-shell";
 import type { SideNavItem } from "@/components/side-nav";
-import { getMemberActionCounts } from "@/lib/nav/action-counts";
+import { getMemberActionCounts, memberCountsForOrganisation } from "@/lib/nav/action-counts";
 import { getMyUnreadNotificationCount } from "@/lib/notifications/queries";
 import { selectAccountPath, resolveActiveOrganisation } from "@/lib/organisations/active-account";
 import { readActiveOrganisationCookie } from "@/lib/organisations/active-session";
@@ -21,6 +21,7 @@ export async function MemberArea({ children }: { children: ReactNode }) {
   const active = organisations.find(
     (organisation) => organisation.id === resolved.selectedId,
   );
+  const orgCounts = memberCountsForOrganisation(counts, active?.id);
 
   const items: SideNavItem[] = [
     {
@@ -37,26 +38,26 @@ export async function MemberArea({ children }: { children: ReactNode }) {
     {
       heading: "This business",
       items: [
-        { href: "/dashboard", label: "Overview" },
+        { href: "/dashboard", label: "Overview", badge: orgCounts.overview },
         { href: "/dashboard/account", label: "Business Settings" },
         {
           href: "/dashboard/holdings",
           label: "Quota Holdings",
           match: "prefix",
           alsoMatch: ["auctions"],
-          badge: counts.holdings,
+          badge: orgCounts.holdings,
         },
         {
           href: "/dashboard/listings",
           label: "Listings",
           alsoMatch: ["listings"],
-          badge: counts.listings,
+          badge: orgCounts.listings,
         },
         {
           href: "/dashboard/orders",
           label: "Orders",
           alsoMatch: ["/orders"],
-          badge: counts.orders,
+          badge: orgCounts.orders,
         },
         { href: "/dashboard/activity", label: "Activity" },
       ],

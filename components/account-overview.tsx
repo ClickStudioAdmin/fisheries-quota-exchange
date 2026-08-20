@@ -1,16 +1,29 @@
 import Link from "next/link";
 import { displayName } from "@/lib/auth/display-name";
 import { MyInvitationList } from "@/components/invitation-lists";
-import { listHoldingsForOrganisation } from "@/lib/fisheries/queries";
+import {
+  listFisheries,
+  listHoldingsForOrganisation,
+  listJurisdictions,
+} from "@/lib/fisheries/queries";
 import { holdingIsVerified } from "@/lib/fisheries/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
 import { listingIsOpen } from "@/lib/listings/types";
 import { listMyInAppNotifications } from "@/lib/notifications/queries";
-import { listOrganisationOrders } from "@/lib/orders/queries";
+import {
+  listLatestComplianceUpdateNotesByOrderIds,
+  listOrganisationOrders,
+} from "@/lib/orders/queries";
+import {
+  orderPaymentActionIsDue,
+  organisationNeedsAttentionItems,
+} from "@/lib/organisations/needs-attention";
 import { accountPaymentsPath } from "@/lib/organisations/paths";
 import { getOrganisation, listMyPendingInvitations } from "@/lib/organisations/queries";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
+import { listPaymentStatusesByOrderIds } from "@/lib/payments/queries";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
 import { OverviewNotifications } from "@/components/overview-notifications";
@@ -45,7 +58,7 @@ export async function AccountOverviewSection({
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
   const acceptedTerms = await hasAcceptedCurrentTerms();
-  const [holdings, listings, orders, sellError, notifications, invitations] =
+  const [holdings, listings, orders, sellError, notifications, invitations, fisheries, jurisdictions] =
     await Promise.all([
       organisationId
         ? listHoldingsForOrganisation(organisationId)
@@ -59,6 +72,8 @@ export async function AccountOverviewSection({
       organisationId ? organisationCanSellError(organisationId) : Promise.resolve(null),
       listMyInAppNotifications(10),
       listMyPendingInvitations(),
+      organisationId ? listFisheries() : Promise.resolve([]),
+      organisationId ? listJurisdictions() : Promise.resolve([]),
     ]);
   const hasAccount = Boolean(result);
   const detailsMissing = result
@@ -82,14 +97,55 @@ export async function AccountOverviewSection({
   const openOrders = orders.filter((order) =>
     OPEN_ORDER_STATUSES.has(order.status),
   );
-  const payOrders = orders.filter((order) => order.status === "AWAITING_PAYMENT");
-  const needsAttention = orders.filter(
-    (order) =>
-      canManage &&
-      order.status === "AWAITING_PAYMENT" &&
-      organisationId != null &&
-      order.buyer_organisation_id === organisationId,
+  const [transferApplications, complianceNotes, paymentStatusByOrderId] =
+    organisationId
+      ? await Promise.all([
+          canManage
+            ? listTransferApplicationsByOrderIds(
+                orders
+                  .filter((order) => order.status === "AWAITING_TRANSFER")
+                  .map((order) => order.id),
+              )
+            : Promise.resolve(
+                new Map<number, { process_code: string; status: string }>(),
+              ),
+          canManage
+            ? listLatestComplianceUpdateNotesByOrderIds(
+                orders
+                  .filter((order) => order.status === "AWAITING_COMPLIANCE")
+                  .map((order) => order.id),
+              )
+            : Promise.resolve(
+                new Map<number, { buyer: string | null; seller: string | null }>(),
+              ),
+          listPaymentStatusesByOrderIds(
+            orders
+              .filter((order) => order.status === "AWAITING_PAYMENT")
+              .map((order) => order.id),
+          ),
+        ])
+      : [
+          new Map<number, { process_code: string; status: string }>(),
+          new Map<number, { buyer: string | null; seller: string | null }>(),
+          new Map<number, string>(),
+        ];
+  const payOrders = orders.filter((order) =>
+    orderPaymentActionIsDue(
+      order.status,
+      paymentStatusByOrderId.get(order.id),
+    ),
   );
+  const needsAttention = organisationNeedsAttentionItems({
+    organisationId: organisationId ?? 0,
+    canManage,
+    orders,
+    listings,
+    transferByOrderId: transferApplications,
+    fisheries,
+    jurisdictions,
+    complianceNotesByOrderId: complianceNotes,
+    paymentStatusByOrderId,
+  });
   const cardLinkClassName = `${statClassName} transition-colors hover:border-sea`;
 
   return (
@@ -221,13 +277,10 @@ export async function AccountOverviewSection({
               </p>
             ) : (
               <ul className="space-y-2">
-                {needsAttention.slice(0, 5).map((order) => (
-                  <li key={order.id}>
-                    <Link
-                      href={`/orders/${order.id}`}
-                      className="text-sm underline"
-                    >
-                      Pay order {order.id} · {order.fishery_name}
+                {needsAttention.map((item) => (
+                  <li key={item.key}>
+                    <Link href={item.href} className="text-sm underline">
+                      {item.label}
                     </Link>
                   </li>
                 ))}

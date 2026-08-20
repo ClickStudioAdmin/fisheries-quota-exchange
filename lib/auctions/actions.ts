@@ -28,6 +28,7 @@ import type { AuctionFormState, BidFormState } from "@/lib/auctions/types";
 import { getListing } from "@/lib/listings/queries";
 import { listBids } from "@/lib/auctions/queries";
 import { getOrder } from "@/lib/orders/queries";
+import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import {
   notifyAuctionClosed,
   notifyBidPlaced,
@@ -272,6 +273,8 @@ export async function closeAuctionAction(formData: FormData) {
   if (listing) {
     await notifyAuctionClosed({ listing, bids, order });
   }
+
+  revalidateOrderSurfaces(order?.id);
 
   if (data) {
     redirect(`/orders/${data}`);

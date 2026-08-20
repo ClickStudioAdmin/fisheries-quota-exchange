@@ -136,3 +136,43 @@ export async function getPaymentForOrder(orderId: number) {
 
   return data;
 }
+
+export async function listPaymentStatusesByOrderIds(orderIds: number[]) {
+  const unique = [
+    ...new Set(
+      orderIds.filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+  const byOrderId = new Map<number, string>();
+
+  if (unique.length === 0) {
+    return byOrderId;
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    return byOrderId;
+  }
+
+  const { data, error } = await supabase
+    .from("payments")
+    .select("order_id, status")
+    .in("order_id", unique);
+
+  if (error || !data) {
+    return byOrderId;
+  }
+
+  for (const row of data) {
+    const orderId = Number((row as { order_id?: unknown }).order_id);
+    const status = String((row as { status?: unknown }).status ?? "").toUpperCase();
+
+    if (!Number.isInteger(orderId) || orderId <= 0 || !status) {
+      continue;
+    }
+
+    byOrderId.set(orderId, status);
+  }
+
+  return byOrderId;
+}

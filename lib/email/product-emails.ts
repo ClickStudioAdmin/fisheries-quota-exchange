@@ -327,7 +327,7 @@ export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   compliance_rejected: "Compliance rejected",
   compliance_update_requested: "Compliance update requested",
   settlement_failed: "Settlement delayed or failed",
-  transfer_in_progress: "Transfer in progress",
+  transfer_in_progress: "Prepare transfer documents",
   transfer_application_ready: "Transfer application ready",
   transfer_complete: "Transfer complete",
   order_settled: "Order settled",

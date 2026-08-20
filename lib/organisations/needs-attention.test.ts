@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { organisationNeedsAttentionItems } from "./needs-attention.ts";
+import {
+  memberActionCountBuckets,
+  organisationNeedsAttentionItems,
+} from "./needs-attention.ts";
 
 const fisheries = [{ name: "East Coast Spanish Mackerel Fishery", jurisdiction_id: 1 }];
 const jurisdictions = [
@@ -83,6 +86,11 @@ test("organisationNeedsAttentionItems lists pay, QLD documents, compliance updat
   );
   assert.equal(items.find((item) => item.key === "pay-3632")?.href, "/orders/3632");
   assert.equal(items.find((item) => item.key === "auction-88")?.href, "/auctions/88");
+  assert.deepEqual(memberActionCountBuckets(items), {
+    orders: 4,
+    listings: 1,
+    overview: 5,
+  });
 });
 
 test("organisationNeedsAttentionItems skips seller pay, other-party updates, and simulated transfer", () => {
@@ -134,6 +142,48 @@ test("organisationNeedsAttentionItems infers QLD prepare when no application row
         "Prepare transfer documents for order 9 · East Coast Spanish Mackerel Fishery",
     },
   ]);
+});
+
+test("organisationNeedsAttentionItems drops cancelled, rejected, and expired-payment orders", () => {
+  const items = organisationNeedsAttentionItems({
+    organisationId: 10,
+    canManage: true,
+    fisheries,
+    jurisdictions,
+    paymentStatusByOrderId: new Map([[3632, "EXPIRED"]]),
+    complianceNotesByOrderId: new Map([
+      [8, { buyer: "Update ABN.", seller: null }],
+    ]),
+    transferByOrderId: new Map([
+      [7, { process_code: "QLD_SALE", status: "READY" }],
+    ]),
+    orders: [
+      order({
+        id: 3632,
+        status: "AWAITING_PAYMENT",
+        fishery_name: "Northern Prawn Fishery",
+      }),
+      order({
+        id: 5,
+        status: "CANCELLED",
+        fishery_name: "Northern Prawn Fishery",
+      }),
+      order({ id: 7, status: "CANCELLED" }),
+      order({ id: 8, status: "REJECTED" }),
+      order({ id: 9, status: "COMPLETED" }),
+    ],
+    listings: [
+      {
+        id: 88,
+        listing_type: "AUCTION",
+        status: "UNSOLD",
+        expires_at: "2026-08-19T00:00:00.000Z",
+        fishery_name: "Coral Trout",
+      },
+    ],
+  });
+
+  assert.deepEqual(items, []);
 });
 
 test("organisationNeedsAttentionItems is empty without manage permission", () => {

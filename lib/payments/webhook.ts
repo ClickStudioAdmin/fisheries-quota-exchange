@@ -3,6 +3,7 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getPaymentProvider } from "@/lib/payments/provider";
 import { getOrderForSystem } from "@/lib/orders/queries";
+import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import {
   notifyBankDebitSubmitted,
   notifyCheckoutExpired,
@@ -158,6 +159,10 @@ export async function handleStripeWebhook(payload: string, signature: string) {
       if (order) {
         await notifyCheckoutExpired(order);
       }
+    }
+
+    if (orderId) {
+      revalidateOrderSurfaces(orderId);
     }
   }
 

@@ -24,6 +24,8 @@ import { accountPaymentsPath } from "@/lib/organisations/paths";
 import type { Bid } from "@/lib/auctions/types";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getOrderJurisdictionCode } from "@/lib/transfers/queries";
+import { getTransferProcess } from "@/lib/transfers/registry";
 
 function listingUrl(siteUrl: string, listing: Pick<Listing, "id" | "listing_type">) {
   return `${siteUrl}${listingHref(listing)}`;
@@ -504,9 +506,12 @@ export async function notifySettlementFailed(order: Order) {
 
 export async function notifyTransferInProgress(order: Order) {
   const siteUrl = await siteUrlOrEmpty();
+  const jurisdictionCode = await getOrderJurisdictionCode(order);
+  const process = getTransferProcess(jurisdictionCode, order.offering);
   const data = emailCopy.transfer_in_progress({
     orderId: order.id,
     orderUrl: `${siteUrl}/orders/${order.id}`,
+    prepareDocuments: !process.usesSimulatedTransfer,
   });
   await notifyBuyerAndSeller("transfer_in_progress", order, data);
   await notifyOperatorOrderPending(order, siteUrl);

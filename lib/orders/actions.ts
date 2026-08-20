@@ -9,6 +9,7 @@ import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
 import { transferOrderSellerProceeds } from "@/lib/payments/actions";
 import { getListing } from "@/lib/listings/queries";
 import { getOrder } from "@/lib/orders/queries";
+import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
 import { selectedComplianceUpdateNotes } from "@/lib/orders/compliance-update";
 import { getOrderJurisdictionCode } from "@/lib/transfers/queries";
@@ -53,6 +54,10 @@ function read(formData: FormData, name: string) {
 }
 
 function redirectAfterOrderQueue(formData: FormData) {
+  const orderId = Number(formData.get("order_id"));
+  revalidateOrderSurfaces(
+    Number.isInteger(orderId) && orderId > 0 ? orderId : undefined,
+  );
   redirect(orderQueuePath(formData.getAll("review_queue").map(String)));
 }
 
@@ -189,6 +194,7 @@ export async function cancelOrderAction(formData: FormData) {
   }
 
   await supabase.rpc("cancel_order", { p_order_id: orderId });
+  revalidateOrderSurfaces(orderId);
   redirect(next);
 }
 
@@ -350,8 +356,7 @@ export async function requestComplianceUpdateAction(
   }
 
   await notifyComplianceUpdateRequested(order, selected);
-  revalidatePath("/admin/orders");
-  revalidatePath(`/orders/${order.id}`);
+  revalidateOrderSurfaces(order.id);
   return { message: "Update requested." };
 }
 

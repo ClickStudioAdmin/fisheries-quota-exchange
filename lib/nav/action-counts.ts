@@ -1,7 +1,17 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
+import { listLatestComplianceUpdateNotesByOrderIds } from "@/lib/orders/queries";
 import { listMyOrganisations } from "@/lib/organisations/queries";
 import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import {
+  memberActionCountBuckets,
+  organisationNeedsAttentionItems,
+  type NeedsAttentionListing,
+  type NeedsAttentionOrder,
+} from "@/lib/organisations/needs-attention";
+import { listPaymentStatusesByOrderIds } from "@/lib/payments/queries";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 
 export type AdminActionCounts = {
   holdings: number;
@@ -10,12 +20,16 @@ export type AdminActionCounts = {
   total: number;
 };
 
-export type MemberActionCounts = {
+export type MemberOrgActionCounts = {
   holdings: number;
   listings: number;
   orders: number;
+  overview: number;
   total: number;
-  byOrganisation: Record<number, number>;
+};
+
+export type MemberActionCounts = MemberOrgActionCounts & {
+  byOrganisation: Record<number, MemberOrgActionCounts>;
 };
 
 const OPEN_ORDER_STATUSES = [
@@ -25,14 +39,55 @@ const OPEN_ORDER_STATUSES = [
   "AWAITING_SETTLEMENT",
 ] as const;
 
-function addCount(counts: Record<number, number>, organisationId: unknown) {
-  const id = Number(organisationId);
+const ACTION_ORDER_STATUSES = [
+  "AWAITING_PAYMENT",
+  "AWAITING_COMPLIANCE",
+  "AWAITING_TRANSFER",
+] as const;
 
+function emptyOrgCounts(): MemberOrgActionCounts {
+  return { holdings: 0, listings: 0, orders: 0, overview: 0, total: 0 };
+}
+
+export function memberCountsForOrganisation(
+  counts: MemberActionCounts,
+  organisationId: number | null | undefined,
+): MemberOrgActionCounts {
+  if (organisationId != null && counts.byOrganisation[organisationId]) {
+    return counts.byOrganisation[organisationId];
+  }
+
+  return {
+    holdings: counts.holdings,
+    listings: counts.listings,
+    orders: counts.orders,
+    overview: counts.overview,
+    total: counts.total,
+  };
+}
+
+function finishOrgCounts(counts: MemberOrgActionCounts) {
+  counts.total = counts.holdings + counts.listings + counts.orders;
+  return counts;
+}
+
+function bumpOrg(
+  byOrganisation: Record<number, MemberOrgActionCounts>,
+  organisationId: unknown,
+  field: "holdings" | "listings",
+) {
+  const id = Number(organisationId);
   if (!Number.isInteger(id) || id <= 0) {
     return;
   }
 
-  counts[id] = (counts[id] ?? 0) + 1;
+  const current = byOrganisation[id] ?? emptyOrgCounts();
+  current[field] += 1;
+  byOrganisation[id] = finishOrgCounts(current);
+}
+
+function asOrderOffering(value: unknown): "SALE" | "LEASE" {
+  return value === "LEASE" ? "LEASE" : "SALE";
 }
 
 function asCount(value: unknown) {
@@ -125,10 +180,7 @@ export const getAdminActionCounts = cache(
 export const getMemberActionCounts = cache(
   async (): Promise<MemberActionCounts> => {
     const empty: MemberActionCounts = {
-      holdings: 0,
-      listings: 0,
-      orders: 0,
-      total: 0,
+      ...emptyOrgCounts(),
       byOrganisation: {},
     };
     const organisations = await listMyOrganisations();
@@ -145,86 +197,161 @@ export const getMemberActionCounts = cache(
     }
 
     const now = new Date().toISOString();
-    const [{ data: holdings }, { data: pendingListings }, { data: endedAuctions }, { data: orders }] =
-      await Promise.all([
-        supabase
-          .from("quota_holdings")
-          .select("organisation_id")
-          .eq("verification_status", "PENDING_VERIFICATION")
-          .in("organisation_id", organisationIds),
-        supabase
-          .from("listings")
-          .select("organisation_id")
-          .eq("status", "PENDING_APPROVAL")
-          .in("organisation_id", organisationIds),
-        supabase
-          .from("listings")
-          .select("organisation_id")
-          .eq("listing_type", "AUCTION")
-          .eq("status", "PUBLISHED")
-          .lte("expires_at", now)
-          .in("organisation_id", organisationIds),
-        supabase
-          .from("orders")
-          .select("buyer_organisation_id, seller_organisation_id, status")
-          .in("status", [...OPEN_ORDER_STATUSES])
-          .or(
-            `buyer_organisation_id.in.(${organisationIds.join(",")}),seller_organisation_id.in.(${organisationIds.join(",")})`,
-          ),
-      ]);
+    const [
+      { data: holdings },
+      { data: pendingListings },
+      { data: endedAuctions },
+      { data: orderRows },
+      fisheries,
+      jurisdictions,
+    ] = await Promise.all([
+      supabase
+        .from("quota_holdings")
+        .select("organisation_id")
+        .eq("verification_status", "PENDING_VERIFICATION")
+        .in("organisation_id", organisationIds),
+      supabase
+        .from("listings")
+        .select("organisation_id")
+        .eq("status", "PENDING_APPROVAL")
+        .in("organisation_id", organisationIds),
+      supabase
+        .from("listings")
+        .select("id, organisation_id, listing_type, status, expires_at, fishery_name")
+        .eq("listing_type", "AUCTION")
+        .eq("status", "PUBLISHED")
+        .lte("expires_at", now)
+        .in("organisation_id", organisationIds),
+      supabase
+        .from("orders")
+        .select(
+          "id, buyer_organisation_id, seller_organisation_id, status, fishery_name, offering",
+        )
+        .in("status", [...ACTION_ORDER_STATUSES])
+        .or(
+          `buyer_organisation_id.in.(${organisationIds.join(",")}),seller_organisation_id.in.(${organisationIds.join(",")})`,
+        ),
+      listFisheries(),
+      listJurisdictions(),
+    ]);
 
-    const byOrganisation: Record<number, number> = {};
-    const memberOrgs = new Set(organisationIds);
-    const buyerManagerOrgs = new Set(
-      organisations
-        .filter((organisation) => canBuyForOrganisation(organisation.role))
-        .map((organisation) => organisation.id),
+    const orders: NeedsAttentionOrder[] = (orderRows ?? []).flatMap((row) => {
+      const id = Number(row.id);
+      const buyerOrganisationId = Number(row.buyer_organisation_id);
+      const sellerOrganisationId = Number(row.seller_organisation_id);
+      const status = String(row.status ?? "");
+
+      if (
+        !Number.isInteger(id) ||
+        id <= 0 ||
+        !Number.isInteger(buyerOrganisationId) ||
+        !Number.isInteger(sellerOrganisationId) ||
+        !status
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          id,
+          status,
+          fishery_name: String(row.fishery_name ?? ""),
+          offering: asOrderOffering(row.offering),
+          buyer_organisation_id: buyerOrganisationId,
+          seller_organisation_id: sellerOrganisationId,
+        },
+      ];
+    });
+    const listings: NeedsAttentionListing[] = (endedAuctions ?? []).flatMap(
+      (row) => {
+        const id = Number(row.id);
+        const organisationId = Number(row.organisation_id);
+
+        if (!Number.isInteger(id) || id <= 0) {
+          return [];
+        }
+
+        return [
+          {
+            id,
+            organisation_id: Number.isInteger(organisationId)
+              ? organisationId
+              : undefined,
+            listing_type: String(row.listing_type ?? "AUCTION"),
+            status: String(row.status ?? "PUBLISHED"),
+            expires_at: String(row.expires_at ?? now),
+            fishery_name: String(row.fishery_name ?? ""),
+          },
+        ];
+      },
     );
 
+    const [transferByOrderId, complianceNotesByOrderId, paymentStatusByOrderId] =
+      await Promise.all([
+        listTransferApplicationsByOrderIds(
+          orders
+            .filter((order) => order.status === "AWAITING_TRANSFER")
+            .map((order) => order.id),
+        ),
+        listLatestComplianceUpdateNotesByOrderIds(
+          orders
+            .filter((order) => order.status === "AWAITING_COMPLIANCE")
+            .map((order) => order.id),
+        ),
+        listPaymentStatusesByOrderIds(
+          orders
+            .filter((order) => order.status === "AWAITING_PAYMENT")
+            .map((order) => order.id),
+        ),
+      ]);
+
+    const byOrganisation: Record<number, MemberOrgActionCounts> = {};
+    for (const organisationId of organisationIds) {
+      byOrganisation[organisationId] = emptyOrgCounts();
+    }
+
     for (const row of holdings ?? []) {
-      addCount(byOrganisation, row.organisation_id);
+      bumpOrg(byOrganisation, row.organisation_id, "holdings");
     }
 
     for (const row of pendingListings ?? []) {
-      addCount(byOrganisation, row.organisation_id);
+      bumpOrg(byOrganisation, row.organisation_id, "listings");
     }
 
-    for (const row of endedAuctions ?? []) {
-      addCount(byOrganisation, row.organisation_id);
-    }
-
-    for (const row of orders ?? []) {
-      if (row.status === "AWAITING_PAYMENT") {
-        if (buyerManagerOrgs.has(Number(row.buyer_organisation_id))) {
-          addCount(byOrganisation, row.buyer_organisation_id);
-        }
+    for (const organisation of organisations) {
+      if (!canBuyForOrganisation(organisation.role)) {
         continue;
       }
 
-      if (memberOrgs.has(Number(row.buyer_organisation_id))) {
-        addCount(byOrganisation, row.buyer_organisation_id);
-      } else {
-        addCount(byOrganisation, row.seller_organisation_id);
-      }
+      const items = organisationNeedsAttentionItems({
+        organisationId: organisation.id,
+        canManage: true,
+        orders,
+        listings,
+        transferByOrderId,
+        fisheries,
+        jurisdictions,
+        complianceNotesByOrderId,
+        paymentStatusByOrderId,
+      });
+      const buckets = memberActionCountBuckets(items);
+      const current = byOrganisation[organisation.id] ?? emptyOrgCounts();
+      current.orders += buckets.orders;
+      current.listings += buckets.listings;
+      current.overview += buckets.overview;
+      byOrganisation[organisation.id] = finishOrgCounts(current);
     }
 
-    const visibleOrders = (orders ?? []).filter((row) => {
-      if (row.status === "AWAITING_PAYMENT") {
-        return buyerManagerOrgs.has(Number(row.buyer_organisation_id));
-      }
-
-      return true;
-    });
-    const holdingsCount = (holdings ?? []).length;
-    const listingsCount =
-      (pendingListings ?? []).length + (endedAuctions ?? []).length;
-    const ordersCount = visibleOrders.length;
+    const totals = emptyOrgCounts();
+    for (const orgCounts of Object.values(byOrganisation)) {
+      totals.holdings += orgCounts.holdings;
+      totals.listings += orgCounts.listings;
+      totals.orders += orgCounts.orders;
+      totals.overview += orgCounts.overview;
+    }
 
     return {
-      holdings: holdingsCount,
-      listings: listingsCount,
-      orders: ordersCount,
-      total: holdingsCount + listingsCount + ordersCount,
+      ...finishOrgCounts(totals),
       byOrganisation,
     };
   },

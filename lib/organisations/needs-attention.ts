@@ -19,6 +19,7 @@ export type NeedsAttentionListing = {
   status: string;
   expires_at: string;
   fishery_name: string;
+  organisation_id?: number;
 };
 
 export type NeedsAttentionTransfer = {
@@ -30,6 +31,48 @@ export type NeedsAttentionComplianceNotes = {
   buyer: string | null;
   seller: string | null;
 };
+
+const CLOSED_ORDER_STATUSES = new Set([
+  "CANCELLED",
+  "REJECTED",
+  "COMPLETED",
+]);
+
+const PAYMENT_NO_LONGER_DUE = new Set(["PAID", "EXPIRED", "FAILED"]);
+
+export function orderPaymentActionIsDue(
+  orderStatus: string,
+  paymentStatus?: string | null,
+) {
+  if (orderStatus !== "AWAITING_PAYMENT") {
+    return false;
+  }
+
+  if (paymentStatus && PAYMENT_NO_LONGER_DUE.has(paymentStatus.toUpperCase())) {
+    return false;
+  }
+
+  return true;
+}
+
+export function memberActionCountBuckets(items: readonly NeedsAttentionItem[]) {
+  let orders = 0;
+  let listings = 0;
+
+  for (const item of items) {
+    if (item.key.startsWith("auction-")) {
+      listings += 1;
+    } else {
+      orders += 1;
+    }
+  }
+
+  return {
+    orders,
+    listings,
+    overview: items.length,
+  };
+}
 
 function usesSimulatedTransfer(
   order: Pick<NeedsAttentionOrder, "offering" | "fishery_name">,
@@ -74,6 +117,7 @@ export function organisationNeedsAttentionItems(input: {
   fisheries?: readonly { name: string; jurisdiction_id: number }[];
   jurisdictions?: readonly { id: number; code: string }[];
   complianceNotesByOrderId?: ReadonlyMap<number, NeedsAttentionComplianceNotes>;
+  paymentStatusByOrderId?: ReadonlyMap<number, string>;
   now?: Date;
 }): NeedsAttentionItem[] {
   if (!input.canManage || input.organisationId <= 0) {
@@ -85,9 +129,14 @@ export function organisationNeedsAttentionItems(input: {
   const jurisdictions = input.jurisdictions ?? [];
   const transfers = input.transferByOrderId ?? new Map();
   const notesByOrderId = input.complianceNotesByOrderId ?? new Map();
+  const paymentStatusByOrderId = input.paymentStatusByOrderId ?? new Map();
   const now = input.now ?? new Date();
 
   for (const order of input.orders) {
+    if (CLOSED_ORDER_STATUSES.has(order.status)) {
+      continue;
+    }
+
     const isBuyer = order.buyer_organisation_id === input.organisationId;
     const isSeller = order.seller_organisation_id === input.organisationId;
 
@@ -95,7 +144,13 @@ export function organisationNeedsAttentionItems(input: {
       continue;
     }
 
-    if (isBuyer && order.status === "AWAITING_PAYMENT") {
+    if (
+      isBuyer &&
+      orderPaymentActionIsDue(
+        order.status,
+        paymentStatusByOrderId.get(order.id),
+      )
+    ) {
       items.push({
         key: `pay-${order.id}`,
         href: `/orders/${order.id}`,
@@ -135,6 +190,13 @@ export function organisationNeedsAttentionItems(input: {
   }
 
   for (const listing of input.listings) {
+    if (
+      listing.organisation_id != null &&
+      listing.organisation_id !== input.organisationId
+    ) {
+      continue;
+    }
+
     if (
       listing.listing_type !== "AUCTION" ||
       listing.status !== "PUBLISHED" ||

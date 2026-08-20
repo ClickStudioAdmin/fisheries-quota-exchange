@@ -7,6 +7,7 @@ import type {
   SimulatedTransaction,
 } from "@/lib/orders/types";
 import { parseComplianceChecklist } from "@/lib/orders/checklist";
+import { latestComplianceUpdateNotes } from "@/lib/orders/compliance-update";
 
 const orderColumns =
   "id, listing_id, holding_id, seller_organisation_id, buyer_organisation_id, offering, quantity, unit_price_aud, amount_aud, fee_percent, fee_amount_aud, status, seller_name, buyer_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, updated_at, review_note, compliance_checklist";
@@ -206,4 +207,66 @@ export async function listOrderAuditEvents(orderId: number) {
     .order("id", { ascending: false });
 
   return (data ?? []) as AuditEvent[];
+}
+
+export async function listLatestComplianceUpdateNotesByOrderIds(orderIds: number[]) {
+  const unique = [
+    ...new Set(
+      orderIds.filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+  const notes = new Map<number, { buyer: string | null; seller: string | null }>();
+
+  for (const id of unique) {
+    notes.set(id, { buyer: null, seller: null });
+  }
+
+  if (unique.length === 0) {
+    return notes;
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    return notes;
+  }
+
+  const { data } = await supabase
+    .from("audit_events")
+    .select("id, entity_id, event_type, payload, created_at")
+    .eq("entity_type", "order")
+    .in("entity_id", unique)
+    .in("event_type", [
+      "COMPLIANCE_UPDATE_REQUESTED_BUYER",
+      "COMPLIANCE_UPDATE_REQUESTED_SELLER",
+    ])
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
+
+  const grouped = new Map<
+    number,
+    Array<{ event_type: string; payload: Record<string, unknown> }>
+  >();
+
+  for (const row of data ?? []) {
+    const orderId = Number((row as { entity_id?: unknown }).entity_id);
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      continue;
+    }
+
+    const list = grouped.get(orderId) ?? [];
+    list.push({
+      event_type: String((row as { event_type?: unknown }).event_type ?? ""),
+      payload: ((row as { payload?: unknown }).payload ?? {}) as Record<
+        string,
+        unknown
+      >,
+    });
+    grouped.set(orderId, list);
+  }
+
+  for (const id of unique) {
+    notes.set(id, latestComplianceUpdateNotes(grouped.get(id) ?? []));
+  }
+
+  return notes;
 }

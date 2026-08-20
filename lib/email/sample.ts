@@ -159,7 +159,11 @@ export function sampleEmailData(
     case "payment_reminder":
       return emailCopy.payment_reminder({ orderId: 1001, orderUrl });
     case "transfer_in_progress":
-      return emailCopy.transfer_in_progress({ orderId: 1001, orderUrl });
+      return emailCopy.transfer_in_progress({
+        orderId: 1001,
+        orderUrl,
+        prepareDocuments: true,
+      });
     case "transfer_application_ready":
       return emailCopy.transfer_application_ready({
         orderId: 1001,

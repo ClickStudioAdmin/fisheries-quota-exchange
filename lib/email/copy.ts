@@ -319,12 +319,32 @@ export const emailCopy = {
       ["This order is still awaiting payment. Pay FQX from the order page to keep the reservation."],
       { label: "Pay FQX", url: input.orderUrl },
     ),
-  transfer_in_progress: (input: { orderId: number; orderUrl: string }) =>
-    notice(
-      `Quota transfer has started for FQX order ${input.orderId}`,
-      ["Compliance passed. FQX is running the authority transfer for this order."],
-      { label: "View order", url: input.orderUrl },
-    ),
+  transfer_in_progress: (input: {
+    orderId: number;
+    orderUrl: string;
+    prepareDocuments?: boolean;
+  }) =>
+    input.prepareDocuments
+      ? {
+          ...notice(
+            `Prepare transfer documents for FQX order ${input.orderId}`,
+            [
+              "Compliance passed. Next, buyer and seller prepare the Queensland transfer application.",
+              "Open the order to complete any missing business details. FQX will generate the unsigned PDF. Sign and witness it offline, then return the signed pack to FQX.",
+            ],
+            { label: "Prepare documents", url: input.orderUrl },
+          ),
+          highlight:
+            "You need to prepare transfer documents for this order. This is not complete until the signed pack is back with FQX.",
+          highlightLabel: "What you need to do",
+        }
+      : notice(
+          `Quota transfer has started for FQX order ${input.orderId}`,
+          [
+            "Compliance passed. FQX is running the authority transfer for this order.",
+          ],
+          { label: "View order", url: input.orderUrl },
+        ),
   transfer_application_ready: (input: {
     orderId: number;
     orderUrl: string;

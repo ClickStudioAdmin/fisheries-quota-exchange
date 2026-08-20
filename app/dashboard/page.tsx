@@ -1,6 +1,8 @@
 import { AccountOverviewSection } from "@/components/account-overview";
 import { resolveDashboardAccount } from "@/lib/organisations/dashboard-account";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Overview",
 };

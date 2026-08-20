@@ -222,4 +222,17 @@ test("cancelled-order copy differs for buyer and seller", () => {
   );
   assert.match(updateRequested.paragraphs[0] ?? "", /still open/);
   assert.doesNotMatch(updateRequested.paragraphs.join(" "), /cancelled/);
+
+  const simulatedTransfer = emailCopy.transfer_in_progress(input);
+  assert.match(simulatedTransfer.subject, /Quota transfer has started/);
+  assert.equal(simulatedTransfer.highlight, undefined);
+
+  const qldTransfer = emailCopy.transfer_in_progress({
+    ...input,
+    prepareDocuments: true,
+  });
+  assert.match(qldTransfer.subject, /Prepare transfer documents/);
+  assert.match(qldTransfer.paragraphs.join(" "), /Queensland transfer application/);
+  assert.match(qldTransfer.highlight ?? "", /prepare transfer documents/);
+  assert.equal(qldTransfer.actionLabel, "Prepare documents");
 });
