@@ -4,6 +4,7 @@ export type OrderStepId =
   | "quota_reserved"
   | "payment"
   | "compliance"
+  | "transfer"
   | "settlement";
 
 export type OrderStepState = "done" | "current" | "upcoming" | "failed";
@@ -18,7 +19,8 @@ export type OrderStep = {
 const LABELS: Record<OrderStepId, string> = {
   quota_reserved: "Quota reserved",
   payment: "Payment",
-  compliance: "Compliance & Transfers",
+  compliance: "Compliance",
+  transfer: "Transfer",
   settlement: "Settlement",
 };
 
@@ -26,6 +28,7 @@ const STEP_IDS: OrderStepId[] = [
   "quota_reserved",
   "payment",
   "compliance",
+  "transfer",
   "settlement",
 ];
 
@@ -53,6 +56,10 @@ function pastCompliance(status: OrderStatus) {
     status === "AWAITING_SETTLEMENT" ||
     status === "COMPLETED"
   );
+}
+
+function pastTransfer(status: OrderStatus) {
+  return status === "AWAITING_SETTLEMENT" || status === "COMPLETED";
 }
 
 function quotaState(input: ProgressInput): OrderStepState {
@@ -116,15 +123,24 @@ function complianceState(input: ProgressInput): OrderStepState {
   return "upcoming";
 }
 
+function transferState(input: ProgressInput): OrderStepState {
+  if (input.orderStatus === "AWAITING_TRANSFER") {
+    return "current";
+  }
+
+  if (pastTransfer(input.orderStatus)) {
+    return "done";
+  }
+
+  return "upcoming";
+}
+
 function settlementState(input: ProgressInput): OrderStepState {
   if (input.orderStatus === "COMPLETED" || input.settlementCompleted) {
     return "done";
   }
 
-  if (
-    input.orderStatus === "AWAITING_TRANSFER" ||
-    input.orderStatus === "AWAITING_SETTLEMENT"
-  ) {
+  if (input.orderStatus === "AWAITING_SETTLEMENT") {
     return "current";
   }
 
@@ -136,6 +152,7 @@ const stateFor: Record<OrderStepId, (input: ProgressInput) => OrderStepState> =
     quota_reserved: quotaState,
     payment: paymentState,
     compliance: complianceState,
+    transfer: transferState,
     settlement: settlementState,
   };
 
@@ -205,6 +222,18 @@ function complianceDetail(input: ProgressInput, state: OrderStepState) {
   return "Waiting";
 }
 
+function transferDetail(_input: ProgressInput, state: OrderStepState) {
+  if (state === "done") {
+    return "Complete";
+  }
+
+  if (state === "current") {
+    return "In progress";
+  }
+
+  return "Waiting";
+}
+
 function settlementDetail(_input: ProgressInput, state: OrderStepState) {
   if (state === "done") {
     return "Completed";
@@ -229,6 +258,8 @@ function stepDetail(
       return paymentDetail(input, state);
     case "compliance":
       return complianceDetail(input, state);
+    case "transfer":
+      return transferDetail(input, state);
     case "settlement":
       return settlementDetail(input, state);
   }
