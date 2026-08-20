@@ -27,6 +27,7 @@ import { listPaymentStatusesByOrderIds } from "@/lib/payments/queries";
 import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 import { AcceptTermsForm } from "@/components/accept-terms-form";
 import { OverviewNotifications } from "@/components/overview-notifications";
+import { NavBadge } from "@/components/nav-badge";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
 import { StatusBadge } from "@/components/status-badge";
 import { ActionNotice } from "@/components/notices";
@@ -269,7 +270,10 @@ export async function AccountOverviewSection({
           <OverviewNotifications notifications={notifications} />
         </div>
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-ink">Needs attention</h2>
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-ink">
+            Needs attention
+            <NavBadge count={needsAttention.length} />
+          </h2>
           <div className={panelClassName}>
             {needsAttention.length === 0 ? (
               <p className="text-sm text-ink-muted">
