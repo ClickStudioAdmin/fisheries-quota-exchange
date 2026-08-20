@@ -107,10 +107,14 @@ export function orderQueueTitle(status: OrderQueueStatus) {
     case "AWAITING_COMPLIANCE":
       return "Review orders";
     case "AWAITING_TRANSFER":
-      return "Transfer";
+      return "Transfer orders";
     case "AWAITING_SETTLEMENT":
       return "Simulate settlement";
   }
+}
+
+export function adminTransferActionLabel(usesSimulatedTransfer: boolean) {
+  return usesSimulatedTransfer ? "Simulate transfer" : "Open transfer";
 }
 
 export function qldTransferPublicStatusLabel(status?: string | null) {

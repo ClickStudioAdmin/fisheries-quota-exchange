@@ -3,6 +3,7 @@ import Link from "next/link";
 import { startOrderQueueAction } from "@/lib/orders/actions";
 import { listAllOrders } from "@/lib/orders/queries";
 import {
+  adminTransferActionLabel,
   isOrderQueueStatus,
   orderQueuePath,
   orderQueueTitle,
@@ -21,7 +22,7 @@ import { ReviewTransferForms } from "@/components/review-transfer-forms";
 import { BulkReviewOrdersModal } from "@/components/bulk-review-orders-modal";
 import { tableButtonClassName } from "@/components/auth-card";
 import { formatTableDate } from "@/lib/format";
-import { orderStatusLabelFor } from "@/lib/transfers/display";
+import { orderStatusLabelFor, transferStatusInputForOrder } from "@/lib/transfers/display";
 import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 
 export const metadata = {
@@ -104,11 +105,20 @@ export default async function AdminOrdersPage({
             hiddenFields: { expected_status: "AWAITING_COMPLIANCE" },
           },
           {
-            label: "Transfer",
+            label: "Open transfer",
             action: startOrderQueueAction,
             requireValue: {
-              key: "status",
-              value: "AWAITING_TRANSFER",
+              key: "transferKind",
+              value: "QLD",
+            },
+            hiddenFields: { expected_status: "AWAITING_TRANSFER" },
+          },
+          {
+            label: "Simulate transfer",
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "transferKind",
+              value: "SIMULATED",
             },
             hiddenFields: { expected_status: "AWAITING_TRANSFER" },
           },
@@ -175,48 +185,63 @@ export default async function AdminOrdersPage({
             ],
           },
         ]}
-        rows={orders.map((order) => ({
-          id: order.id,
-          needsAction:
-            order.status === "AWAITING_COMPLIANCE" ||
-            order.status === "AWAITING_TRANSFER" ||
-            order.status === "AWAITING_SETTLEMENT",
-          details: [
-            { label: "Created", value: formatTableDate(order.created_at) },
-          ],
-          values: {
+        rows={orders.map((order) => {
+          const transfer = transferStatusInputForOrder(
+            order,
+            transferApplications.get(order.id),
+            fisheries,
+            jurisdictions,
+          );
+
+          return {
             id: order.id,
-            parties: `${order.buyer_name} ${order.seller_name}`,
-            buyer: order.buyer_name,
-            seller: order.seller_name,
-            fishery: fisherySelectLabelForName(
-              order.fishery_name,
-              fisheries,
-              jurisdictions,
-            ),
-            offering: order.offering,
-            quantity: order.quantity,
-            amount: order.amount_aud,
-            fee: order.fee_amount_aud,
-            status: order.status,
-            created: order.created_at,
-          },
-          display: {
-            offering: listingOfferingLabel(order.offering),
-            quantity: `${order.quantity} ${order.unit_label}`,
-            amount: formatAud(order.amount_aud),
-            fee:
-              Number(order.fee_percent) > 0
-                ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
-                : formatAud(order.fee_amount_aud),
-            status: orderStatusLabelFor(
-              order,
-              transferApplications,
-              fisheries,
-              jurisdictions,
-            ),
-          },
-        }))}
+            needsAction:
+              order.status === "AWAITING_COMPLIANCE" ||
+              order.status === "AWAITING_TRANSFER" ||
+              order.status === "AWAITING_SETTLEMENT",
+            details: [
+              { label: "Created", value: formatTableDate(order.created_at) },
+            ],
+            values: {
+              id: order.id,
+              parties: `${order.buyer_name} ${order.seller_name}`,
+              buyer: order.buyer_name,
+              seller: order.seller_name,
+              fishery: fisherySelectLabelForName(
+                order.fishery_name,
+                fisheries,
+                jurisdictions,
+              ),
+              offering: order.offering,
+              quantity: order.quantity,
+              amount: order.amount_aud,
+              fee: order.fee_amount_aud,
+              status: order.status,
+              transferKind:
+                order.status === "AWAITING_TRANSFER"
+                  ? transfer.usesSimulatedTransfer
+                    ? "SIMULATED"
+                    : "QLD"
+                  : "",
+              created: order.created_at,
+            },
+            display: {
+              offering: listingOfferingLabel(order.offering),
+              quantity: `${order.quantity} ${order.unit_label}`,
+              amount: formatAud(order.amount_aud),
+              fee:
+                Number(order.fee_percent) > 0
+                  ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                  : formatAud(order.fee_amount_aud),
+              status: orderStatusLabelFor(
+                order,
+                transferApplications,
+                fisheries,
+                jurisdictions,
+              ),
+            },
+          };
+        })}
       >
         {orders.map((order) => (
           <DataTableRowExtras
@@ -241,7 +266,14 @@ export default async function AdminOrdersPage({
                     href={`/admin/orders?queue=${order.id}`}
                     className={tableButtonClassName}
                   >
-                    Transfer
+                    {adminTransferActionLabel(
+                      transferStatusInputForOrder(
+                        order,
+                        transferApplications.get(order.id),
+                        fisheries,
+                        jurisdictions,
+                      ).usesSimulatedTransfer,
+                    )}
                   </Link>
                 ) : null}
                 {order.status === "AWAITING_SETTLEMENT" ? (

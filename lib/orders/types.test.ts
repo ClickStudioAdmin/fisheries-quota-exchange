@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { orderQueuePath, orderStatusLabel, parseOrderIds } from "./types.ts";
+import {
+  adminTransferActionLabel,
+  orderQueuePath,
+  orderStatusLabel,
+  parseOrderIds,
+} from "./types.ts";
 
 test("orderQueuePath builds a remaining queue URL", () => {
   assert.equal(orderQueuePath([12, 3]), "/admin/orders?queue=12,3");
@@ -55,4 +60,9 @@ test("orderStatusLabel uses Queensland child status during transfer", () => {
     }),
     "Action required",
   );
+});
+
+test("adminTransferActionLabel names the Queensland workspace vs simulate", () => {
+  assert.equal(adminTransferActionLabel(true), "Simulate transfer");
+  assert.equal(adminTransferActionLabel(false), "Open transfer");
 });
