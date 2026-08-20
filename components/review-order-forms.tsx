@@ -3,6 +3,7 @@ import {
   tableButtonClassName,
 } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { panelClassName } from "@/components/surface";
 import {
   approveComplianceAction,
   rejectComplianceAction,
@@ -113,31 +114,45 @@ export function ReviewOrderForms({
 
   if (order.status === "AWAITING_TRANSFER") {
     return (
-      <form action={simulateTransferAction}>
-        <input type="hidden" name="order_id" value={order.id} />
-        {queueFields()}
-        <PendingSubmitButton
-          className={tableButtonClassName}
-          pendingLabel="Simulating…"
-        >
-          Simulate transfer
-        </PendingSubmitButton>
-      </form>
+      <section className={panelClassName}>
+        <h3 className="text-lg font-semibold text-ink">Simulated transfer</h3>
+        <p className="mt-1 text-sm text-ink-muted">
+          This fishery uses simulated authority transfer. Run it when you are
+          ready to move the order to settlement.
+        </p>
+        <form action={simulateTransferAction} className="mt-4">
+          <input type="hidden" name="order_id" value={order.id} />
+          {queueFields()}
+          <PendingSubmitButton
+            className={tableButtonClassName}
+            pendingLabel="Simulating…"
+          >
+            Simulate transfer
+          </PendingSubmitButton>
+        </form>
+      </section>
     );
   }
 
   if (order.status === "AWAITING_SETTLEMENT") {
     return (
-      <form action={simulateSettlementAction}>
-        <input type="hidden" name="order_id" value={order.id} />
-        {queueFields()}
-        <PendingSubmitButton
-          className={tableButtonClassName}
-          pendingLabel="Settling…"
-        >
-          Simulate settlement
-        </PendingSubmitButton>
-      </form>
+      <section className={panelClassName}>
+        <h3 className="text-lg font-semibold text-ink">Simulated settlement</h3>
+        <p className="mt-1 text-sm text-ink-muted">
+          Transfers the seller’s share after the platform fee and writes the
+          quota ledger. Dummy tax invoices are emailed after settlement.
+        </p>
+        <form action={simulateSettlementAction} className="mt-4">
+          <input type="hidden" name="order_id" value={order.id} />
+          {queueFields()}
+          <PendingSubmitButton
+            className={tableButtonClassName}
+            pendingLabel="Settling…"
+          >
+            Simulate settlement
+          </PendingSubmitButton>
+        </form>
+      </section>
     );
   }
 
