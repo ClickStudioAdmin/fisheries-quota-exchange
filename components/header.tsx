@@ -1,4 +1,5 @@
 import { AuthLinks } from "@/components/auth-links";
+import { HeaderMenu } from "@/components/header-menu";
 import { Logo } from "@/components/logo";
 import { Nav } from "@/components/nav";
 import { pageWidthClassName } from "@/components/surface";
@@ -20,20 +21,36 @@ export async function Header() {
       user ? getMyUnreadNotificationCount() : Promise.resolve(0),
       user ? Promise.resolve(false) : registrationsAllowed(),
     ]);
+  const dashboardBadge = (memberCounts?.total ?? 0) + unreadNotifications;
+  const adminBadge = adminCounts?.total ?? 0;
 
   return (
-    <header className="shrink-0 bg-ink text-paper">
-      <div className={`${pageWidthClassName} flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between`}>
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+    <header className="relative shrink-0 bg-ink text-paper">
+      <div
+        className={`${pageWidthClassName} flex items-center justify-between gap-4 py-3 lg:py-4`}
+      >
+        <div className="flex min-w-0 items-center gap-x-8">
           <Logo />
-          <Nav />
+          <div className="hidden lg:block">
+            <Nav />
+          </div>
         </div>
-        <AuthLinks
+        <div className="hidden lg:block">
+          <AuthLinks
+            email={user?.email ?? null}
+            name={user ? displayName(user) : null}
+            showAdmin={showAdmin}
+            adminBadge={adminBadge}
+            dashboardBadge={dashboardBadge}
+            showRegister={allowRegister}
+          />
+        </div>
+        <HeaderMenu
           email={user?.email ?? null}
           name={user ? displayName(user) : null}
           showAdmin={showAdmin}
-          adminBadge={adminCounts?.total ?? 0}
-          dashboardBadge={(memberCounts?.total ?? 0) + unreadNotifications}
+          adminBadge={adminBadge}
+          dashboardBadge={dashboardBadge}
           showRegister={allowRegister}
         />
       </div>
