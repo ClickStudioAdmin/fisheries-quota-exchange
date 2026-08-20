@@ -98,7 +98,7 @@ export function TransferOrderPanel({
             <a
               href={transferDocumentPath(
                 workspace.order.id,
-                workspace.latestUnsigned.id,
+                sellerDownload.id,
               )}
               className={`${buttonClassName} inline-block`}
             >

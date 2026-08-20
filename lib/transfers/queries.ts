@@ -3,6 +3,7 @@ import "server-only";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { getFishery, getHolding, listJurisdictions } from "@/lib/fisheries/queries";
+import { listingOfferingLabel } from "@/lib/listings/types";
 import { parseComplianceChecklist } from "@/lib/orders/checklist";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { canDownloadTransferDocument } from "@/lib/transfers/access";
