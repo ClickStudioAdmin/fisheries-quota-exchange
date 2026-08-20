@@ -8,10 +8,12 @@ import type {
 } from "./application-data.ts";
 import {
   fdu1465FieldValues,
+  fdu1469FieldValues,
   fduAddressParts,
   fduPersonName,
   fduWholeUnits,
   matchFdu1465QuotaRow,
+  matchFdu1469QuotaRow,
 } from "./fdu1465-map.ts";
 
 const address = {
@@ -70,6 +72,7 @@ function pdfData(
 
 test("fduWholeUnits stores whole numbers without decimals", () => {
   assert.equal(fduWholeUnits("5000.00"), "5000");
+  assert.equal(fduWholeUnits(5000), "5000");
   assert.equal(fduWholeUnits("12.5"), "12.5");
 });
 
@@ -141,4 +144,47 @@ test("official FDU1465 template accepts mapped field names", async () => {
   );
   assert.equal(filled.getForm().getTextField("ECIFF-24").getText(), "5000");
   assert.equal(filled.getForm().getTextField("Textfield-9").getText(), "QLD-1");
+});
+
+test("matchFdu1469QuotaRow maps Spanish mackerel to SM unused units", () => {
+  const row = matchFdu1469QuotaRow(
+    "QLD - East Coast Spanish Mackerel Fishery Quota kg",
+  );
+  assert.equal(row?.unused, "Text15");
+});
+
+test("fdu1469FieldValues fills company parties and SM unused units", () => {
+  const values = fdu1469FieldValues(
+    pdfData({ formType: "FDU1469", formVersion: "V02/26" }),
+  );
+  assert.equal(values["Textfield-3"], "Test Org");
+  assert.equal(values["Text2"], "1 Wharf St, Brisbane, QLD");
+  assert.equal(values["Text3"], "4000");
+  assert.equal(values["Textfield-10"], "0412345678");
+  assert.equal(values["Textfield-20"], "Test Buyer Pty Ltd");
+  assert.equal(values["Text7"], "1 Wharf St, Brisbane, QLD");
+  assert.equal(values["Textfield-24"], "0412345678");
+  assert.equal(values["Textfield-26"], "QLD-2");
+  assert.equal(values["Text15"], "5000");
+  assert.equal(values["Textfield-1"], undefined);
+});
+
+test("official FDU1469 template accepts mapped field names", async () => {
+  const bytes = readFileSync(new URL("./forms/fdu1469-v02-26.pdf", import.meta.url));
+  const pdf = await PDFDocument.load(bytes);
+  const form = pdf.getForm();
+  const values = fdu1469FieldValues(
+    pdfData({ formType: "FDU1469", formVersion: "V02/26" }),
+  );
+
+  for (const [name, value] of Object.entries(values)) {
+    form.getTextField(name).setText(value);
+  }
+
+  const filled = await PDFDocument.load(await pdf.save());
+  assert.equal(filled.getPageCount(), 4);
+  assert.equal(filled.getForm().getTextField("Textfield-3").getText(), "Test Org");
+  assert.equal(filled.getForm().getTextField("Textfield-20").getText(), "Test Buyer Pty Ltd");
+  assert.equal(filled.getForm().getTextField("Text15").getText(), "5000");
+  assert.equal(filled.getForm().getTextField("Textfield-26").getText(), "QLD-2");
 });

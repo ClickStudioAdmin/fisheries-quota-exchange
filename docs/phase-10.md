@@ -15,7 +15,7 @@ Never trust the browser for payment status, bid time, quota availability, or tra
 ## Flow
 
 1. Payment stays as it is. Compliance review shows the order, buyer and seller business details, and a checklist of jurisdiction steps (Queensland instructions on QLD orders). Admins tick steps and save progress. Each newly saved check writes an audit event. Approve stays disabled until every required check is saved; the browser is not trusted. Approving then moves the order to `AWAITING_TRANSFER` and writes the existing compliance-approved audit event. **Request update** keeps the order in `AWAITING_COMPLIANCE` and emails only the ticked parties, each with their own message. **Reject** still cancels the order and emails both parties.
-2. FQX resolves the process from the listing holding’s fishery jurisdiction plus offering (`SALE` or `LEASE`). Queensland uses `QLD_SALE` (FDU1465) or `QLD_LEASE`. Everything else uses `SIMULATED`.
+2. FQX resolves the process from the listing holding’s fishery jurisdiction plus offering (`SALE` or `LEASE`). Queensland uses `QLD_SALE` (FDU1465) or `QLD_LEASE` (FDU1469). Everything else uses `SIMULATED`.
 3. A `transfer_applications` row holds **child** status. It does not replace `orders.status`.
 4. Shared transfer fields live on the business (entity kind, ACN for companies, phone, structured Australian addresses). Queensland-only fields live on `organisation_jurisdiction_profiles`. Owners and admins select jurisdictions on **Business Settings → Details**; Queensland fields appear when Queensland is selected. There is no second onboarding form.
 5. Buying, bidding, and listing require complete identity fields (entity kind, legal name, ABN, ACN for companies, phone, registered address; postal address if it differs). Queensland client number and primary licence are required only for Queensland trades, which also requires Queensland to be selected. The browser is not trusted: server actions check the signed-in business and call `organisation_is_trade_ready` for the other party. Incomplete details block the form and name the missing fields.
@@ -41,12 +41,12 @@ Embedded e-sign is a later phase, after a provider is chosen and checked against
 
 ## Forms
 
-PDF layout for Queensland **sales** fills the official Fisheries Queensland FDU1465 form (`lib/transfers/forms/fdu1465-v09-23.pdf`) from stored business and order data, then stores the filled PDF in a private bucket. Signature, witness, date of birth, licence-transfer, and fee-payment fields stay blank for offline completion. Queensland **leases** still use an in-app layout (`@react-pdf/renderer`) until an official lease PDF is supplied. Dummy tax invoices stay on `@react-pdf/renderer`.
+PDF layout for Queensland **sales** fills official FDU1465 (`lib/transfers/forms/fdu1465-v09-23.pdf`). Queensland **leases** fill official FDU1469 (`lib/transfers/forms/fdu1469-v02-26.pdf`). Both are pre-filled from stored business and order data and stored in a private bucket. Signature, witness, date of birth, licence-transfer, quota-year, and fee-payment fields stay blank for offline completion. Dummy tax invoices stay on `@react-pdf/renderer`.
 
 | Offering | Form type | Version | Notes |
 | --- | --- | --- | --- |
 | Sale | `FDU1465` | `V09/23` | Official Register transfer of quota or effort unit application. FQX pre-fills party and quota fields; parties sign and witness offline. |
-| Lease | `FDU_LEASE` | `V01/26` | Queensland lease / temporary transfer. Official form code pending. |
+| Lease | `FDU1469` | `V02/26` | Official Register temporary transfer of quota or effort unit application. FQX pre-fills party and unused-unit fields; parties sign and witness offline. |
 
 Child statuses (QLD only): `READY` → `AWAITING_SIGNED_PACK` (after generate) → `ADMIN_REVIEW` (after signed pack) → `SUBMITTED` → `PROCESSING` → `APPROVED` or `ACTION_REQUIRED`. Corrections regenerate a new unsigned PDF; previous files stay.
 

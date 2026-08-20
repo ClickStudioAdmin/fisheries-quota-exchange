@@ -388,7 +388,7 @@ export function transferPdfData(
     offeringLabel: listingOfferingLabel(order.offering),
     fisheryName: order.fishery_name,
     quotaTypeName: order.quota_type_name,
-    quantity: order.quantity,
+    quantity: String(order.quantity ?? ""),
     unitLabel: order.unit_label,
     seller,
     buyer,
