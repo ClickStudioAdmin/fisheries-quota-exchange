@@ -46,6 +46,8 @@ begin
         transfer_status text,
         days_ago integer not null,
         qty numeric not null,
+        unused_qty numeric not null,
+        used_qty numeric not null,
         price numeric not null,
         review_note text
     ) on commit drop;
@@ -53,51 +55,51 @@ begin
     insert into qld_status_spec (
         sort_order, offering, listing_type, listing_status, order_status,
         payment_status, reservation_status, transfer_status,
-        days_ago, qty, price, review_note
+        days_ago, qty, unused_qty, used_qty, price, review_note
     )
     values
         (1, 'SALE', 'FIXED_PRICE', 'SOLD', 'COMPLETED',
             'PAID', 'CONSUMED', 'APPROVED',
-            52, 420, 18.40, null),
+            52, 420, 336, 84, 18.40, null),
         (2, 'LEASE', 'FIXED_PRICE', 'SOLD', 'COMPLETED',
             'PAID', 'CONSUMED', 'APPROVED',
-            38, 260, 6.15, null),
+            38, 260, 208, 52, 6.15, null),
         (3, 'SALE', 'FIXED_PRICE', 'CANCELLED', 'CANCELLED',
             'EXPIRED', 'RELEASED', null,
-            24, 140, 12.20, 'Checkout expired.'),
+            24, 140, 112, 28, 12.20, 'Checkout expired.'),
         (4, 'LEASE', 'FIXED_PRICE', 'CANCELLED', 'CANCELLED',
             'PAID', 'RELEASED', null,
-            16, 110, 7.80, 'Cancelled by admin during compliance.'),
+            16, 110, 88, 22, 7.80, 'Cancelled by admin during compliance.'),
         (5, 'SALE', 'FIXED_PRICE', 'REJECTED', 'REJECTED',
             'PAID', 'RELEASED', null,
-            11, 95, 15.60, 'Primary licence does not match this fishery.'),
+            11, 95, 76, 19, 15.60, 'Primary licence does not match this fishery.'),
         (6, 'SALE', 'FIXED_PRICE', 'RESERVED', 'AWAITING_PAYMENT',
             'PENDING', 'ACTIVE', null,
-            1, 175, 11.25, null),
+            1, 175, 140, 35, 11.25, null),
         (7, 'SALE', 'FIXED_PRICE', 'RESERVED', 'AWAITING_COMPLIANCE',
             'PAID', 'ACTIVE', null,
-            3, 190, 10.40, null),
+            3, 190, 152, 38, 10.40, null),
         (8, 'SALE', 'FIXED_PRICE', 'RESERVED', 'AWAITING_TRANSFER',
-            'PAID', 'ACTIVE', 'AWAITING_SELLER_SIGNATURE',
-            5, 210, 13.75, null),
+            'PAID', 'ACTIVE', 'READY',
+            5, 210, 168, 42, 13.75, null),
         (9, 'LEASE', 'FIXED_PRICE', 'RESERVED', 'AWAITING_TRANSFER',
-            'PAID', 'ACTIVE', 'AWAITING_BUYER_SIGNATURE',
-            4, 155, 8.10, null),
+            'PAID', 'ACTIVE', 'READY',
+            4, 155, 124, 31, 8.10, null),
         (10, 'SALE', 'FIXED_PRICE', 'RESERVED', 'AWAITING_SETTLEMENT',
             'PAID', 'ACTIVE', 'APPROVED',
-            8, 165, 16.90, null),
+            8, 165, 132, 33, 16.90, null),
         (11, 'SALE', 'FIXED_PRICE', 'PENDING_APPROVAL', null,
             null, null, null,
-            2, 80, 9.50, null),
+            2, 80, 64, 16, 9.50, null),
         (12, 'LEASE', 'FIXED_PRICE', 'CANCELLED', null,
             null, null, null,
-            21, 70, 5.40, 'Withdrawn by seller.'),
+            21, 70, 56, 14, 5.40, 'Withdrawn by seller.'),
         (13, 'SALE', 'FIXED_PRICE', 'REJECTED', null,
             null, null, null,
-            14, 60, 8.75, 'Holding documents incomplete.'),
+            14, 60, 48, 12, 8.75, 'Holding documents incomplete.'),
         (14, 'SALE', 'AUCTION', 'UNSOLD', null,
             null, null, null,
-            9, 45, 22.00, 'Ended with no bids.');
+            9, 45, 36, 9, 22.00, 'Ended with no bids.');
 
     select array_agg(organisations.id order by organisations.id)
     into v_org_ids
@@ -152,39 +154,32 @@ begin
         end if;
 
         if v_buyer_id is null or v_buyer_id = v_seller.id then
-            select organisations.id
-            into v_buyer_id
-            from public.organisations
-            where organisations.id <> v_seller.id
-            order by organisations.id
-            limit 1;
-        end if;
-
-        if v_buyer_id is null then
-            raise notice 'No counterparty for %, skipping status fixtures',
+            raise notice 'No Queensland trade-ready counterparty for %, skipping orders',
                 v_seller.legal_name;
-            continue;
+            v_buyer_id := null;
         end if;
 
-        select organisations.legal_name
-        into v_buyer_name
-        from public.organisations
-        where organisations.id = v_buyer_id;
+        if v_buyer_id is not null then
+            select organisations.legal_name
+            into v_buyer_name
+            from public.organisations
+            where organisations.id = v_buyer_id;
 
-        select organisation_users.email
-        into v_buyer_email
-        from public.organisation_users
-        where organisation_users.organisation_id = v_buyer_id
-        order by
-            case organisation_users.role
-                when 'OWNER' then 0
-                when 'ADMIN' then 1
-                else 2
-            end,
-            organisation_users.id
-        limit 1;
+            select organisation_users.email
+            into v_buyer_email
+            from public.organisation_users
+            where organisation_users.organisation_id = v_buyer_id
+            order by
+                case organisation_users.role
+                    when 'OWNER' then 0
+                    when 'ADMIN' then 1
+                    else 2
+                end,
+                organisation_users.id
+            limit 1;
 
-        v_buyer_email := coalesce(v_buyer_email, v_email);
+            v_buyer_email := coalesce(v_buyer_email, v_email);
+        end if;
 
         for v_spec in
             select * from qld_status_spec order by sort_order
@@ -339,8 +334,8 @@ begin
                 v_spec.listing_type,
                 v_spec.offering,
                 v_spec.qty,
-                v_spec.qty,
-                0,
+                v_spec.unused_qty,
+                v_spec.used_qty,
                 v_spec.price,
                 case
                     when v_spec.listing_status = 'UNSOLD' then v_at
@@ -380,7 +375,7 @@ begin
 
             v_created := v_created + 1;
 
-            if v_spec.order_status is null then
+            if v_spec.order_status is null or v_buyer_id is null then
                 continue;
             end if;
 
@@ -413,8 +408,8 @@ begin
                 v_buyer_id,
                 v_spec.offering,
                 v_spec.qty,
-                v_spec.qty,
-                0,
+                v_spec.unused_qty,
+                v_spec.used_qty,
                 v_spec.price,
                 v_amount,
                 v_spec.order_status,

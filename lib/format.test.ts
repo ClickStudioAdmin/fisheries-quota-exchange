@@ -19,6 +19,7 @@ test("formatCountdown uses Ended when time is up", () => {
 test("parseIsoDate keeps a calendar date and ignores a time suffix", () => {
   assert.equal(parseIsoDate("1985-03-15"), "1985-03-15");
   assert.equal(parseIsoDate("1985-03-15T00:00:00.000Z"), "1985-03-15");
+  assert.equal(parseIsoDate(new Date("1985-03-15T00:00:00.000Z")), "1985-03-15");
   assert.equal(parseIsoDate("15/03/1985"), null);
 });
 

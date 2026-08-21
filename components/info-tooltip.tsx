@@ -60,7 +60,7 @@ export function InfoTooltip({
           id={tooltipId}
           role="tooltip"
           style={{ top: position.top, left: position.left }}
-          className="fixed z-50 w-72 border border-line bg-paper-raised p-3 text-left shadow-sm"
+          className="fixed z-[60] w-72 border border-line bg-paper-raised p-3 text-left shadow-sm"
         >
           <dl className="space-y-2">
             {details.map((item) => (

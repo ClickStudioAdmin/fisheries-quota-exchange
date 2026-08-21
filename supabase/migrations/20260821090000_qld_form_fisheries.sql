@@ -444,6 +444,7 @@ declare
     v_holding_id bigint;
     v_qty numeric;
     v_list_qty numeric;
+    v_used numeric;
     v_price numeric;
     v_offering text;
     v_unit text;
@@ -545,6 +546,7 @@ begin
                 else 'UNITS'
             end;
             v_list_qty := 250 + (v_index * 50);
+            v_used := round(v_list_qty * 0.2, 0);
             v_price := round(
                 (4.5 + ((v_fishery.id % 17) * 1.75))::numeric,
                 2
@@ -592,8 +594,8 @@ begin
                 case when v_listing_n = 2 then 'AUCTION' else 'FIXED_PRICE' end,
                 v_offering,
                 v_list_qty,
-                v_list_qty,
-                0,
+                v_list_qty - v_used,
+                v_used,
                 v_price,
                 now() + interval '40 days',
                 'PUBLISHED',

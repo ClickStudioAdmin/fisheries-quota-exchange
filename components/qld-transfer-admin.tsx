@@ -46,10 +46,19 @@ export function QldTransferAdmin({
   const complete =
     workspace.buyerMissing.length === 0 && workspace.sellerMissing.length === 0;
   const canGenerate =
-    complete &&
     status !== "SUBMITTED" &&
     status !== "PROCESSING" &&
     status !== "APPROVED";
+  const missingDetailNote = [
+    workspace.sellerMissing.length > 0
+      ? `Seller missing ${transferProfileFieldLabels(workspace.sellerMissing).join(", ")}.`
+      : null,
+    workspace.buyerMissing.length > 0
+      ? `Buyer missing ${transferProfileFieldLabels(workspace.buyerMissing).join(", ")}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const formMeta = workspace.process.formType
     ? `${workspace.process.formType} ${workspace.process.formVersion}`
     : null;
@@ -78,6 +87,15 @@ export function QldTransferAdmin({
                   label: "Quantity",
                   value: `${order.quantity} ${order.unit_label}`,
                 },
+                ...(order.unused_quantity != null &&
+                order.used_quantity != null
+                  ? [
+                      {
+                        label: "Unused / used",
+                        value: `${order.unused_quantity} ${order.unit_label} / ${order.used_quantity} ${order.unit_label}`,
+                      },
+                    ]
+                  : []),
                 { label: "Amount", value: formatAud(order.amount_aud) },
               ]}
             />
@@ -144,6 +162,11 @@ export function QldTransferAdmin({
             download it. Regenerating stores a new unsigned PDF. Earlier signed
             files stay stored, but only this application’s files are listed.
           </p>
+          {!complete && missingDetailNote ? (
+            <p className="mt-3 text-sm text-ink-muted">
+              {missingDetailNote} Generation still requires complete details.
+            </p>
+          ) : null}
           {workspace.latestUnsigned ||
           workspace.latestSellerSigned ||
           workspace.latestSignedPack ? (
@@ -197,17 +220,23 @@ export function QldTransferAdmin({
             />
           ) : null}
         </section>
-        {workspace.latestUnsigned &&
-        (status === "AWAITING_SELLER_SIGNATURE" ||
-          status === "AWAITING_SELLER_PACK_REVIEW" ||
-          status === "AWAITING_BUYER_SIGNATURE") ? (
+        {status === "AWAITING_SELLER_SIGNATURE" ||
+        status === "AWAITING_SELLER_PACK_REVIEW" ||
+        status === "AWAITING_BUYER_SIGNATURE" ? (
           <section className={panelClassName}>
             <h3 className="text-lg font-semibold text-ink">Offline upload</h3>
             <p className="mt-1 text-sm text-ink-muted">
               Use this when the signed PDF came in by email or post. This does
               not overwrite stored files.
             </p>
-            {status === "AWAITING_SELLER_SIGNATURE" ? (
+            {!workspace.latestUnsigned ? (
+              <p className="mt-3 text-sm text-ink-muted">
+                Generate the unsigned application first. Offline upload is
+                available after that file exists.
+              </p>
+            ) : null}
+            {workspace.latestUnsigned &&
+            status === "AWAITING_SELLER_SIGNATURE" ? (
               <QldOfflineUploadForm
                 orderId={order.id}
                 remainingQueue={remaining}
@@ -217,14 +246,16 @@ export function QldTransferAdmin({
                 submitLabel="Upload seller-signed form"
               />
             ) : null}
-            <QldOfflineUploadForm
-              orderId={order.id}
-              remainingQueue={remaining}
-              packKind="signed_pack"
-              inputId={`signed-pack-${order.id}`}
-              fileLabel="Completed pack (both parties signed)"
-              submitLabel="Upload completed pack"
-            />
+            {workspace.latestUnsigned ? (
+              <QldOfflineUploadForm
+                orderId={order.id}
+                remainingQueue={remaining}
+                packKind="signed_pack"
+                inputId={`signed-pack-${order.id}`}
+                fileLabel="Completed pack (both parties signed)"
+                submitLabel="Upload completed pack"
+              />
+            ) : null}
           </section>
         ) : null}
       </div>

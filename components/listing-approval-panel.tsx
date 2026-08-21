@@ -91,6 +91,15 @@ export async function ListingApprovalPanel({
                   label: "Quantity",
                   value: `${listing.quantity} ${unit}`,
                 },
+                ...(listing.unused_quantity != null &&
+                listing.used_quantity != null
+                  ? [
+                      {
+                        label: "Unused / used",
+                        value: `${listing.unused_quantity} ${unit} / ${listing.used_quantity} ${unit}`,
+                      },
+                    ]
+                  : []),
                 {
                   label: auction ? "Starting price" : "Unit price",
                   value: formatAudPerUnit(price, unit),

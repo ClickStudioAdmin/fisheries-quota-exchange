@@ -188,6 +188,15 @@ export function ComplianceReviewPanel({
                   label: "Quantity",
                   value: `${order.quantity} ${order.unit_label}`,
                 },
+                ...(order.unused_quantity != null &&
+                order.used_quantity != null
+                  ? [
+                      {
+                        label: "Unused / used",
+                        value: `${order.unused_quantity} ${order.unit_label} / ${order.used_quantity} ${order.unit_label}`,
+                      },
+                    ]
+                  : []),
                 { label: "Amount", value: formatAud(order.amount_aud) },
                 {
                   label: "Platform fee",
