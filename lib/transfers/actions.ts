@@ -17,7 +17,7 @@ import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { isPandaDocConfigured } from "@/lib/pandadoc/env";
+import { pandadocApiRecipientEmail } from "@/lib/pandadoc/sandbox-recipients";
 import {
   notifySignOnlineAfterGenerate,
   sendUnsignedPdfToPandaDoc,
@@ -779,10 +779,12 @@ export async function createPandaDocSigningSessionAction(
     return { error: "The buyer has already signed." };
   }
 
-  const email = (isSeller ? workspace.seller?.email : workspace.buyer?.email)?.trim();
-  if (!email) {
+  const realEmail = (isSeller ? workspace.seller?.email : workspace.buyer?.email)?.trim();
+  if (!realEmail) {
     return { error: "This business needs a contact email to sign." };
   }
+
+  const email = pandadocApiRecipientEmail(isSeller ? "Seller" : "Buyer", realEmail);
 
   try {
     const { createPandaDocClient, pandaDocSigningUrl } = await import(

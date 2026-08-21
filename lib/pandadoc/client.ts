@@ -109,7 +109,7 @@ async function pandaDocRequest(
   if (!response.ok) {
     if (text.includes("outside of your organization")) {
       throw new Error(
-        "PandaDoc sandbox can only send to emails on the same domain as your PandaDoc account. Set the seller and buyer contact emails to that domain, then generate again.",
+        "PandaDoc sandbox can only send to emails on the same domain as your PandaDoc account. Set PANDADOC_SANDBOX_RECIPIENT_EMAIL to that address (Preview only), then generate again.",
       );
     }
     throw new Error(

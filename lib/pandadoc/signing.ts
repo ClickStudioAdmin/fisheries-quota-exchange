@@ -21,6 +21,7 @@ import { getOrderForSystem } from "@/lib/orders/queries";
 import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import { createServiceClient } from "@/lib/supabase/service";
 import { addPandadocSigningFields } from "@/lib/transfers/pandadoc-fields";
+import { pandadocApiRecipientEmail } from "@/lib/pandadoc/sandbox-recipients";
 import {
   transferStoredFilenameForType,
 } from "@/lib/transfers/filenames";
@@ -47,7 +48,11 @@ function recipientFor(
     return null;
   }
   const names = splitName(party);
-  return { email, role, ...names };
+  return {
+    email: pandadocApiRecipientEmail(role, email),
+    role,
+    ...names,
+  };
 }
 
 export async function sendUnsignedPdfToPandaDoc(input: {
