@@ -32,7 +32,10 @@ import {
   stripeCardFeeAud,
   stripeCardFeeRateLabel,
 } from "@/lib/payments/money";
-import { orderPayPanel } from "@/lib/payments/order-pay-panel";
+import {
+  orderPayPanel,
+  orderPaymentShouldPoll,
+} from "@/lib/payments/order-pay-panel";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
 import { reconcilePandaDocSigning } from "@/lib/pandadoc/signing";
 import { formatTableDateTime } from "@/lib/format";
@@ -265,7 +268,9 @@ export default async function OrderPage({
 
   return (
     <div>
-      {showPending || paymentConfirmingForOthers ? <OrderPaymentPoll /> : null}
+      {orderPaymentShouldPoll(order.status, payPanel) ? (
+        <OrderPaymentPoll />
+      ) : null}
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
         {showCheckout ? "Checkout" : `Order ${order.id}`}
       </h1>
@@ -404,7 +409,7 @@ export default async function OrderPage({
                 : paymentLive === "processing"
                   ? "The buyer submitted an Australian bank debit. Stripe may show Incoming until it clears. This page will update when payment is confirmed. You do not need to do anything."
                   : isSeller
-                    ? "The buyer reserved this quota and must pay FQX. FQX will hold the funds until settlement. You receive the listed amount minus the platform fee at settlement, not now. You do not need to do anything. If the buyer does not pay, the reservation is released and the quota can be sold again."
+                    ? "The buyer reserved this quota and must pay FQX. FQX will hold the funds until settlement. You receive the listed amount minus the platform fee at settlement, not now. You do not need to do anything. This page will update when the buyer pays. If they do not pay, the reservation is released and the quota can be sold again."
                     : "The buyer reserved this quota and must pay FQX. FQX will hold the funds until settlement. The seller is paid the listed amount minus the platform fee at settlement. If the buyer does not pay, the reservation is released."}
             </p>
           </div>

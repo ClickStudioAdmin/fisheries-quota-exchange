@@ -34,7 +34,7 @@ Do not mix controls. An `OFFLINE` order never shows **Sign Online**. A `PANDADOC
 ### Default and per-order choice
 
 1. Platform admins set the **default Queensland signing channel** on `/admin/settings` (`platform_settings.qld_default_signing_channel`). Default value is `OFFLINE` so current behaviour stays until someone changes it.
-2. During `AWAITING_COMPLIANCE` on a Queensland order, a **required compliance control** chooses the channel for that order: Offline pack or Sign online (PandaDoc). The control is pre-filled from the platform default. Saving the checklist stores the choice. Approve is disabled until this control is saved along with the other required checks. The browser is not trusted.
+2. During `AWAITING_COMPLIANCE` on a Queensland order, a **required compliance control** on the Decision section chooses the channel for that order: Offline pack or Sign online (PandaDoc). The control is pre-filled from the platform default. Saving the signing method stores the choice. Approve is disabled until this control is saved along with the other required checks. The browser is not trusted.
 3. Approving compliance copies the saved channel onto `transfer_applications.signing_channel` and must not change it afterwards.
 4. The channel cannot be changed after the transfer application leaves `READY` (unsigned PDF generated, or PandaDoc document created). Switch before generate only, by keeping the order in `AWAITING_COMPLIANCE` (request update / do not approve yet) or by regenerating from `READY` has not started — once generate has run, stay on that channel.
 5. If PandaDoc API keys are missing, the platform default can still be `OFFLINE`. Selecting `PANDADOC` on an order or as the default is refused with a clear error until keys exist.
@@ -122,7 +122,7 @@ Identity for **Sign Online**: signed-in Owner or Admin of the seller organisatio
 | Path | Purpose |
 | --- | --- |
 | `/admin/settings` | Add **Queensland signing**: default channel Offline pack or Sign online (PandaDoc). Saving is platform-admin only. Audit the change. |
-| `/admin/orders` compliance | Queensland orders: required **Signing method** control (pre-filled from default). Other checks unchanged. Simulated orders unchanged. |
+| `/admin/orders` compliance | Queensland orders: required **Signing method** control on Decision (pre-filled from default). Other checks unchanged. Simulated orders unchanged. |
 | `/admin/orders` transfer workspace | Branch on `signing_channel`. Offline workspace unchanged. PandaDoc workspace: generate (PDF + PandaDoc send), PandaDoc status, link/id for support, download unsigned and sealed files, no party-upload signing, then the existing FQ submission block once `ADMIN_REVIEW` or later. |
 | `/orders/[id]` | Offline transfer panel unchanged when channel is `OFFLINE`. `PANDADOC`: seller and buyer both see **Sign Online** during `AWAITING_SIGNATURES` until their own recipient has completed; then waiting-for-the-other or “FQX reviewing” copy. Both see download of the sealed PDF after it is stored. |
 | `/api/pandadoc/webhook` | Signed PandaDoc events. Public POST, no trailing slash, must not sit behind Vercel Authentication (same Preview lesson as Stripe). |

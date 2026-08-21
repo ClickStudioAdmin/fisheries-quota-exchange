@@ -17,10 +17,12 @@ export function ReviewOrderForms({
   order,
   reviewQueue = [],
   canApprove = false,
+  approveBlockedReason = "Save all compliance checks above before you can approve.",
 }: {
   order: Pick<Order, "id" | "status" | "buyer_name" | "seller_name">;
   reviewQueue?: number[];
   canApprove?: boolean;
+  approveBlockedReason?: string;
 }) {
   const remaining = reviewQueue.filter((id) => id !== order.id);
 
@@ -45,9 +47,7 @@ export function ReviewOrderForms({
               <li>The optional note is stored on the order. It is not emailed.</li>
             </ul>
             {!canApprove ? (
-              <p className="text-sm text-ink-muted">
-                Save all compliance checks above before you can approve.
-              </p>
+              <p className="text-sm text-ink-muted">{approveBlockedReason}</p>
             ) : null}
             <div>
               <label

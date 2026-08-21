@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { orderPayPanel } from "./order-pay-panel.ts";
+import { orderPayPanel, orderPaymentShouldPoll } from "./order-pay-panel.ts";
 
 const awaiting = {
   orderStatus: "AWAITING_PAYMENT" as const,
@@ -62,4 +62,11 @@ test("hidden once the order has moved to compliance", () => {
 
 test("hidden for a seller viewing an unpaid order", () => {
   assert.equal(orderPayPanel({ ...awaiting, isBuyer: false }), "hidden");
+});
+
+test("polls the seller waiting view, not the Stripe checkout embed", () => {
+  assert.equal(orderPaymentShouldPoll("AWAITING_PAYMENT", "checkout"), false);
+  assert.equal(orderPaymentShouldPoll("AWAITING_PAYMENT", "pending"), true);
+  assert.equal(orderPaymentShouldPoll("AWAITING_PAYMENT", "hidden"), true);
+  assert.equal(orderPaymentShouldPoll("AWAITING_COMPLIANCE", "hidden"), false);
 });

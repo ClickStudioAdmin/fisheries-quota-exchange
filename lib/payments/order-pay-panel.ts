@@ -27,3 +27,10 @@ export function orderPayPanel(input: {
 
   return "checkout";
 }
+
+export function orderPaymentShouldPoll(
+  orderStatus: OrderStatus,
+  payPanel: OrderPayPanel,
+) {
+  return orderStatus === "AWAITING_PAYMENT" && payPanel !== "checkout";
+}

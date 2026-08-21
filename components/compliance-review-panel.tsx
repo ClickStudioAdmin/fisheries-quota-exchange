@@ -1,10 +1,10 @@
 import { ReviewOrderForms } from "@/components/review-order-forms";
 import { ReviewChecklistForm } from "@/components/review-checklist-form";
+import { QldSigningMethodForm } from "@/components/qld-signing-method-form";
 import { saveComplianceChecklistAction } from "@/lib/orders/actions";
 import { checklistIsComplete } from "@/lib/orders/checklist";
 import { isPandaDocConfigured } from "@/lib/pandadoc/env";
 import { getPlatformSettings } from "@/lib/settings/queries";
-import { signingChannelLabel } from "@/lib/transfers/signing-channel";
 import {
   LabeledFieldGroups,
   LabeledFields,
@@ -178,11 +178,18 @@ export async function ComplianceReviewPanel({
     settings?.qld_default_signing_channel ??
     "OFFLINE";
   const channelSaved = Boolean(order.qld_signing_channel);
-  const canApprove =
-    checklistIsComplete(
-      workspace.process.complianceChecks,
-      order.compliance_checklist,
-    ) && (!qld || channelSaved);
+  const checksComplete = checklistIsComplete(
+    workspace.process.complianceChecks,
+    order.compliance_checklist,
+  );
+  const canApprove = checksComplete && (!qld || channelSaved);
+  const approveBlockedReason = !qld
+    ? "Save all compliance checks above before you can approve."
+    : !checksComplete && !channelSaved
+      ? "Save all compliance checks above and the signing method before you can approve."
+      : !channelSaved
+        ? "Save the signing method before you can approve."
+        : "Save all compliance checks above before you can approve.";
 
   return (
     <div className="mt-2 min-w-0 space-y-6">
@@ -238,59 +245,6 @@ export async function ComplianceReviewPanel({
               checks={workspace.process.complianceChecks}
               completed={order.compliance_checklist}
               proceedGoal="to approve compliance"
-              extraFields={
-                qld ? (
-                  <fieldset className="space-y-2">
-                    <legend className="text-sm font-medium text-ink">
-                      Signing method
-                    </legend>
-                    <p className="text-sm text-ink-muted">
-                      Offline pack is the Phase 10 seller-then-buyer upload.
-                      Sign online lets both parties sign in FQX at the same
-                      time. Save this with the checks. The browser is not
-                      trusted.
-                    </p>
-                    {(
-                      [
-                        ["OFFLINE", signingChannelLabel("OFFLINE")],
-                        ["PANDADOC", signingChannelLabel("PANDADOC")],
-                      ] as const
-                    ).map(([value, label]) => (
-                      <label
-                        key={value}
-                        className="flex items-start gap-2 text-sm text-ink"
-                      >
-                        <input
-                          type="radio"
-                          name="qld_signing_channel"
-                          value={value}
-                          defaultChecked={selectedChannel === value}
-                          disabled={value === "PANDADOC" && !pandadocReady}
-                        />
-                        <span>
-                          {label}
-                          {value === "PANDADOC" && !pandadocReady
-                            ? " (PandaDoc keys are not configured)"
-                            : null}
-                        </span>
-                      </label>
-                    ))}
-                    {channelSaved ? (
-                      <p className="text-sm text-ink-muted">
-                        Saved as {signingChannelLabel(order.qld_signing_channel!)}.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-ink-muted">
-                        Not saved yet. Pre-filled from platform default (
-                        {signingChannelLabel(
-                          settings?.qld_default_signing_channel ?? "OFFLINE",
-                        )}
-                        ).
-                      </p>
-                    )}
-                  </fieldset>
-                ) : null
-              }
             />
           </div>
         </section>
@@ -320,11 +274,26 @@ export async function ComplianceReviewPanel({
             Queensland profile.
           </p>
         ) : null}
+        {qld ? (
+          <div className="mt-4">
+            <QldSigningMethodForm
+              orderId={order.id}
+              completedChecks={order.compliance_checklist}
+              selectedChannel={selectedChannel}
+              savedChannel={order.qld_signing_channel}
+              defaultChannel={
+                settings?.qld_default_signing_channel ?? "OFFLINE"
+              }
+              pandadocReady={pandadocReady}
+            />
+          </div>
+        ) : null}
         <div className="mt-4">
           <ReviewOrderForms
             order={order}
             reviewQueue={reviewQueue}
             canApprove={canApprove}
+            approveBlockedReason={approveBlockedReason}
           />
         </div>
       </section>

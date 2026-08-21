@@ -5,6 +5,7 @@ import { getPaymentProvider } from "@/lib/payments/provider";
 import { getPaymentForOrder } from "@/lib/payments/queries";
 import { getOrderForSystem } from "@/lib/orders/queries";
 import { notifyPaymentReceived } from "@/lib/email/events";
+import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 
 export type OrderPaymentLiveStatus = "paid" | "processing" | "unpaid" | "expired";
 
@@ -50,6 +51,7 @@ export async function reconcileOrderPayment(
       await notifyPaymentReceived(order);
     }
 
+    revalidateOrderSurfaces(orderId);
     return "paid";
   }
 

@@ -244,11 +244,17 @@ export async function saveComplianceChecklistAction(
     process.complianceChecks,
     formData.getAll("checks").map(String),
   );
+  const submittedChannel = formData.get("qld_signing_channel");
   const qldChannel = process.usesSimulatedTransfer
     ? null
-    : parseSigningChannel(formData.get("qld_signing_channel"));
+    : parseSigningChannel(submittedChannel);
 
-  if (!process.usesSimulatedTransfer && !qldChannel) {
+  if (
+    !process.usesSimulatedTransfer &&
+    submittedChannel != null &&
+    String(submittedChannel).trim() !== "" &&
+    !qldChannel
+  ) {
     return { error: "Choose Offline pack or Sign online." };
   }
 
@@ -270,7 +276,9 @@ export async function saveComplianceChecklistAction(
   }
 
   revalidatePath("/admin/orders");
-  return { message: "Progress saved." };
+  return {
+    message: qldChannel ? "Signing method saved." : "Progress saved.",
+  };
 }
 
 export async function approveComplianceAction(formData: FormData) {
