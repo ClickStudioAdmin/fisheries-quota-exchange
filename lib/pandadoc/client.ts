@@ -171,15 +171,17 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
     async waitUntilDraft(documentId) {
       const deadline = Date.now() + DRAFT_WAIT_MS;
       while (Date.now() < deadline) {
-        const details = await this.getDocument(documentId);
-        if (details.status === "document.draft") {
-          return details;
+        const statusPayload = await pandaDocRequest(
+          apiKey,
+          `/documents/${documentId}`,
+        );
+        const status =
+          asString(asRecord(statusPayload)?.status) ?? "";
+        if (status === "document.draft") {
+          return this.getDocument(documentId);
         }
-        if (
-          details.status === "document.error" ||
-          details.status === "document.voided"
-        ) {
-          throw new Error(`PandaDoc document entered ${details.status}.`);
+        if (status === "document.error" || status === "document.voided") {
+          throw new Error(`PandaDoc document entered ${status}.`);
         }
         await new Promise((resolve) => setTimeout(resolve, DRAFT_POLL_MS));
       }
