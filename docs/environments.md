@@ -59,6 +59,12 @@ Production stays on `main`.
 
 Pushes to `develop` should create a Preview deployment automatically. Use that URL for testing. It is not the production domain.
 
+Stripe webhooks cannot log in to Vercel. If Preview **Deployment Protection** (Vercel Authentication) is on, Stripe POSTs get the Vercel login page and the endpoint is marked failing. Turn protection off for Preview, or give `develop` a public URL. In the Stripe test Dashboard, the endpoint must be exactly:
+
+`https://<preview-host>/api/stripe/webhook`
+
+Do not put a trailing slash on the host (`…vercel.app//api/…` fails) or on the path (`…/webhook/` returns 308, and Stripe does not follow redirects). After changing the URL or protection, send a test event from Stripe. Opening an unpaid order still reconciles payment if a webhook was missed.
+
 When the app starts using Supabase from the browser, set Vercel environment variables by environment:
 
 | Variable | Preview / `develop` | Production / `main` |

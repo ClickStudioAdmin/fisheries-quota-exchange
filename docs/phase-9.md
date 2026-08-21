@@ -120,7 +120,9 @@ Server only (never `NEXT_PUBLIC_` except the publishable key):
 | `SUPABASE_SERVICE_ROLE_KEY` | Webhook, settlement transfer updates, and scheduled email. Never expose to the browser. |
 | `CRON_SECRET` | Bearer token for `/api/cron/emails`. Vercel Cron sends it automatically when set. |
 
-Point the Stripe sandbox webhook at `/api/stripe/webhook`:
+Point the Stripe sandbox webhook at the **public** `/api/stripe/webhook` URL for that environment (Preview for `develop`, production host for `main`). No trailing slash on the host. If the Preview deployment is behind Vercel Authentication, Stripe cannot deliver events (see [environments.md](environments.md)).
+
+Events:
 
 - `checkout.session.completed`
 - `checkout.session.async_payment_succeeded`
