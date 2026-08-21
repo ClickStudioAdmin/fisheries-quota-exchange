@@ -33,4 +33,12 @@ test("create fields payload assigns each layout to a recipient id", () => {
     "buyer-1",
   );
   assert.equal(payload.fields[0]?.layout.position.anchor_point, "topleft");
+  assert.equal(
+    Number.isInteger(payload.fields[0]?.layout.style.width),
+    true,
+  );
+  assert.equal(
+    Number.isInteger(payload.fields[0]?.layout.style.height),
+    true,
+  );
 });

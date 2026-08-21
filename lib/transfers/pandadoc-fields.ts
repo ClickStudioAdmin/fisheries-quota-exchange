@@ -251,13 +251,13 @@ export function pandadocCreateFieldsPayload(
       layout: {
         page: layout.page,
         position: {
-          offset_x: Number(layout.offsetX.toFixed(2)),
-          offset_y: Number(layout.offsetY.toFixed(2)),
+          offset_x: Math.round(layout.offsetX),
+          offset_y: Math.round(layout.offsetY),
           anchor_point: "topleft" as const,
         },
         style: {
-          width: Number(layout.width.toFixed(2)),
-          height: Number(layout.height.toFixed(2)),
+          width: Math.max(1, Math.round(layout.width)),
+          height: Math.max(1, Math.round(layout.height)),
         },
       },
     })),
