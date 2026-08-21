@@ -49,7 +49,7 @@ FQX remains the source of the official form content.
 2. For `PANDADOC`, upload **that PDF file** to PandaDoc (`POST /public/v1/documents` as `multipart/form-data`). Do not send a public URL (the transfer bucket is private). Do not rebuild the FDU as PandaDoc tokens; that would duplicate fill logic and drift from the official form.
 3. Signature, date, printed-name, and witness blocks stay blank in the FQX fill, as today. For `PANDADOC`, FQX flattens that filled PDF, then embeds only the needed native signature/text widgets on the official declaration boxes and uploads with `parse_form_fields: true` so PandaDoc places fields from the PDF itself. Do not use Create Document Fields coordinates for placement (they drifted from the form). Offline generation does not add PandaDoc widgets.
 4. Recipients: **Seller** and **Buyer** roles. Contact emails are the first Owner (else Admin) membership emails, same as the form contact email today.
-5. Declaration rows: FDU1465 has three Transferor and three Transferee rows; FDU1469 has three lessor blocks and two lessee blocks. FQX places **1–N rows per side** from that side’s Owner/Admin signatory count (`min(3, max(1, count))`, capped by form capacity). Extra rows stay assigned to the same Seller or Buyer recipient for this phase — one Sign Online session completes every required row for that organisation (witness physically present for each). Separate PandaDoc recipients per named signatory are out of scope for Phase 11.
+5. Declaration rows (interim): FDU1465 has three Transferor and three Transferee rows; FDU1469 has three lessor blocks and two lessee blocks. Until dedicated QLD transfer signatories ship, FQX places **1–N rows per side** from that side’s Owner/Admin count (`min(3, max(1, count))`, capped by form capacity), all assigned to the single Seller or Buyer PandaDoc recipient.
 
 PandaDoc templates that recreate the whole FDU are out of scope. Signing widgets are placed with the Create Document Fields API after upload, not by drawing tags into the PDF.
 
@@ -211,3 +211,14 @@ Lint and production build must pass.
 - Fisheries Queensland portal/API, live Stripe keys, seller bank payouts, refunds, chargebacks
 - Other jurisdictions’ real transfer processes
 - Treating an on-screen checkbox as a legal witness
+
+## Deferred (agreed, not building yet)
+
+**QLD transfer signatories (1–3 per business)** — shelved; implement later in this phase when ready.
+
+- Not a new membership role. Keep `OWNER` / `ADMIN` / `MEMBER`. Signing is a separate QLD list on Business Settings → Details (Queensland block).
+- Ordered 1–3 people from existing members (any role); invite if needed. Require name + email.
+- Table shape: `organisation_qld_signatories` (`organisation_id`, `organisation_user_id`, `sort_order` 1–3).
+- Snapshot onto the transfer application at generate. Refuse generate (offline and PandaDoc) if seller or buyer list is missing or invalid.
+- PandaDoc: one recipient per listed person, each only their declaration row(s). Listed people can view the order and Sign Online for their slot.
+- Offline: same list drives row count and who must wet-ink; upload stays Owner/Admin for now.
