@@ -6,7 +6,9 @@ export type PandadocFieldLayout = {
   role: "Seller" | "Buyer";
   /** 1-based PandaDoc page number */
   page: number;
+  /** PDF user-space X (points from left). */
   offsetX: number;
+  /** PDF user-space Y (points from bottom). */
   offsetY: number;
   width: number;
   height: number;
@@ -18,14 +20,17 @@ type PdfBox = {
   role: "Seller" | "Buyer";
   /** 0-based PDF page index */
   pageIndex: number;
+  /** Bottom-left of the AcroForm widget in PDF points. */
   x: number;
   y: number;
   width: number;
   height: number;
-  pageHeight: number;
 };
 
-/** Official FDU1465 declaration row 1 boxes (page 3 / index 2). */
+/**
+ * Official FDU1465 declaration row 1 boxes (page 3 / index 2).
+ * Coordinates are pdf-lib widget rectangles (origin bottom-left).
+ */
 const SALE_BOXES: PdfBox[] = [
   {
     fieldId: "sellerSig",
@@ -35,8 +40,7 @@ const SALE_BOXES: PdfBox[] = [
     x: 48.5,
     y: 329,
     width: 118.3,
-    height: 24,
-    pageHeight: 841.9,
+    height: 17.05,
   },
   {
     fieldId: "sellerWitnessName",
@@ -47,7 +51,6 @@ const SALE_BOXES: PdfBox[] = [
     y: 329,
     width: 156.7,
     height: 17.05,
-    pageHeight: 841.9,
   },
   {
     fieldId: "sellerWitnessSig",
@@ -57,8 +60,7 @@ const SALE_BOXES: PdfBox[] = [
     x: 335.3,
     y: 329,
     width: 143.75,
-    height: 24,
-    pageHeight: 841.9,
+    height: 17.05,
   },
   {
     fieldId: "sellerDate",
@@ -69,7 +71,6 @@ const SALE_BOXES: PdfBox[] = [
     y: 329,
     width: 86.15,
     height: 17.05,
-    pageHeight: 841.9,
   },
   {
     fieldId: "buyerSig",
@@ -79,8 +80,7 @@ const SALE_BOXES: PdfBox[] = [
     x: 48.5,
     y: 154.8,
     width: 118.3,
-    height: 24,
-    pageHeight: 841.9,
+    height: 17,
   },
   {
     fieldId: "buyerWitnessName",
@@ -91,7 +91,6 @@ const SALE_BOXES: PdfBox[] = [
     y: 154.8,
     width: 156.7,
     height: 17,
-    pageHeight: 841.9,
   },
   {
     fieldId: "buyerWitnessSig",
@@ -101,8 +100,7 @@ const SALE_BOXES: PdfBox[] = [
     x: 335.3,
     y: 154.8,
     width: 143.75,
-    height: 24,
-    pageHeight: 841.9,
+    height: 17,
   },
   {
     fieldId: "buyerDate",
@@ -113,22 +111,23 @@ const SALE_BOXES: PdfBox[] = [
     y: 154.8,
     width: 86.15,
     height: 17,
-    pageHeight: 841.9,
   },
 ];
 
-/** Official FDU1469 first seller/buyer declaration rows (page 3 / index 2). */
+/**
+ * Official FDU1469 first seller/buyer declaration rows (page 3 / index 2).
+ * Seller signature + witness sit on stacked rows in the left column.
+ */
 const LEASE_BOXES: PdfBox[] = [
   {
     fieldId: "sellerSig",
     type: "signature",
     role: "Seller",
     pageIndex: 2,
-    x: 89.9,
+    x: 89.92,
     y: 400.87,
     width: 115.25,
-    height: 24,
-    pageHeight: 841.92,
+    height: 17.11,
   },
   {
     fieldId: "sellerWitnessName",
@@ -139,7 +138,6 @@ const LEASE_BOXES: PdfBox[] = [
     y: 400.63,
     width: 115.25,
     height: 17.11,
-    pageHeight: 841.92,
   },
   {
     fieldId: "sellerWitnessSig",
@@ -149,8 +147,7 @@ const LEASE_BOXES: PdfBox[] = [
     x: 90.61,
     y: 382.53,
     width: 115.25,
-    height: 24,
-    pageHeight: 841.92,
+    height: 17.11,
   },
   {
     fieldId: "sellerDate",
@@ -161,7 +158,6 @@ const LEASE_BOXES: PdfBox[] = [
     y: 401.9,
     width: 91.04,
     height: 17.11,
-    pageHeight: 841.92,
   },
   {
     fieldId: "buyerSig",
@@ -171,8 +167,7 @@ const LEASE_BOXES: PdfBox[] = [
     x: 85.09,
     y: 173.89,
     width: 115.25,
-    height: 24,
-    pageHeight: 841.92,
+    height: 17.11,
   },
   {
     fieldId: "buyerWitnessName",
@@ -183,7 +178,6 @@ const LEASE_BOXES: PdfBox[] = [
     y: 173.65,
     width: 115.25,
     height: 17.11,
-    pageHeight: 841.92,
   },
   {
     fieldId: "buyerWitnessSig",
@@ -193,8 +187,7 @@ const LEASE_BOXES: PdfBox[] = [
     x: 85.03,
     y: 155.54,
     width: 115.25,
-    height: 24,
-    pageHeight: 841.92,
+    height: 17.11,
   },
   {
     fieldId: "buyerDate",
@@ -205,7 +198,6 @@ const LEASE_BOXES: PdfBox[] = [
     y: 174.91,
     width: 91.04,
     height: 17.11,
-    pageHeight: 841.92,
   },
 ];
 
@@ -215,8 +207,9 @@ function toPandaDocLayout(box: PdfBox): PandadocFieldLayout {
     type: box.type,
     role: box.role,
     page: box.pageIndex + 1,
+    // PandaDoc field layout uses PDF user space with a bottom-left anchor.
     offsetX: box.x,
-    offsetY: box.pageHeight - box.y - box.height,
+    offsetY: box.y,
     width: box.width,
     height: box.height,
   };
@@ -253,7 +246,7 @@ export function pandadocCreateFieldsPayload(
         position: {
           offset_x: Math.round(layout.offsetX),
           offset_y: Math.round(layout.offsetY),
-          anchor_point: "topleft" as const,
+          anchor_point: "bottomleft" as const,
         },
         style: {
           width: Math.max(1, Math.round(layout.width)),
