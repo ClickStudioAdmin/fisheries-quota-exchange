@@ -105,7 +105,9 @@ export function SignOnlineForm({ orderId }: { orderId: number }) {
     <div className="space-y-3">
       <p className="text-sm text-ink-muted">
         Your witness must be physically present and complete the witness block
-        before you finish. A PandaDoc field is not itself a witness. Completing
+        for each signature row before you finish. If more than one transferor or
+        transferee row is required, complete every row shown for your
+        organisation. A PandaDoc field is not itself a witness. Completing
         this screen does not update FQX until PandaDoc confirms the signature.
       </p>
       {state.error ? (

@@ -1,10 +1,6 @@
 import "server-only";
 
 import { getPandaDocEnv } from "@/lib/pandadoc/env";
-import {
-  pandadocCreateFieldsPayload,
-  type PandadocFieldLayout,
-} from "@/lib/transfers/pandadoc-fields";
 
 const API_BASE = "https://api.pandadoc.com/public/v1";
 const DRAFT_WAIT_MS = 60_000;
@@ -38,14 +34,10 @@ export type PandaDocClient = {
     pdf: Buffer;
     filename: string;
     recipients: readonly PandaDocRecipient[];
+    parseFormFields?: boolean;
+    fields?: Record<string, { role: string; value?: string }>;
   }): Promise<{ id: string; status: string }>;
   waitUntilDraft(documentId: string): Promise<PandaDocDocumentDetails>;
-  createSigningFields(input: {
-    documentId: string;
-    layouts: readonly PandadocFieldLayout[];
-    sellerRecipientId: string;
-    buyerRecipientId: string;
-  }): Promise<number>;
   sendSilent(documentId: string): Promise<void>;
   createSession(documentId: string, recipientEmail: string): Promise<string>;
   getDocument(documentId: string): Promise<PandaDocDocumentDetails>;
@@ -151,6 +143,7 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
         new Blob([new Uint8Array(input.pdf)], { type: "application/pdf" }),
         input.filename,
       );
+      const parseFormFields = Boolean(input.parseFormFields);
       form.append(
         "data",
         JSON.stringify({
@@ -162,7 +155,8 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
             role: recipient.role,
             signing_order: 1,
           })),
-          parse_form_fields: false,
+          parse_form_fields: parseFormFields,
+          ...(parseFormFields && input.fields ? { fields: input.fields } : {}),
         }),
       );
       const created = await pandaDocRequest(apiKey, "/documents", {
@@ -190,24 +184,6 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
         await new Promise((resolve) => setTimeout(resolve, DRAFT_POLL_MS));
       }
       throw new Error("PandaDoc did not finish preparing the document.");
-    },
-
-    async createSigningFields(input) {
-      const payload = pandadocCreateFieldsPayload(input.layouts, {
-        sellerId: input.sellerRecipientId,
-        buyerId: input.buyerRecipientId,
-      });
-      const result = await pandaDocRequest(
-        apiKey,
-        `/documents/${input.documentId}/fields`,
-        {
-          method: "POST",
-          body: JSON.stringify(payload),
-        },
-      );
-      const row = asRecord(result);
-      const fields = Array.isArray(row?.fields) ? row.fields : [];
-      return fields.length;
     },
 
     async sendSilent(documentId) {

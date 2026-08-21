@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 import { pandadocSigningLayoutsForForm } from "@/lib/transfers/pandadoc-fields";
+import { preparePandaDocSigningPdf } from "@/lib/transfers/pandadoc-pdf";
 import {
   transferStoredFilenameForType,
 } from "@/lib/transfers/filenames";
@@ -13,8 +14,6 @@ import {
   createPandaDocClient,
   PANDADOC_BUYER_ROLE,
   PANDADOC_SELLER_ROLE,
-  recipientIdForRole,
-  recipientIdForEmail,
   recipientRoleFromEmail,
   type PandaDocClient,
   type PandaDocDocumentDetails,
@@ -76,43 +75,26 @@ export async function sendUnsignedPdfToPandaDoc(input: {
   }
 
   const client = input.client ?? createPandaDocClient();
+  const layouts = pandadocSigningLayoutsForForm(
+    input.workspace.process.formType ?? "FDU1465",
+    {
+      sellerRows: input.workspace.seller?.signatories.length ?? 1,
+      buyerRows: input.workspace.buyer?.signatories.length ?? 1,
+    },
+  );
+  const prepared = await preparePandaDocSigningPdf(input.pdf, layouts);
+  if (Object.keys(prepared.fields).length < 1) {
+    throw new Error("No signing fields were prepared for PandaDoc.");
+  }
   const created = await client.createDocumentFromPdf({
     name: `FQX order ${input.workspace.order.id} ${input.workspace.process.formType ?? "transfer"}`,
-    pdf: input.pdf,
+    pdf: prepared.pdf,
     filename: input.filename,
     recipients: [seller, buyer],
+    parseFormFields: true,
+    fields: prepared.fields,
   });
-  const draft = await client.waitUntilDraft(created.id);
-  const sellerRecipientId =
-    recipientIdForRole(draft, PANDADOC_SELLER_ROLE) ??
-    recipientIdForEmail(draft, seller.email);
-  const buyerRecipientId =
-    recipientIdForRole(draft, PANDADOC_BUYER_ROLE) ??
-    recipientIdForEmail(draft, buyer.email);
-  if (!sellerRecipientId || !buyerRecipientId) {
-    const listed = draft.recipients
-      .map((item) => `${item.email}${item.role ? ` (${item.role})` : ""}`)
-      .join(", ");
-    throw new Error(
-      listed
-        ? `PandaDoc recipients did not match Seller/Buyer (${listed}).`
-        : "PandaDoc did not return Seller and Buyer recipients for signing fields.",
-    );
-  }
-
-  const fieldCount = await client.createSigningFields({
-    documentId: created.id,
-    layouts: pandadocSigningLayoutsForForm(
-      input.workspace.process.formType ?? "FDU1465",
-    ),
-    sellerRecipientId,
-    buyerRecipientId,
-  });
-  if (fieldCount < 1) {
-    throw new Error(
-      "PandaDoc did not create signing fields on the application.",
-    );
-  }
+  await client.waitUntilDraft(created.id);
 
   await client.sendSilent(created.id);
   return { documentId: created.id, status: "document.sent" };

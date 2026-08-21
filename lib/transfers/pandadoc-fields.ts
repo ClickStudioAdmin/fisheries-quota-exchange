@@ -14,6 +14,11 @@ export type PandadocFieldLayout = {
   height: number;
 };
 
+export type PandadocSigningRowCounts = {
+  sellerRows: number;
+  buyerRows: number;
+};
+
 type PdfBox = {
   fieldId: string;
   type: PandadocFieldType;
@@ -27,179 +32,183 @@ type PdfBox = {
   height: number;
 };
 
+type DeclarationColumn = {
+  type: PandadocFieldType;
+  fieldId: string;
+  x: number;
+  width: number;
+  height: number;
+};
+
+const MAX_DECLARATION_ROWS = 3;
+
+/** FDU1465 transferor / transferee columns (page 3). */
+const SALE_COLUMNS: DeclarationColumn[] = [
+  { type: "signature", fieldId: "Sig", x: 48.5, width: 118.3, height: 17.05 },
+  {
+    type: "text",
+    fieldId: "WitnessName",
+    x: 172.8,
+    width: 156.7,
+    height: 17.05,
+  },
+  {
+    type: "signature",
+    fieldId: "WitnessSig",
+    x: 335.3,
+    width: 143.75,
+    height: 17.05,
+  },
+  { type: "date", fieldId: "Date", x: 485.05, width: 86.15, height: 17.05 },
+];
+
+/** Bottom Y of transferor rows 1–3, then transferee rows 1–3. */
+const SALE_SELLER_ROW_Y = [329, 297.8, 266.6] as const;
+const SALE_BUYER_ROW_Y = [154.8, 123.6, 92.4] as const;
+
 /**
- * Official FDU1465 declaration row 1 boxes (page 3 / index 2).
- * Coordinates are pdf-lib widget rectangles (origin bottom-left).
+ * FDU1469 lessor / lessee party blocks (page 3).
+ * Each party uses a stacked pair: signature + witness name + date on the
+ * upper line, witness signature on the lower-left.
  */
-const SALE_BOXES: PdfBox[] = [
+type LeasePartyBlock = {
+  sig: { x: number; y: number; width: number; height: number };
+  witnessName: { x: number; y: number; width: number; height: number };
+  witnessSig: { x: number; y: number; width: number; height: number };
+  date: { x: number; y: number; width: number; height: number };
+};
+
+const LEASE_SELLER_BLOCKS: readonly LeasePartyBlock[] = [
   {
-    fieldId: "sellerSig",
-    type: "signature",
-    role: "Seller",
-    pageIndex: 2,
-    x: 48.5,
-    y: 329,
-    width: 118.3,
-    height: 17.05,
+    sig: { x: 89.92, y: 400.87, width: 115.25, height: 17.11 },
+    witnessName: { x: 272.89, y: 400.63, width: 115.25, height: 17.11 },
+    witnessSig: { x: 90.61, y: 382.53, width: 115.25, height: 17.11 },
+    date: { x: 472.03, y: 401.9, width: 91.04, height: 17.11 },
   },
   {
-    fieldId: "sellerWitnessName",
-    type: "text",
-    role: "Seller",
-    pageIndex: 2,
-    x: 172.8,
-    y: 329,
-    width: 156.7,
-    height: 17.05,
+    sig: { x: 91.08, y: 352.33, width: 115.25, height: 17.11 },
+    witnessName: { x: 271.86, y: 353.13, width: 115.25, height: 17.11 },
+    witnessSig: { x: 91.02, y: 334.64, width: 115.25, height: 17.11 },
+    date: { x: 472.77, y: 353.73, width: 91.04, height: 17.11 },
   },
   {
-    fieldId: "sellerWitnessSig",
-    type: "signature",
-    role: "Seller",
-    pageIndex: 2,
-    x: 335.3,
-    y: 329,
-    width: 143.75,
-    height: 17.05,
+    sig: { x: 91.04, y: 304.59, width: 115.25, height: 17.11 },
+    witnessName: { x: 272.54, y: 305.79, width: 115.25, height: 17.11 },
+    witnessSig: { x: 90.98, y: 285.12, width: 115.25, height: 17.11 },
+    date: { x: 473.18, y: 304.15, width: 91.04, height: 17.11 },
+  },
+];
+
+/** FDU1469 page 3 has two lessee declaration blocks (three lessor blocks). */
+const LEASE_BUYER_BLOCKS: readonly LeasePartyBlock[] = [
+  {
+    sig: { x: 85.09, y: 173.89, width: 115.25, height: 17.11 },
+    witnessName: { x: 269.57, y: 173.65, width: 115.25, height: 17.11 },
+    witnessSig: { x: 85.03, y: 155.54, width: 115.25, height: 17.11 },
+    date: { x: 470.95, y: 174.91, width: 91.04, height: 17.11 },
   },
   {
-    fieldId: "sellerDate",
-    type: "date",
-    role: "Seller",
-    pageIndex: 2,
-    x: 485.05,
-    y: 329,
-    width: 86.15,
-    height: 17.05,
-  },
-  {
-    fieldId: "buyerSig",
-    type: "signature",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 48.5,
-    y: 154.8,
-    width: 118.3,
-    height: 17,
-  },
-  {
-    fieldId: "buyerWitnessName",
-    type: "text",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 172.8,
-    y: 154.8,
-    width: 156.7,
-    height: 17,
-  },
-  {
-    fieldId: "buyerWitnessSig",
-    type: "signature",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 335.3,
-    y: 154.8,
-    width: 143.75,
-    height: 17,
-  },
-  {
-    fieldId: "buyerDate",
-    type: "date",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 485.05,
-    y: 154.8,
-    width: 86.15,
-    height: 17,
+    sig: { x: 84.0, y: 122.35, width: 115.25, height: 17.11 },
+    witnessName: { x: 269.28, y: 122.39, width: 115.25, height: 17.11 },
+    witnessSig: { x: 84.32, y: 103.91, width: 115.25, height: 17.11 },
+    date: { x: 472.45, y: 122.25, width: 91.04, height: 17.11 },
   },
 ];
 
 /**
- * Official FDU1469 first seller/buyer declaration rows (page 3 / index 2).
- * Seller signature + witness sit on stacked rows in the left column.
+ * How many Transferor / Transferee declaration rows to place.
+ * Uses Owner/Admin signatories on the organisation (same list as the PDF
+ * party block). Always at least one row; form capacity is three.
  */
-const LEASE_BOXES: PdfBox[] = [
-  {
-    fieldId: "sellerSig",
-    type: "signature",
-    role: "Seller",
-    pageIndex: 2,
-    x: 89.92,
-    y: 400.87,
-    width: 115.25,
-    height: 17.11,
-  },
-  {
-    fieldId: "sellerWitnessName",
-    type: "text",
-    role: "Seller",
-    pageIndex: 2,
-    x: 272.89,
-    y: 400.63,
-    width: 115.25,
-    height: 17.11,
-  },
-  {
-    fieldId: "sellerWitnessSig",
-    type: "signature",
-    role: "Seller",
-    pageIndex: 2,
-    x: 90.61,
-    y: 382.53,
-    width: 115.25,
-    height: 17.11,
-  },
-  {
-    fieldId: "sellerDate",
-    type: "date",
-    role: "Seller",
-    pageIndex: 2,
-    x: 472.03,
-    y: 401.9,
-    width: 91.04,
-    height: 17.11,
-  },
-  {
-    fieldId: "buyerSig",
-    type: "signature",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 85.09,
-    y: 173.89,
-    width: 115.25,
-    height: 17.11,
-  },
-  {
-    fieldId: "buyerWitnessName",
-    type: "text",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 269.57,
-    y: 173.65,
-    width: 115.25,
-    height: 17.11,
-  },
-  {
-    fieldId: "buyerWitnessSig",
-    type: "signature",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 85.03,
-    y: 155.54,
-    width: 115.25,
-    height: 17.11,
-  },
-  {
-    fieldId: "buyerDate",
-    type: "date",
-    role: "Buyer",
-    pageIndex: 2,
-    x: 470.95,
-    y: 174.91,
-    width: 91.04,
-    height: 17.11,
-  },
-];
+export function pandadocDeclarationRowCount(signatoryCount: number) {
+  if (!Number.isFinite(signatoryCount) || signatoryCount < 1) {
+    return 1;
+  }
+  return Math.min(MAX_DECLARATION_ROWS, Math.floor(signatoryCount));
+}
+
+function saleBoxesForRole(
+  role: "Seller" | "Buyer",
+  rowCount: number,
+  rowYs: readonly number[],
+): PdfBox[] {
+  const count = Math.min(
+    pandadocDeclarationRowCount(rowCount),
+    rowYs.length,
+  );
+  const boxes: PdfBox[] = [];
+  for (let row = 0; row < count; row += 1) {
+    const y = rowYs[row];
+    if (y == null) {
+      break;
+    }
+    const suffix = row === 0 ? "" : String(row + 1);
+    for (const column of SALE_COLUMNS) {
+      boxes.push({
+        fieldId: `${role.toLowerCase()}${column.fieldId}${suffix}`,
+        type: column.type,
+        role,
+        pageIndex: 2,
+        x: column.x,
+        y,
+        width: column.width,
+        height: column.height,
+      });
+    }
+  }
+  return boxes;
+}
+
+function leaseBoxesForRole(
+  role: "Seller" | "Buyer",
+  rowCount: number,
+  blocks: readonly LeasePartyBlock[],
+): PdfBox[] {
+  const count = Math.min(
+    pandadocDeclarationRowCount(rowCount),
+    blocks.length,
+  );
+  const boxes: PdfBox[] = [];
+  for (let row = 0; row < count; row += 1) {
+    const block = blocks[row];
+    if (!block) {
+      break;
+    }
+    const suffix = row === 0 ? "" : String(row + 1);
+    const prefix = role.toLowerCase();
+    boxes.push(
+      {
+        fieldId: `${prefix}Sig${suffix}`,
+        type: "signature",
+        role,
+        pageIndex: 2,
+        ...block.sig,
+      },
+      {
+        fieldId: `${prefix}WitnessName${suffix}`,
+        type: "text",
+        role,
+        pageIndex: 2,
+        ...block.witnessName,
+      },
+      {
+        fieldId: `${prefix}WitnessSig${suffix}`,
+        type: "signature",
+        role,
+        pageIndex: 2,
+        ...block.witnessSig,
+      },
+      {
+        fieldId: `${prefix}Date${suffix}`,
+        type: "date",
+        role,
+        pageIndex: 2,
+        ...block.date,
+      },
+    );
+  }
+  return boxes;
+}
 
 function toPandaDocLayout(box: PdfBox): PandadocFieldLayout {
   return {
@@ -207,7 +216,6 @@ function toPandaDocLayout(box: PdfBox): PandadocFieldLayout {
     type: box.type,
     role: box.role,
     page: box.pageIndex + 1,
-    // PandaDoc field layout uses PDF user space with a bottom-left anchor.
     offsetX: box.x,
     offsetY: box.y,
     width: box.width,
@@ -215,8 +223,22 @@ function toPandaDocLayout(box: PdfBox): PandadocFieldLayout {
   };
 }
 
-export function pandadocSigningLayoutsForForm(formType: string) {
-  const boxes = formType === "FDU1469" ? LEASE_BOXES : SALE_BOXES;
+export function pandadocSigningLayoutsForForm(
+  formType: string,
+  counts: PandadocSigningRowCounts = { sellerRows: 1, buyerRows: 1 },
+) {
+  const sellerRows = pandadocDeclarationRowCount(counts.sellerRows);
+  const buyerRows = pandadocDeclarationRowCount(counts.buyerRows);
+  const boxes =
+    formType === "FDU1469"
+      ? [
+          ...leaseBoxesForRole("Seller", sellerRows, LEASE_SELLER_BLOCKS),
+          ...leaseBoxesForRole("Buyer", buyerRows, LEASE_BUYER_BLOCKS),
+        ]
+      : [
+          ...saleBoxesForRole("Seller", sellerRows, SALE_SELLER_ROW_Y),
+          ...saleBoxesForRole("Buyer", buyerRows, SALE_BUYER_ROW_Y),
+        ];
   return boxes.map(toPandaDocLayout);
 }
 
