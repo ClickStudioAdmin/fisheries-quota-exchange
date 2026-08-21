@@ -1,3 +1,5 @@
+import type { SigningChannel } from "@/lib/transfers/signing-channel";
+
 export const ORDER_STATUSES = [
   "AWAITING_PAYMENT",
   "AWAITING_COMPLIANCE",
@@ -36,6 +38,7 @@ export type Order = {
   updated_at: string;
   review_note: string | null;
   compliance_checklist: string[];
+  qld_signing_channel: SigningChannel | null;
 };
 
 export type QuotaReservation = {
@@ -119,7 +122,28 @@ export function adminTransferActionLabel(usesSimulatedTransfer: boolean) {
   return usesSimulatedTransfer ? "Simulate transfer" : "Open transfer";
 }
 
-export function qldTransferPublicStatusLabel(status?: string | null) {
+export function qldTransferPublicStatusLabel(
+  status?: string | null,
+  signingChannel?: SigningChannel | string | null,
+) {
+  if (signingChannel === "PANDADOC") {
+    switch (status ?? "READY") {
+      case "AWAITING_SIGNATURES":
+        return "2 of 4 · Waiting for signatures";
+      case "ADMIN_REVIEW":
+        return "3 of 4 · Reviewing completed pack";
+      case "SUBMITTED":
+      case "PROCESSING":
+        return "4 of 4 · With Fisheries Queensland";
+      case "APPROVED":
+        return "Fisheries Queensland approved";
+      case "ACTION_REQUIRED":
+        return "Action required";
+      default:
+        return "1 of 4 · Waiting for application";
+    }
+  }
+
   switch (status ?? "READY") {
     case "AWAITING_SELLER_SIGNATURE":
       return "2 of 6 · Waiting for seller to sign";
@@ -146,6 +170,7 @@ export function orderStatusLabel(
   transfer?: {
     usesSimulatedTransfer: boolean;
     applicationStatus?: string | null;
+    signingChannel?: string | null;
   } | null,
 ) {
   if (
@@ -153,7 +178,10 @@ export function orderStatusLabel(
     transfer &&
     !transfer.usesSimulatedTransfer
   ) {
-    return qldTransferPublicStatusLabel(transfer.applicationStatus);
+    return qldTransferPublicStatusLabel(
+      transfer.applicationStatus,
+      transfer.signingChannel,
+    );
   }
 
   switch (status) {

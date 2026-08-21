@@ -328,9 +328,24 @@ export const emailCopy = {
     orderUrl: string;
     prepareDocuments?: boolean;
     forSeller?: boolean;
+    signOnline?: boolean;
   }) =>
     input.prepareDocuments
-      ? input.forSeller
+      ? input.signOnline
+        ? {
+            ...notice(
+              `Sign online for FQX order ${input.orderId}`,
+              [
+                "Compliance passed. FQX will prepare the Queensland transfer application.",
+                "You and the other party will Sign Online on the order at the same time. Have your witness physically present when you sign.",
+              ],
+              { label: "View order", url: input.orderUrl },
+            ),
+            highlight:
+              "Do not wait for the other party. Sign Online when the application is ready.",
+            highlightLabel: "What you need to do",
+          }
+        : input.forSeller
         ? {
             ...notice(
               `Prepare transfer documents for FQX order ${input.orderId}`,
@@ -374,6 +389,48 @@ export const emailCopy = {
       [
         `${input.formTitle} is ready. A copy is attached.`,
         "Download it, sign and witness it offline, then upload the seller-signed form from the order. The buyer will receive it after FQX checks your upload.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
+  transfer_sign_online_ready: (input: {
+    orderId: number;
+    orderUrl: string;
+    formTitle: string;
+  }) => ({
+    ...notice(
+      `Sign online for FQX order ${input.orderId}`,
+      [
+        `${input.formTitle} is ready in FQX.`,
+        "Open the order and click Sign Online. Your witness must be physically present and complete the witness block before you finish. A checkbox is not a witness.",
+      ],
+      { label: "Sign Online", url: input.orderUrl },
+    ),
+    highlight:
+      "You and the other party can sign at the same time. Do not download this file to sign offline.",
+    highlightLabel: "What you need to do",
+  }),
+  transfer_recipient_signed: (input: {
+    orderId: number;
+    orderUrl: string;
+    waitingOnOther?: boolean;
+  }) =>
+    notice(
+      `FQX has your signature for order ${input.orderId}`,
+      [
+        input.waitingOnOther
+          ? "Your Sign Online session is complete. FQX is still waiting for the other party."
+          : "Your Sign Online session is complete.",
+      ],
+      { label: "View order", url: input.orderUrl },
+    ),
+  transfer_online_pack_ready: (input: {
+    orderId: number;
+    orderUrl: string;
+  }) =>
+    notice(
+      `Signed transfer application received for FQX order ${input.orderId}`,
+      [
+        "Both parties have signed online. FQX is reviewing the completed application before Fisheries Queensland submission.",
       ],
       { label: "View order", url: input.orderUrl },
     ),

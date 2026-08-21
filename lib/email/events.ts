@@ -526,12 +526,14 @@ export async function notifyTransferInProgress(order: Order) {
   const jurisdictionCode = await getOrderJurisdictionCode(order);
   const process = getTransferProcess(jurisdictionCode, order.offering);
   const prepareDocuments = !process.usesSimulatedTransfer;
+  const signOnline = order.qld_signing_channel === "PANDADOC";
   await notifyBuyerAndSellerCopies("transfer_in_progress", order, (forSeller) =>
     emailCopy.transfer_in_progress({
       orderId: order.id,
       orderUrl: `${siteUrl}/orders/${order.id}`,
       prepareDocuments,
       forSeller,
+      signOnline,
     }),
   );
   await notifyOperatorOrderPending(order, siteUrl);
@@ -569,6 +571,60 @@ export async function notifyTransferApplicationReady(
     undefined,
     attachments,
   );
+}
+
+export async function notifyTransferSignOnlineReady(
+  order: Order,
+  documentId: number,
+) {
+  if (
+    !(await claimEmailDispatch(
+      "transfer_sign_online_ready",
+      `${order.id}:doc:${documentId}`,
+    ))
+  ) {
+    return;
+  }
+
+  const siteUrl = await siteUrlOrEmpty();
+  const data = emailCopy.transfer_sign_online_ready({
+    orderId: order.id,
+    orderUrl: `${siteUrl}/orders/${order.id}`,
+    formTitle:
+      order.offering === "LEASE"
+        ? "The Queensland FDU1469 temporary transfer application"
+        : "The Queensland FDU1465 transfer application",
+  });
+  await notifyBuyerAndSeller("transfer_sign_online_ready", order, data);
+}
+
+export async function notifyTransferRecipientSigned(
+  order: Order,
+  input: { organisationId: number; waitingOnOther: boolean },
+) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "transfer_recipient_signed",
+    input.organisationId,
+    emailCopy.transfer_recipient_signed({
+      orderId: order.id,
+      orderUrl: `${siteUrl}/orders/${order.id}`,
+      waitingOnOther: input.waitingOnOther,
+    }),
+  );
+}
+
+export async function notifyTransferOnlinePackReady(order: Order) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyBuyerAndSeller(
+    "transfer_online_pack_ready",
+    order,
+    emailCopy.transfer_online_pack_ready({
+      orderId: order.id,
+      orderUrl: `${siteUrl}/orders/${order.id}`,
+    }),
+  );
+  await notifyOperatorOrderPending(order, siteUrl);
 }
 
 export async function notifyTransferSellerSignedReceived(order: Order) {

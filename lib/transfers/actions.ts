@@ -17,6 +17,12 @@ import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { isPandaDocConfigured } from "@/lib/pandadoc/env";
+import {
+  notifySignOnlineAfterGenerate,
+  sendUnsignedPdfToPandaDoc,
+} from "@/lib/pandadoc/signing";
+import { isPandadocChannel } from "@/lib/transfers/signing-channel";
 import {
   generateTransferApplicationPdf,
 } from "@/lib/transfers/generate";
@@ -236,14 +242,50 @@ export async function generateTransferDocumentAction(
     return { error: stored.error ?? "Could not store the application." };
   }
 
-  const statusResult = await setTransferApplicationStatus(
-    application.id,
-    "AWAITING_SELLER_SIGNATURE",
-    { seller_pack_checklist: [] },
+  const pandadoc = isPandadocChannel(application.signing_channel);
+  if (pandadoc && !isPandaDocConfigured()) {
+    return {
+      error:
+        "Sign online needs PANDADOC_API_KEY and PANDADOC_WEBHOOK_SHARED_KEY.",
+    };
+  }
+
+  let pandadocDocumentId: string | null = null;
+  let pandadocStatus: string | null = null;
+  if (pandadoc) {
+    try {
+      const sent = await sendUnsignedPdfToPandaDoc({
+        workspace,
+        pdf,
+        filename,
+      });
+      pandadocDocumentId = sent.documentId;
+      pandadocStatus = sent.status;
+    } catch (error) {
+      console.error("sendUnsignedPdfToPandaDoc failed", error);
+      return {
+        error: userFacingError(error, "Could not send the application to PandaDoc."),
+      };
+    }
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    return { error: "Database is not configured." };
+  }
+
+  const { error: generatedError } = await supabase.rpc(
+    "mark_qld_application_generated",
+    {
+      p_order_id: orderId,
+      p_status: pandadoc ? "AWAITING_SIGNATURES" : "AWAITING_SELLER_SIGNATURE",
+      p_pandadoc_document_id: pandadocDocumentId,
+      p_pandadoc_status: pandadocStatus,
+    },
   );
 
-  if (statusResult.error) {
-    return { error: userFacingError(statusResult.error) };
+  if (generatedError) {
+    return { error: userFacingError(generatedError) };
   }
 
   await writeOrderAudit(orderId, "TRANSFER_DOCUMENT_GENERATED", {
@@ -252,16 +294,24 @@ export async function generateTransferDocumentAction(
     form_version: pdfData.formVersion,
   });
   try {
-    await notifyTransferApplicationReady(workspace.order, {
-      filename,
-      pdf,
-      documentId: stored.documentId,
-    });
+    if (pandadoc) {
+      await notifySignOnlineAfterGenerate(workspace, stored.documentId);
+    } else {
+      await notifyTransferApplicationReady(workspace.order, {
+        filename,
+        pdf,
+        documentId: stored.documentId,
+      });
+    }
   } catch (error) {
-    console.error("notifyTransferApplicationReady failed", error);
+    console.error("transfer generate mail failed", error);
   }
   revalidateTransfer(orderId);
-  return { message: "Application prepared and emailed to the seller." };
+  return {
+    message: pandadoc
+      ? "Application prepared. Buyer and seller can Sign Online."
+      : "Application prepared and emailed to the seller.",
+  };
 }
 
 export async function generateTransferDocumentAdminAction(
@@ -305,6 +355,10 @@ export async function uploadPartyTransferDocumentAction(
     return { error: "You cannot upload this document." };
   }
 
+  if (isPandadocChannel(workspace.application.signing_channel)) {
+    return { error: "This order uses Sign online. Upload is not used." };
+  }
+
   const supabase = await createClient();
 
   if (!supabase) {
@@ -334,7 +388,7 @@ export async function uploadPartyTransferDocumentAction(
     formVersion: workspace.process.formVersion,
     version: nextTransferDocumentVersion(workspace.documents, documentType),
   });
-  const { data, error } = await supabase.rpc("record_party_transfer_upload", {
+  const { error } = await supabase.rpc("record_party_transfer_upload", {
     p_order_id: workspace.order.id,
     p_storage_path: path,
     p_filename: filename,
@@ -395,6 +449,10 @@ export async function uploadSignedPackAction(
     !workspace.latestUnsigned
   ) {
     return { error: "This order is not waiting for an offline upload." };
+  }
+
+  if (isPandadocChannel(workspace.application.signing_channel)) {
+    return { error: "This order uses Sign online. Upload is not used." };
   }
 
   const application = workspace.application;
@@ -676,5 +734,68 @@ export async function approveQldTransferAction(formData: FormData) {
 
     revalidateTransfer(workspace.order.id);
   }
-
 }
+
+export type SignOnlineState = {
+  error?: string;
+  sessionId?: string;
+  signingUrl?: string;
+};
+
+export async function createPandaDocSigningSessionAction(
+  _prev: SignOnlineState,
+  formData: FormData,
+): Promise<SignOnlineState> {
+  const orderId = Number(formData.get("order_id"));
+  if (!Number.isInteger(orderId)) {
+    return { error: "Order not found." };
+  }
+
+  const workspace = await getTransferWorkspace(orderId);
+  if (
+    !workspace?.application ||
+    workspace.application.signing_channel !== "PANDADOC" ||
+    workspace.application.status !== "AWAITING_SIGNATURES" ||
+    !workspace.application.pandadoc_document_id
+  ) {
+    return { error: "This order is not waiting for Sign online." };
+  }
+
+  const active = await getActiveOrganisation();
+  if (!active || !canEditOrganisation(active.role)) {
+    return { error: "Only an owner or admin can Sign Online." };
+  }
+
+  const isSeller = active.id === workspace.order.seller_organisation_id;
+  const isBuyer = active.id === workspace.order.buyer_organisation_id;
+  if (!isSeller && !isBuyer) {
+    return { error: "You cannot sign this application." };
+  }
+
+  if (isSeller && workspace.application.pandadoc_seller_completed_at) {
+    return { error: "The seller has already signed." };
+  }
+  if (isBuyer && workspace.application.pandadoc_buyer_completed_at) {
+    return { error: "The buyer has already signed." };
+  }
+
+  const email = (isSeller ? workspace.seller?.email : workspace.buyer?.email)?.trim();
+  if (!email) {
+    return { error: "This business needs a contact email to sign." };
+  }
+
+  try {
+    const { createPandaDocClient, pandaDocSigningUrl } = await import(
+      "@/lib/pandadoc/client"
+    );
+    const sessionId = await createPandaDocClient().createSession(
+      workspace.application.pandadoc_document_id,
+      email,
+    );
+    return { sessionId, signingUrl: pandaDocSigningUrl(sessionId) };
+  } catch (error) {
+    console.error("createPandaDocSigningSessionAction failed", error);
+    return { error: userFacingError(error, "Could not start Sign Online.") };
+  }
+}
+

@@ -63,7 +63,11 @@ Stripe webhooks cannot log in to Vercel. If Preview **Deployment Protection** (V
 
 `https://<preview-host>/api/stripe/webhook`
 
-Do not put a trailing slash on the host (`…vercel.app//api/…` fails) or on the path (`…/webhook/` returns 308, and Stripe does not follow redirects). After changing the URL or protection, send a test event from Stripe. Opening an unpaid order still reconciles payment if a webhook was missed.
+The PandaDoc webhook has the same rules. Use exactly:
+
+`https://<preview-host>/api/pandadoc/webhook`
+
+Do not put a trailing slash on the host (`…vercel.app//api/…` fails) or on the path (`…/webhook/` returns 308, and Stripe does not follow redirects). After changing the URL or protection, send a test event from Stripe. Opening an unpaid order still reconciles payment if a webhook was missed. Opening a Queensland Sign online order reconciles PandaDoc status if a webhook was missed.
 
 When the app starts using Supabase from the browser, set Vercel environment variables by environment:
 
@@ -77,9 +81,11 @@ When the app starts using Supabase from the browser, set Vercel environment vari
 | `STRIPE_SECRET_KEY` | Stripe test secret (`sk_test_...`) | Keep test keys until live mode is a later phase |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe test publishable (`pk_test_...`) | Test publishable until live mode |
 | `STRIPE_WEBHOOK_SECRET` | Sandbox webhook secret | Sandbox or later live webhook secret |
+| `PANDADOC_API_KEY` | PandaDoc sandbox API key | Sandbox key until a later live-key phase |
+| `PANDADOC_WEBHOOK_SHARED_KEY` | PandaDoc webhook HMAC key | Sandbox webhook key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Development service role | Production service role |
 
-Supabase variables are required from Phase 3. Resend variables are needed to send product email. `CRON_SECRET` is required for the scheduled email job on Vercel. Stripe test keys and the service-role key are needed from Phase 9 to take payments. After adding them, redeploy. Do not add service-role keys, Resend keys, `CRON_SECRET`, or Stripe secrets to the frontend except `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. If Stripe is unset, purchases stay simulated. In the Stripe test Dashboard, add Radar rule `Block if :card_country: != 'AU'` so only Australian-issued cards are accepted (see [phase-9.md](phase-9.md)).
+Supabase variables are required from Phase 3. Resend variables are needed to send product email. `CRON_SECRET` is required for the scheduled email job on Vercel. Stripe test keys and the service-role key are needed from Phase 9 to take payments. PandaDoc sandbox keys are needed from Phase 11 for Queensland Sign online; Offline pack still works if they are unset. After adding them, redeploy. Do not add service-role keys, Resend keys, `CRON_SECRET`, Stripe secrets, or PandaDoc keys to the frontend except `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. If Stripe is unset, purchases stay simulated. In the Stripe test Dashboard, add Radar rule `Block if :card_country: != 'AU'` so only Australian-issued cards are accepted (see [phase-9.md](phase-9.md)).
 
 Auth redirect URLs must be set on each Supabase project. See [phase-3.md](phase-3.md).
 

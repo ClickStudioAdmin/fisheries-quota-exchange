@@ -3,7 +3,9 @@ import { PdfDownloadLink } from "@/components/pdf-download-link";
 import { StatusBadge } from "@/components/status-badge";
 import { TransferPrepareForm } from "@/components/transfer-prepare-form";
 import { TransferPartyUploadForm } from "@/components/transfer-party-upload-form";
+import { SignOnlineForm } from "@/components/sign-online-form";
 import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
+import { isPandadocChannel } from "@/lib/transfers/signing-channel";
 import { accountSettingsPath } from "@/lib/organisations/paths";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
 import { transferDocumentPath } from "@/lib/transfers/types";
@@ -23,6 +25,7 @@ export function TransferOrderPanel({
   }
 
   const status = workspace.application?.status ?? "READY";
+  const pandadoc = isPandadocChannel(workspace.application?.signing_channel);
   const isBuyer = viewerOrganisationId === workspace.order.buyer_organisation_id;
   const isSeller =
     viewerOrganisationId === workspace.order.seller_organisation_id;
@@ -38,8 +41,10 @@ export function TransferOrderPanel({
       : [...workspace.buyerMissing, ...workspace.sellerMissing];
   const complete =
     workspace.buyerMissing.length === 0 && workspace.sellerMissing.length === 0;
-  const sellerDownload = isSeller && workspace.latestUnsigned;
+  const sellerDownload =
+    !pandadoc && isSeller && workspace.latestUnsigned;
   const buyerDownload =
+    !pandadoc &&
     isBuyer &&
     status === "AWAITING_BUYER_SIGNATURE" &&
     workspace.latestSellerSigned;
@@ -51,9 +56,24 @@ export function TransferOrderPanel({
       status === "PROCESSING" ||
       status === "APPROVED");
   const sellerUpload =
-    canPrepare && isSeller && status === "AWAITING_SELLER_SIGNATURE";
+    !pandadoc &&
+    canPrepare &&
+    isSeller &&
+    status === "AWAITING_SELLER_SIGNATURE";
   const buyerUpload =
-    canPrepare && isBuyer && status === "AWAITING_BUYER_SIGNATURE";
+    !pandadoc && canPrepare && isBuyer && status === "AWAITING_BUYER_SIGNATURE";
+  const sellerSignOnline =
+    pandadoc &&
+    canPrepare &&
+    isSeller &&
+    status === "AWAITING_SIGNATURES" &&
+    !workspace.application?.pandadoc_seller_completed_at;
+  const buyerSignOnline =
+    pandadoc &&
+    canPrepare &&
+    isBuyer &&
+    status === "AWAITING_SIGNATURES" &&
+    !workspace.application?.pandadoc_buyer_completed_at;
   const showDocuments =
     Boolean(sellerDownload || buyerDownload || signedPackDownload);
 
@@ -61,12 +81,17 @@ export function TransferOrderPanel({
     <div>
       <h2 className="text-lg font-semibold text-ink">Queensland transfer</h2>
       <p className="mt-2 text-sm text-ink-muted">
-        The seller signs and witnesses first, then uploads that file. FQX checks
-        it before the buyer can download it. Signatures are not collected in
-        the browser.
+        {pandadoc
+          ? "Buyer and seller Sign Online at the same time. Have your witness physically present. FQX waits for PandaDoc to confirm each signature."
+          : "The seller signs and witnesses first, then uploads that file. FQX checks it before the buyer can download it. Signatures are not collected in the browser."}
       </p>
       <div className="mt-4">
-        <StatusBadge label={qldTransferPublicStatusLabel(status)} />
+        <StatusBadge
+          label={qldTransferPublicStatusLabel(
+            status,
+            workspace.application?.signing_channel,
+          )}
+        />
       </div>
       {workspace.application?.fq_reference ? (
         <p className="mt-2 text-sm text-ink-muted">
@@ -98,7 +123,14 @@ export function TransferOrderPanel({
       ) : null}
       {complete && !workspace.latestUnsigned && canPrepare ? (
         <div className="mt-6">
-          <TransferPrepareForm orderId={workspace.order.id} />
+          {pandadoc && isBuyer ? (
+            <p className="text-sm text-ink-muted">
+              FQX will prepare the application. You and the seller can Sign
+              Online at the same time after that.
+            </p>
+          ) : (
+            <TransferPrepareForm orderId={workspace.order.id} />
+          )}
         </div>
       ) : null}
       {showDocuments ? (
@@ -152,9 +184,26 @@ export function TransferOrderPanel({
               label="Upload completed pack"
             />
           ) : null}
+          {sellerSignOnline || buyerSignOnline ? (
+            <SignOnlineForm orderId={workspace.order.id} />
+          ) : null}
+          {pandadoc &&
+          status === "AWAITING_SIGNATURES" &&
+          ((isSeller && workspace.application?.pandadoc_seller_completed_at) ||
+            (isBuyer && workspace.application?.pandadoc_buyer_completed_at)) ? (
+            <p className="mt-4 text-sm text-ink-muted">
+              FQX has your signature
+              {isSeller && !workspace.application?.pandadoc_buyer_completed_at
+                ? " and is waiting for the buyer."
+                : isBuyer && !workspace.application?.pandadoc_seller_completed_at
+                  ? " and is waiting for the seller."
+                  : "."}
+            </p>
+          ) : null}
           {canPrepare &&
           isSeller &&
-          (status === "ACTION_REQUIRED" || status === "ADMIN_REVIEW") ? (
+          (status === "ACTION_REQUIRED" ||
+            (!pandadoc && status === "ADMIN_REVIEW")) ? (
             <div className="mt-4">
               <TransferPrepareForm orderId={workspace.order.id} />
             </div>
@@ -162,6 +211,7 @@ export function TransferOrderPanel({
         </div>
       ) : null}
       {isBuyer &&
+      !pandadoc &&
       (status === "READY" ||
         status === "AWAITING_SELLER_SIGNATURE" ||
         status === "AWAITING_SELLER_PACK_REVIEW") ? (

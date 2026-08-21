@@ -13,6 +13,7 @@ import { ReviewChecklistForm } from "@/components/review-checklist-form";
 import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
 import { qldTransferPublicStatusLabel } from "@/lib/orders/types";
 import { transferProfileFieldLabels } from "@/lib/transfers/profile";
+import { isPandadocChannel, signingChannelLabel } from "@/lib/transfers/signing-channel";
 import {
   approveQldTransferAction,
   recordFqSubmissionAction,
@@ -43,6 +44,7 @@ export function QldTransferAdmin({
   const order = workspace.order;
   const remaining = reviewQueue.filter((id) => id !== order.id);
   const status = workspace.application?.status ?? "READY";
+  const pandadoc = isPandadocChannel(workspace.application?.signing_channel);
   const complete =
     workspace.buyerMissing.length === 0 && workspace.sellerMissing.length === 0;
   const canGenerate =
@@ -108,7 +110,12 @@ export function QldTransferAdmin({
             {formMeta ? ` · ${formMeta}` : null}
           </p>
           <div className="mt-3">
-            <StatusBadge label={qldTransferPublicStatusLabel(status)} />
+            <StatusBadge
+              label={qldTransferPublicStatusLabel(
+                status,
+                workspace.application?.signing_channel,
+              )}
+            />
           </div>
           <p className="mt-2 text-sm text-ink-muted">
             {transferApplicationStatusLabel(status)}
@@ -131,22 +138,53 @@ export function QldTransferAdmin({
                       : `Missing ${transferProfileFieldLabels(workspace.buyerMissing).join(", ")}`,
                 },
                 {
+                  label: "Signing method",
+                  value: signingChannelLabel(
+                    workspace.application?.signing_channel ?? "OFFLINE",
+                  ),
+                },
+                {
                   label: "Unsigned PDF",
                   value: workspace.latestUnsigned
                     ? "Generated"
                     : "Not generated",
                 },
-                {
-                  label: "Seller-signed PDF",
-                  value: workspace.latestSellerSigned
-                    ? "Uploaded"
-                    : "Not uploaded",
-                },
+                ...(pandadoc
+                  ? [
+                      {
+                        label: "PandaDoc",
+                        value: workspace.application?.pandadoc_document_id
+                          ? workspace.application.pandadoc_status ?? "Sent"
+                          : "Not sent",
+                      },
+                      {
+                        label: "Seller signed",
+                        value: workspace.application?.pandadoc_seller_completed_at
+                          ? "Yes"
+                          : "Not yet",
+                      },
+                      {
+                        label: "Buyer signed",
+                        value: workspace.application?.pandadoc_buyer_completed_at
+                          ? "Yes"
+                          : "Not yet",
+                      },
+                    ]
+                  : [
+                      {
+                        label: "Seller-signed PDF",
+                        value: workspace.latestSellerSigned
+                          ? "Uploaded"
+                          : "Not uploaded",
+                      },
+                    ]),
                 {
                   label: "Completed pack",
                   value: workspace.latestSignedPack
-                    ? "Uploaded"
-                    : "Not uploaded",
+                    ? pandadoc
+                      ? "Stored"
+                      : "Uploaded"
+                    : "Not stored",
                 },
               ]}
             />
@@ -157,10 +195,12 @@ export function QldTransferAdmin({
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">Documents</h3>
           <p className="mt-1 text-sm text-ink-muted">
-            Generate the unsigned application from stored business details. The
-            seller signs first. FQX checks that file before the buyer can
-            download it. Regenerating stores a new unsigned PDF. Earlier signed
-            files stay stored, but only this application’s files are listed.
+            Generate the unsigned application from stored business details.
+            {pandadoc
+              ? " FQX then sends that PDF to PandaDoc so buyer and seller can Sign Online at the same time. There is no seller-pack review on this channel."
+              : " The seller signs first. FQX checks that file before the buyer can download it."}{" "}
+            Regenerating stores a new unsigned PDF. Earlier signed files stay
+            stored, but only this application’s files are listed.
           </p>
           {!complete && missingDetailNote ? (
             <p className="mt-3 text-sm text-ink-muted">

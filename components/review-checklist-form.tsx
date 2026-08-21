@@ -27,6 +27,7 @@ export function ReviewChecklistForm({
   checks,
   completed,
   extraSubmits = [],
+  extraFields,
   hint = "Save as you work. You must save all checks before you can approve.",
   proceedGoal = "to approve",
 }: {
@@ -39,6 +40,7 @@ export function ReviewChecklistForm({
   checks: readonly string[];
   completed: readonly string[];
   extraSubmits?: readonly ReviewChecklistExtraSubmit[];
+  extraFields?: ReactNode;
   hint?: string;
   proceedGoal?: string;
 }) {
@@ -61,6 +63,7 @@ export function ReviewChecklistForm({
         <input key={name} type="hidden" name={name} value={value} />
       ))}
       {extraHidden}
+      {extraFields}
       <p className="text-sm text-ink-muted">
         {done} of {checks.length} complete. {hint}
       </p>

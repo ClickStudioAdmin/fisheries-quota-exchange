@@ -1,3 +1,7 @@
+import type { SigningChannel } from "./signing-channel";
+
+export type { SigningChannel } from "./signing-channel";
+
 export const TRANSFER_PROCESS_CODES = [
   "QLD_SALE",
   "QLD_LEASE",
@@ -11,6 +15,7 @@ export const TRANSFER_APPLICATION_STATUSES = [
   "AWAITING_SELLER_SIGNATURE",
   "AWAITING_SELLER_PACK_REVIEW",
   "AWAITING_BUYER_SIGNATURE",
+  "AWAITING_SIGNATURES",
   "ADMIN_REVIEW",
   "SUBMITTED",
   "PROCESSING",
@@ -65,11 +70,16 @@ export type TransferApplication = {
   form_type: string | null;
   form_version: string | null;
   status: TransferApplicationStatus;
+  signing_channel: SigningChannel;
   fq_reference: string | null;
   submission_method: string | null;
   submitted_at: string | null;
   notes: string | null;
   seller_pack_checklist: string[];
+  pandadoc_document_id: string | null;
+  pandadoc_status: string | null;
+  pandadoc_seller_completed_at: string | null;
+  pandadoc_buyer_completed_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -129,6 +139,8 @@ export function transferApplicationStatusLabel(status: TransferApplicationStatus
       return "Checking seller signed form";
     case "AWAITING_BUYER_SIGNATURE":
       return "Waiting for buyer to sign";
+    case "AWAITING_SIGNATURES":
+      return "Waiting for signatures";
     case "ADMIN_REVIEW":
       return "Reviewing completed pack";
     case "SUBMITTED":

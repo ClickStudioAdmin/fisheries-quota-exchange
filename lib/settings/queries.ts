@@ -4,6 +4,7 @@ import {
   DEFAULT_PLATFORM_SETTINGS,
   type PlatformSettings,
 } from "@/lib/settings/types";
+import { parseSigningChannel } from "@/lib/transfers/signing-channel";
 
 function asSettings(row: Record<string, unknown> | null): PlatformSettings {
   if (!row) {
@@ -19,6 +20,8 @@ function asSettings(row: Record<string, unknown> | null): PlatformSettings {
     disabled_emails: Array.isArray(row.disabled_emails)
       ? row.disabled_emails.map(String)
       : [],
+    qld_default_signing_channel:
+      parseSigningChannel(row.qld_default_signing_channel) ?? "OFFLINE",
   };
 }
 
@@ -32,7 +35,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   const { data, error } = await supabase
     .from("platform_settings")
     .select(
-      "sale_fee_percent, lease_fee_percent, allow_registrations, auto_approve_holdings, auto_approve_listings, disabled_emails",
+      "sale_fee_percent, lease_fee_percent, allow_registrations, auto_approve_holdings, auto_approve_listings, disabled_emails, qld_default_signing_channel",
     )
     .eq("id", 1)
     .maybeSingle();

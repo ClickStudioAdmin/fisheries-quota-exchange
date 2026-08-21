@@ -68,6 +68,21 @@ test("Queensland transfer step uses the application sub-status", () => {
   assert.equal(transfer?.detail, "2 of 6 · Waiting for seller to sign");
 });
 
+test("PandaDoc transfer step uses the parallel signatures sub-status", () => {
+  const steps = buildOrderSteps({
+    orderStatus: "AWAITING_TRANSFER",
+    reservationStatus: "ACTIVE",
+    paymentStatus: "PAID",
+    usesSimulatedTransfer: false,
+    transferApplicationStatus: "AWAITING_SIGNATURES",
+    signingChannel: "PANDADOC",
+  });
+  const transfer = steps.find((step) => step.id === "transfer");
+
+  assert.equal(transfer?.state, "current");
+  assert.equal(transfer?.detail, "2 of 4 · Waiting for signatures");
+});
+
 test("Queensland transfer action required stays unnumbered", () => {
   const steps = buildOrderSteps({
     orderStatus: "AWAITING_TRANSFER",

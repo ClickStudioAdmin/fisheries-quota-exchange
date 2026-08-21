@@ -290,9 +290,33 @@ const EMAIL_CATALOG: Record<
   transfer_in_progress: {
     summary: "After compliance is approved",
     description:
-      "On Queensland orders, tells the seller to sign first and the buyer to wait for the seller-signed form. On simulated orders, says the authority transfer has started.",
+      "On Queensland offline orders, tells the seller to sign first and the buyer to wait for the seller-signed form. On Queensland Sign online orders, tells both parties they will Sign Online at the same time. On simulated orders, says the authority transfer has started.",
     sentWhen: "After approve_compliance.",
     trigger: "approveComplianceAction then notifyTransferInProgress.",
+    recipient: buyerAndSellerRolesRecipient,
+  },
+  transfer_sign_online_ready: {
+    summary: "Queensland Sign Online is ready",
+    description:
+      "Tells buyer and seller to open the order and Sign Online at the same time. Does not attach the unsigned PDF.",
+    sentWhen: "When a PandaDoc application is generated.",
+    trigger: "generateTransferDocumentAction then notifyTransferSignOnlineReady.",
+    recipient: buyerAndSellerRolesRecipient,
+  },
+  transfer_recipient_signed: {
+    summary: "This party finished Sign Online",
+    description:
+      "Confirms that party’s PandaDoc session completed. If the other party has not signed, says FQX is still waiting.",
+    sentWhen: "After a verified PandaDoc recipient_completed event or reconcile.",
+    trigger: "handlePandaDocWebhook then notifyTransferRecipientSigned.",
+    recipient: accountRolesRecipient,
+  },
+  transfer_online_pack_ready: {
+    summary: "Both parties signed online",
+    description:
+      "Tells buyer and seller that FQX has the sealed PDF and is reviewing it before Fisheries Queensland submission.",
+    sentWhen: "After a verified PandaDoc completed-PDF event or reconcile.",
+    trigger: "handlePandaDocWebhook then notifyTransferOnlinePackReady.",
     recipient: buyerAndSellerRolesRecipient,
   },
   transfer_application_ready: {
@@ -511,6 +535,7 @@ export function sampleTaxInvoiceData(kind: TaxInvoiceKind): TaxInvoiceData {
     updated_at: "2026-08-17T00:00:00.000Z",
     review_note: null,
     compliance_checklist: [],
+    qld_signing_channel: null,
   };
 
   return buildTaxInvoiceData(

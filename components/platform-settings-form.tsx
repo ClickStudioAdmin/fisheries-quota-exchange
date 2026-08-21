@@ -126,6 +126,39 @@ export function PlatformSettingsForm({
       </fieldset>
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-ink">
+          Queensland signing
+        </legend>
+        <p className="text-sm text-ink-muted">
+          Default for new Queensland compliance reviews. Changing this does not
+          alter orders already saved or approved. Offline pack stays the Phase
+          10 seller-then-buyer upload. Sign online uses PandaDoc so both
+          parties can sign at the same time.
+        </p>
+        <div className="space-y-2">
+          <label className="flex items-start gap-2 text-sm text-ink">
+            <input
+              type="radio"
+              name="qld_default_signing_channel"
+              value="OFFLINE"
+              defaultChecked={settings.qld_default_signing_channel === "OFFLINE"}
+            />
+            Offline pack
+          </label>
+          <label className="flex items-start gap-2 text-sm text-ink">
+            <input
+              type="radio"
+              name="qld_default_signing_channel"
+              value="PANDADOC"
+              defaultChecked={
+                settings.qld_default_signing_channel === "PANDADOC"
+              }
+            />
+            Sign online (PandaDoc)
+          </label>
+        </div>
+      </fieldset>
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium text-ink">
           Transactional email
         </legend>
         <p className="text-sm text-ink-muted">

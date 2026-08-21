@@ -1,3 +1,5 @@
+import type { SigningChannel } from "@/lib/transfers/signing-channel";
+
 export type PlatformSettings = {
   sale_fee_percent: string;
   lease_fee_percent: string;
@@ -5,6 +7,7 @@ export type PlatformSettings = {
   auto_approve_holdings: boolean;
   auto_approve_listings: boolean;
   disabled_emails: string[];
+  qld_default_signing_channel: SigningChannel;
 };
 
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
@@ -14,6 +17,7 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   auto_approve_holdings: true,
   auto_approve_listings: false,
   disabled_emails: [],
+  qld_default_signing_channel: "OFFLINE",
 };
 
 export function formatFeePercent(value: string | number) {

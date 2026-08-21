@@ -174,6 +174,23 @@ export function sampleEmailData(
         orderUrl,
         formTitle: "The Queensland FDU1465 transfer application",
       });
+    case "transfer_sign_online_ready":
+      return emailCopy.transfer_sign_online_ready({
+        orderId: 1001,
+        orderUrl,
+        formTitle: "The Queensland FDU1465 transfer application",
+      });
+    case "transfer_recipient_signed":
+      return emailCopy.transfer_recipient_signed({
+        orderId: 1001,
+        orderUrl,
+        waitingOnOther: true,
+      });
+    case "transfer_online_pack_ready":
+      return emailCopy.transfer_online_pack_ready({
+        orderId: 1001,
+        orderUrl,
+      });
     case "transfer_seller_signed_received":
       return emailCopy.transfer_seller_signed_received({
         orderId: 1001,

@@ -27,6 +27,9 @@ export type NeedsAttentionListing = {
 export type NeedsAttentionTransfer = {
   process_code: string;
   status: string;
+  signing_channel?: string;
+  pandadoc_seller_completed_at?: string | null;
+  pandadoc_buyer_completed_at?: string | null;
 };
 
 export type NeedsAttentionComplianceNotes = {
@@ -95,10 +98,30 @@ function usesSimulatedTransfer(
 }
 
 function qldTransferActionLabel(
-  status: string | null,
+  application: NeedsAttentionTransfer | undefined,
   isSeller: boolean,
   isBuyer: boolean,
 ) {
+  const status = application?.status ?? "READY";
+  if (application?.signing_channel === "PANDADOC") {
+    if (status === "READY") {
+      return isSeller ? "Prepare transfer documents" : null;
+    }
+    if (status === "AWAITING_SIGNATURES") {
+      if (isSeller && !application.pandadoc_seller_completed_at) {
+        return "Sign Online";
+      }
+      if (isBuyer && !application.pandadoc_buyer_completed_at) {
+        return "Sign Online";
+      }
+      return null;
+    }
+    if (status === "ACTION_REQUIRED") {
+      return "Update transfer details";
+    }
+    return null;
+  }
+
   if (status == null || status === "READY") {
     return isSeller ? "Prepare transfer documents" : null;
   }
@@ -193,7 +216,7 @@ export function organisationNeedsAttentionItems(input: {
       }
 
       const action = qldTransferActionLabel(
-        application?.status ?? "READY",
+        application,
         isSeller,
         isBuyer,
       );

@@ -4,7 +4,11 @@ import { getTransferProcess } from "@/lib/transfers/registry";
 
 export function transferStatusInputForOrder(
   order: Pick<Order, "offering" | "fishery_name">,
-  application: { process_code: string; status: string } | null | undefined,
+  application: {
+    process_code: string;
+    status: string;
+    signing_channel?: string | null;
+  } | null | undefined,
   fisheries: readonly Pick<Fishery, "name" | "jurisdiction_id">[],
   jurisdictions: readonly Pick<Jurisdiction, "id" | "code">[],
 ) {
@@ -19,12 +23,16 @@ export function transferStatusInputForOrder(
   return {
     usesSimulatedTransfer,
     applicationStatus: application?.status ?? null,
+    signingChannel: application?.signing_channel ?? null,
   };
 }
 
 export function orderStatusLabelFor(
   order: Pick<Order, "id" | "status" | "offering" | "fishery_name">,
-  applications: ReadonlyMap<number, { process_code: string; status: string }>,
+  applications: ReadonlyMap<
+    number,
+    { process_code: string; status: string; signing_channel?: string | null }
+  >,
   fisheries: readonly Pick<Fishery, "name" | "jurisdiction_id">[],
   jurisdictions: readonly Pick<Jurisdiction, "id" | "code">[],
 ) {

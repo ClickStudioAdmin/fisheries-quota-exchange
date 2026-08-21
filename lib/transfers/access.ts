@@ -9,12 +9,14 @@ export function canDownloadTransferDocument(input: {
   isAdmin: boolean;
   isBuyer: boolean;
   isSeller: boolean;
+  signingChannel?: string | null;
 }) {
   if (input.isAdmin) {
     return true;
   }
 
   const status = input.applicationStatus ?? "READY";
+  const pandadoc = input.signingChannel === "PANDADOC";
   const buyerReleased =
     status === "AWAITING_BUYER_SIGNATURE" ||
     status === "ADMIN_REVIEW" ||
@@ -28,11 +30,11 @@ export function canDownloadTransferDocument(input: {
     status === "APPROVED";
 
   if (input.documentType === "UNSIGNED_APPLICATION") {
-    return input.isSeller;
+    return !pandadoc && input.isSeller;
   }
 
   if (input.documentType === "SELLER_SIGNED") {
-    return input.isSeller || (input.isBuyer && buyerReleased);
+    return !pandadoc && (input.isSeller || (input.isBuyer && buyerReleased));
   }
 
   if (input.documentType === "SIGNED_PACK") {

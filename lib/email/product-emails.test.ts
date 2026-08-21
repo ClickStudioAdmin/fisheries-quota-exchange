@@ -249,4 +249,12 @@ test("cancelled-order copy differs for buyer and seller", () => {
   assert.match(qldBuyer.subject, /Transfer documents will follow/);
   assert.match(qldBuyer.paragraphs.join(" "), /seller signs/);
   assert.match(qldBuyer.highlight ?? "", /Wait until FQX releases/);
+
+  const qldOnline = emailCopy.transfer_in_progress({
+    ...input,
+    prepareDocuments: true,
+    signOnline: true,
+  });
+  assert.match(qldOnline.subject, /Sign online/);
+  assert.match(qldOnline.paragraphs.join(" "), /same time/);
 });

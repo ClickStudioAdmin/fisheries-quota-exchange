@@ -222,3 +222,39 @@ test("organisationNeedsAttentionItems is empty without manage permission", () =>
 
   assert.deepEqual(items, []);
 });
+
+test("PandaDoc Sign Online is listed for each party until they have signed", () => {
+  const transfers = new Map([
+    [
+      40,
+      {
+        process_code: "QLD_SALE",
+        status: "AWAITING_SIGNATURES",
+        signing_channel: "PANDADOC",
+        pandadoc_seller_completed_at: null,
+        pandadoc_buyer_completed_at: null,
+      },
+    ],
+  ]);
+  const sellerItems = organisationNeedsAttentionItems({
+    organisationId: 20,
+    canManage: true,
+    fisheries,
+    jurisdictions,
+    transferByOrderId: transfers,
+    orders: [order({ id: 40 })],
+    listings: [],
+  });
+  const buyerItems = organisationNeedsAttentionItems({
+    organisationId: 10,
+    canManage: true,
+    fisheries,
+    jurisdictions,
+    transferByOrderId: transfers,
+    orders: [order({ id: 40 })],
+    listings: [],
+  });
+
+  assert.match(sellerItems[0]?.title ?? "", /Sign Online/);
+  assert.match(buyerItems[0]?.title ?? "", /Sign Online/);
+});

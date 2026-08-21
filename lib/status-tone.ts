@@ -17,7 +17,7 @@ const ACTION = new Set([
   "action required",
   "waiting for application",
   "waiting for seller to sign",
-  "waiting for buyer to sign",
+  "waiting for signatures",
   "ended",
   "ended waiting to close",
   "unread",
@@ -82,7 +82,9 @@ function isActionStatus(key: string) {
   return (
     key.startsWith("1 of 6") ||
     key.startsWith("2 of 6") ||
-    key.startsWith("4 of 6")
+    key.startsWith("4 of 6") ||
+    key.startsWith("1 of 4") ||
+    key.startsWith("2 of 4")
   );
 }
 
@@ -91,7 +93,9 @@ function isInReviewStatus(key: string) {
     IN_REVIEW.has(key) ||
     key.startsWith("3 of 6") ||
     key.startsWith("5 of 6") ||
-    key.startsWith("6 of 6")
+    key.startsWith("6 of 6") ||
+    key.startsWith("3 of 4") ||
+    key.startsWith("4 of 4")
   );
 }
 

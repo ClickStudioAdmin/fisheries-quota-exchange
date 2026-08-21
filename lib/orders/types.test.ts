@@ -56,6 +56,14 @@ test("orderStatusLabel uses Queensland child status during transfer", () => {
   assert.equal(
     orderStatusLabel("AWAITING_TRANSFER", {
       usesSimulatedTransfer: false,
+      applicationStatus: "AWAITING_SIGNATURES",
+      signingChannel: "PANDADOC",
+    }),
+    "2 of 4 · Waiting for signatures",
+  );
+  assert.equal(
+    orderStatusLabel("AWAITING_TRANSFER", {
+      usesSimulatedTransfer: false,
       applicationStatus: "ACTION_REQUIRED",
     }),
     "Action required",

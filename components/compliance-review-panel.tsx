@@ -2,6 +2,9 @@ import { ReviewOrderForms } from "@/components/review-order-forms";
 import { ReviewChecklistForm } from "@/components/review-checklist-form";
 import { saveComplianceChecklistAction } from "@/lib/orders/actions";
 import { checklistIsComplete } from "@/lib/orders/checklist";
+import { isPandaDocConfigured } from "@/lib/pandadoc/env";
+import { getPlatformSettings } from "@/lib/settings/queries";
+import { signingChannelLabel } from "@/lib/transfers/signing-channel";
 import {
   LabeledFieldGroups,
   LabeledFields,
@@ -154,7 +157,7 @@ function PartyDetails({
   );
 }
 
-export function ComplianceReviewPanel({
+export async function ComplianceReviewPanel({
   workspace,
   reviewQueue = [],
 }: {
@@ -168,6 +171,18 @@ export function ComplianceReviewPanel({
     : order.fishery_name;
   const incomplete =
     workspace.buyerMissing.length > 0 || workspace.sellerMissing.length > 0;
+  const settings = qld ? await getPlatformSettings() : null;
+  const pandadocReady = isPandaDocConfigured();
+  const selectedChannel =
+    order.qld_signing_channel ??
+    settings?.qld_default_signing_channel ??
+    "OFFLINE";
+  const channelSaved = Boolean(order.qld_signing_channel);
+  const canApprove =
+    checklistIsComplete(
+      workspace.process.complianceChecks,
+      order.compliance_checklist,
+    ) && (!qld || channelSaved);
 
   return (
     <div className="mt-2 min-w-0 space-y-6">
@@ -223,6 +238,59 @@ export function ComplianceReviewPanel({
               checks={workspace.process.complianceChecks}
               completed={order.compliance_checklist}
               proceedGoal="to approve compliance"
+              extraFields={
+                qld ? (
+                  <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium text-ink">
+                      Signing method
+                    </legend>
+                    <p className="text-sm text-ink-muted">
+                      Offline pack is the Phase 10 seller-then-buyer upload.
+                      Sign online lets both parties sign in FQX at the same
+                      time. Save this with the checks. The browser is not
+                      trusted.
+                    </p>
+                    {(
+                      [
+                        ["OFFLINE", signingChannelLabel("OFFLINE")],
+                        ["PANDADOC", signingChannelLabel("PANDADOC")],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <label
+                        key={value}
+                        className="flex items-start gap-2 text-sm text-ink"
+                      >
+                        <input
+                          type="radio"
+                          name="qld_signing_channel"
+                          value={value}
+                          defaultChecked={selectedChannel === value}
+                          disabled={value === "PANDADOC" && !pandadocReady}
+                        />
+                        <span>
+                          {label}
+                          {value === "PANDADOC" && !pandadocReady
+                            ? " (PandaDoc keys are not configured)"
+                            : null}
+                        </span>
+                      </label>
+                    ))}
+                    {channelSaved ? (
+                      <p className="text-sm text-ink-muted">
+                        Saved as {signingChannelLabel(order.qld_signing_channel!)}.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-ink-muted">
+                        Not saved yet. Pre-filled from platform default (
+                        {signingChannelLabel(
+                          settings?.qld_default_signing_channel ?? "OFFLINE",
+                        )}
+                        ).
+                      </p>
+                    )}
+                  </fieldset>
+                ) : null
+              }
             />
           </div>
         </section>
@@ -256,10 +324,7 @@ export function ComplianceReviewPanel({
           <ReviewOrderForms
             order={order}
             reviewQueue={reviewQueue}
-            canApprove={checklistIsComplete(
-              workspace.process.complianceChecks,
-              order.compliance_checklist,
-            )}
+            canApprove={canApprove}
           />
         </div>
       </section>

@@ -17,6 +17,11 @@ import { missingTransferProfileFields } from "@/lib/transfers/profile";
 import { getTransferProcess } from "@/lib/transfers/registry";
 import type { TransferApplicationPdfData, TransferPartyDetails, TransferSignatory } from "@/lib/transfers/application-data";
 import {
+  isSigningChannel,
+  parseSigningChannel,
+  type SigningChannel,
+} from "@/lib/transfers/signing-channel";
+import {
   isTransferApplicationStatus,
   isTransferDocumentType,
   isTransferProcessCode,
@@ -117,11 +122,22 @@ function mapApplication(row: Record<string, unknown>): TransferApplication | nul
     form_type: asNullableText(row.form_type),
     form_version: asNullableText(row.form_version),
     status,
+    signing_channel: isSigningChannel(row.signing_channel)
+      ? row.signing_channel
+      : "OFFLINE",
     fq_reference: asNullableText(row.fq_reference),
     submission_method: asNullableText(row.submission_method),
     submitted_at: asNullableText(row.submitted_at),
     notes: asNullableText(row.notes),
     seller_pack_checklist: parseComplianceChecklist(row.seller_pack_checklist),
+    pandadoc_document_id: asNullableText(row.pandadoc_document_id),
+    pandadoc_status: asNullableText(row.pandadoc_status),
+    pandadoc_seller_completed_at: asNullableText(
+      row.pandadoc_seller_completed_at,
+    ),
+    pandadoc_buyer_completed_at: asNullableText(
+      row.pandadoc_buyer_completed_at,
+    ),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
@@ -178,7 +194,7 @@ async function loadApplication(orderId: number) {
   const { data, error } = await supabase
     .from("transfer_applications")
     .select(
-      "id, order_id, process_code, form_type, form_version, status, fq_reference, submission_method, submitted_at, notes, seller_pack_checklist, created_at, updated_at",
+      "id, order_id, process_code, form_type, form_version, status, signing_channel, fq_reference, submission_method, submitted_at, notes, seller_pack_checklist, pandadoc_document_id, pandadoc_status, pandadoc_seller_completed_at, pandadoc_buyer_completed_at, created_at, updated_at",
     )
     .eq("order_id", orderId)
     .maybeSingle();
@@ -198,7 +214,13 @@ export async function listTransferApplicationsByOrderIds(orderIds: number[]) {
   ];
   const byOrderId = new Map<
     number,
-    { process_code: string; status: string }
+    {
+      process_code: string;
+      status: string;
+      signing_channel: SigningChannel;
+      pandadoc_seller_completed_at: string | null;
+      pandadoc_buyer_completed_at: string | null;
+    }
   >();
 
   if (unique.length === 0) {
@@ -213,7 +235,9 @@ export async function listTransferApplicationsByOrderIds(orderIds: number[]) {
 
   const { data, error } = await supabase
     .from("transfer_applications")
-    .select("order_id, process_code, status")
+    .select(
+      "order_id, process_code, status, signing_channel, pandadoc_seller_completed_at, pandadoc_buyer_completed_at",
+    )
     .in("order_id", unique);
 
   if (error || !data) {
@@ -229,7 +253,21 @@ export async function listTransferApplicationsByOrderIds(orderIds: number[]) {
       continue;
     }
 
-    byOrderId.set(orderId, { process_code: processCode, status });
+    byOrderId.set(orderId, {
+      process_code: processCode,
+      status,
+      signing_channel: parseSigningChannel(
+        (row as { signing_channel?: unknown }).signing_channel,
+      ) ?? "OFFLINE",
+      pandadoc_seller_completed_at: asNullableText(
+        (row as { pandadoc_seller_completed_at?: unknown })
+          .pandadoc_seller_completed_at,
+      ),
+      pandadoc_buyer_completed_at: asNullableText(
+        (row as { pandadoc_buyer_completed_at?: unknown })
+          .pandadoc_buyer_completed_at,
+      ),
+    });
   }
 
   return byOrderId;
@@ -307,6 +345,8 @@ export async function ensureTransferApplication(
     form_type: process.formType,
     form_version: process.formVersion,
     status: "READY",
+    signing_channel:
+      parseSigningChannel(order.qld_signing_channel) ?? "OFFLINE",
   });
 
   if (error && !error.message.toLowerCase().includes("duplicate")) {
@@ -428,6 +468,7 @@ export async function getTransferDocumentFile(
   const allowed = canDownloadTransferDocument({
     documentType: document.document_type,
     applicationStatus: workspace.application?.status ?? null,
+    signingChannel: workspace.application?.signing_channel,
     isAdmin: admin,
     isBuyer: active?.id === workspace.order.buyer_organisation_id,
     isSeller: active?.id === workspace.order.seller_organisation_id,

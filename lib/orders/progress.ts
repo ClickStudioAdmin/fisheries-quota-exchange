@@ -40,6 +40,7 @@ type ProgressInput = {
   settlementCompleted?: boolean;
   usesSimulatedTransfer?: boolean;
   transferApplicationStatus?: string | null;
+  signingChannel?: string | null;
 };
 
 function pastPayment(status: OrderStatus) {
@@ -224,8 +225,29 @@ function complianceDetail(input: ProgressInput, state: OrderStepState) {
   return "Waiting";
 }
 
-function qldTransferPublicStatusLabel(status?: string | null) {
+function qldTransferPublicStatusLabel(
+  status?: string | null,
+  signingChannel?: string | null,
+) {
   // Keep in sync with qldTransferPublicStatusLabel in lib/orders/types.ts.
+  if (signingChannel === "PANDADOC") {
+    switch (status ?? "READY") {
+      case "AWAITING_SIGNATURES":
+        return "2 of 4 · Waiting for signatures";
+      case "ADMIN_REVIEW":
+        return "3 of 4 · Reviewing completed pack";
+      case "SUBMITTED":
+      case "PROCESSING":
+        return "4 of 4 · With Fisheries Queensland";
+      case "APPROVED":
+        return "Fisheries Queensland approved";
+      case "ACTION_REQUIRED":
+        return "Action required";
+      default:
+        return "1 of 4 · Waiting for application";
+    }
+  }
+
   switch (status ?? "READY") {
     case "AWAITING_SELLER_SIGNATURE":
       return "2 of 6 · Waiting for seller to sign";
@@ -254,7 +276,10 @@ function transferDetail(input: ProgressInput, state: OrderStepState) {
 
   if (state === "current") {
     if (input.usesSimulatedTransfer === false) {
-      return qldTransferPublicStatusLabel(input.transferApplicationStatus);
+      return qldTransferPublicStatusLabel(
+        input.transferApplicationStatus,
+        input.signingChannel,
+      );
     }
 
     return "In progress";

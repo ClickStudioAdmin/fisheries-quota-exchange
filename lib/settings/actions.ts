@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { isPlatformAdmin } from "@/lib/admin/access";
 import { disabledProductEmails } from "@/lib/email/product-emails";
+import { isPandaDocConfigured } from "@/lib/pandadoc/env";
 import { createClient } from "@/lib/supabase/server";
+import { parseSigningChannel } from "@/lib/transfers/signing-channel";
 import { userFacingError } from "@/lib/errors/user-message";
 
 export type SettingsFormState = {
@@ -45,6 +47,19 @@ export async function updatePlatformSettingsAction(
     return { error: lease.error };
   }
 
+  const qldChannel = parseSigningChannel(formData.get("qld_default_signing_channel"));
+
+  if (!qldChannel) {
+    return { error: "Choose Offline pack or Sign online." };
+  }
+
+  if (qldChannel === "PANDADOC" && !isPandaDocConfigured()) {
+    return {
+      error:
+        "Sign online needs PANDADOC_API_KEY and PANDADOC_WEBHOOK_SHARED_KEY.",
+    };
+  }
+
   const supabase = await createClient();
 
   if (!supabase) {
@@ -62,6 +77,7 @@ export async function updatePlatformSettingsAction(
     p_auto_approve_holdings: readToggle(formData, "auto_approve_holdings"),
     p_auto_approve_listings: readToggle(formData, "auto_approve_listings"),
     p_disabled_emails: disabledEmails,
+    p_qld_default_signing_channel: qldChannel,
   });
 
   if (error) {

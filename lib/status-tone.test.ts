@@ -25,6 +25,10 @@ test("party-action statuses use the bright amber alert tone", () => {
     statusToneClass("AWAITING_TRANSFER", "Action required"),
     ACTION_STATUS_TONE_CLASS,
   );
+  assert.equal(
+    statusToneClass("AWAITING_TRANSFER", "2 of 4 · Waiting for signatures"),
+    ACTION_STATUS_TONE_CLASS,
+  );
   assert.equal(statusToneClass("Unread"), ACTION_STATUS_TONE_CLASS);
 });
 

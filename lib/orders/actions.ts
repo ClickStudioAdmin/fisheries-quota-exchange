@@ -12,7 +12,9 @@ import { getOrder } from "@/lib/orders/queries";
 import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
 import { selectedComplianceUpdateNotes } from "@/lib/orders/compliance-update";
+import { isPandaDocConfigured } from "@/lib/pandadoc/env";
 import { getOrderJurisdictionCode } from "@/lib/transfers/queries";
+import { parseSigningChannel } from "@/lib/transfers/signing-channel";
 import { getTransferProcess } from "@/lib/transfers/registry";
 import { sendSettledOrderInvoice } from "@/lib/orders/settlement-mail";
 import {
@@ -242,10 +244,25 @@ export async function saveComplianceChecklistAction(
     process.complianceChecks,
     formData.getAll("checks").map(String),
   );
+  const qldChannel = process.usesSimulatedTransfer
+    ? null
+    : parseSigningChannel(formData.get("qld_signing_channel"));
+
+  if (!process.usesSimulatedTransfer && !qldChannel) {
+    return { error: "Choose Offline pack or Sign online." };
+  }
+
+  if (qldChannel === "PANDADOC" && !isPandaDocConfigured()) {
+    return {
+      error:
+        "Sign online needs PANDADOC_API_KEY and PANDADOC_WEBHOOK_SHARED_KEY.",
+    };
+  }
 
   const { error } = await supabase.rpc("save_compliance_checklist", {
     p_order_id: order.id,
     p_completed: completed,
+    p_qld_signing_channel: qldChannel,
   });
 
   if (error) {
@@ -274,6 +291,17 @@ export async function approveComplianceAction(formData: FormData) {
         process.complianceChecks,
         order.compliance_checklist,
       )
+    ) {
+      return;
+    }
+
+    if (!process.usesSimulatedTransfer && !order.qld_signing_channel) {
+      return;
+    }
+
+    if (
+      order.qld_signing_channel === "PANDADOC" &&
+      !isPandaDocConfigured()
     ) {
       return;
     }

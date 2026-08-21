@@ -7,10 +7,11 @@ import type {
   SimulatedTransaction,
 } from "@/lib/orders/types";
 import { parseComplianceChecklist } from "@/lib/orders/checklist";
+import { parseSigningChannel } from "@/lib/transfers/signing-channel";
 import { latestComplianceUpdateNotes } from "@/lib/orders/compliance-update";
 
 const orderColumns =
-  "id, listing_id, holding_id, seller_organisation_id, buyer_organisation_id, offering, quantity, unused_quantity, used_quantity, unit_price_aud, amount_aud, fee_percent, fee_amount_aud, status, seller_name, buyer_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, updated_at, review_note, compliance_checklist";
+  "id, listing_id, holding_id, seller_organisation_id, buyer_organisation_id, offering, quantity, unused_quantity, used_quantity, unit_price_aud, amount_aud, fee_percent, fee_amount_aud, status, seller_name, buyer_name, fishery_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, updated_at, review_note, compliance_checklist, qld_signing_channel";
 
 function mapOrder(row: Record<string, unknown> | null): Order | null {
   if (!row) {
@@ -20,6 +21,7 @@ function mapOrder(row: Record<string, unknown> | null): Order | null {
   return {
     ...(row as Order),
     compliance_checklist: parseComplianceChecklist(row.compliance_checklist),
+    qld_signing_channel: parseSigningChannel(row.qld_signing_channel),
   };
 }
 

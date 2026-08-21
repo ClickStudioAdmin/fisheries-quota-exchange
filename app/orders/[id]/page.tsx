@@ -34,6 +34,7 @@ import {
 } from "@/lib/payments/money";
 import { orderPayPanel } from "@/lib/payments/order-pay-panel";
 import { reconcileOrderPayment } from "@/lib/payments/reconcile";
+import { reconcilePandaDocSigning } from "@/lib/pandadoc/signing";
 import { formatTableDateTime } from "@/lib/format";
 import { latestComplianceUpdateNotes } from "@/lib/orders/compliance-update";
 import { accountSettingsPath } from "@/lib/organisations/paths";
@@ -81,6 +82,14 @@ export default async function OrderPage({
   if (order.status === "AWAITING_PAYMENT") {
     paymentLive = await reconcileOrderPayment(order.id);
     order = (await getOrder(orderId)) ?? order;
+  }
+
+  if (order.status === "AWAITING_TRANSFER") {
+    try {
+      await reconcilePandaDocSigning(order.id);
+    } catch (error) {
+      console.error("reconcilePandaDocSigning failed", error);
+    }
   }
 
   const [reservation, transaction, events, buyerRole, sellerRole, admin, payment, active, transferWorkspace] =
@@ -204,6 +213,7 @@ export default async function OrderPage({
     settlementCompleted: transaction?.status === "COMPLETED",
     usesSimulatedTransfer: transferWorkspace?.process.usesSimulatedTransfer,
     transferApplicationStatus: transferWorkspace?.application?.status ?? null,
+    signingChannel: transferWorkspace?.application?.signing_channel ?? null,
   });
   const feeLabel =
     Number(order.fee_percent) > 0

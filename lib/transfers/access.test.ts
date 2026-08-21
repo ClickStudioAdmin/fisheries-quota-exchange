@@ -48,6 +48,31 @@ test("buyer cannot download the seller-signed form until FQX accepts it", () => 
   );
 });
 
+test("PandaDoc parties cannot download the unsigned application", () => {
+  assert.equal(
+    canDownloadTransferDocument({
+      documentType: "UNSIGNED_APPLICATION",
+      applicationStatus: "AWAITING_SIGNATURES",
+      signingChannel: "PANDADOC",
+      isAdmin: false,
+      isBuyer: false,
+      isSeller: true,
+    }),
+    false,
+  );
+  assert.equal(
+    canDownloadTransferDocument({
+      documentType: "UNSIGNED_APPLICATION",
+      applicationStatus: "AWAITING_SIGNATURES",
+      signingChannel: "PANDADOC",
+      isAdmin: true,
+      isBuyer: false,
+      isSeller: false,
+    }),
+    true,
+  );
+});
+
 test("buyer and seller can download the completed pack after it is uploaded", () => {
   assert.equal(
     canDownloadTransferDocument({
