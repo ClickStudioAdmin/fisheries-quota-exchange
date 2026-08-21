@@ -1,6 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useId,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import { tableSecondaryButtonClassName } from "@/components/auth-card";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   createPandaDocSigningSessionAction,
@@ -17,6 +24,71 @@ export function SignOnlineForm({ orderId }: { orderId: number }) {
     createPandaDocSigningSessionAction,
     initialState,
   );
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const titleId = useId();
+  const signingUrl = state.signingUrl;
+
+  useEffect(() => {
+    if (signingUrl) {
+      setOverlayOpen(true);
+    }
+  }, [signingUrl]);
+
+  useEffect(() => {
+    if (!overlayOpen) {
+      return;
+    }
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOverlayOpen(false);
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [overlayOpen]);
+
+  const overlay =
+    signingUrl && overlayOpen && typeof document !== "undefined" ? (
+      <div className="fixed inset-0 z-50 flex flex-col bg-ink/50 p-2 sm:p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          className="flex min-h-0 flex-1 flex-col border border-line bg-paper"
+        >
+          <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+            <div className="min-w-0 max-w-3xl">
+              <h2 id={titleId} className="text-lg font-semibold text-ink">
+                Sign Online
+              </h2>
+              <p className="mt-1 text-sm text-ink-muted">
+                Have your witness physically present. Closing this window does
+                not finish signing. FQX updates only after PandaDoc confirms.
+              </p>
+            </div>
+            <button
+              type="button"
+              className={tableSecondaryButtonClassName}
+              onClick={() => setOverlayOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+          <iframe
+            title="Sign Online"
+            src={signingUrl}
+            className="min-h-0 w-full flex-1 bg-paper-raised"
+          />
+        </div>
+      </div>
+    ) : null;
 
   return (
     <div className="space-y-3">
@@ -30,12 +102,28 @@ export function SignOnlineForm({ orderId }: { orderId: number }) {
           {state.error}
         </p>
       ) : null}
-      {state.signingUrl ? (
-        <iframe
-          title="Sign Online"
-          src={state.signingUrl}
-          className="h-[720px] w-full border border-line bg-paper-raised"
-        />
+      {signingUrl ? (
+        <button
+          type="button"
+          className={signOnlineBoxClassName}
+          onClick={() => setOverlayOpen(true)}
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-sea/15 text-sea">
+            <SignatureIcon className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-ink">
+              Continue Sign Online
+            </span>
+            <span className="mt-0.5 block truncate text-xs text-ink-muted">
+              Reopen the full-page signing window
+            </span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-sea">
+            Open
+            <OpenArrow className="h-3.5 w-3.5" />
+          </span>
+        </button>
       ) : (
         <form action={formAction} className="max-w-lg">
           <input type="hidden" name="order_id" value={orderId} />
@@ -62,6 +150,7 @@ export function SignOnlineForm({ orderId }: { orderId: number }) {
           </PendingSubmitButton>
         </form>
       )}
+      {overlay ? createPortal(overlay, document.body) : null}
     </div>
   );
 }
