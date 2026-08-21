@@ -1,6 +1,10 @@
 import "server-only";
 
 import { getPandaDocEnv } from "@/lib/pandadoc/env";
+import {
+  pandadocCreateFieldsPayload,
+  type PandadocFieldLayout,
+} from "@/lib/transfers/pandadoc-fields";
 
 const API_BASE = "https://api.pandadoc.com/public/v1";
 const DRAFT_WAIT_MS = 60_000;
@@ -21,6 +25,7 @@ export type PandaDocDocumentDetails = {
   status: string;
   fieldCount: number;
   recipients: Array<{
+    id: string | null;
     email: string;
     role: string | null;
     has_completed: boolean;
@@ -35,6 +40,12 @@ export type PandaDocClient = {
     recipients: readonly PandaDocRecipient[];
   }): Promise<{ id: string; status: string }>;
   waitUntilDraft(documentId: string): Promise<PandaDocDocumentDetails>;
+  createSigningFields(input: {
+    documentId: string;
+    layouts: readonly PandadocFieldLayout[];
+    sellerRecipientId: string;
+    buyerRecipientId: string;
+  }): Promise<number>;
   sendSilent(documentId: string): Promise<void>;
   createSession(documentId: string, recipientEmail: string): Promise<string>;
   getDocument(documentId: string): Promise<PandaDocDocumentDetails>;
@@ -83,6 +94,7 @@ function mapDocument(payload: unknown): PandaDocDocumentDetails {
             : roles[0] ?? null);
       return [
         {
+          id: asString(recipient?.id),
           email,
           role,
           has_completed: Boolean(recipient?.has_completed),
@@ -146,16 +158,6 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
             role: recipient.role,
             signing_order: 1,
           })),
-          fields: {
-            sellerSig: { value: "", role: PANDADOC_SELLER_ROLE },
-            sellerDate: { value: "", role: PANDADOC_SELLER_ROLE },
-            sellerWitnessSig: { value: "", role: PANDADOC_SELLER_ROLE },
-            sellerWitnessName: { value: "", role: PANDADOC_SELLER_ROLE },
-            buyerSig: { value: "", role: PANDADOC_BUYER_ROLE },
-            buyerDate: { value: "", role: PANDADOC_BUYER_ROLE },
-            buyerWitnessSig: { value: "", role: PANDADOC_BUYER_ROLE },
-            buyerWitnessName: { value: "", role: PANDADOC_BUYER_ROLE },
-          },
           parse_form_fields: false,
         }),
       );
@@ -182,6 +184,24 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
         await new Promise((resolve) => setTimeout(resolve, DRAFT_POLL_MS));
       }
       throw new Error("PandaDoc did not finish preparing the document.");
+    },
+
+    async createSigningFields(input) {
+      const payload = pandadocCreateFieldsPayload(input.layouts, {
+        sellerId: input.sellerRecipientId,
+        buyerId: input.buyerRecipientId,
+      });
+      const result = await pandaDocRequest(
+        apiKey,
+        `/documents/${input.documentId}/fields`,
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
+        },
+      );
+      const row = asRecord(result);
+      const fields = Array.isArray(row?.fields) ? row.fields : [];
+      return fields.length;
     },
 
     async sendSilent(documentId) {
@@ -248,4 +268,13 @@ export function recipientRoleFromEmail(
     (item) => item.email.toLowerCase() === email.trim().toLowerCase(),
   );
   return match?.role ?? null;
+}
+
+export function recipientIdForRole(
+  document: PandaDocDocumentDetails,
+  role: typeof PANDADOC_SELLER_ROLE | typeof PANDADOC_BUYER_ROLE,
+) {
+  return (
+    document.recipients.find((item) => item.role === role)?.id ?? null
+  );
 }

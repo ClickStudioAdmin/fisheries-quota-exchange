@@ -47,10 +47,10 @@ FQX remains the source of the official form content.
 
 1. Generate the same unsigned FDU1465 / FDU1469 PDF from stored business and order data (Phase 10 generator). Store it as `UNSIGNED_APPLICATION`.
 2. For `PANDADOC`, upload **that PDF file** to PandaDoc (`POST /public/v1/documents` as `multipart/form-data`). Do not send a public URL (the transfer bucket is private). Do not rebuild the FDU as PandaDoc tokens; that would duplicate fill logic and drift from the official form.
-3. Signature, date, printed-name, and witness blocks stay blank in the FQX fill, as today. This phase adds **named fillable fields** on those blocks so PandaDoc can parse them (`parse_form_fields: true`) and assign them to roles. Offline generation can keep the same PDF; extra blank fields must not break wet-ink printing.
+3. Signature, date, printed-name, and witness blocks stay blank in the FQX fill, as today. After the PDF is uploaded and reaches `document.draft`, FQX places PandaDoc signature/text/date fields on those boxes via `POST /documents/{id}/fields` (coordinates from the official form widgets) and assigns them to Seller and Buyer. Do not rely on drawn PDF field tags; PandaDoc left those as plain text. Offline generation does not add PandaDoc fields.
 4. Recipients: **Seller** and **Buyer** roles. Contact emails are the first Owner (else Admin) membership emails, same as the form contact email today.
 
-PandaDoc templates that recreate the whole FDU are out of scope. Field tags in the PDF are allowed if native AcroForm mapping is not reliable; pick one placement method and test it on both forms before wiring production generate.
+PandaDoc templates that recreate the whole FDU are out of scope. Signing widgets are placed with the Create Document Fields API after upload, not by drawing tags into the PDF.
 
 ### Parallel signing (this is the online time saving)
 

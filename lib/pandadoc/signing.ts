@@ -1,10 +1,19 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { createServiceClient } from "@/lib/supabase/service";
+import { pandadocSigningLayoutsForForm } from "@/lib/transfers/pandadoc-fields";
+import {
+  transferStoredFilenameForType,
+} from "@/lib/transfers/filenames";
+import type { TransferWorkspace } from "@/lib/transfers/queries";
+import { TRANSFER_DOCUMENTS_BUCKET } from "@/lib/transfers/types";
+import type { TransferPartyDetails } from "@/lib/transfers/application-data";
 import {
   createPandaDocClient,
   PANDADOC_BUYER_ROLE,
   PANDADOC_SELLER_ROLE,
+  recipientIdForRole,
   recipientRoleFromEmail,
   type PandaDocClient,
   type PandaDocDocumentDetails,
@@ -19,15 +28,7 @@ import {
 } from "@/lib/email/events";
 import { getOrderForSystem } from "@/lib/orders/queries";
 import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
-import { createServiceClient } from "@/lib/supabase/service";
-import { addPandadocSigningFields } from "@/lib/transfers/pandadoc-fields";
 import { pandadocApiRecipientEmail } from "@/lib/pandadoc/sandbox-recipients";
-import {
-  transferStoredFilenameForType,
-} from "@/lib/transfers/filenames";
-import type { TransferWorkspace } from "@/lib/transfers/queries";
-import { TRANSFER_DOCUMENTS_BUCKET } from "@/lib/transfers/types";
-import type { TransferPartyDetails } from "@/lib/transfers/application-data";
 
 function splitName(party: TransferPartyDetails | null) {
   const fromSignatory = party?.signatories[0]?.full_name.trim() ?? "";
@@ -73,24 +74,36 @@ export async function sendUnsignedPdfToPandaDoc(input: {
     );
   }
 
-  const pdf = await addPandadocSigningFields(
-    input.pdf,
-    input.workspace.process.formType ?? "FDU1465",
-  );
   const client = input.client ?? createPandaDocClient();
   const created = await client.createDocumentFromPdf({
     name: `FQX order ${input.workspace.order.id} ${input.workspace.process.formType ?? "transfer"}`,
-    pdf,
+    pdf: input.pdf,
     filename: input.filename,
     recipients: [seller, buyer],
   });
-  await client.waitUntilDraft(created.id);
-  const drafted = await client.getDocument(created.id);
-  if (drafted.fieldCount < 1) {
+  const draft = await client.waitUntilDraft(created.id);
+  const sellerRecipientId = recipientIdForRole(draft, PANDADOC_SELLER_ROLE);
+  const buyerRecipientId = recipientIdForRole(draft, PANDADOC_BUYER_ROLE);
+  if (!sellerRecipientId || !buyerRecipientId) {
     throw new Error(
-      "PandaDoc prepared the PDF but did not create signing fields. Regenerate, or check the field tags on the application.",
+      "PandaDoc did not return Seller and Buyer recipients for signing fields.",
     );
   }
+
+  const fieldCount = await client.createSigningFields({
+    documentId: created.id,
+    layouts: pandadocSigningLayoutsForForm(
+      input.workspace.process.formType ?? "FDU1465",
+    ),
+    sellerRecipientId,
+    buyerRecipientId,
+  });
+  if (fieldCount < 1) {
+    throw new Error(
+      "PandaDoc did not create signing fields on the application.",
+    );
+  }
+
   await client.sendSilent(created.id);
   return { documentId: created.id, status: "document.sent" };
 }
