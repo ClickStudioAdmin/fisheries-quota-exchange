@@ -1,66 +1,62 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-const TAGS = [
-  ["Seller signature", "[signature:Seller:sellerSig___]"],
-  ["Seller date", "[date:Seller:sellerDate___]"],
-  ["Seller printed name", "[textfield:Seller:sellerPrinted___]"],
-  ["Seller witness signature (physically present)", "[signature:Seller:sellerWitnessSig___]"],
-  ["Seller witness name", "[textfield:Seller:sellerWitnessName___]"],
-  ["Buyer signature", "[signature:Buyer:buyerSig___]"],
-  ["Buyer date", "[date:Buyer:buyerDate___]"],
-  ["Buyer printed name", "[textfield:Buyer:buyerPrinted___]"],
-  ["Buyer witness signature (physically present)", "[signature:Buyer:buyerWitnessSig___]"],
-  ["Buyer witness name", "[textfield:Buyer:buyerWitnessName___]"],
-] as const;
+type SigningTag = {
+  page: number;
+  x: number;
+  y: number;
+  size?: number;
+  tag: string;
+};
 
-export async function addPandadocSigningFields(pdfBytes: Buffer) {
+const SALE_TAGS: SigningTag[] = [
+  { page: 2, x: 51, y: 332, tag: "[signature:Seller:sellerSig___]" },
+  { page: 2, x: 175, y: 332, tag: "[textfield:Seller:sellerWitnessName___]" },
+  { page: 2, x: 337, y: 332, tag: "[signature:Seller:sellerWitnessSig___]" },
+  { page: 2, x: 487, y: 332, tag: "[date:Seller:sellerDate___]" },
+  { page: 2, x: 51, y: 158, tag: "[signature:Buyer:buyerSig___]" },
+  { page: 2, x: 175, y: 158, tag: "[textfield:Buyer:buyerWitnessName___]" },
+  { page: 2, x: 337, y: 158, tag: "[signature:Buyer:buyerWitnessSig___]" },
+  { page: 2, x: 487, y: 158, tag: "[date:Buyer:buyerDate___]" },
+];
+
+const LEASE_TAGS: SigningTag[] = [
+  { page: 3, x: 86, y: 404, tag: "[signature:Seller:sellerSig___]" },
+  { page: 3, x: 206, y: 404, size: 5, tag: "[signature:Seller:sellerWitnessSig___]" },
+  { page: 3, x: 275, y: 404, tag: "[textfield:Seller:sellerWitnessName___]" },
+  { page: 3, x: 474, y: 405, tag: "[date:Seller:sellerDate___]" },
+  { page: 3, x: 87, y: 177, tag: "[signature:Buyer:buyerSig___]" },
+  { page: 3, x: 207, y: 177, size: 5, tag: "[signature:Buyer:buyerWitnessSig___]" },
+  { page: 3, x: 272, y: 177, tag: "[textfield:Buyer:buyerWitnessName___]" },
+  { page: 3, x: 473, y: 178, tag: "[date:Buyer:buyerDate___]" },
+];
+
+export function pandadocSigningTagsForForm(formType: string) {
+  if (formType === "FDU1469") {
+    return LEASE_TAGS;
+  }
+  return SALE_TAGS;
+}
+
+export async function addPandadocSigningFields(
+  pdfBytes: Buffer,
+  formType: string,
+) {
   const pdf = await PDFDocument.load(pdfBytes);
-  const page = pdf.addPage();
-  const { height } = page.getSize();
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  let y = height - 48;
+  const font = await pdf.embedFont(StandardFonts.Courier);
+  const pages = pdf.getPages();
 
-  page.drawText("FQX Sign Online fields", {
-    x: 48,
-    y,
-    size: 14,
-    font: bold,
-    color: rgb(0.12, 0.16, 0.22),
-  });
-  y -= 22;
-  page.drawText(
-    "Complete these fields in FQX. Each party’s witness must be physically present.",
-    {
-      x: 48,
-      y,
-      size: 10,
-      font,
-      color: rgb(0.25, 0.28, 0.32),
-    },
-  );
-  y -= 28;
-
-  for (const [label, tag] of TAGS) {
-    page.drawText(label, {
-      x: 48,
-      y,
-      size: 10,
-      font: bold,
-      color: rgb(0.12, 0.16, 0.22),
-    });
-    y -= 16;
-    page.drawText(tag, {
-      x: 48,
-      y,
-      size: 11,
-      font,
-      color: rgb(0.12, 0.16, 0.22),
-    });
-    y -= 28;
-    if (y < 64) {
-      break;
+  for (const item of pandadocSigningTagsForForm(formType)) {
+    const page = pages[item.page];
+    if (!page) {
+      continue;
     }
+    page.drawText(item.tag, {
+      x: item.x,
+      y: item.y,
+      size: item.size ?? 6,
+      font,
+      color: rgb(0.12, 0.16, 0.22),
+    });
   }
 
   return Buffer.from(await pdf.save({ updateFieldAppearances: false }));

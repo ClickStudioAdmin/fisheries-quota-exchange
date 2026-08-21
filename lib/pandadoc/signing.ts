@@ -68,7 +68,10 @@ export async function sendUnsignedPdfToPandaDoc(input: {
     );
   }
 
-  const pdf = await addPandadocSigningFields(input.pdf);
+  const pdf = await addPandadocSigningFields(
+    input.pdf,
+    input.workspace.process.formType ?? "FDU1465",
+  );
   const client = input.client ?? createPandaDocClient();
   const created = await client.createDocumentFromPdf({
     name: `FQX order ${input.workspace.order.id} ${input.workspace.process.formType ?? "transfer"}`,

@@ -141,12 +141,10 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
           fields: {
             sellerSig: { value: "", role: PANDADOC_SELLER_ROLE },
             sellerDate: { value: "", role: PANDADOC_SELLER_ROLE },
-            sellerPrinted: { value: "", role: PANDADOC_SELLER_ROLE },
             sellerWitnessSig: { value: "", role: PANDADOC_SELLER_ROLE },
             sellerWitnessName: { value: "", role: PANDADOC_SELLER_ROLE },
             buyerSig: { value: "", role: PANDADOC_BUYER_ROLE },
             buyerDate: { value: "", role: PANDADOC_BUYER_ROLE },
-            buyerPrinted: { value: "", role: PANDADOC_BUYER_ROLE },
             buyerWitnessSig: { value: "", role: PANDADOC_BUYER_ROLE },
             buyerWitnessName: { value: "", role: PANDADOC_BUYER_ROLE },
           },
