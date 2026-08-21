@@ -4,7 +4,7 @@ Master development specification, version 3.2.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 10 — Queensland transfer process (foundation). See [phase-10.md](phase-10.md).
+Current implementation phase: Phase 10 complete. Further work waits for a new phase document under `docs/`. See [phase-10.md](phase-10.md).
 
 ## Development philosophy
 
@@ -217,7 +217,7 @@ Stripe Connect in test mode behind a `PaymentProvider` abstraction. Separate cha
 
 Jurisdiction-specific transfer after payment and compliance. Queensland sales and leases generate stored application PDFs from business details. The seller signs first and uploads; admin checks that file before the buyer can download it; admin records Fisheries Queensland submission. Other jurisdictions keep simulated transfer. Approved QLD applications hand off to existing `simulate_transfer` and settlement. No live e-sign and no FQ API.
 
-See [phase-10.md](phase-10.md).
+**Complete.** See [phase-10.md](phase-10.md).
 
 ## 30. Later phases
 

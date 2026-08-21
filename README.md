@@ -6,9 +6,9 @@ GitHub is the source of truth. The hosted database and Vercel deployment are not
 
 ## Current phase
 
-**Phase 10 — Queensland transfer process (foundation)**
+**Phase 10 — Queensland transfer process (foundation)** is complete.
 
-See [docs/phase-10.md](docs/phase-10.md). Phase 9 (Stripe test payments) is complete.
+See [docs/phase-10.md](docs/phase-10.md). Further work waits for a new phase document under `docs/`.
 
 Work happens on `develop`. Merge to `main` for production. See [docs/environments.md](docs/environments.md).
 

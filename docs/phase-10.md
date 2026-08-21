@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress. Work only on this phase until acceptance criteria pass.
+Complete. Do not extend this phase. Further work waits for a new phase document under `docs/`. Refinements to this foundation may follow in a later phase.
 
 ## Purpose
 
