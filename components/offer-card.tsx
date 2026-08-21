@@ -139,7 +139,10 @@ export function OfferCard({
   const logoFishery =
     fishery ??
     (hideFishery ? null : { name: listing.fishery_name, logo_path: null });
-  const showMeta = showFisheryLink || usage != null;
+  const showMeta =
+    showFisheryLink ||
+    usage != null ||
+    Boolean(metaLabel && metaValue != null);
   const TitleTag = href ? "p" : "h1";
   const titleClassName = href
     ? "min-w-0 text-lg font-semibold tracking-tight text-ink sm:text-xl"
@@ -185,7 +188,7 @@ export function OfferCard({
           {badges}
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <OfferStat
           label="Quantity"
           value={formatQuantity(listing.quantity)}
@@ -200,9 +203,6 @@ export function OfferCard({
               : `/ ${unitPriceSuffix(listing.unit_label)}`
           }
         />
-        {metaLabel && metaValue != null ? (
-          <MetaBlock label={metaLabel} value={metaValue} />
-        ) : null}
         <OfferStat
           label={totalLabel}
           value={
@@ -236,9 +236,9 @@ export function OfferCard({
           headerAndStats
         )}
         {showMeta ? (
-          <div className="mt-4 grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 items-end gap-4 sm:grid-cols-3">
             {usage ? (
-              <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1 sm:col-start-3">
+              <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1">
                 <MetaBlock
                   label="Unused"
                   value={quantityWithUnit(usage.unused, listing.unit_label)}
@@ -249,12 +249,17 @@ export function OfferCard({
                 />
               </div>
             ) : (
-              <span className="sm:col-start-3" />
+              <span />
+            )}
+            {metaLabel && metaValue != null ? (
+              <MetaBlock label={metaLabel} value={metaValue} />
+            ) : (
+              <span />
             )}
             {showFisheryLink ? (
               <Link
                 href={`/fisheries/${fisheryId}`}
-                className="justify-self-end text-sm underline sm:col-start-4"
+                className="justify-self-end text-sm underline"
               >
                 View fishery
               </Link>
