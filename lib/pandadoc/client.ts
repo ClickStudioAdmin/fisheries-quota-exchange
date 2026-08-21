@@ -19,6 +19,7 @@ export type PandaDocRecipient = {
 export type PandaDocDocumentDetails = {
   id: string;
   status: string;
+  fieldCount: number;
   recipients: Array<{
     email: string;
     role: string | null;
@@ -59,9 +60,11 @@ function mapDocument(payload: unknown): PandaDocDocumentDetails {
   }
 
   const recipientsRaw = Array.isArray(row?.recipients) ? row.recipients : [];
+  const fieldsRaw = Array.isArray(row?.fields) ? row.fields : [];
   return {
     id,
     status,
+    fieldCount: fieldsRaw.length,
     recipients: recipientsRaw.flatMap((item) => {
       const recipient = asRecord(item);
       const email = asString(recipient?.email);
@@ -209,7 +212,7 @@ export function createPandaDocClient(apiKey = getPandaDocEnv()?.apiKey): PandaDo
 
     async getDocument(documentId) {
       return mapDocument(
-        await pandaDocRequest(apiKey, `/documents/${documentId}`),
+        await pandaDocRequest(apiKey, `/documents/${documentId}/details`),
       );
     },
 

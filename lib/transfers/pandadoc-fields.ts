@@ -9,25 +9,25 @@ type SigningTag = {
 };
 
 const SALE_TAGS: SigningTag[] = [
-  { page: 2, x: 51, y: 332, tag: "[signature:Seller:sellerSig___]" },
-  { page: 2, x: 175, y: 332, tag: "[textfield:Seller:sellerWitnessName___]" },
-  { page: 2, x: 337, y: 332, tag: "[signature:Seller:sellerWitnessSig___]" },
-  { page: 2, x: 487, y: 332, tag: "[date:Seller:sellerDate___]" },
-  { page: 2, x: 51, y: 158, tag: "[signature:Buyer:buyerSig___]" },
-  { page: 2, x: 175, y: 158, tag: "[textfield:Buyer:buyerWitnessName___]" },
-  { page: 2, x: 337, y: 158, tag: "[signature:Buyer:buyerWitnessSig___]" },
-  { page: 2, x: 487, y: 158, tag: "[date:Buyer:buyerDate___]" },
+  { page: 2, x: 48, y: 328, size: 8, tag: "[signature:Seller:sellerSig_____________]" },
+  { page: 2, x: 170, y: 328, size: 7, tag: "[textfield:Seller:sellerWitnessName_______]" },
+  { page: 2, x: 330, y: 328, size: 8, tag: "[signature:Seller:sellerWitnessSig________]" },
+  { page: 2, x: 480, y: 328, size: 7, tag: "[date:Seller:sellerDate____]" },
+  { page: 2, x: 48, y: 154, size: 8, tag: "[signature:Buyer:buyerSig_____________]" },
+  { page: 2, x: 170, y: 154, size: 7, tag: "[textfield:Buyer:buyerWitnessName_______]" },
+  { page: 2, x: 330, y: 154, size: 8, tag: "[signature:Buyer:buyerWitnessSig________]" },
+  { page: 2, x: 480, y: 154, size: 7, tag: "[date:Buyer:buyerDate____]" },
 ];
 
 const LEASE_TAGS: SigningTag[] = [
-  { page: 3, x: 86, y: 404, tag: "[signature:Seller:sellerSig___]" },
-  { page: 3, x: 206, y: 404, size: 5, tag: "[signature:Seller:sellerWitnessSig___]" },
-  { page: 3, x: 275, y: 404, tag: "[textfield:Seller:sellerWitnessName___]" },
-  { page: 3, x: 474, y: 405, tag: "[date:Seller:sellerDate___]" },
-  { page: 3, x: 87, y: 177, tag: "[signature:Buyer:buyerSig___]" },
-  { page: 3, x: 207, y: 177, size: 5, tag: "[signature:Buyer:buyerWitnessSig___]" },
-  { page: 3, x: 272, y: 177, tag: "[textfield:Buyer:buyerWitnessName___]" },
-  { page: 3, x: 473, y: 178, tag: "[date:Buyer:buyerDate___]" },
+  { page: 3, x: 82, y: 400, size: 8, tag: "[signature:Seller:sellerSig_____________]" },
+  { page: 3, x: 200, y: 400, size: 7, tag: "[signature:Seller:sellerWitnessSig________]" },
+  { page: 3, x: 268, y: 400, size: 7, tag: "[textfield:Seller:sellerWitnessName_______]" },
+  { page: 3, x: 468, y: 401, size: 7, tag: "[date:Seller:sellerDate____]" },
+  { page: 3, x: 83, y: 173, size: 8, tag: "[signature:Buyer:buyerSig_____________]" },
+  { page: 3, x: 201, y: 173, size: 7, tag: "[signature:Buyer:buyerWitnessSig________]" },
+  { page: 3, x: 266, y: 173, size: 7, tag: "[textfield:Buyer:buyerWitnessName_______]" },
+  { page: 3, x: 467, y: 174, size: 7, tag: "[date:Buyer:buyerDate____]" },
 ];
 
 export function pandadocSigningTagsForForm(formType: string) {
@@ -55,7 +55,8 @@ export async function addPandadocSigningFields(
       y: item.y,
       size: item.size ?? 6,
       font,
-      color: rgb(0.12, 0.16, 0.22),
+      // Match the page so tags are parsed but do not show as dark text.
+      color: rgb(1, 1, 1),
     });
   }
 

@@ -85,6 +85,12 @@ export async function sendUnsignedPdfToPandaDoc(input: {
     recipients: [seller, buyer],
   });
   await client.waitUntilDraft(created.id);
+  const drafted = await client.getDocument(created.id);
+  if (drafted.fieldCount < 1) {
+    throw new Error(
+      "PandaDoc prepared the PDF but did not create signing fields. Regenerate, or check the field tags on the application.",
+    );
+  }
   await client.sendSilent(created.id);
   return { documentId: created.id, status: "document.sent" };
 }
