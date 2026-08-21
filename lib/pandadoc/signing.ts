@@ -14,6 +14,7 @@ import {
   PANDADOC_BUYER_ROLE,
   PANDADOC_SELLER_ROLE,
   recipientIdForRole,
+  recipientIdForEmail,
   recipientRoleFromEmail,
   type PandaDocClient,
   type PandaDocDocumentDetails,
@@ -82,11 +83,20 @@ export async function sendUnsignedPdfToPandaDoc(input: {
     recipients: [seller, buyer],
   });
   const draft = await client.waitUntilDraft(created.id);
-  const sellerRecipientId = recipientIdForRole(draft, PANDADOC_SELLER_ROLE);
-  const buyerRecipientId = recipientIdForRole(draft, PANDADOC_BUYER_ROLE);
+  const sellerRecipientId =
+    recipientIdForRole(draft, PANDADOC_SELLER_ROLE) ??
+    recipientIdForEmail(draft, seller.email);
+  const buyerRecipientId =
+    recipientIdForRole(draft, PANDADOC_BUYER_ROLE) ??
+    recipientIdForEmail(draft, buyer.email);
   if (!sellerRecipientId || !buyerRecipientId) {
+    const listed = draft.recipients
+      .map((item) => `${item.email}${item.role ? ` (${item.role})` : ""}`)
+      .join(", ");
     throw new Error(
-      "PandaDoc did not return Seller and Buyer recipients for signing fields.",
+      listed
+        ? `PandaDoc recipients did not match Seller/Buyer (${listed}).`
+        : "PandaDoc did not return Seller and Buyer recipients for signing fields.",
     );
   }
 

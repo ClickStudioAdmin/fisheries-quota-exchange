@@ -85,16 +85,20 @@ function mapDocument(payload: unknown): PandaDocDocumentDetails {
       const roles = Array.isArray(recipient?.roles)
         ? recipient.roles.map(String)
         : [];
+      const roleFromList = roles.find(
+        (item) =>
+          item === PANDADOC_SELLER_ROLE || item === PANDADOC_BUYER_ROLE,
+      );
       const role =
         asString(recipient?.role) ??
-        (roles.includes(PANDADOC_SELLER_ROLE)
-          ? PANDADOC_SELLER_ROLE
-          : roles.includes(PANDADOC_BUYER_ROLE)
-            ? PANDADOC_BUYER_ROLE
-            : roles[0] ?? null);
+        roleFromList ??
+        (roles[0] ? String(roles[0]) : null);
       return [
         {
-          id: asString(recipient?.id),
+          id:
+            asString(recipient?.id) ??
+            asString(recipient?.recipient_id) ??
+            asString(recipient?.uuid),
           email,
           role,
           has_completed: Boolean(recipient?.has_completed),
@@ -278,5 +282,17 @@ export function recipientIdForRole(
 ) {
   return (
     document.recipients.find((item) => item.role === role)?.id ?? null
+  );
+}
+
+export function recipientIdForEmail(
+  document: PandaDocDocumentDetails,
+  email: string,
+) {
+  const needle = email.trim().toLowerCase();
+  return (
+    document.recipients.find(
+      (item) => item.email.trim().toLowerCase() === needle,
+    )?.id ?? null
   );
 }
