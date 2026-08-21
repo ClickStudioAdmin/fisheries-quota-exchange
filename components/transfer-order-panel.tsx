@@ -184,22 +184,6 @@ export function TransferOrderPanel({
               label="Upload completed pack"
             />
           ) : null}
-          {sellerSignOnline || buyerSignOnline ? (
-            <SignOnlineForm orderId={workspace.order.id} />
-          ) : null}
-          {pandadoc &&
-          status === "AWAITING_SIGNATURES" &&
-          ((isSeller && workspace.application?.pandadoc_seller_completed_at) ||
-            (isBuyer && workspace.application?.pandadoc_buyer_completed_at)) ? (
-            <p className="mt-4 text-sm text-ink-muted">
-              FQX has your signature
-              {isSeller && !workspace.application?.pandadoc_buyer_completed_at
-                ? " and is waiting for the buyer."
-                : isBuyer && !workspace.application?.pandadoc_seller_completed_at
-                  ? " and is waiting for the seller."
-                  : "."}
-            </p>
-          ) : null}
           {canPrepare &&
           isSeller &&
           (status === "ACTION_REQUIRED" ||
@@ -209,6 +193,24 @@ export function TransferOrderPanel({
             </div>
           ) : null}
         </div>
+      ) : null}
+      {sellerSignOnline || buyerSignOnline ? (
+        <div className="mt-6">
+          <SignOnlineForm orderId={workspace.order.id} />
+        </div>
+      ) : null}
+      {pandadoc &&
+      status === "AWAITING_SIGNATURES" &&
+      ((isSeller && workspace.application?.pandadoc_seller_completed_at) ||
+        (isBuyer && workspace.application?.pandadoc_buyer_completed_at)) ? (
+        <p className="mt-4 text-sm text-ink-muted">
+          FQX has your signature
+          {isSeller && !workspace.application?.pandadoc_buyer_completed_at
+            ? " and is waiting for the buyer."
+            : isBuyer && !workspace.application?.pandadoc_seller_completed_at
+              ? " and is waiting for the seller."
+              : "."}
+        </p>
       ) : null}
       {isBuyer &&
       !pandadoc &&
