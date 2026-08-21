@@ -7,11 +7,11 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Work only on the current phase. Phase 10 is complete. See [docs/phase-10.md](docs/phase-10.md). Further feature work waits for a new phase document under `docs/`.
+Work only on the current phase. The current phase is Phase 11. See [docs/phase-11.md](docs/phase-11.md). Phase 10 is complete.
 
 Do feature work on `develop`. Merge to `main` only when the user is ready for production.
 
-Phase 10 delivered a jurisdiction transfer adapter, Queensland profile fields, generated and stored application PDFs, admin review of an offline signed pack, and manual Fisheries Queensland tracking. Do not add live e-sign, an FQ API, live Stripe keys, seller bank payouts, refund/chargeback workflows, or other jurisdictions’ real processes unless a new phase document asks for that work. Never trust the browser for payment status, bid time, quota availability, or transfer outcome. Never delete quota ledger rows.
+Phase 11 adds PandaDoc online signing as an alternate Queensland channel, with parallel buyer and seller signing. Do not change or remove the Phase 10 offline pack flow. Do not add an FQ API, live Stripe keys, seller bank payouts, refund/chargeback workflows, or other jurisdictions’ real processes. Never trust the browser, a PandaDoc iframe, or a return URL for payment status, bid time, quota availability, signature completion, or transfer outcome. Never delete quota ledger rows.
 
 Do not create later-phase tables or speculative architecture.
 

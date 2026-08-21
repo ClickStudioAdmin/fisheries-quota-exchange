@@ -1,10 +1,10 @@
 # Fisheries Quota Exchange (FQX)
 
-Master development specification, version 3.2.
+Master development specification, version 3.3.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 10 complete. Further work waits for a new phase document under `docs/`. See [phase-10.md](phase-10.md).
+Current implementation phase: Phase 11 — Queensland online signing (PandaDoc). See [phase-11.md](phase-11.md). Phase 10 is complete.
 
 ## Development philosophy
 
@@ -219,13 +219,19 @@ Jurisdiction-specific transfer after payment and compliance. Queensland sales an
 
 **Complete.** See [phase-10.md](phase-10.md).
 
-## 30. Later phases
+## 30. Phase 11 — Queensland online signing (PandaDoc)
 
-Phases after 10 are not pre-planned. A new phase starts only when its objective, scope, and acceptance criteria are written under `docs/`.
+Alternate Queensland signing channel using PandaDoc sandbox. The Phase 10 offline pack stays a fully separate, unchanged flow. Admins set a default channel and choose Offline or PandaDoc per order during compliance. FQX still generates the official PDF; PandaDoc is for signatures only. Buyer and seller sign in parallel. Webhooks are the source of truth. After a sealed PDF is stored, Fisheries Queensland tracking and `simulate_transfer` are unchanged.
 
-Do not implement a previously sketched Phase 11+ (live e-sign, FQ portal/API, other jurisdictions’ real processes, settlement ledger, seller bank payouts, market-data expansion, closed beta, public launch, or exchange matching) unless a new phase document asks for that work.
+See [phase-11.md](phase-11.md).
 
-## 31. Long-term architecture
+## 31. Later phases
+
+Phases after 11 are not pre-planned. A new phase starts only when its objective, scope, and acceptance criteria are written under `docs/`.
+
+Do not implement a previously sketched later phase (FQ portal/API, other jurisdictions’ real processes, settlement ledger, seller bank payouts, market-data expansion, closed beta, public launch, or exchange matching) unless a new phase document asks for that work.
+
+## 32. Long-term architecture
 
 Every table must be justified by an actual feature. Do not create all tables during early phases.
 
@@ -233,6 +239,6 @@ Quota and financial ledgers are immutable. Never delete historical entries. Neve
 
 Never trust the browser for payment, bid, quota, balance, payout, settlement, or admin state.
 
-## 32. Cursor rules
+## 33. Cursor rules
 
 Project rules in `.cursor/rules/` enforce phase discipline, GitHub as source of truth, migration-only schema changes, secret handling, and the stop condition at the end of each phase.
