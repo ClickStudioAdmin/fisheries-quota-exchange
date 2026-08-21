@@ -223,6 +223,7 @@ export default async function ListingPage({
                 <EditListingPriceButton
                   title="Edit listing"
                   label="Edit listing"
+                  triggerClassName={buttonClassName}
                   listingId={listing.id}
                   unitLabel={listing.unit_label}
                   currentQuantity={listing.quantity}

@@ -104,10 +104,15 @@ export function EditListingForm({
 export function EditListingPriceButton({
   title,
   label,
+  triggerClassName,
   ...props
-}: EditListingFormProps & { title: string; label?: string }) {
+}: EditListingFormProps & {
+  title: string;
+  label?: string;
+  triggerClassName?: string;
+}) {
   return (
-    <TableModal title={title} label={label}>
+    <TableModal title={title} label={label} triggerClassName={triggerClassName}>
       {(close) => <EditListingForm {...props} onSaved={close} />}
     </TableModal>
   );
