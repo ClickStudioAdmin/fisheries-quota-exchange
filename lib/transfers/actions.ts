@@ -17,6 +17,7 @@ import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getActiveOrganisation } from "@/lib/organisations/active-session";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { isPandaDocConfigured } from "@/lib/pandadoc/env";
 import { pandadocApiRecipientEmail } from "@/lib/pandadoc/sandbox-recipients";
 import {
   notifySignOnlineAfterGenerate,

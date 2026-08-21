@@ -1,14 +1,4 @@
-export function pandadocApiRecipientEmail(
-  role: "Seller" | "Buyer",
-  realEmail: string,
-) {
-  const sandbox = getPandaDocSandboxRecipients();
-  if (!sandbox) {
-    return realEmail;
-  }
-
-  return role === "Seller" ? sandbox.sellerEmail : sandbox.buyerEmail;
-}
+export function plusTaggedSandboxEmails(email: string) {
   const at = email.lastIndexOf("@");
   if (at <= 0 || at === email.length - 1) {
     return null;
@@ -38,7 +28,7 @@ export function getPandaDocSandboxRecipients() {
 }
 
 export function pandadocApiRecipientEmail(
-  role: typeof PANDADOC_SELLER_ROLE | typeof PANDADOC_BUYER_ROLE,
+  role: "Seller" | "Buyer",
   realEmail: string,
 ) {
   const sandbox = getPandaDocSandboxRecipients();
@@ -46,7 +36,5 @@ export function pandadocApiRecipientEmail(
     return realEmail;
   }
 
-  return role === PANDADOC_SELLER_ROLE
-    ? sandbox.sellerEmail
-    : sandbox.buyerEmail;
+  return role === "Seller" ? sandbox.sellerEmail : sandbox.buyerEmail;
 }
