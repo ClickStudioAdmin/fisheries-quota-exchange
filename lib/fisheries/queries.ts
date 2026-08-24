@@ -4,12 +4,17 @@ import type {
   Jurisdiction,
   QuotaHolding,
   QuotaLedgerEntry,
+  CustodyReleaseRequest,
 } from "@/lib/fisheries/types";
-import { isHoldingVerificationStatus } from "@/lib/fisheries/types";
+import {
+  isHoldingVerificationStatus,
+  isHoldingCustodyKind,
+  isCustodyReleaseStatus,
+} from "@/lib/fisheries/types";
 import { parseComplianceChecklist } from "@/lib/orders/checklist";
 
 const HOLDING_COLUMNS =
-  "id, organisation_id, fishery_id, quantity, verification_status, verification_checklist";
+  "id, organisation_id, fishery_id, quantity, custody_kind, verification_status, verification_checklist";
 
 function mapHolding(row: Record<string, unknown> | null): QuotaHolding | null {
   if (!row) {
@@ -17,7 +22,11 @@ function mapHolding(row: Record<string, unknown> | null): QuotaHolding | null {
   }
 
   const status = String(row.verification_status ?? "");
+  const custody = String(row.custody_kind ?? "MEMBER");
   if (!isHoldingVerificationStatus(status)) {
+    return null;
+  }
+  if (!isHoldingCustodyKind(custody)) {
     return null;
   }
 
@@ -26,6 +35,7 @@ function mapHolding(row: Record<string, unknown> | null): QuotaHolding | null {
     organisation_id: Number(row.organisation_id),
     fishery_id: Number(row.fishery_id),
     quantity: String(row.quantity),
+    custody_kind: custody,
     verification_status: status,
     verification_checklist: parseComplianceChecklist(
       row.verification_checklist,
@@ -230,4 +240,96 @@ export async function listAllHoldings() {
     )
     .order("id", { ascending: false });
   return mapHoldings(data);
+}
+
+const CUSTODY_RELEASE_COLUMNS =
+  "id, organisation_id, holding_id, quantity, status, fishnet_reference, admin_notes, created_by_email, completed_by_email, created_at, completed_at, cancelled_at";
+
+function mapCustodyRelease(
+  row: Record<string, unknown> | null,
+): CustodyReleaseRequest | null {
+  if (!row) {
+    return null;
+  }
+
+  const status = String(row.status ?? "");
+  if (!isCustodyReleaseStatus(status)) {
+    return null;
+  }
+
+  return {
+    id: Number(row.id),
+    organisation_id: Number(row.organisation_id),
+    holding_id: Number(row.holding_id),
+    quantity: String(row.quantity),
+    status,
+    fishnet_reference: (row.fishnet_reference as string | null) ?? null,
+    admin_notes: (row.admin_notes as string | null) ?? null,
+    created_by_email: (row.created_by_email as string | null) ?? null,
+    completed_by_email: (row.completed_by_email as string | null) ?? null,
+    created_at: String(row.created_at),
+    completed_at: (row.completed_at as string | null) ?? null,
+    cancelled_at: (row.cancelled_at as string | null) ?? null,
+  };
+}
+
+function mapCustodyReleases(data: unknown): CustodyReleaseRequest[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map((row) =>
+      row && typeof row === "object"
+        ? mapCustodyRelease(row as Record<string, unknown>)
+        : null,
+    )
+    .filter((row): row is CustodyReleaseRequest => row != null);
+}
+
+export async function listCustodyReleaseRequestsForHolding(holdingId: number) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("custody_release_requests")
+    .select(CUSTODY_RELEASE_COLUMNS)
+    .eq("holding_id", holdingId)
+    .order("id", { ascending: false });
+  return mapCustodyReleases(data);
+}
+
+export async function listPendingCustodyReleaseRequestsForOrganisation(
+  organisationId: number,
+) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("custody_release_requests")
+    .select(CUSTODY_RELEASE_COLUMNS)
+    .eq("organisation_id", organisationId)
+    .eq("status", "PENDING")
+    .order("id", { ascending: false });
+  return mapCustodyReleases(data);
+}
+
+export async function listAllPendingCustodyReleaseRequests() {
+  const supabase = await createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("custody_release_requests")
+    .select(CUSTODY_RELEASE_COLUMNS)
+    .eq("status", "PENDING")
+    .order("id", { ascending: false });
+  return mapCustodyReleases(data);
+}
+
+export async function getCustodyReleaseRequest(id: number) {
+  const supabase = await createClient();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("custody_release_requests")
+    .select(CUSTODY_RELEASE_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  return mapCustodyRelease((data as Record<string, unknown> | null) ?? null);
 }

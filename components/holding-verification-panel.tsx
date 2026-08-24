@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { VerifyHoldingForm } from "@/components/verify-holding-form";
 import { ReviewChecklistForm } from "@/components/review-checklist-form";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { LabeledFieldGroups, LabeledFields, panelClassName } from "@/components/surface";
-import { saveHoldingVerificationChecklistAction } from "@/lib/fisheries/actions";
+import {
+  cancelCustodialHoldingAction,
+  saveHoldingVerificationChecklistAction,
+} from "@/lib/fisheries/actions";
 import {
   jurisdictionLabel,
   quantityTypeLabel,
+  holdingCustodyLabel,
+  holdingIsCustodial,
 } from "@/lib/fisheries/types";
+import { tableSecondaryButtonClassName } from "@/components/auth-card";
 import { getHoldingVerificationWorkspace } from "@/lib/fisheries/verification";
 import { formatIsoDate, formatTableDateTime } from "@/lib/format";
 import { formatAustralianAddress } from "@/lib/organisations/address";
@@ -47,6 +54,7 @@ export async function HoldingVerificationPanel({
   } = workspace;
   const qld = tradeRequiresQldProfile(jurisdiction?.code);
   const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "units";
+  const custodial = holdingIsCustodial(holding);
   const company = organisation?.entity_kind === "COMPANY";
   const recentLedger = ledger.slice(-5).reverse();
 
@@ -67,6 +75,10 @@ export async function HoldingVerificationPanel({
                 {
                   label: "Jurisdiction",
                   value: jurisdictionLabel(jurisdiction),
+                },
+                {
+                  label: "Custody",
+                  value: holdingCustodyLabel(holding.custody_kind),
                 },
                 {
                   label: "Quantity",
@@ -96,11 +108,16 @@ export async function HoldingVerificationPanel({
         </section>
         <section className={panelClassName}>
           <h3 className="text-lg font-semibold text-ink">
-            {qld ? "Queensland checks" : "Verification checks"}
+            {custodial
+              ? "Custodial inbound checks"
+              : qld
+                ? "Queensland checks"
+                : "Verification checks"}
           </h3>
           <p className="mt-1 text-sm text-ink-muted">
-            Work through these steps against the authority record. Save
-            progress if you need to come back.
+            {custodial
+              ? "Confirm the temporary FishNet transfer into FQX custody. FQX does not own this quota."
+              : "Work through these steps against the authority record. Save progress if you need to come back."}
           </p>
           <div className="mt-4">
             <ReviewChecklistForm
@@ -215,6 +232,24 @@ export async function HoldingVerificationPanel({
       </div>
       <section id="review-decision" className={panelClassName}>
         <h3 className="text-lg font-semibold text-ink">Decision</h3>
+        {custodial ? (
+          <form action={cancelCustodialHoldingAction} className="mb-6 space-y-3">
+            <input type="hidden" name="holding_id" value={holding.id} />
+            <h4 className="text-sm font-semibold text-ink">
+              Cancel pending custodial inbound
+            </h4>
+            <p className="text-sm text-ink-muted">
+              Use when the temporary FishNet transfer never arrived. The member
+              is notified.
+            </p>
+            <PendingSubmitButton
+              className={tableSecondaryButtonClassName}
+              pendingLabel="Cancelling…"
+            >
+              Cancel custodial request
+            </PendingSubmitButton>
+          </form>
+        ) : null}
         <div className="mt-4">
           <VerifyHoldingForm
             holdingId={holding.id}

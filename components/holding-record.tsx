@@ -13,14 +13,20 @@ import { LedgerTable } from "@/components/ledger-table";
 import { LabeledFields } from "@/components/surface";
 import { TableModal } from "@/components/table-modal";
 import { HoldingVerificationPanel } from "@/components/holding-verification-panel";
+import { CustodyReleaseForm } from "@/components/custody-release-form";
+import { CustodyReleaseAdminPanel } from "@/components/custody-release-admin-panel";
 import {
   getFishery,
+  listCustodyReleaseRequestsForHolding,
   listHoldingCommitments,
   listJurisdictions,
   listLedger,
 } from "@/lib/fisheries/queries";
 import {
   fisherySelectLabel,
+  holdingCustodyLabel,
+  holdingIsCancelled,
+  holdingIsCustodial,
   holdingIsVerified,
   holdingVerificationLabel,
   jurisdictionLabel,
@@ -81,6 +87,7 @@ export async function HoldingRecord({
     orders,
     prices,
     sellError,
+    releaseRequests,
   ] = await Promise.all([
     getFishery(holding.fishery_id),
     listJurisdictions(),
@@ -94,6 +101,7 @@ export async function HoldingRecord({
     variant === "account"
       ? organisationCanSellError(holding.organisation_id)
       : Promise.resolve(null),
+    listCustodyReleaseRequestsForHolding(holding.id),
   ]);
   const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "units";
   const transferApplications = await listTransferApplicationsByOrderIds(
@@ -121,6 +129,11 @@ export async function HoldingRecord({
       : [];
   const detailsIncomplete = detailsMissing.length > 0;
   const listingBlocked = Boolean(sellError) || detailsIncomplete;
+  const custodial = holdingIsCustodial(holding);
+  const cancelled = holdingIsCancelled(holding);
+  const pendingReleaseQuantity = releaseRequests
+    .filter((item) => item.status === "PENDING")
+    .reduce((sum, item) => sum + Number(item.quantity), 0);
 
   return (
     <div className="space-y-10">
@@ -138,6 +151,9 @@ export async function HoldingRecord({
             <p className="mt-2 text-sm text-ink-muted">
               Holding {holding.id}. Quantity changes are recorded on the ledger
               below.
+              {custodial
+                ? " This is temporary FQX custodianship — FQX does not own the quota."
+                : null}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -190,6 +206,10 @@ export async function HoldingRecord({
                 value: fishery?.code ?? "—",
               },
               {
+                label: "Custody",
+                value: holdingCustodyLabel(holding.custody_kind),
+              },
+              {
                 label: "Quantity type",
                 value: unit,
               },
@@ -216,7 +236,7 @@ export async function HoldingRecord({
             ]}
           />
         </div>
-        {canManage && verified && available > 0 ? (
+        {canManage && verified && !cancelled && available > 0 ? (
           <div className="mt-4 space-y-3">
             {detailsIncomplete ? (
               <BusinessDetailsRequiredNotice
@@ -257,18 +277,41 @@ export async function HoldingRecord({
             </TableActionRow>
           </div>
         ) : null}
-        {canManage && verified && available <= 0 ? (
+        {canManage && verified && !cancelled && available <= 0 ? (
           <p className="mt-4 text-sm text-ink-muted">
             All of this holding is listed. Cancel a listing to list more, or
             increase the holding quantity.
           </p>
         ) : null}
-        {canManage && !verified ? (
+        {canManage && !verified && !cancelled ? (
           <p className="mt-4 text-sm text-ink-muted">
-            Waiting for admin verification before listing.
+            {custodial
+              ? "Waiting for FQX to verify the FishNet inbound transfer before listing a lease."
+              : "Waiting for admin verification before listing."}
           </p>
         ) : null}
       </div>
+
+      {custodial && verified && !cancelled ? (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-ink">Return custody</h2>
+          <CustodyReleaseForm
+            holdingId={holding.id}
+            unitLabel={unit}
+            maxQuantity={Number(holding.quantity) - listed}
+            pendingReleaseQuantity={pendingReleaseQuantity}
+            requests={releaseRequests}
+            canManage={canManage || variant === "admin"}
+          />
+        </section>
+      ) : null}
+
+      {variant === "admin" && custodial ? (
+        <CustodyReleaseAdminPanel
+          requests={releaseRequests}
+          unitLabel={unit}
+        />
+      ) : null}
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-ink">Ledger</h2>

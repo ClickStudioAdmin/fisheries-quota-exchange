@@ -17,6 +17,7 @@ export type AdminActionCounts = {
   holdings: number;
   listings: number;
   orders: number;
+  custody_releases: number;
   total: number;
 };
 
@@ -45,8 +46,8 @@ const ACTION_ORDER_STATUSES = [
   "AWAITING_TRANSFER",
 ] as const;
 
-function emptyOrgCounts(): MemberOrgActionCounts {
-  return { holdings: 0, listings: 0, orders: 0, overview: 0, total: 0 };
+function emptyAdminCounts(): AdminActionCounts {
+  return { holdings: 0, listings: 0, orders: 0, custody_releases: 0, total: 0 };
 }
 
 export function memberCountsForOrganisation(
@@ -66,8 +67,21 @@ export function memberCountsForOrganisation(
   };
 }
 
+function emptyOrgCounts(): MemberOrgActionCounts {
+  return { holdings: 0, listings: 0, orders: 0, overview: 0, total: 0 };
+}
+
 function finishOrgCounts(counts: MemberOrgActionCounts) {
   counts.total = counts.holdings + counts.listings + counts.orders;
+  return counts;
+}
+
+function finishAdminCounts(counts: AdminActionCounts) {
+  counts.total =
+    counts.holdings +
+    counts.listings +
+    counts.orders +
+    counts.custody_releases;
   return counts;
 }
 
@@ -106,27 +120,30 @@ function parseAdminActionCounts(data: unknown): AdminActionCounts | null {
   const holdingsCount = asCount(record.holdings);
   const listingsCount = asCount(record.listings);
   const ordersCount = asCount(record.orders);
+  const custodyReleasesCount = asCount(record.custody_releases);
 
   if (
     holdingsCount == null ||
     listingsCount == null ||
-    ordersCount == null
+    ordersCount == null ||
+    custodyReleasesCount == null
   ) {
     return null;
   }
 
-  return {
+  return finishAdminCounts({
     holdings: holdingsCount,
     listings: listingsCount,
     orders: ordersCount,
-    total: holdingsCount + listingsCount + ordersCount,
-  };
+    custody_releases: custodyReleasesCount,
+    total: 0,
+  });
 }
 
 async function countAdminActionsFromTables(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
 ): Promise<AdminActionCounts> {
-  const [holdings, listings, orders] = await Promise.all([
+  const [holdings, listings, orders, custodyReleases] = await Promise.all([
     supabase
       .from("quota_holdings")
       .select("id", { count: "exact", head: true })
@@ -139,23 +156,24 @@ async function countAdminActionsFromTables(
       .from("orders")
       .select("id", { count: "exact", head: true })
       .in("status", [...OPEN_ORDER_STATUSES]),
+    supabase
+      .from("custody_release_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "PENDING"),
   ]);
 
-  const holdingsCount = holdings.count ?? 0;
-  const listingsCount = listings.count ?? 0;
-  const ordersCount = orders.count ?? 0;
-
-  return {
-    holdings: holdingsCount,
-    listings: listingsCount,
-    orders: ordersCount,
-    total: holdingsCount + listingsCount + ordersCount,
-  };
+  return finishAdminCounts({
+    holdings: holdings.count ?? 0,
+    listings: listings.count ?? 0,
+    orders: orders.count ?? 0,
+    custody_releases: custodyReleases.count ?? 0,
+    total: 0,
+  });
 }
 
 export const getAdminActionCounts = cache(
   async (): Promise<AdminActionCounts> => {
-    const empty = { holdings: 0, listings: 0, orders: 0, total: 0 };
+    const empty = emptyAdminCounts();
     const supabase = await createClient();
 
     if (!supabase) {
@@ -200,20 +218,27 @@ export const getMemberActionCounts = cache(
     const [
       { data: holdings },
       { data: pendingListings },
+      { data: pendingReleases },
       { data: endedAuctions },
       { data: orderRows },
+      { data: orgHoldings },
       fisheries,
       jurisdictions,
     ] = await Promise.all([
       supabase
         .from("quota_holdings")
-        .select("organisation_id")
+        .select("id, organisation_id, fishery_id, custody_kind, verification_status")
         .eq("verification_status", "PENDING_VERIFICATION")
         .in("organisation_id", organisationIds),
       supabase
         .from("listings")
         .select("organisation_id")
         .eq("status", "PENDING_APPROVAL")
+        .in("organisation_id", organisationIds),
+      supabase
+        .from("custody_release_requests")
+        .select("id, organisation_id, holding_id, quantity")
+        .eq("status", "PENDING")
         .in("organisation_id", organisationIds),
       supabase
         .from("listings")
@@ -231,9 +256,16 @@ export const getMemberActionCounts = cache(
         .or(
           `buyer_organisation_id.in.(${organisationIds.join(",")}),seller_organisation_id.in.(${organisationIds.join(",")})`,
         ),
+      supabase
+        .from("quota_holdings")
+        .select("id, fishery_id")
+        .in("organisation_id", organisationIds),
       listFisheries(),
       listJurisdictions(),
     ]);
+    const holdingFisheryById = new Map(
+      (orgHoldings ?? []).map((row) => [Number(row.id), Number(row.fishery_id)]),
+    );
 
     const orders: NeedsAttentionOrder[] = (orderRows ?? []).flatMap((row) => {
       const id = Number(row.id);
@@ -318,6 +350,51 @@ export const getMemberActionCounts = cache(
       bumpOrg(byOrganisation, row.organisation_id, "listings");
     }
 
+    for (const row of pendingReleases ?? []) {
+      bumpOrg(byOrganisation, row.organisation_id, "holdings");
+    }
+
+    const attentionHoldings = (holdings ?? []).flatMap((row) => {
+      const id = Number(row.id);
+      const fishery = fisheries.find((item) => item.id === Number(row.fishery_id));
+      if (!Number.isInteger(id) || id <= 0) {
+        return [];
+      }
+
+      return [
+        {
+          id,
+          fishery_name: fishery?.name ?? "Holding",
+          custody_kind:
+            row.custody_kind === "FQX_CUSTODIAL"
+              ? ("FQX_CUSTODIAL" as const)
+              : ("MEMBER" as const),
+          verification_status: String(row.verification_status ?? ""),
+        },
+      ];
+    });
+    const attentionReleases = (pendingReleases ?? []).flatMap((row) => {
+      const id = Number(row.id);
+      const holdingId = Number(row.holding_id);
+      const organisationId = Number(row.organisation_id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return [];
+      }
+
+      const holdingFisheryId = holdingFisheryById.get(holdingId);
+      const fishery = fisheries.find((item) => item.id === holdingFisheryId);
+
+      return [
+        {
+          id,
+          organisation_id: organisationId,
+          holding_id: holdingId,
+          fishery_name: fishery?.name ?? "Holding",
+          quantity: String(row.quantity ?? ""),
+        },
+      ];
+    });
+
     for (const organisation of organisations) {
       if (!canBuyForOrganisation(organisation.role)) {
         continue;
@@ -326,8 +403,24 @@ export const getMemberActionCounts = cache(
       const items = organisationNeedsAttentionItems({
         organisationId: organisation.id,
         canManage: true,
-        orders,
-        listings,
+        orders: orders.filter(
+          (order) =>
+            order.buyer_organisation_id === organisation.id ||
+            order.seller_organisation_id === organisation.id,
+        ),
+        listings: listings.filter(
+          (listing) => listing.organisation_id === organisation.id,
+        ),
+        holdings: attentionHoldings.filter((holding) =>
+          (holdings ?? []).some(
+            (row) =>
+              Number(row.id) === holding.id &&
+              Number(row.organisation_id) === organisation.id,
+          ),
+        ),
+        custodyReleases: attentionReleases.filter(
+          (release) => release.organisation_id === organisation.id,
+        ),
         transferByOrderId,
         fisheries,
         jurisdictions,

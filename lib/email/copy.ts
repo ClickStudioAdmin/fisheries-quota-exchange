@@ -91,6 +91,84 @@ export const emailCopy = {
       ],
       { label: "View holding", url: input.holdingUrl },
     ),
+  custody_inbound_verified: (input: {
+    fisheryName: string;
+    holdingUrl: string;
+  }) =>
+    notice(
+      `Custodial quota verified: ${input.fisheryName}`,
+      [
+        "FQX has confirmed the temporary FishNet transfer into custody. FQX does not own this quota. You can list lease offerings from this holding when payments setup is complete.",
+      ],
+      { label: "View holding", url: input.holdingUrl },
+    ),
+  custody_inbound_cancelled: (input: {
+    fisheryName: string;
+    holdingUrl: string;
+  }) =>
+    notice(
+      `Custodial request cancelled: ${input.fisheryName}`,
+      [
+        "FQX cancelled the pending custodial inbound request because the temporary FishNet transfer was not received.",
+      ],
+      { label: "View holdings", url: input.holdingUrl },
+    ),
+  custody_release_completed: (input: {
+    fisheryName: string;
+    quantityLabel: string;
+    holdingUrl: string;
+  }) =>
+    notice(
+      `Custody release completed: ${input.fisheryName}`,
+      [
+        `FQX returned ${input.quantityLabel} from temporary custody to your member-held quota on FishNet.`,
+      ],
+      { label: "View holding", url: input.holdingUrl },
+    ),
+  custody_release_cancelled: (input: {
+    fisheryName: string;
+    holdingUrl: string;
+  }) =>
+    notice(
+      `Custody release cancelled: ${input.fisheryName}`,
+      [
+        "A pending custody release request was cancelled. The custodial quantity on FQX is unchanged.",
+      ],
+      { label: "View holding", url: input.holdingUrl },
+    ),
+  custody_inbound_requested: (input: {
+    holdingId: number;
+    adminUrl: string;
+  }) =>
+    notice(
+      `Custodial inbound pending: holding ${input.holdingId}`,
+      [
+        "A member requested temporary FishNet custodianship. Verify the inbound transfer on the admin holdings queue.",
+      ],
+      { label: "Review holdings", url: input.adminUrl },
+    ),
+  custody_release_requested: (input: {
+    requestId: number;
+    adminUrl: string;
+  }) =>
+    notice(
+      `Custody release pending: request ${input.requestId}`,
+      [
+        "A member requested return of custodial quota. Complete the FishNet instant transfer, then mark the request done.",
+      ],
+      { label: "Review holdings", url: input.adminUrl },
+    ),
+  lease_outbound_ready: (input: {
+    orderId: number;
+    adminUrl: string;
+  }) =>
+    notice(
+      `Lease outbound ready: order ${input.orderId}`,
+      [
+        "A Queensland lease order is paid and waiting for FishNet outbound from FQX custody. Complete the outbound checklist on the admin order workspace.",
+      ],
+      { label: "Review orders", url: input.adminUrl },
+    ),
   listing_submitted: (input: {
     fisheryName: string;
     listingUrl: string;

@@ -35,6 +35,7 @@ export const qldSaleProcess: JurisdictionTransferProcess = {
   formVersion: "V09/23",
   title: "Permanent transfer of quota and/or effort units (FDU1465)",
   usesSimulatedTransfer: false,
+  usesFishNetOutbound: false,
   requiredProfileFields: QLD_REQUIRED,
   complianceChecks: [
     ...QLD_SHARED_CHECKS,
@@ -42,23 +43,28 @@ export const qldSaleProcess: JurisdictionTransferProcess = {
     "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the completed pack is uploaded.",
   ],
   sellerPackChecks: QLD_SELLER_PACK_CHECKS,
+  outboundChecks: [],
 };
 
+/** QLD leases use temporary FQX FishNet custody — no FDU1469 paperwork. */
 export const qldLeaseProcess: JurisdictionTransferProcess = {
   code: "QLD_LEASE",
   jurisdictionCode: "QLD",
   offering: "LEASE",
-  formType: "FDU1469",
-  formVersion: "V02/26",
-  title: "Temporary transfer of quota and/or effort units (FDU1469)",
+  formType: null,
+  formVersion: null,
+  title: "Queensland custodial lease (FishNet outbound)",
   usesSimulatedTransfer: false,
+  usesFishNetOutbound: true,
   requiredProfileFields: QLD_REQUIRED,
-  complianceChecks: [
-    ...QLD_SHARED_CHECKS,
-    "After approval, FQX prepares an unsigned FDU1469 (V02/26) from these details. The seller signs and witnesses first, uploads it, and FQX checks that form before the buyer can access it. A checkbox is not a witness.",
-    "Do not record Fisheries Queensland submission at this step. That happens in Transfer after the completed pack is uploaded.",
+  complianceChecks: [],
+  sellerPackChecks: [],
+  outboundChecks: [
+    "Confirm payment has cleared for this lease order.",
+    "Confirm the custodial quantity on the seller holding still covers this order.",
+    "Confirm buyer identity and Queensland client / licence details for FishNet outbound.",
+    "Complete the temporary FishNet transfer from FQX custody to the buyer, then mark outbound complete. That settles the order and moves the quota ledger.",
   ],
-  sellerPackChecks: QLD_SELLER_PACK_CHECKS,
 };
 
 export const simulatedProcess: JurisdictionTransferProcess = {
@@ -69,6 +75,7 @@ export const simulatedProcess: JurisdictionTransferProcess = {
   formVersion: null,
   title: "Simulated authority transfer",
   usesSimulatedTransfer: true,
+  usesFishNetOutbound: false,
   requiredProfileFields: [],
   complianceChecks: [
     "Confirm buyer and seller identities match this order.",
@@ -76,6 +83,7 @@ export const simulatedProcess: JurisdictionTransferProcess = {
     "Quota is already reserved. Approving compliance starts the simulated transfer step, not a regulator submission.",
   ],
   sellerPackChecks: [],
+  outboundChecks: [],
 };
 
 export function getTransferProcess(

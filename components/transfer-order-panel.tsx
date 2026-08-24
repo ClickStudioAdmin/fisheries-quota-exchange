@@ -24,6 +24,10 @@ export function TransferOrderPanel({
     return null;
   }
 
+  if (workspace.process.usesFishNetOutbound) {
+    return null;
+  }
+
   const status = workspace.application?.status ?? "READY";
   const pandadoc = isPandadocChannel(workspace.application?.signing_channel);
   const isBuyer = viewerOrganisationId === workspace.order.buyer_organisation_id;

@@ -25,6 +25,7 @@ import { accountPaymentsPath } from "@/lib/organisations/paths";
 import type { Bid } from "@/lib/auctions/types";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getCustodyReleaseRequest, getFishery, getHolding } from "@/lib/fisheries/queries";
 import { getOrderJurisdictionCode } from "@/lib/transfers/queries";
 import { getTransferProcess } from "@/lib/transfers/registry";
 
@@ -385,7 +386,13 @@ export async function notifyPaymentReceived(order: Order) {
     orderUrl: `${siteUrl}/orders/${order.id}`,
   });
   await notifyBuyerAndSeller("payment_received", order, data);
-  await notifyOperatorOrderPending(order, siteUrl);
+  const jurisdictionCode = await getOrderJurisdictionCode(order);
+  const process = getTransferProcess(jurisdictionCode, order.offering);
+  if (process.usesFishNetOutbound && order.status === "AWAITING_TRANSFER") {
+    await notifyLeaseOutboundReady(order);
+  } else {
+    await notifyOperatorOrderPending(order, siteUrl);
+  }
 }
 
 export async function notifyBankDebitSubmitted(order: Order) {
@@ -561,7 +568,7 @@ export async function notifyTransferApplicationReady(
     orderUrl: `${siteUrl}/orders/${order.id}`,
     formTitle:
       order.offering === "LEASE"
-        ? "The Queensland FDU1469 temporary transfer application"
+        ? "The Queensland custodial lease paperwork"
         : "The Queensland FDU1465 transfer application",
   });
   await notifyAccountEmail(
@@ -592,7 +599,7 @@ export async function notifyTransferSignOnlineReady(
     orderUrl: `${siteUrl}/orders/${order.id}`,
     formTitle:
       order.offering === "LEASE"
-        ? "The Queensland FDU1469 temporary transfer application"
+        ? "The Queensland custodial lease paperwork"
         : "The Queensland FDU1465 transfer application",
   });
   await notifyBuyerAndSeller("transfer_sign_online_ready", order, data);
@@ -659,7 +666,7 @@ export async function notifyTransferBuyerFormReady(
     orderUrl: `${siteUrl}/orders/${order.id}`,
     formTitle:
       order.offering === "LEASE"
-        ? "The Queensland FDU1469 temporary transfer application"
+        ? "The Queensland custodial lease paperwork"
         : "The Queensland FDU1465 transfer application",
   });
   await notifyAccountEmail(
@@ -781,6 +788,113 @@ export async function notifyHoldingPending(holdingId: number) {
     emailCopy.operator_holding_pending({
       holdingId,
       adminUrl: `${siteUrl}/admin/holdings`,
+    }),
+  );
+}
+
+export async function notifyCustodyInboundRequested(holdingId: number) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyEmail(
+    "custody_inbound_requested",
+    await platformAdminEmails(),
+    emailCopy.custody_inbound_requested({
+      holdingId,
+      adminUrl: `${siteUrl}/admin/holdings`,
+    }),
+  );
+}
+
+export async function notifyCustodyInboundVerified(input: {
+  organisationId: number;
+  fisheryName: string;
+  holdingId: number;
+}) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "custody_inbound_verified",
+    input.organisationId,
+    emailCopy.custody_inbound_verified({
+      fisheryName: input.fisheryName,
+      holdingUrl: `${siteUrl}/dashboard/holdings/${input.holdingId}`,
+    }),
+  );
+}
+
+export async function notifyCustodyInboundCancelled(input: {
+  organisationId: number;
+  fisheryName: string;
+  holdingId: number;
+}) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "custody_inbound_cancelled",
+    input.organisationId,
+    emailCopy.custody_inbound_cancelled({
+      fisheryName: input.fisheryName,
+      holdingUrl: `${siteUrl}/dashboard/holdings`,
+    }),
+  );
+}
+
+export async function notifyCustodyReleaseRequested(requestId: number) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyEmail(
+    "custody_release_requested",
+    await platformAdminEmails(),
+    emailCopy.custody_release_requested({
+      requestId,
+      adminUrl: `${siteUrl}/admin/holdings`,
+    }),
+  );
+}
+
+export async function notifyCustodyReleaseCompleted(requestId: number) {
+  const request = await getCustodyReleaseRequest(requestId);
+  if (!request) {
+    return;
+  }
+
+  const holding = await getHolding(request.holding_id);
+  const fishery = holding ? await getFishery(holding.fishery_id) : null;
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "custody_release_completed",
+    request.organisation_id,
+    emailCopy.custody_release_completed({
+      fisheryName: fishery?.name ?? "Holding",
+      quantityLabel: `${request.quantity} ${fishery ? (fishery.quantity_type === "KG" ? "kg" : "units") : "units"}`,
+      holdingUrl: `${siteUrl}/dashboard/holdings/${request.holding_id}`,
+    }),
+  );
+}
+
+export async function notifyCustodyReleaseCancelled(requestId: number) {
+  const request = await getCustodyReleaseRequest(requestId);
+  if (!request) {
+    return;
+  }
+
+  const holding = await getHolding(request.holding_id);
+  const fishery = holding ? await getFishery(holding.fishery_id) : null;
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyAccountEmail(
+    "custody_release_cancelled",
+    request.organisation_id,
+    emailCopy.custody_release_cancelled({
+      fisheryName: fishery?.name ?? "Holding",
+      holdingUrl: `${siteUrl}/dashboard/holdings/${request.holding_id}`,
+    }),
+  );
+}
+
+export async function notifyLeaseOutboundReady(order: Order) {
+  const siteUrl = await siteUrlOrEmpty();
+  await notifyEmail(
+    "lease_outbound_ready",
+    await platformAdminEmails(),
+    emailCopy.lease_outbound_ready({
+      orderId: order.id,
+      adminUrl: `${siteUrl}/admin/orders`,
     }),
   );
 }

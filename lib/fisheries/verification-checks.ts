@@ -7,12 +7,25 @@ const SHARED_HOLDING_CHECKS = [
 
 const QLD_HOLDING_CHECKS = [
   "Confirm the business has a Queensland fisheries client number and primary commercial fishing licence on Business Settings → Details.",
-  "This check is not a Fisheries Queensland transfer. A later sale or lease still uses the Queensland transfer process.",
+  "This check is not a Fisheries Queensland transfer. A later sale still uses the Queensland transfer documents.",
+] as const;
+
+const QLD_CUSTODIAL_INBOUND_CHECKS = [
+  "Confirm this is a temporary FishNet transfer into FQX custody — FQX does not own this quota.",
+  "Confirm the fishery, quantity, and unit match what was transferred to FQX on FishNet.",
+  "Confirm the FishNet reference / transfer evidence for the inbound temporary transfer.",
+  "Confirm the business has a Queensland fisheries client number and primary commercial fishing licence on Business Settings → Details.",
+  "Verifying custodial inbound does not list the quota. The member lists lease offerings from this holding after it is verified.",
 ] as const;
 
 export function holdingVerificationChecks(
   jurisdictionCode: string | null | undefined,
+  custodyKind: "MEMBER" | "FQX_CUSTODIAL" = "MEMBER",
 ) {
+  if (custodyKind === "FQX_CUSTODIAL") {
+    return [...QLD_CUSTODIAL_INBOUND_CHECKS];
+  }
+
   if (jurisdictionCode === "QLD") {
     return [...SHARED_HOLDING_CHECKS, ...QLD_HOLDING_CHECKS];
   }

@@ -184,6 +184,13 @@ export async function generateTransferDocumentAction(
     return { error: "This fishery uses simulated transfer." };
   }
 
+  if (workspace.process.usesFishNetOutbound) {
+    return {
+      error:
+        "Queensland leases use FishNet custodial outbound. There is no transfer application PDF to generate.",
+    };
+  }
+
   if (workspace.application?.status === "APPROVED") {
     return { error: "This transfer is already approved." };
   }

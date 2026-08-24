@@ -24,6 +24,20 @@ export type NeedsAttentionListing = {
   organisation_id?: number;
 };
 
+export type NeedsAttentionHolding = {
+  id: number;
+  fishery_name: string;
+  custody_kind: "MEMBER" | "FQX_CUSTODIAL";
+  verification_status: string;
+};
+
+export type NeedsAttentionCustodyRelease = {
+  id: number;
+  holding_id: number;
+  fishery_name: string;
+  quantity: string;
+};
+
 export type NeedsAttentionTransfer = {
   process_code: string;
   status: string;
@@ -63,10 +77,16 @@ export function orderPaymentActionIsDue(
 export function memberActionCountBuckets(items: readonly NeedsAttentionItem[]) {
   let orders = 0;
   let listings = 0;
+  let holdings = 0;
 
   for (const item of items) {
     if (item.key.startsWith("auction-")) {
       listings += 1;
+    } else if (
+      item.key.startsWith("holding-") ||
+      item.key.startsWith("custody-release-")
+    ) {
+      holdings += 1;
     } else {
       orders += 1;
     }
@@ -75,8 +95,26 @@ export function memberActionCountBuckets(items: readonly NeedsAttentionItem[]) {
   return {
     orders,
     listings,
+    holdings,
     overview: items.length,
   };
+}
+
+function isQldLeaseAwaitingOutbound(
+  order: Pick<NeedsAttentionOrder, "status" | "offering" | "fishery_name">,
+  fisheries: readonly { name: string; jurisdiction_id: number }[],
+  jurisdictions: readonly { id: number; code: string }[],
+) {
+  if (order.status !== "AWAITING_TRANSFER" || order.offering !== "LEASE") {
+    return false;
+  }
+
+  const fishery = fisheries.find((item) => item.name === order.fishery_name);
+  const jurisdictionCode =
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code ??
+    null;
+
+  return jurisdictionCode === "QLD";
 }
 
 function usesSimulatedTransfer(
@@ -146,6 +184,8 @@ export function organisationNeedsAttentionItems(input: {
   canManage: boolean;
   orders: readonly NeedsAttentionOrder[];
   listings: readonly NeedsAttentionListing[];
+  holdings?: readonly NeedsAttentionHolding[];
+  custodyReleases?: readonly NeedsAttentionCustodyRelease[];
   transferByOrderId?: ReadonlyMap<number, NeedsAttentionTransfer>;
   fisheries?: readonly { name: string; jurisdiction_id: number }[];
   jurisdictions?: readonly { id: number; code: string }[];
@@ -164,6 +204,33 @@ export function organisationNeedsAttentionItems(input: {
   const notesByOrderId = input.complianceNotesByOrderId ?? new Map();
   const paymentStatusByOrderId = input.paymentStatusByOrderId ?? new Map();
   const now = input.now ?? new Date();
+
+  for (const holding of input.holdings ?? []) {
+    if (holding.verification_status !== "PENDING_VERIFICATION") {
+      continue;
+    }
+
+    items.push({
+      key: `holding-${holding.id}`,
+      href: `/dashboard/holdings/${holding.id}`,
+      title:
+        holding.custody_kind === "FQX_CUSTODIAL"
+          ? `Custodial quota pending verification`
+          : `Holding pending verification`,
+      detail: holding.fishery_name,
+      actionLabel: "View holding",
+    });
+  }
+
+  for (const release of input.custodyReleases ?? []) {
+    items.push({
+      key: `custody-release-${release.id}`,
+      href: `/dashboard/holdings/${release.holding_id}`,
+      title: `Custody release pending`,
+      detail: `${release.fishery_name} · ${release.quantity}`,
+      actionLabel: "View holding",
+    });
+  }
 
   for (const order of input.orders) {
     if (CLOSED_ORDER_STATUSES.has(order.status)) {
@@ -210,6 +277,17 @@ export function organisationNeedsAttentionItems(input: {
     }
 
     if (order.status === "AWAITING_TRANSFER") {
+      if (isQldLeaseAwaitingOutbound(order, fisheries, jurisdictions)) {
+        items.push({
+          key: `lease-outbound-${order.id}`,
+          href: `/orders/${order.id}`,
+          title: `Lease awaiting FishNet outbound for order ${order.id}`,
+          detail: order.fishery_name,
+          actionLabel: "Go to order",
+        });
+        continue;
+      }
+
       const application = transfers.get(order.id);
       if (usesSimulatedTransfer(order, application, fisheries, jurisdictions)) {
         continue;

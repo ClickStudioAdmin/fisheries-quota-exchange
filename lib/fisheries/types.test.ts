@@ -5,6 +5,8 @@ import {
   fisheryNameWithJurisdiction,
   fisheryOfferingOptions,
   fisherySelectLabel,
+  holdingMarketplaceOfferings,
+  holdingOfferingBlockedMessage,
   holdingVerifyPath,
   parseHoldingIds,
 } from "./types.ts";
@@ -56,5 +58,38 @@ test("fisheryOfferingOptions follows sale and lease flags", () => {
   assert.equal(
     fisheryAllowsOffering({ sale_allowed: false, lease_allowed: true }, "LEASE"),
     true,
+  );
+});
+
+test("holdingMarketplaceOfferings gates QLD sale vs custodial lease", () => {
+  const both = { sale_allowed: true, lease_allowed: true };
+  assert.deepEqual(
+    holdingMarketplaceOfferings({ custody_kind: "MEMBER" }, both, "QLD"),
+    ["SALE"],
+  );
+  assert.deepEqual(
+    holdingMarketplaceOfferings({ custody_kind: "FQX_CUSTODIAL" }, both, "QLD"),
+    ["LEASE"],
+  );
+  assert.deepEqual(
+    holdingMarketplaceOfferings({ custody_kind: "MEMBER" }, both, "NSW"),
+    ["SALE", "LEASE"],
+  );
+  assert.deepEqual(
+    holdingMarketplaceOfferings(
+      { custody_kind: "FQX_CUSTODIAL" },
+      both,
+      "NSW",
+    ),
+    [],
+  );
+  assert.match(
+    holdingOfferingBlockedMessage({ custody_kind: "MEMBER" }, "QLD") ?? "",
+    /custodial/i,
+  );
+  assert.match(
+    holdingOfferingBlockedMessage({ custody_kind: "FQX_CUSTODIAL" }, "QLD") ??
+      "",
+    /lease/i,
   );
 });

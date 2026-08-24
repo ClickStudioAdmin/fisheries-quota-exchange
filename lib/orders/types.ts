@@ -38,6 +38,7 @@ export type Order = {
   updated_at: string;
   review_note: string | null;
   compliance_checklist: string[];
+  lease_outbound_checklist: string[];
   qld_signing_channel: SigningChannel | null;
 };
 

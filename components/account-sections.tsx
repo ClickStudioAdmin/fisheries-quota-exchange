@@ -16,6 +16,7 @@ import type { User } from "@supabase/supabase-js";
 import { DataTable, DataTableRowExtras, TableActionRow, tableLinkClassName } from "@/components/data-table";
 import { OrderTableDownloads, OrderTableLinks } from "@/components/order-table-links";
 import { HoldingForm } from "@/components/holding-form";
+import { CustodialHoldingForm } from "@/components/custodial-holding-form";
 import { EditHoldingButton } from "@/components/holding-actions";
 import { EditListingPriceButton } from "@/components/edit-listing-price-form";
 import {
@@ -23,10 +24,14 @@ import {
   listHoldingCommitments,
   listHoldingsForOrganisation,
   listJurisdictions,
+  getQldJurisdictionId,
 } from "@/lib/fisheries/queries";
 import {
   fisherySelectLabel,
   fisherySelectLabelForName,
+  holdingCustodyLabel,
+  holdingIsCancelled,
+  holdingIsCustodial,
   holdingIsVerified,
   holdingVerificationLabel,
   quantityTypeLabel,
@@ -340,6 +345,13 @@ export async function AccountHoldingsSection({
     0,
   );
   const missingPrices = valued.some((value) => value == null);
+  const qldJurisdictionId = await getQldJurisdictionId();
+  const existingCustodialFisheryIds = holdings
+    .filter(
+      (holding) =>
+        holdingIsCustodial(holding) && !holdingIsCancelled(holding),
+    )
+    .map((holding) => holding.fishery_id);
 
   return (
     <div className="space-y-10">
@@ -349,7 +361,7 @@ export async function AccountHoldingsSection({
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
           {canManage
-            ? "Create or update a holding here. Unverified holdings must be approved by a platform admin before you can list or auction them. Changing quantity records an ADJUSTMENT on the ledger."
+            ? "Add member-held quota for sales, or request Queensland custodial quota for leases. Custodianship is temporary — FQX does not own the quota. Unverified holdings must be approved before listing."
             : "Owners and admins can create and update holdings for this business."}
         </p>
         {created === "pending" || created === "listing" ? (
@@ -417,6 +429,16 @@ export async function AccountHoldingsSection({
             align: "right",
           },
           {
+            key: "custody",
+            header: "Custody",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "Member held", label: "Member held" },
+              { value: "FQX custodial", label: "FQX custodial" },
+            ],
+          },
+          {
             key: "status",
             header: "Status",
             sortable: true,
@@ -424,6 +446,7 @@ export async function AccountHoldingsSection({
             filterOptions: [
               { value: "Verified", label: "Verified" },
               { value: "Pending verification", label: "Pending verification" },
+              { value: "Cancelled", label: "Cancelled" },
             ],
           },
         ]}
@@ -443,11 +466,13 @@ export async function AccountHoldingsSection({
                 : "Fishery",
               quantity: holding.quantity,
               marketValue: value ?? "",
+              custody: holdingCustodyLabel(holding.custody_kind),
               status: holdingVerificationLabel(holding.verification_status),
             },
             display: {
               quantity: `${holding.quantity} ${unit}`.trim(),
               marketValue: value != null ? formatAud(value) : "—",
+              custody: holdingCustodyLabel(holding.custody_kind),
             },
           };
         })}
@@ -456,8 +481,11 @@ export async function AccountHoldingsSection({
           const fishery = fisheries.find((item) => item.id === holding.fishery_id);
           const unit = fishery ? quantityTypeLabel(fishery.quantity_type) : "units";
           const verified = holdingIsVerified(holding);
+          const cancelled = holdingIsCancelled(holding);
+          const custodial = holdingIsCustodial(holding);
           const listed = commitments.get(holding.id) ?? 0;
           const available = Number(holding.quantity) - listed;
+          const canList = verified && !cancelled && available > 0;
 
           return (
             <DataTableRowExtras
@@ -486,7 +514,7 @@ export async function AccountHoldingsSection({
               actions={
                 canManage ? (
                   <>
-                    {verified && available > 0 ? (
+                    {canList ? (
                       <>
                         {listingBlocked ? (
                           <>
@@ -523,22 +551,31 @@ export async function AccountHoldingsSection({
                         )}
                       </>
                     ) : null}
-                    <EditHoldingButton
-                      title={`Edit ${fishery?.name ?? "holding"}`}
-                      holdingId={holding.id}
-                      quantity={holding.quantity}
-                      unitLabel={unit}
-                      minQuantity={String(listed)}
-                    />
-                    {verified && available <= 0 ? (
+                    {!cancelled ? (
+                      <EditHoldingButton
+                        title={`Edit ${fishery?.name ?? "holding"}`}
+                        holdingId={holding.id}
+                        quantity={holding.quantity}
+                        unitLabel={unit}
+                        minQuantity={String(listed)}
+                      />
+                    ) : null}
+                    {verified && available <= 0 && !cancelled ? (
                       <p className="max-w-xs whitespace-normal text-sm text-ink-muted">
                         All of this holding is listed. Cancel a listing to list
                         more, or increase the holding quantity.
                       </p>
                     ) : null}
-                    {!verified ? (
+                    {!verified && !cancelled ? (
                       <p className="max-w-xs whitespace-normal text-sm text-ink-muted">
-                        Waiting for admin verification before listing.
+                        {custodial
+                          ? "Waiting for FQX to verify the FishNet inbound transfer before you can list a lease."
+                          : "Waiting for admin verification before listing."}
+                      </p>
+                    ) : null}
+                    {cancelled ? (
+                      <p className="max-w-xs whitespace-normal text-sm text-ink-muted">
+                        This custodial request was cancelled.
                       </p>
                     ) : null}
                   </>
@@ -549,15 +586,37 @@ export async function AccountHoldingsSection({
         })}
       </DataTable>
       {canManage ? (
-        <div className="max-w-md">
-          <h2 className="text-xl font-semibold text-ink">Add holding</h2>
-          <div className="mt-4">
-            <HoldingForm
-              organisationId={organisationId}
-              fisheries={fisheries}
-              jurisdictions={jurisdictions}
-            />
+        <div className="grid max-w-4xl gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-xl font-semibold text-ink">Add member holding</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              Member-held quota on FishNet. List for sale (or lease outside
+              Queensland).
+            </p>
+            <div className="mt-4">
+              <HoldingForm
+                organisationId={organisationId}
+                fisheries={fisheries}
+                jurisdictions={jurisdictions}
+              />
+            </div>
           </div>
+          {qldJurisdictionId ? (
+            <div>
+              <h2 className="text-xl font-semibold text-ink">
+                Request custodial quota
+              </h2>
+              <div className="mt-4">
+                <CustodialHoldingForm
+                  organisationId={organisationId}
+                  fisheries={fisheries}
+                  jurisdictions={jurisdictions}
+                  qldJurisdictionId={qldJurisdictionId}
+                  existingCustodialFisheryIds={existingCustodialFisheryIds}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

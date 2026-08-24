@@ -5,6 +5,7 @@ import {
   listFisheries,
   listHoldingsForOrganisation,
   listJurisdictions,
+  listPendingCustodyReleaseRequestsForOrganisation,
 } from "@/lib/fisheries/queries";
 import { holdingIsVerified } from "@/lib/fisheries/types";
 import { listOrganisationListings } from "@/lib/listings/queries";
@@ -59,7 +60,7 @@ export async function AccountOverviewSection({
 }) {
   const result = organisationId ? await getOrganisation(organisationId) : null;
   const acceptedTerms = await hasAcceptedCurrentTerms();
-  const [holdings, listings, orders, sellError, notifications, invitations, fisheries, jurisdictions] =
+  const [holdings, listings, orders, pendingReleases, sellError, notifications, invitations, fisheries, jurisdictions] =
     await Promise.all([
       organisationId
         ? listHoldingsForOrganisation(organisationId)
@@ -70,6 +71,9 @@ export async function AccountOverviewSection({
       organisationId
         ? listOrganisationOrders(organisationId)
         : Promise.resolve([] as Awaited<ReturnType<typeof listOrganisationOrders>>),
+      organisationId
+        ? listPendingCustodyReleaseRequestsForOrganisation(organisationId)
+        : Promise.resolve([]),
       organisationId ? organisationCanSellError(organisationId) : Promise.resolve(null),
       listMyInAppNotifications(10),
       listMyPendingInvitations(),
@@ -141,6 +145,28 @@ export async function AccountOverviewSection({
     canManage,
     orders,
     listings,
+    holdings: holdings
+      .filter((holding) => holding.verification_status === "PENDING_VERIFICATION")
+      .map((holding) => ({
+        id: holding.id,
+        fishery_name:
+          fisheries.find((item) => item.id === holding.fishery_id)?.name ??
+          "Holding",
+        custody_kind: holding.custody_kind,
+        verification_status: holding.verification_status,
+      })),
+    custodyReleases: pendingReleases.map((release) => ({
+      id: release.id,
+      holding_id: release.holding_id,
+      fishery_name:
+        fisheries.find(
+          (item) =>
+            item.id ===
+            holdings.find((holding) => holding.id === release.holding_id)
+              ?.fishery_id,
+        )?.name ?? "Holding",
+      quantity: release.quantity,
+    })),
     transferByOrderId: transferApplications,
     fisheries,
     jurisdictions,

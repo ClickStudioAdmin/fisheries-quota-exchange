@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress. Work only on this phase until acceptance criteria pass.
+In progress. Implementation is in place (migration, holdings custody/release, listing gates, lease FishNet outbound, notifications). Finish acceptance testing on `develop` before marking complete.
 
 ## Purpose
 

@@ -14,11 +14,18 @@ import {
   notifyHoldingNeedsChanges,
   notifyHoldingPending,
   notifyHoldingVerified,
+  notifyCustodyInboundRequested,
+  notifyCustodyInboundVerified,
+  notifyCustodyInboundCancelled,
+  notifyCustodyReleaseRequested,
+  notifyCustodyReleaseCompleted,
+  notifyCustodyReleaseCancelled,
 } from "@/lib/email/events";
 import { userFacingError } from "@/lib/errors/user-message";
 import { requireActiveOrganisationMatch } from "@/lib/organisations/active-session";
 import { selectedComplianceChecks, checklistIsComplete } from "@/lib/orders/checklist";
 import { holdingVerificationChecks } from "@/lib/fisheries/verification-checks";
+import { holdingIsCustodial } from "@/lib/fisheries/types";
 import {
   FISHERY_LOGO_BUCKET,
   fisheryLogoExtension,
@@ -406,7 +413,7 @@ export async function saveHoldingVerificationChecklistAction(
 
   const jurisdictionCode = await getHoldingJurisdictionCode(holding.id);
   const completed = selectedComplianceChecks(
-    holdingVerificationChecks(jurisdictionCode),
+    holdingVerificationChecks(jurisdictionCode, holding.custody_kind),
     formData.getAll("checks").map(String),
   );
 
@@ -446,7 +453,7 @@ export async function verifyHoldingAction(formData: FormData) {
   const jurisdictionCode = await getHoldingJurisdictionCode(holding.id);
   if (
     !checklistIsComplete(
-      holdingVerificationChecks(jurisdictionCode),
+      holdingVerificationChecks(jurisdictionCode, holding.custody_kind),
       holding.verification_checklist,
     )
   ) {
@@ -457,8 +464,14 @@ export async function verifyHoldingAction(formData: FormData) {
     p_holding_id: holdingId,
   });
 
-  if (holding) {
-    const fishery = await getFishery(holding.fishery_id);
+  const fishery = await getFishery(holding.fishery_id);
+  if (holdingIsCustodial(holding)) {
+    await notifyCustodyInboundVerified({
+      organisationId: holding.organisation_id,
+      fisheryName: fishery?.name ?? "Holding",
+      holdingId: holding.id,
+    });
+  } else if (holding) {
     await notifyHoldingVerified({
       organisationId: holding.organisation_id,
       fisheryName: fishery?.name ?? "Holding",
@@ -471,6 +484,216 @@ export async function verifyHoldingAction(formData: FormData) {
   revalidatePath(`/admin/holdings/${holdingId}`);
   revalidatePath(`/dashboard/holdings/${holdingId}`);
   revalidatePath("/admin/users", "layout");
+}
+
+export async function createCustodialHoldingAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const organisationId = Number(formData.get("organisation_id"));
+  const fisheryId = Number(formData.get("fishery_id"));
+  const quantity = Number(read(formData, "quantity"));
+  const note = read(formData, "note");
+
+  if (
+    !Number.isInteger(organisationId) ||
+    !Number.isInteger(fisheryId) ||
+    !Number.isFinite(quantity)
+  ) {
+    return { error: "Organisation, fishery and quantity are required." };
+  }
+
+  if (!(await isPlatformAdmin())) {
+    const activeError = await requireActiveOrganisationMatch(organisationId);
+
+    if (activeError) {
+      return { error: activeError };
+    }
+  }
+
+  const { data, error } = await supabase.rpc("create_custodial_holding", {
+    p_organisation_id: organisationId,
+    p_fishery_id: fisheryId,
+    p_quantity: quantity,
+    p_note: note || null,
+  });
+
+  if (error) return { error: userFacingError(error) };
+
+  const holdingId = Number(data);
+  if (Number.isInteger(holdingId)) {
+    await notifyCustodyInboundRequested(holdingId);
+  }
+
+  revalidatePath("/dashboard/holdings");
+  revalidatePath("/admin/holdings");
+  return {
+    message:
+      "Custodial holding requested. Transfer quota temporarily to FQX on FishNet, then wait for admin verification.",
+  };
+}
+
+export async function cancelCustodialHoldingAction(formData: FormData) {
+  const admin = await requireAdmin();
+  if (admin.error || !admin.supabase) return;
+
+  const holdingId = Number(formData.get("holding_id"));
+
+  if (!Number.isInteger(holdingId)) {
+    return;
+  }
+
+  const holding = await getHolding(holdingId);
+
+  if (
+    !holding ||
+    !holdingIsCustodial(holding) ||
+    holding.verification_status !== "PENDING_VERIFICATION"
+  ) {
+    return;
+  }
+
+  const { error } = await admin.supabase.rpc("cancel_custodial_holding", {
+    p_holding_id: holdingId,
+  });
+
+  if (error) {
+    return;
+  }
+
+  const fishery = await getFishery(holding.fishery_id);
+  await notifyCustodyInboundCancelled({
+    organisationId: holding.organisation_id,
+    fisheryName: fishery?.name ?? "Holding",
+    holdingId: holding.id,
+  });
+
+  revalidatePath("/admin/holdings");
+  revalidatePath("/dashboard/holdings");
+  revalidatePath(`/admin/holdings/${holdingId}`);
+  revalidatePath(`/dashboard/holdings/${holdingId}`);
+}
+
+export async function requestCustodyReleaseAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const holdingId = Number(formData.get("holding_id"));
+  const quantity = Number(read(formData, "quantity"));
+
+  if (!Number.isInteger(holdingId) || !Number.isFinite(quantity)) {
+    return { error: "Holding and quantity are required." };
+  }
+
+  const holding = await getHolding(holdingId);
+
+  if (!holding) {
+    return { error: "Holding not found." };
+  }
+
+  if (!(await isPlatformAdmin())) {
+    const activeError = await requireActiveOrganisationMatch(
+      holding.organisation_id,
+    );
+
+    if (activeError) {
+      return { error: activeError };
+    }
+  }
+
+  const { data, error } = await supabase.rpc("request_custody_release", {
+    p_holding_id: holdingId,
+    p_quantity: quantity,
+  });
+
+  if (error) return { error: userFacingError(error) };
+
+  const requestId = Number(data);
+  if (Number.isInteger(requestId)) {
+    await notifyCustodyReleaseRequested(requestId);
+  }
+
+  revalidatePath("/dashboard/holdings");
+  revalidatePath(`/dashboard/holdings/${holdingId}`);
+  revalidatePath("/admin/holdings");
+  revalidatePath(`/admin/holdings/${holdingId}`);
+  return { message: "Release request submitted. FQX will complete the FishNet return." };
+}
+
+export async function cancelCustodyReleaseAction(formData: FormData) {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return;
+  }
+
+  const requestId = Number(formData.get("request_id"));
+
+  if (!Number.isInteger(requestId)) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("cancel_custody_release", {
+    p_request_id: requestId,
+  });
+
+  if (error) {
+    return;
+  }
+
+  await notifyCustodyReleaseCancelled(requestId);
+
+  revalidatePath("/dashboard/holdings");
+  revalidatePath("/admin/holdings");
+}
+
+export async function completeCustodyReleaseAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const admin = await requireAdmin();
+  if (admin.error || !admin.supabase) {
+    return { error: admin.error ?? "Not a platform admin." };
+  }
+
+  const requestId = Number(formData.get("request_id"));
+  const fishnetReference = read(formData, "fishnet_reference");
+  const adminNotes = read(formData, "admin_notes");
+
+  if (!Number.isInteger(requestId) || !fishnetReference) {
+    return { error: "Request and FishNet reference are required." };
+  }
+
+  const { error } = await admin.supabase.rpc("complete_custody_release", {
+    p_request_id: requestId,
+    p_fishnet_reference: fishnetReference,
+    p_admin_notes: adminNotes || null,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  await notifyCustodyReleaseCompleted(requestId);
+
+  revalidatePath("/admin/holdings");
+  revalidatePath("/dashboard/holdings");
+  return { message: "Release completed. Custodial quantity updated on the ledger." };
 }
 
 export async function requestHoldingChangesAction(formData: FormData) {

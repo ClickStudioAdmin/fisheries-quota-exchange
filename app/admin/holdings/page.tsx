@@ -9,11 +9,13 @@ import { isPlatformAdmin } from "@/lib/admin/access";
 import { startHoldingVerifyAction } from "@/lib/fisheries/actions";
 import {
   listAllHoldings,
+  listAllPendingCustodyReleaseRequests,
   listFisheries,
   listJurisdictions,
 } from "@/lib/fisheries/queries";
 import {
   fisherySelectLabel,
+  holdingCustodyLabel,
   holdingIsVerified,
   holdingVerificationLabel,
   holdingVerifyPath,
@@ -38,11 +40,13 @@ export default async function HoldingsAdminPage({
   }
 
   const query = await searchParams;
-  const [organisations, fisheries, jurisdictions, holdings] = await Promise.all([
+  const [organisations, fisheries, jurisdictions, holdings, pendingReleases] =
+    await Promise.all([
     listOrganisationsForAdmin(),
     listFisheries(),
     listJurisdictions(),
     listAllHoldings(),
+    listAllPendingCustodyReleaseRequests(),
   ]);
   const queued = parseHoldingIds(query.queue);
   const byId = new Map(holdings.map((holding) => [holding.id, holding]));
@@ -106,6 +110,17 @@ export default async function HoldingsAdminPage({
             filterOptions: [
               { value: "VERIFIED", label: "Verified" },
               { value: "PENDING_VERIFICATION", label: "Pending verification" },
+              { value: "CANCELLED", label: "Cancelled" },
+            ],
+          },
+          {
+            key: "custody",
+            header: "Custody",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "MEMBER", label: "Member held" },
+              { value: "FQX_CUSTODIAL", label: "FQX custodial" },
             ],
           },
         ]}
@@ -127,10 +142,12 @@ export default async function HoldingsAdminPage({
                 : "Fishery",
               quantity: holding.quantity,
               status: holding.verification_status,
+              custody: holding.custody_kind,
             },
             display: {
               quantity: `${holding.quantity} ${unit}`.trim(),
               status: holdingVerificationLabel(holding.verification_status),
+              custody: holdingCustodyLabel(holding.custody_kind),
             },
           };
         })}
@@ -181,6 +198,37 @@ export default async function HoldingsAdminPage({
             </section>
           ))}
         </BulkReviewHoldingsModal>
+      ) : null}
+      {pendingReleases.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold text-ink">
+            Pending custody releases
+          </h2>
+          <ul className="space-y-2">
+            {pendingReleases.map((request) => {
+              const holding = byId.get(request.holding_id);
+              const fishery = holding
+                ? fisheries.find((item) => item.id === holding.fishery_id)
+                : null;
+              const unit = fishery
+                ? quantityTypeLabel(fishery.quantity_type)
+                : "units";
+
+              return (
+                <li key={request.id}>
+                  <Link
+                    href={adminHoldingPath(request.holding_id)}
+                    className="text-sm underline"
+                  >
+                    Request {request.id} · holding {request.holding_id} ·{" "}
+                    {request.quantity} {unit}
+                    {fishery ? ` · ${fishery.name}` : ""}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ) : null}
       <div className="max-w-md">
         <h2 className="text-xl font-semibold text-ink">Create holding</h2>

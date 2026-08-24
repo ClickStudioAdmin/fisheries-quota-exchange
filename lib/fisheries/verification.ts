@@ -87,6 +87,6 @@ export async function getHoldingVerificationWorkspace(
     listed,
     available: Number(holding.quantity) - listed,
     ledger,
-    checks: holdingVerificationChecks(jurisdiction?.code),
+    checks: holdingVerificationChecks(jurisdiction?.code, holding.custody_kind),
   };
 }

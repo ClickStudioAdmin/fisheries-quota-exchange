@@ -382,7 +382,7 @@ export async function getTransferWorkspace(
 
   const jurisdictionCode = await getOrderJurisdictionCode(order);
   const process = getTransferProcess(jurisdictionCode, order.offering);
-  const application = process.usesSimulatedTransfer
+  const application = process.usesSimulatedTransfer || process.usesFishNetOutbound
     ? await loadApplication(order.id)
     : await ensureTransferApplication(order, process);
   const documents = application ? await loadDocuments(application.id) : [];

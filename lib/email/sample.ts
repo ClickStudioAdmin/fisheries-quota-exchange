@@ -56,6 +56,27 @@ export function sampleEmailData(
         note: "Please attach the current licence document.",
         holdingUrl,
       });
+    case "custody_inbound_verified":
+      return emailCopy.custody_inbound_verified({
+        fisheryName: "East Coast Spanish Mackerel Fishery",
+        holdingUrl,
+      });
+    case "custody_inbound_cancelled":
+      return emailCopy.custody_inbound_cancelled({
+        fisheryName: "East Coast Spanish Mackerel Fishery",
+        holdingUrl,
+      });
+    case "custody_release_completed":
+      return emailCopy.custody_release_completed({
+        fisheryName: "East Coast Spanish Mackerel Fishery",
+        quantityLabel: "100 kg",
+        holdingUrl,
+      });
+    case "custody_release_cancelled":
+      return emailCopy.custody_release_cancelled({
+        fisheryName: "East Coast Spanish Mackerel Fishery",
+        holdingUrl,
+      });
     case "listing_submitted":
       return emailCopy.listing_submitted({
         fisheryName: "Northern Prawn Fishery",
@@ -239,6 +260,21 @@ export function sampleEmailData(
       return emailCopy.operator_holding_pending({
         holdingId: 1,
         adminUrl: adminHoldings,
+      });
+    case "custody_inbound_requested":
+      return emailCopy.custody_inbound_requested({
+        holdingId: 1,
+        adminUrl: adminHoldings,
+      });
+    case "custody_release_requested":
+      return emailCopy.custody_release_requested({
+        requestId: 1,
+        adminUrl: adminHoldings,
+      });
+    case "lease_outbound_ready":
+      return emailCopy.lease_outbound_ready({
+        orderId: 1001,
+        adminUrl: adminOrders,
       });
     case "operator_listing_pending":
       return emailCopy.operator_listing_pending({

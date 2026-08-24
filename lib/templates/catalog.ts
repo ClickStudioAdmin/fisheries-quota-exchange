@@ -381,6 +381,60 @@ const EMAIL_CATALOG: Record<
     trigger: "createHoldingAction then notifyHoldingPending.",
     recipient: "platform_admins emails.",
   },
+  custody_inbound_requested: {
+    summary: "Operator: custodial inbound pending",
+    description:
+      "Alerts platform admins that a member requested temporary FishNet custodianship.",
+    sentWhen: "After create_custodial_holding when status is PENDING_VERIFICATION.",
+    trigger: "createCustodialHoldingAction then notifyCustodyInboundRequested.",
+    recipient: "platform_admins emails.",
+  },
+  custody_inbound_verified: {
+    summary: "Custodial quota verified",
+    description:
+      "Tells the member FQX confirmed the temporary FishNet inbound transfer.",
+    sentWhen: "After admin verifies a custodial holding.",
+    trigger: "verifyHoldingAction then notifyCustodyInboundVerified.",
+    recipient: "holding business roles.",
+  },
+  custody_inbound_cancelled: {
+    summary: "Custodial request cancelled",
+    description:
+      "Tells the member FQX cancelled a pending custodial inbound that never arrived on FishNet.",
+    sentWhen: "After admin cancels a pending custodial holding.",
+    trigger: "cancelCustodialHoldingAction then notifyCustodyInboundCancelled.",
+    recipient: "holding business roles.",
+  },
+  custody_release_requested: {
+    summary: "Operator: custody release pending",
+    description: "Alerts platform admins that a member requested custody return.",
+    sentWhen: "After request_custody_release.",
+    trigger: "requestCustodyReleaseAction then notifyCustodyReleaseRequested.",
+    recipient: "platform_admins emails.",
+  },
+  custody_release_completed: {
+    summary: "Custody release completed",
+    description:
+      "Tells the member FQX completed the FishNet return and updated the ledger.",
+    sentWhen: "After complete_custody_release.",
+    trigger: "completeCustodyReleaseAction then notifyCustodyReleaseCompleted.",
+    recipient: "holding business roles.",
+  },
+  custody_release_cancelled: {
+    summary: "Custody release cancelled",
+    description: "Tells the member a pending custody release was cancelled.",
+    sentWhen: "After cancel_custody_release.",
+    trigger: "cancelCustodyReleaseAction then notifyCustodyReleaseCancelled.",
+    recipient: "holding business roles.",
+  },
+  lease_outbound_ready: {
+    summary: "Operator: lease outbound ready",
+    description:
+      "Alerts platform admins that a paid Queensland lease order needs FishNet outbound.",
+    sentWhen: "After payment when the order moves to AWAITING_TRANSFER for a QLD lease.",
+    trigger: "notifyPaymentReceived then notifyLeaseOutboundReady.",
+    recipient: "platform_admins emails.",
+  },
   operator_listing_pending: {
     summary: "Operator: listing needs approval",
     description: "Alerts platform admins that a listing or auction is waiting.",
@@ -535,6 +589,7 @@ export function sampleTaxInvoiceData(kind: TaxInvoiceKind): TaxInvoiceData {
     updated_at: "2026-08-17T00:00:00.000Z",
     review_note: null,
     compliance_checklist: [],
+    lease_outbound_checklist: [],
     qld_signing_channel: null,
   };
 

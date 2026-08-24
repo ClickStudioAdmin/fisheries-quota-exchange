@@ -108,6 +108,7 @@ test("organisationNeedsAttentionItems lists pay, QLD documents, compliance updat
   assert.deepEqual(memberActionCountBuckets(items), {
     orders: 3,
     listings: 1,
+    holdings: 0,
     overview: 4,
   });
 });
@@ -221,6 +222,26 @@ test("organisationNeedsAttentionItems is empty without manage permission", () =>
   });
 
   assert.deepEqual(items, []);
+});
+
+test("QLD lease awaiting FishNet outbound is listed for parties", () => {
+  const items = organisationNeedsAttentionItems({
+    organisationId: 10,
+    canManage: true,
+    fisheries,
+    jurisdictions,
+    orders: [
+      order({
+        id: 50,
+        offering: "LEASE",
+        status: "AWAITING_TRANSFER",
+      }),
+    ],
+    listings: [],
+  });
+
+  assert.equal(items.length, 1);
+  assert.match(items[0]?.title ?? "", /FishNet outbound/);
 });
 
 test("PandaDoc Sign Online is listed for each party until they have signed", () => {

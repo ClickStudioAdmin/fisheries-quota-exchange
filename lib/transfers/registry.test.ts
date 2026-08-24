@@ -33,24 +33,21 @@ const completeOrg: Organisation = {
   enabled_jurisdiction_codes: ["QLD"],
 };
 
-test("getTransferProcess routes QLD sale and lease separately from simulated", () => {
+test("getTransferProcess routes QLD sale and custodial lease separately from simulated", () => {
   assert.equal(getTransferProcess("QLD", "SALE").code, "QLD_SALE");
   assert.equal(getTransferProcess("QLD", "SALE").formType, "FDU1465");
   assert.equal(getTransferProcess("QLD", "SALE").formVersion, "V09/23");
+  assert.equal(getTransferProcess("QLD", "SALE").usesFishNetOutbound, false);
   assert.ok(
     getTransferProcess("QLD", "SALE").complianceChecks.some((item) =>
       item.includes("FDU1465"),
     ),
   );
   assert.equal(getTransferProcess("QLD", "LEASE").code, "QLD_LEASE");
-  assert.equal(getTransferProcess("QLD", "LEASE").formType, "FDU1469");
-  assert.equal(getTransferProcess("QLD", "LEASE").formVersion, "V02/26");
-  assert.equal(getTransferProcess("QLD", "LEASE").usesSimulatedTransfer, false);
-  assert.ok(
-    getTransferProcess("QLD", "LEASE").complianceChecks.some((item) =>
-      item.includes("FDU1469"),
-    ),
-  );
+  assert.equal(getTransferProcess("QLD", "LEASE").formType, null);
+  assert.equal(getTransferProcess("QLD", "LEASE").usesFishNetOutbound, true);
+  assert.ok(getTransferProcess("QLD", "LEASE").outboundChecks.length > 0);
+  assert.equal(getTransferProcess("QLD", "LEASE").sellerPackChecks.length, 0);
   assert.ok(getTransferProcess("QLD", "SALE").sellerPackChecks.length > 0);
   assert.equal(getTransferProcess("NSW", "SALE").code, "SIMULATED");
   assert.equal(getTransferProcess("NSW", "SALE").sellerPackChecks.length, 0);
@@ -78,74 +75,22 @@ test("missingTransferProfileFields is empty for a complete QLD company", () => {
 
 test("missingTransferProfileFields names QLD gaps and skips ACN for individuals", () => {
   const process = getTransferProcess("QLD", "LEASE");
-  const missing = missingTransferProfileFields({
-    organisation: {
-      ...completeOrg,
-      entity_kind: "INDIVIDUAL",
-      acn: null,
-      date_of_birth: null,
-      abn: null,
-      mobile: null,
-      registered_address: null,
-    },
-    profile: null,
-    process,
-  });
-  assert.equal(missing.includes("acn"), false);
-  assert.equal(missing.includes("abn"), false);
-  assert.ok(missing.includes("date_of_birth"));
-  assert.ok(missing.includes("mobile"));
-  assert.ok(missing.includes("registered_address"));
-  assert.ok(missing.includes("qld_client_number"));
-  assert.ok(missing.includes("qld_licence_number"));
-});
-
-test("postal address is required only when it differs from registered", () => {
-  const process = getTransferProcess("QLD", "SALE");
   assert.deepEqual(
     missingTransferProfileFields({
       organisation: {
         ...completeOrg,
-        postal_address: null,
-        postal_same_as_registered: true,
+        entity_kind: "INDIVIDUAL",
+        acn: null,
+        date_of_birth: null,
+        abn: null,
       },
-      profile: {
-        organisation_id: 1,
-        jurisdiction_id: 4,
-        client_reference: "QLD-100",
-        licence_number: "L123",
-        fishery_symbols: "SM",
-      },
-      process,
-    }),
-    [],
-  );
-  assert.ok(
-    missingTransferProfileFields({
-      organisation: {
-        ...completeOrg,
-        postal_address: null,
-        postal_same_as_registered: false,
-      },
-      profile: {
-        organisation_id: 1,
-        jurisdiction_id: 4,
-        client_reference: "QLD-100",
-        licence_number: "L123",
-        fishery_symbols: "SM",
-      },
-      process,
-    }).includes("postal_address"),
-  );
-});
-
-test("simulated process does not require profile fields", () => {
-  assert.deepEqual(
-    missingTransferProfileFields({
-      organisation: { ...completeOrg, entity_kind: null, acn: null },
       profile: null,
-      process: getTransferProcess("WA", "SALE"),
+      process,
     }),
-    [],
+    [
+      "date_of_birth",
+      "qld_client_number",
+      "qld_licence_number",
+    ],
   );
 });

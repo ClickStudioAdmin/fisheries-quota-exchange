@@ -2,7 +2,7 @@
 
 ## Status
 
-Complete.
+Complete for **sales**. Live Queensland **leases** moved to Phase 12 custodial FishNet (FDU1469 / lease PandaDoc retired from live paths). Sale offline pack and sale PandaDoc remain as built in this phase.
 
 ## Purpose
 

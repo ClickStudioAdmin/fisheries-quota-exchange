@@ -104,16 +104,22 @@ export type FisheryRule = {
 export const HOLDING_VERIFICATION_STATUSES = [
   "PENDING_VERIFICATION",
   "VERIFIED",
+  "CANCELLED",
 ] as const;
 
 export type HoldingVerificationStatus =
   (typeof HOLDING_VERIFICATION_STATUSES)[number];
+
+export const HOLDING_CUSTODY_KINDS = ["MEMBER", "FQX_CUSTODIAL"] as const;
+
+export type HoldingCustodyKind = (typeof HOLDING_CUSTODY_KINDS)[number];
 
 export type QuotaHolding = {
   id: number;
   organisation_id: number;
   fishery_id: number;
   quantity: string;
+  custody_kind: HoldingCustodyKind;
   verification_status: HoldingVerificationStatus;
   verification_checklist: string[];
 };
@@ -126,12 +132,76 @@ export function isHoldingVerificationStatus(
   );
 }
 
+export function isHoldingCustodyKind(value: string): value is HoldingCustodyKind {
+  return HOLDING_CUSTODY_KINDS.includes(value as HoldingCustodyKind);
+}
+
 export function holdingIsVerified(holding: QuotaHolding) {
   return holding.verification_status === "VERIFIED";
 }
 
+export function holdingIsCancelled(
+  holding: Pick<QuotaHolding, "verification_status">,
+) {
+  return holding.verification_status === "CANCELLED";
+}
+
+export function holdingIsCustodial(holding: Pick<QuotaHolding, "custody_kind">) {
+  return holding.custody_kind === "FQX_CUSTODIAL";
+}
+
+export function holdingMarketplaceOfferings(
+  holding: Pick<QuotaHolding, "custody_kind">,
+  fishery: Pick<Fishery, "sale_allowed" | "lease_allowed">,
+  jurisdictionCode: string | null | undefined,
+): Array<"SALE" | "LEASE"> {
+  if (holdingIsCustodial(holding)) {
+    if (jurisdictionCode !== "QLD" || !fishery.lease_allowed) {
+      return [];
+    }
+
+    return ["LEASE"];
+  }
+
+  const options = fisheryOfferingOptions(fishery);
+
+  if (jurisdictionCode === "QLD") {
+    return options.filter((offering) => offering === "SALE");
+  }
+
+  return options;
+}
+
+export function holdingOfferingBlockedMessage(
+  holding: Pick<QuotaHolding, "custody_kind">,
+  jurisdictionCode: string | null | undefined,
+): string | null {
+  if (holdingIsCustodial(holding) && jurisdictionCode !== "QLD") {
+    return "Custodial holdings are only supported for Queensland.";
+  }
+
+  if (
+    holdingIsCustodial(holding) &&
+    jurisdictionCode === "QLD"
+  ) {
+    return "Custodial quota can only be listed for lease.";
+  }
+
+  if (jurisdictionCode === "QLD" && !holdingIsCustodial(holding)) {
+    return "Queensland leases require FQX custodial quota. Request custodial quota from Holdings first.";
+  }
+
+  return null;
+}
+
 export function holdingVerificationLabel(status: HoldingVerificationStatus) {
-  return status === "VERIFIED" ? "Verified" : "Pending verification";
+  if (status === "VERIFIED") return "Verified";
+  if (status === "CANCELLED") return "Cancelled";
+  return "Pending verification";
+}
+
+export function holdingCustodyLabel(kind: HoldingCustodyKind) {
+  return kind === "FQX_CUSTODIAL" ? "FQX custodial" : "Member held";
 }
 
 export function parseHoldingIds(value?: string | null) {
@@ -169,3 +239,38 @@ export type QuotaLedgerEntry = {
   created_at: string;
   created_by_email: string | null;
 };
+
+export const CUSTODY_RELEASE_STATUSES = [
+  "PENDING",
+  "COMPLETED",
+  "CANCELLED",
+] as const;
+
+export type CustodyReleaseStatus = (typeof CUSTODY_RELEASE_STATUSES)[number];
+
+export type CustodyReleaseRequest = {
+  id: number;
+  organisation_id: number;
+  holding_id: number;
+  quantity: string;
+  status: CustodyReleaseStatus;
+  fishnet_reference: string | null;
+  admin_notes: string | null;
+  created_by_email: string | null;
+  completed_by_email: string | null;
+  created_at: string;
+  completed_at: string | null;
+  cancelled_at: string | null;
+};
+
+export function isCustodyReleaseStatus(
+  value: string,
+): value is CustodyReleaseStatus {
+  return CUSTODY_RELEASE_STATUSES.includes(value as CustodyReleaseStatus);
+}
+
+export function custodyReleaseStatusLabel(status: CustodyReleaseStatus) {
+  if (status === "COMPLETED") return "Completed";
+  if (status === "CANCELLED") return "Cancelled";
+  return "Pending";
+}

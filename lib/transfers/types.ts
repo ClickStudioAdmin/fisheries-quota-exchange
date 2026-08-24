@@ -58,9 +58,12 @@ export type JurisdictionTransferProcess = {
   formVersion: string | null;
   title: string;
   usesSimulatedTransfer: boolean;
+  /** QLD custodial lease: admin FishNet outbound checklist, no FDU PDF. */
+  usesFishNetOutbound: boolean;
   requiredProfileFields: readonly TransferProfileField[];
   complianceChecks: readonly string[];
   sellerPackChecks: readonly string[];
+  outboundChecks: readonly string[];
 };
 
 export type TransferApplication = {

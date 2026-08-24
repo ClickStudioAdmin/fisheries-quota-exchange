@@ -15,7 +15,7 @@ import { SwitchAccountNotice } from "@/components/switch-account-notice";
 import { loginPath } from "@/lib/auth/paths";
 import { canEditOrganisation } from "@/lib/organisations/permissions";
 import { getOrganisation } from "@/lib/organisations/queries";
-import { holdingIsVerified, quantityTypeLabel, fisheryOfferingOptions } from "@/lib/fisheries/types";
+import { holdingIsVerified, holdingIsCancelled, quantityTypeLabel, holdingMarketplaceOfferings, holdingOfferingBlockedMessage } from "@/lib/fisheries/types";
 import { getUser } from "@/lib/supabase/server";
 import { organisationCanSellError } from "@/lib/payments/sell-access";
 import { PaymentsSetupNotice } from "@/components/payments-setup-notice";
@@ -92,7 +92,7 @@ export default async function NewAuctionPage({
     notFound();
   }
 
-  if (!holdingIsVerified(holding)) {
+  if (!holdingIsVerified(holding) || holdingIsCancelled(holding)) {
     redirect("/dashboard/holdings");
   }
 
@@ -114,7 +114,16 @@ export default async function NewAuctionPage({
   const unitLabel = fishery
     ? quantityTypeLabel(fishery.quantity_type)
     : "units";
-  const offerings = fishery ? fisheryOfferingOptions(fishery) : [];
+  const jurisdictionCode = jurisdictions.find(
+    (item) => item.id === fishery?.jurisdiction_id,
+  )?.code;
+  const offerings = fishery
+    ? holdingMarketplaceOfferings(holding, fishery, jurisdictionCode)
+    : [];
+  const offeringBlockedMessage = holdingOfferingBlockedMessage(
+    holding,
+    jurisdictionCode,
+  );
   const availableLabel = String(available);
   const autoPublish = verified && settings.auto_approve_listings;
   const feeNote = platformFeeDisclosure(settings);
@@ -152,7 +161,13 @@ export default async function NewAuctionPage({
             href={accountPaymentsPath(organisationId)}
           />
         ) : (
-          <CreateAuctionForm
+          <>
+            {offerings.length === 0 && offeringBlockedMessage ? (
+              <p className="mb-4 text-sm text-red-800" role="alert">
+                {offeringBlockedMessage}
+              </p>
+            ) : null}
+            <CreateAuctionForm
             organisationId={organisationId}
             holdingId={holding.id}
             maxQuantity={availableLabel}
@@ -162,6 +177,7 @@ export default async function NewAuctionPage({
             autoPublish={autoPublish}
             feeNote={feeNote}
           />
+          </>
         )}
       </div>
     </div>

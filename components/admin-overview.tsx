@@ -26,7 +26,10 @@ export async function AdminOverviewSection() {
   const paymentsOn = isPaymentsConfigured();
   const unpaidOrders = Math.max(0, counts.orders - queueOrders.length);
   const hasQueue =
-    counts.holdings > 0 || counts.listings > 0 || queueOrders.length > 0;
+    counts.holdings > 0 ||
+    counts.custody_releases > 0 ||
+    counts.listings > 0 ||
+    queueOrders.length > 0;
 
   return (
     <div className="space-y-8">
@@ -86,6 +89,15 @@ export async function AdminOverviewSection() {
                   {counts.holdings === 1
                     ? "1 holding waiting for verification"
                     : `${counts.holdings} holdings waiting for verification`}
+                </Link>
+              </li>
+            ) : null}
+            {counts.custody_releases > 0 ? (
+              <li>
+                <Link href="/admin/holdings" className="text-sm underline">
+                  {counts.custody_releases === 1
+                    ? "1 custody release waiting"
+                    : `${counts.custody_releases} custody releases waiting`}
                 </Link>
               </li>
             ) : null}

@@ -393,6 +393,108 @@ export async function requestComplianceUpdateAction(
   return { message: "Update requested." };
 }
 
+export async function saveLeaseOutboundChecklistAction(
+  _prev: OrderFormState,
+  formData: FormData,
+): Promise<OrderFormState> {
+  const supabase = await createClient();
+
+  if (!supabase || !(await isPlatformAdmin())) {
+    return { error: "Not a platform admin." };
+  }
+
+  const order = await currentOrderForStatus(formData, "AWAITING_TRANSFER");
+
+  if (!order) {
+    return { error: "Order is not waiting for lease outbound transfer." };
+  }
+
+  const jurisdictionCode = await getOrderJurisdictionCode(order);
+  const process = getTransferProcess(jurisdictionCode, order.offering);
+
+  if (!process.usesFishNetOutbound) {
+    return { error: "This order does not use FishNet lease outbound." };
+  }
+
+  const completed = selectedComplianceChecks(
+    process.outboundChecks,
+    formData.getAll("checks").map(String),
+  );
+
+  const { error } = await supabase.rpc("save_lease_outbound_checklist", {
+    p_order_id: order.id,
+    p_completed: completed,
+  });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/admin/orders");
+  return { message: "Progress saved." };
+}
+
+export async function completeLeaseOutboundAction(formData: FormData) {
+  const supabase = await createClient();
+
+  if (!supabase || !(await isPlatformAdmin())) {
+    return;
+  }
+
+  const order = await currentOrderForStatus(formData, "AWAITING_TRANSFER");
+
+  if (!order) {
+    return;
+  }
+
+  const jurisdictionCode = await getOrderJurisdictionCode(order);
+  const process = getTransferProcess(jurisdictionCode, order.offering);
+
+  if (
+    !process.usesFishNetOutbound ||
+    !checklistIsComplete(process.outboundChecks, order.lease_outbound_checklist)
+  ) {
+    return;
+  }
+
+  if (isPaymentsConfigured()) {
+    const transfer = await transferOrderSellerProceeds(order.id);
+
+    if (transfer.error) {
+      console.error("transferOrderSellerProceeds failed", transfer.error);
+      await notifySettlementFailed(order);
+      refreshAfterOrderQueue(formData);
+      return;
+    }
+  }
+
+  const { error } = await supabase.rpc("complete_lease_outbound", {
+    p_order_id: order.id,
+  });
+
+  if (error) {
+    await notifyTransferException(
+      order,
+      error.message || "Lease outbound transfer failed.",
+    );
+  } else {
+    try {
+      await sendSettledOrderInvoice(order.id);
+    } catch (mailError) {
+      const message =
+        mailError instanceof Error ? mailError.message : "Invoice email failed.";
+      console.error("sendSettledOrderInvoice failed", message);
+    }
+
+    const updated = await getOrder(order.id);
+    if (updated) {
+      await notifyTransferComplete(updated);
+    }
+  }
+
+  refreshAfterOrderQueue(formData);
+}
+
 export async function simulateTransferAction(formData: FormData) {
   const supabase = await createClient();
 
@@ -403,6 +505,12 @@ export async function simulateTransferAction(formData: FormData) {
   const order = await currentOrderForStatus(formData, "AWAITING_TRANSFER");
 
   if (order) {
+    const jurisdictionCode = await getOrderJurisdictionCode(order);
+    const process = getTransferProcess(jurisdictionCode, order.offering);
+    if (process.usesFishNetOutbound) {
+      return;
+    }
+
     const { error } = await supabase.rpc("simulate_transfer", {
       p_order_id: order.id,
     });

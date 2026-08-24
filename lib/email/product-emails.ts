@@ -6,6 +6,10 @@ export const PRODUCT_EMAIL_IDS = [
   "payments_setup_complete",
   "holding_verified",
   "holding_needs_changes",
+  "custody_inbound_verified",
+  "custody_inbound_cancelled",
+  "custody_release_completed",
+  "custody_release_cancelled",
   "listing_submitted",
   "listing_published",
   "listing_alert",
@@ -45,6 +49,9 @@ export const PRODUCT_EMAIL_IDS = [
   "operator_holding_pending",
   "operator_listing_pending",
   "operator_order_pending",
+  "custody_inbound_requested",
+  "custody_release_requested",
+  "lease_outbound_ready",
   "operator_payment_exception",
   "operator_transfer_exception",
 ] as const;
@@ -71,7 +78,12 @@ export function disabledProductEmails(
 }
 
 export function isOperatorEmailId(id: ProductEmailId) {
-  return id.startsWith("operator_");
+  return (
+    id.startsWith("operator_") ||
+    id === "custody_inbound_requested" ||
+    id === "custody_release_requested" ||
+    id === "lease_outbound_ready"
+  );
 }
 
 export const MEMBER_EMAIL_IDS = PRODUCT_EMAIL_IDS.filter(
@@ -117,6 +129,10 @@ const SELLER_MANAGER_EMAIL_IDS: ProductEmailId[] = [
   "payments_setup_complete",
   "holding_verified",
   "holding_needs_changes",
+  "custody_inbound_verified",
+  "custody_inbound_cancelled",
+  "custody_release_completed",
+  "custody_release_cancelled",
   "listing_submitted",
   "listing_published",
   "listing_rejected",
@@ -165,7 +181,7 @@ export const PROFILE_NOTIFICATION_GROUPS: NotificationListGroup[] = [
 
 export const ACCOUNT_NOTIFICATION_GROUPS: NotificationListGroup[] = [
   { label: "Payments setup", ids: ["payments_setup_complete"] },
-  { label: "Holdings", ids: ["holding_verified", "holding_needs_changes"] },
+  { label: "Holdings", ids: ["holding_verified", "holding_needs_changes", "custody_inbound_verified", "custody_inbound_cancelled", "custody_release_completed", "custody_release_cancelled"] },
   {
     label: "Listings",
     ids: [
@@ -325,6 +341,10 @@ export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   payments_setup_complete: "Payments setup complete",
   holding_verified: "Holding verified",
   holding_needs_changes: "Holding needs changes",
+  custody_inbound_verified: "Custodial quota verified",
+  custody_inbound_cancelled: "Custodial request cancelled",
+  custody_release_completed: "Custody release completed",
+  custody_release_cancelled: "Custody release cancelled",
   listing_submitted: "Listing submitted",
   listing_published: "Listing published",
   listing_alert: "New listing alert",
@@ -364,6 +384,9 @@ export const PRODUCT_EMAIL_LABELS: Record<ProductEmailId, string> = {
   operator_holding_pending: "Operator: holding needs verification",
   operator_listing_pending: "Operator: listing needs approval",
   operator_order_pending: "Operator: order needs action",
+  custody_inbound_requested: "Operator: custodial inbound pending",
+  custody_release_requested: "Operator: custody release pending",
+  lease_outbound_ready: "Operator: lease outbound ready",
   operator_payment_exception: "Operator: payment exception",
   operator_transfer_exception: "Operator: transfer exception",
 };
