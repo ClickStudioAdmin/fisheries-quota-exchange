@@ -43,7 +43,8 @@ Add these for development:
 | --- | --- |
 | `DEVELOPMENT_SUPABASE_DB_PASSWORD` | `develop` only |
 | `DEVELOPMENT_SUPABASE_PROJECT_ID` | `develop` only |
-| `DEVELOPMENT_SUPABASE_DB_URL` | Optional. Session pooler URI from Supabase → Project Settings → Database → Connection string → URI (port **5432**). Use when `db push` times out on the pooler from GitHub Actions. |
+| `DEVELOPMENT_SUPABASE_DB_URL` | Optional. Full session pooler URI (port **5432**). Prefer leaving this unset and using password + pooler host instead — special characters in passwords break pasted URIs. |
+| `DEVELOPMENT_SUPABASE_POOLER_HOST` | Optional for develop (defaults to `aws-0-ap-northeast-2.pooler.supabase.com`). Copy the exact host from Supabase → Database → Connection string if the default fails. |
 
 Create GitHub Environments named `development` and `production` under **Settings → Environments**. Protection rules on `production` are optional.
 
