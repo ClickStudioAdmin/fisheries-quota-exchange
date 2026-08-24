@@ -35,6 +35,7 @@ Keep the existing production secrets:
 | `SUPABASE_ACCESS_TOKEN` | Both (`sbp_...` personal access token) |
 | `SUPABASE_DB_PASSWORD` | `main` only |
 | `SUPABASE_PROJECT_ID` | `main` only |
+| `SUPABASE_DB_URL` | Optional. Session pooler URI (port **5432**) for production when CI cannot reach the pooler via `supabase link`. |
 
 Add these for development:
 
@@ -42,6 +43,7 @@ Add these for development:
 | --- | --- |
 | `DEVELOPMENT_SUPABASE_DB_PASSWORD` | `develop` only |
 | `DEVELOPMENT_SUPABASE_PROJECT_ID` | `develop` only |
+| `DEVELOPMENT_SUPABASE_DB_URL` | Optional. Session pooler URI from Supabase → Project Settings → Database → Connection string → URI (port **5432**). Use when `db push` times out on the pooler from GitHub Actions. |
 
 Create GitHub Environments named `development` and `production` under **Settings → Environments**. Protection rules on `production` are optional.
 

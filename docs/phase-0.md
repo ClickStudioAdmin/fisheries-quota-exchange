@@ -141,6 +141,14 @@ Add the secrets listed above, then re-run the workflow from the Actions tab.
 **GitHub Actions fails on `db push`**  
 Confirm the project ID and database password match the hosted project. Do not paste the password into issues or logs.
 
+If the log shows `Connection timed out` to `pooler.supabase.com`:
+
+1. In Supabase → **Project Settings → Database → Network**, check for blocked IPs and remove any ban.
+2. Reset the database password if unsure, update `DEVELOPMENT_SUPABASE_DB_PASSWORD` (or production `SUPABASE_DB_PASSWORD`), then re-run.
+3. Copy the **Session pooler** URI (port **5432**, not 6543) from **Connection string** and add it as `DEVELOPMENT_SUPABASE_DB_URL` in GitHub secrets. Re-run the workflow.
+
+The deploy workflow passes `--password` to avoid the CLI temporary login role, which can stall on the pooler after repeated runs.
+
 **Table is missing in Supabase**  
 Open the failed Actions run. Do not create the table in the SQL editor unless recovering from an emergency.
 

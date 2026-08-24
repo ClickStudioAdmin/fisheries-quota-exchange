@@ -57,10 +57,19 @@ jobs:
           version: latest
 
       - name: Link Supabase project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Push migrations
-        run: supabase db push
+        env:
+          SUPABASE_DB_URL: ${{ secrets.DEVELOPMENT_SUPABASE_DB_URL }}
+        run: |
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "Pushing migrations via DEVELOPMENT_SUPABASE_DB_URL (session pooler)."
+            supabase db push --db-url "$SUPABASE_DB_URL"
+          else
+            echo "Pushing migrations via linked project and database password."
+            supabase db push --password "$SUPABASE_DB_PASSWORD"
+          fi
 
   deploy-production:
     name: Apply production migrations
@@ -104,7 +113,16 @@ jobs:
           version: latest
 
       - name: Link Supabase project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Push migrations
-        run: supabase db push
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "Pushing migrations via SUPABASE_DB_URL (session pooler)."
+            supabase db push --db-url "$SUPABASE_DB_URL"
+          else
+            echo "Pushing migrations via linked project and database password."
+            supabase db push --password "$SUPABASE_DB_PASSWORD"
+          fi
