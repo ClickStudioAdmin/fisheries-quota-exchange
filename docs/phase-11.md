@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress. Work only on this phase until acceptance criteria pass.
+Complete.
 
 ## Purpose
 

@@ -7,11 +7,11 @@ alwaysApply: true
 
 Read [docs/master-spec.md](docs/master-spec.md) and the current phase doc before changing code.
 
-Work only on the current phase. The current phase is Phase 11. See [docs/phase-11.md](docs/phase-11.md). Phase 10 is complete.
+Work only on the current phase. The current phase is Phase 12. See [docs/phase-12.md](docs/phase-12.md). Phase 11 is complete.
 
 Do feature work on `develop`. Merge to `main` only when the user is ready for production.
 
-Phase 11 adds PandaDoc online signing as an alternate Queensland channel, with parallel buyer and seller signing. Do not change or remove the Phase 10 offline pack flow. Do not add an FQ API, live Stripe keys, seller bank payouts, refund/chargeback workflows, or other jurisdictions’ real processes. Never trust the browser, a PandaDoc iframe, or a return URL for payment status, bid time, quota availability, signature completion, or transfer outcome. Never delete quota ledger rows.
+Phase 12 adds Queensland temporary FishNet custodianship on holdings: custodial stock may be leased; non-custodial stock may be sold with the existing FDU1465 / Phase 10–11 path. Retire live FDU1469 / lease PandaDoc. Do not add a FishNet API, live Stripe keys, seller bank payouts, refund/chargeback workflows, or other jurisdictions’ real processes. Never trust the browser for custody receipt, release completion, outbound lease transfer, payment status, or ledger balances. Never delete quota ledger rows.
 
 Do not create later-phase tables or speculative architecture.
 
