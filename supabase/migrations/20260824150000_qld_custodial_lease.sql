@@ -1634,7 +1634,10 @@ begin
 end;
 $$;
 
-create or replace function public.admin_action_counts()
+-- Return type adds custody_releases; CREATE OR REPLACE cannot change OUT columns.
+drop function if exists public.admin_action_counts();
+
+create function public.admin_action_counts()
 returns table (
     holdings integer,
     listings integer,
@@ -1678,6 +1681,9 @@ begin
         ) as custody_releases;
 end;
 $$;
+
+revoke all on function public.admin_action_counts() from public;
+grant execute on function public.admin_action_counts() to authenticated;
 
 -- Retire open QLD lease listings that are not on custodial holdings.
 update public.listings as listings
