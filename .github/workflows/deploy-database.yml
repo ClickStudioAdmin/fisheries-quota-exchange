@@ -26,8 +26,6 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.DEVELOPMENT_SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_ID: ${{ secrets.DEVELOPMENT_SUPABASE_PROJECT_ID }}
-      SUPABASE_DB_URL: ${{ secrets.DEVELOPMENT_SUPABASE_DB_URL }}
-      SUPABASE_POOLER_HOST: ${{ secrets.DEVELOPMENT_SUPABASE_POOLER_HOST }}
     steps:
       - name: Check required secrets
         run: |
@@ -48,16 +46,6 @@ jobs:
             echo "Add the missing development secrets, then re-run this workflow."
             exit 1
           fi
-          if [ -n "$SUPABASE_DB_URL" ]; then
-            echo "DEVELOPMENT_SUPABASE_DB_URL is set."
-          else
-            echo "DEVELOPMENT_SUPABASE_DB_URL is not set; will build session pooler URL from password + project id."
-          fi
-          if [ -n "$SUPABASE_POOLER_HOST" ]; then
-            echo "DEVELOPMENT_SUPABASE_POOLER_HOST is set."
-          else
-            echo "DEVELOPMENT_SUPABASE_POOLER_HOST is not set; defaulting to aws-0-ap-northeast-2.pooler.supabase.com"
-          fi
           echo "Deploying migrations to the development database."
 
       - name: Checkout
@@ -66,48 +54,13 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v3
         with:
-          version: 2.40.2
+          version: latest
 
-      - name: Prepare database URL and test connection
-        run: |
-          set -euo pipefail
-          POOLER_HOST="${SUPABASE_POOLER_HOST:-aws-0-ap-northeast-2.pooler.supabase.com}"
-          DB_USER="postgres.${SUPABASE_PROJECT_ID}"
-
-          echo "Testing TCP reachability to ${POOLER_HOST}:5432 ..."
-          timeout 15 bash -c "cat < /dev/null > /dev/tcp/${POOLER_HOST}/5432"
-          echo "Port 5432 is reachable."
-
-          echo "Testing Postgres login with discrete credentials (not URI) ..."
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client > /dev/null
-          PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
-            -h "$POOLER_HOST" \
-            -p 5432 \
-            -U "$DB_USER" \
-            -d postgres \
-            -v ON_ERROR_STOP=1 \
-            -c 'select 1 as connected'
-
-          if [ -n "$SUPABASE_DB_URL" ]; then
-            DB_URL="$SUPABASE_DB_URL"
-          else
-            DB_URL="$(python3 - <<'PY'
-          import os
-          import urllib.parse
-
-          password = urllib.parse.quote(os.environ["SUPABASE_DB_PASSWORD"], safe="")
-          project = os.environ["SUPABASE_PROJECT_ID"]
-          host = os.environ.get("SUPABASE_POOLER_HOST") or "aws-0-ap-northeast-2.pooler.supabase.com"
-          print(f"postgresql://postgres.{project}:{password}@{host}:5432/postgres")
-          PY
-          )"
-          fi
-
-          echo "DB_URL=$DB_URL" >> "$GITHUB_ENV"
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Push migrations
-        run: supabase db push --db-url "$DB_URL" --yes
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
 
   deploy-production:
     name: Apply production migrations
@@ -120,8 +73,6 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-      SUPABASE_POOLER_HOST: ${{ secrets.SUPABASE_POOLER_HOST }}
     steps:
       - name: Check required secrets
         run: |
@@ -150,48 +101,10 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v3
         with:
-          version: 2.40.2
+          version: latest
 
-      - name: Prepare database URL and test connection
-        run: |
-          set -euo pipefail
-          if [ -z "$SUPABASE_POOLER_HOST" ]; then
-            echo "SUPABASE_POOLER_HOST is not set. Add the pooler host from Supabase connection string."
-            exit 1
-          fi
-          POOLER_HOST="$SUPABASE_POOLER_HOST"
-          DB_USER="postgres.${SUPABASE_PROJECT_ID}"
-
-          echo "Testing TCP reachability to ${POOLER_HOST}:5432 ..."
-          timeout 15 bash -c "cat < /dev/null > /dev/tcp/${POOLER_HOST}/5432"
-          echo "Port 5432 is reachable."
-
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client > /dev/null
-          PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
-            -h "$POOLER_HOST" \
-            -p 5432 \
-            -U "$DB_USER" \
-            -d postgres \
-            -v ON_ERROR_STOP=1 \
-            -c 'select 1 as connected'
-
-          if [ -n "$SUPABASE_DB_URL" ]; then
-            DB_URL="$SUPABASE_DB_URL"
-          else
-            DB_URL="$(python3 - <<'PY'
-          import os
-          import urllib.parse
-
-          password = urllib.parse.quote(os.environ["SUPABASE_DB_PASSWORD"], safe="")
-          project = os.environ["SUPABASE_PROJECT_ID"]
-          host = os.environ["SUPABASE_POOLER_HOST"]
-          print(f"postgresql://postgres.{project}:{password}@{host}:5432/postgres")
-          PY
-          )"
-          fi
-
-          echo "DB_URL=$DB_URL" >> "$GITHUB_ENV"
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Push migrations
-        run: supabase db push --db-url "$DB_URL" --yes
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
