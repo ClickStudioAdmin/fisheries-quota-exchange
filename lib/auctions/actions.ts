@@ -3,7 +3,39 @@
 import { redirect } from "next/navigation";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { LISTING_OFFERINGS } from "@/lib/listings/types";
+import { accountPath } from "@/lib/organisations/paths";
+import { organisationCanSellError } from "@/lib/payments/sell-access";
+import {
+  requireCounterpartyTradeReadyError,
+  requireTradeReadyError,
+} from "@/lib/organisations/eligibility";
+import { getHoldingJurisdictionCode, getFishery, getHolding } from "@/lib/fisheries/queries";
+import { fisheryAllowsOffering } from "@/lib/fisheries/types";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import {
+  ACTIVE_ORGANISATION_REQUIRED_MESSAGE,
+  getActiveOrganisation,
+  requireActiveOrganisationMatch,
+} from "@/lib/organisations/active-session";
+import {
+  BUYER_BID_ACKNOWLEDGEMENTS,
+  SELLER_ACKNOWLEDGEMENTS,
+  requireAcknowledgements,
+} from "@/lib/terms/acknowledgements";
+import { requireTermsError } from "@/lib/terms/queries";
+import { qldListingUsage } from "@/lib/listings/quota-usage";
+import { userFacingError } from "@/lib/errors/user-message";
 import type { AuctionFormState, BidFormState } from "@/lib/auctions/types";
+import { getListing } from "@/lib/listings/queries";
+import { listBids } from "@/lib/auctions/queries";
+import { getOrder } from "@/lib/orders/queries";
+import { revalidateOrderSurfaces } from "@/lib/orders/revalidate";
+import {
+  notifyAuctionClosed,
+  notifyBidPlaced,
+  notifyListingCreated,
+} from "@/lib/email/events";
 
 function read(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -34,8 +66,28 @@ export async function createAuctionAction(
     return { error: "Choose a holding." };
   }
 
+  const activeError = await requireActiveOrganisationMatch(organisationId);
+
+  if (activeError) {
+    return { error: activeError };
+  }
+
   if (!LISTING_OFFERINGS.includes(offering as (typeof LISTING_OFFERINGS)[number])) {
     return { error: "Choose sale or lease." };
+  }
+
+  const holding = await getHolding(holdingId);
+  const fishery = holding ? await getFishery(holding.fishery_id) : null;
+  if (
+    !fishery ||
+    !fisheryAllowsOffering(fishery, offering as (typeof LISTING_OFFERINGS)[number])
+  ) {
+    return {
+      error:
+        offering === "LEASE"
+          ? "This fishery cannot be listed for lease."
+          : "This fishery cannot be listed for sale.",
+    };
   }
 
   if (!Number.isFinite(quantity) || quantity <= 0) {
@@ -60,7 +112,47 @@ export async function createAuctionAction(
     return { error: "End time is required." };
   }
 
-  const { error } = await supabase.rpc("create_auction", {
+  const termsError = await requireTermsError();
+
+  if (termsError) {
+    return { error: termsError };
+  }
+
+  const jurisdictionCode = await getHoldingJurisdictionCode(holdingId);
+  const usage = tradeRequiresQldProfile(jurisdictionCode)
+    ? qldListingUsage({
+        quantity,
+        unusedRaw: read(formData, "unused_quantity"),
+        usedRaw: read(formData, "used_quantity"),
+        required: true,
+      })
+    : ({ unused: null, used: null } as const);
+
+  if ("error" in usage) {
+    return { error: usage.error };
+  }
+
+  const accountError = await requireTradeReadyError(organisationId, {
+    requireQldProfile: tradeRequiresQldProfile(jurisdictionCode),
+  });
+
+  if (accountError) {
+    return { error: accountError };
+  }
+
+  const ackError = requireAcknowledgements(formData, SELLER_ACKNOWLEDGEMENTS);
+
+  if (ackError) {
+    return { error: ackError };
+  }
+
+  const sellError = await organisationCanSellError(organisationId);
+
+  if (sellError) {
+    return { error: sellError };
+  }
+
+  const { data, error } = await supabase.rpc("create_auction", {
     p_holding_id: holdingId,
     p_offering: offering,
     p_quantity: quantity,
@@ -69,13 +161,26 @@ export async function createAuctionAction(
     p_reserve_price_aud: reserve,
     p_starts_at: startsAt ? new Date(startsAt).toISOString() : new Date().toISOString(),
     p_ends_at: new Date(endsAt).toISOString(),
+    p_unused_quantity: usage.unused,
+    p_used_quantity: usage.used,
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
-  redirect(`/organisations/${organisationId}`);
+  const listingId = Number(data);
+
+  if (!Number.isInteger(listingId)) {
+    redirect(accountPath(organisationId, "/dashboard/listings"));
+  }
+
+  const listing = await getListing(listingId);
+  if (listing) {
+    await notifyListingCreated(listing);
+  }
+
+  redirect(`/auctions/${listingId}`);
 }
 
 export async function placeBidAction(
@@ -90,17 +195,71 @@ export async function placeBidAction(
   }
 
   const listingId = Number(formData.get("listing_id"));
-  const organisationId = Number(formData.get("bidder_organisation_id"));
+  const active = await getActiveOrganisation();
   const amount = Number(read(formData, "amount_aud"));
 
-  if (!Number.isInteger(listingId) || !Number.isInteger(organisationId)) {
-    return { error: "Choose an organisation to bid with." };
+  if (!Number.isInteger(listingId)) {
+    return { error: "Listing not found." };
   }
+
+  if (!active) {
+    return { error: ACTIVE_ORGANISATION_REQUIRED_MESSAGE };
+  }
+
+  if (!canBuyForOrganisation(active.role)) {
+    return { error: "Only owners and admins can bid for this business." };
+  }
+
+  const organisationId = active.id;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Bid must be greater than zero." };
   }
 
+  const termsError = await requireTermsError();
+
+  if (termsError) {
+    return { error: termsError };
+  }
+
+  const listing = await getListing(listingId);
+  const jurisdictionCode = listing
+    ? await getHoldingJurisdictionCode(listing.holding_id)
+    : null;
+  const requireQld = tradeRequiresQldProfile(jurisdictionCode);
+  const accountError = await requireTradeReadyError(organisationId, {
+    requireQldProfile: requireQld,
+  });
+
+  if (accountError) {
+    return { error: accountError };
+  }
+
+  if (listing) {
+    const sellerError = await requireCounterpartyTradeReadyError(
+      listing.organisation_id,
+      { requireQldProfile: requireQld },
+    );
+
+    if (sellerError) {
+      return { error: sellerError };
+    }
+  }
+
+  const ackError = requireAcknowledgements(formData, BUYER_BID_ACKNOWLEDGEMENTS);
+
+  if (ackError) {
+    return { error: ackError };
+  }
+
+  const previous = (await listBids(listingId))[0] ?? null;
+
+  if (listing?.organisation_id === organisationId) {
+    return {
+      error:
+        "You cannot bid on this auction while using the seller’s business. Switch business to bid as another business.",
+    };
+  }
   const { error } = await supabase.rpc("place_bid", {
     p_listing_id: listingId,
     p_bidder_organisation_id: organisationId,
@@ -108,7 +267,16 @@ export async function placeBidAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
+  }
+
+  if (listing) {
+    await notifyBidPlaced({
+      listing,
+      amount,
+      bidderOrganisationId: organisationId,
+      previous,
+    });
   }
 
   redirect(`/auctions/${listingId}`);
@@ -122,6 +290,8 @@ export async function closeAuctionAction(formData: FormData) {
     return;
   }
 
+  const listing = await getListing(listingId);
+  const bids = await listBids(listingId);
   const { data, error } = await supabase.rpc("close_auction", {
     p_listing_id: listingId,
   });
@@ -129,6 +299,13 @@ export async function closeAuctionAction(formData: FormData) {
   if (error) {
     redirect(`/auctions/${listingId}`);
   }
+
+  const order = data ? await getOrder(Number(data)) : null;
+  if (listing) {
+    await notifyAuctionClosed({ listing, bids, order });
+  }
+
+  revalidateOrderSurfaces(order?.id);
 
   if (data) {
     redirect(`/orders/${data}`);

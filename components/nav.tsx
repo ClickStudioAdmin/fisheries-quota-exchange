@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const links = [
-  { href: "/", label: "Home" },
+export const PRIMARY_NAV_LINKS = [
   { href: "/marketplace", label: "Marketplace" },
   { href: "/fisheries", label: "Fisheries" },
-  { href: "/auctions", label: "Auctions" },
-  { href: "/about", label: "About" },
-];
+  { href: "/how-it-works", label: "How it works" },
+] as const;
 
-function isActive(pathname: string, href: string) {
-  if (href === "/") {
-    return pathname === "/";
+export function isPrimaryNavActive(pathname: string, href: string) {
+  if (href === "/marketplace") {
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`) ||
+      pathname.startsWith("/auctions/")
+    );
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -25,8 +27,8 @@ export function Nav() {
   return (
     <nav aria-label="Primary">
       <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-        {links.map((link) => {
-          const active = isActive(pathname, link.href);
+        {PRIMARY_NAV_LINKS.map((link) => {
+          const active = isPrimaryNavActive(pathname, link.href);
 
           return (
             <li key={link.href}>

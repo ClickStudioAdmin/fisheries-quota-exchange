@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
 import { LoginForm } from "@/components/login-form";
-import { safeNextPath } from "@/lib/auth/paths";
+import { pathForSignedInUser } from "@/lib/organisations/active-session";
+import { registerPath, safeNextPath } from "@/lib/auth/paths";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { getUser } from "@/lib/supabase/server";
+import { registrationsAllowed } from "@/lib/settings/queries";
 
 export const metadata = {
   title: "Log in",
@@ -16,14 +18,15 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const params = await searchParams;
-  const next = params.next ? safeNextPath(params.next) : "/dashboard";
+  const next = params.next ? safeNextPath(params.next) : null;
   const user = await getUser();
 
   if (user) {
-    redirect(next);
+    redirect(await pathForSignedInUser(next));
   }
 
   const configured = getSupabasePublicEnv() !== null;
+  const allowRegister = await registrationsAllowed();
 
   return (
     <AuthCard title="Log in">
@@ -37,18 +40,20 @@ export default async function LoginPage({
           Sign-in could not be completed. Try again.
         </p>
       ) : null}
-      <LoginForm next={next === "/dashboard" ? undefined : next} />
+      <LoginForm next={next ?? undefined} />
       <p className="mt-4 text-sm text-ink-muted">
         <Link href="/forgot-password" className="underline">
           Forgot password
         </Link>
       </p>
-      <p className="mt-2 text-sm text-ink-muted">
-        No account?{" "}
-        <Link href="/register" className="underline">
-          Register
-        </Link>
-      </p>
+      {allowRegister ? (
+        <p className="mt-2 text-sm text-ink-muted">
+          No account?{" "}
+          <Link href={registerPath(next)} className="underline">
+            Register
+          </Link>
+        </p>
+      ) : null}
     </AuthCard>
   );
 }

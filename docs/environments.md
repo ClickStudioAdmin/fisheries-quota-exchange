@@ -35,6 +35,7 @@ Keep the existing production secrets:
 | `SUPABASE_ACCESS_TOKEN` | Both (`sbp_...` personal access token) |
 | `SUPABASE_DB_PASSWORD` | `main` only |
 | `SUPABASE_PROJECT_ID` | `main` only |
+| `SUPABASE_DB_URL` | Optional. Session pooler URI (port **5432**) for production when CI cannot reach the pooler via `supabase link`. |
 
 Add these for development:
 
@@ -42,6 +43,8 @@ Add these for development:
 | --- | --- |
 | `DEVELOPMENT_SUPABASE_DB_PASSWORD` | `develop` only |
 | `DEVELOPMENT_SUPABASE_PROJECT_ID` | `develop` only |
+| `DEVELOPMENT_SUPABASE_DB_URL` | Optional. Full session pooler URI (port **5432**). Prefer leaving this unset and using password + pooler host instead — special characters in passwords break pasted URIs. |
+| `DEVELOPMENT_SUPABASE_POOLER_HOST` | Optional for develop (defaults to `aws-0-ap-northeast-2.pooler.supabase.com`). Copy the exact host from Supabase → Database → Connection string if the default fails. |
 
 Create GitHub Environments named `development` and `production` under **Settings → Environments**. Protection rules on `production` are optional.
 
@@ -53,11 +56,35 @@ Create a **second** hosted project for development. Do not reuse the production 
 
 The first push to `develop` after secrets are set will apply existing migrations, including `system_health`, to the empty development database.
 
+## Supabase keep-alive (free tier)
+
+Free Supabase projects can pause after about seven days of low activity. [`.github/workflows/keepalive-supabase.yml`](../.github/workflows/keepalive-supabase.yml) pings both databases so that is less likely during downtime.
+
+- Runs on a schedule every **3 days** (12:00 UTC) and on **Run workflow**
+- Development job: `select 1` from `system_health` on the develop project
+- Production job: same on the production project
+- Uses the same project ID / DB password / access token secrets as Deploy Database
+- Does **not** apply migrations
+
+GitHub only runs `schedule` workflows from the **default branch**. Merge this workflow to that branch (and to `main` if that is the default) so the timer fires. After a pause warning, run the workflow manually. If the project is already paused, unpause it in the Supabase dashboard first.
+
+Upgrading the project to **Pro** is the only way to turn free-tier pause off permanently.
+
 ## Vercel
 
 Production stays on `main`.
 
 Pushes to `develop` should create a Preview deployment automatically. Use that URL for testing. It is not the production domain.
+
+Stripe webhooks cannot log in to Vercel. If Preview **Deployment Protection** (Vercel Authentication) is on, Stripe POSTs get the Vercel login page and the endpoint is marked failing. Turn protection off for Preview, or give `develop` a public URL. In the Stripe test Dashboard, the endpoint must be exactly:
+
+`https://<preview-host>/api/stripe/webhook`
+
+The PandaDoc webhook has the same rules. Use exactly:
+
+`https://<preview-host>/api/pandadoc/webhook`
+
+Do not put a trailing slash on the host (`…vercel.app//api/…` fails) or on the path (`…/webhook/` returns 308, and Stripe does not follow redirects). After changing the URL or protection, send a test event from Stripe. Opening an unpaid order still reconciles payment if a webhook was missed. Opening a Queensland Sign online order reconciles PandaDoc status if a webhook was missed.
 
 When the app starts using Supabase from the browser, set Vercel environment variables by environment:
 
@@ -65,8 +92,18 @@ When the app starts using Supabase from the browser, set Vercel environment vari
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Development project URL | Production project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Development publishable key | Production publishable key |
+| `RESEND_API_KEY` | Development Resend key | Production Resend key |
+| `EMAIL_FROM` | Test sender: `FQX <beth.t@example.com>` | Verified domain, e.g. `FQX <noreply@yourdomain>` |
+| `CRON_SECRET` | Shared secret for `/api/cron/emails` | Same name, production value |
+| `STRIPE_SECRET_KEY` | Stripe test secret (`sk_test_...`) | Keep test keys until live mode is a later phase |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe test publishable (`pk_test_...`) | Test publishable until live mode |
+| `STRIPE_WEBHOOK_SECRET` | Sandbox webhook secret | Sandbox or later live webhook secret |
+| `PANDADOC_API_KEY` | PandaDoc sandbox API key | Sandbox key until a later live-key phase |
+| `PANDADOC_WEBHOOK_SHARED_KEY` | PandaDoc webhook HMAC key | Sandbox webhook key |
+| `PANDADOC_SANDBOX_RECIPIENT_EMAIL` | Dummy recipient domain for sandbox send (e.g. your PandaDoc login) | Leave unset so real business emails are used |
+| `SUPABASE_SERVICE_ROLE_KEY` | Development service role | Production service role |
 
-These are required from Phase 3. After adding them, redeploy. Do not add service-role keys to Vercel.
+Supabase variables are required from Phase 3. Resend variables are needed to send product email. `CRON_SECRET` is required for the scheduled email job on Vercel. Stripe test keys and the service-role key are needed from Phase 9 to take payments. PandaDoc sandbox keys are needed from Phase 11 for Queensland Sign online; Offline pack still works if they are unset. Sandbox send only allows recipient emails on the **same domain** as the PandaDoc account. For Preview, set `PANDADOC_SANDBOX_RECIPIENT_EMAIL` to that login (FQX still emails the real businesses). Leave it unset on production. After adding keys, redeploy. Do not add service-role keys, Resend keys, `CRON_SECRET`, Stripe secrets, or PandaDoc keys to the frontend except `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. If Stripe is unset, purchases stay simulated. In the Stripe test Dashboard, add Radar rule `Block if :card_country: != 'AU'` so only Australian-issued cards are accepted (see [phase-9.md](phase-9.md)).
 
 Auth redirect URLs must be set on each Supabase project. See [phase-3.md](phase-3.md).
 

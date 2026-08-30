@@ -1,22 +1,58 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidForm } from "@/components/bid-form";
+import { SwitchAccountLink } from "@/components/switch-account-notice";
+import { TermsRequiredNotice } from "@/components/terms-required-notice";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
+import { buttonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { AuctionCountdown } from "@/components/auction-countdown";
+import { OfferCard } from "@/components/offer-card";
+import { OfferDetailLayout } from "@/components/offer-detail-layout";
+import { ListingRelatedMarket } from "@/components/listing-related-market";
+import { pageWidthClassName } from "@/components/surface";
+import {
+  tableBodyCellClassName,
+  tableClassName,
+  tableHeadClassName,
+  tableHeaderCellClassName,
+  tableRowClassName,
+  tableWrapClassName,
+} from "@/components/table-styles";
+import { formatTableDate, formatTableDateTime } from "@/lib/format";
 import { closeAuctionAction } from "@/lib/auctions/actions";
 import { ensureAuctionClosed, listBids } from "@/lib/auctions/queries";
 import {
   auctionHasEnded,
   auctionHasStarted,
   auctionIsLive,
+  auctionReserveLabel,
+  auctionBidStats,
   minimumBid,
 } from "@/lib/auctions/types";
 import { cancelListingAction } from "@/lib/listings/actions";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
-import { formatAud } from "@/lib/listings/types";
+import {
+  canCancelOpenListing,
+  formatAud,
+  listingStatusLabel,
+} from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { listMyOrganisations, getMyRole, loadPublicBuyerDisplays, loadPublicSellerDisplays } from "@/lib/organisations/queries";
+import { PublicSellerName } from "@/components/public-seller-name";
+import { PRIVATE_BUYER_LABEL } from "@/lib/organisations/public-seller";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import {
+  ownMissingTradeReadyFields,
+  ownMissingTradeReadyLabels,
+  requireCounterpartyTradeReadyError,
+} from "@/lib/organisations/eligibility";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { getOrderForListing } from "@/lib/orders/queries";
 import { getUser } from "@/lib/supabase/server";
-import { buttonClassName } from "@/components/auth-card";
+import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 
 export const metadata = {
   title: "Auction",
@@ -41,197 +77,320 @@ export default async function AuctionPage({
   }
 
   const listing = await ensureAuctionClosed(initial);
-  const [bids, order] = await Promise.all([
+  const [bids, order, fisheries, jurisdictions] = await Promise.all([
     listBids(listing.id),
     getOrderForListing(listing.id),
+    listFisheries(),
+    listJurisdictions(),
   ]);
+  const fishery = fisheries.find((item) => item.name === listing.fishery_name);
+  const jurisdictionCode =
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code ??
+    null;
+  const requireQld = tradeRequiresQldProfile(jurisdictionCode);
   const user = await getUser();
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
   const organisations = user ? await listMyOrganisations() : [];
-  const bidderOrganisations = organisations.filter(
-    (organisation) => organisation.id !== listing.organisation_id,
-  );
+  const active = user ? await getActiveOrganisation() : null;
+  const auctionPath = `/auctions/${listing.id}`;
+  const canSwitch = organisations.length > 1;
+  const operatingAsSeller = active?.id === listing.organisation_id;
+  const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
+  const buyerMissing =
+    active && !operatingAsSeller
+      ? await ownMissingTradeReadyFields(active.id, {
+          requireQldProfile: requireQld,
+        })
+      : [];
+  const sellerIncomplete =
+    Boolean(user) && !operatingAsSeller
+      ? Boolean(
+          await requireCounterpartyTradeReadyError(listing.organisation_id, {
+            requireQldProfile: requireQld,
+          }),
+        )
+      : false;
+  const sellerDisplays = await loadPublicSellerDisplays([listing]);
+  const sellerDisplay = sellerDisplays[listing.id] ?? {
+    label: listing.seller_name,
+    tooltip: null,
+  };
+  const bidderDisplays = await loadPublicBuyerDisplays(bids);
   const ended = auctionHasEnded(listing);
   const started = auctionHasStarted(listing);
   const live = auctionIsLive(listing);
-  const canCancel =
-    (listing.status === "PENDING_APPROVAL" || listing.status === "PUBLISHED") &&
-    (admin || ((role === "OWNER" || role === "ADMIN") && bids.length === 0));
+  const canManage =
+    admin ||
+    (operatingAsSeller && (role === "OWNER" || role === "ADMIN"));
+  const canCancel = canManage && canCancelOpenListing(listing, bids.length);
   const canClose =
     listing.status === "PUBLISHED" && ended && Boolean(user);
   const minBid = minimumBid(listing, bids.length);
-  const isSeller = role !== null;
+  const isSeller = operatingAsSeller;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className={`${pageWidthClassName} py-12 sm:py-16`}>
       <p className="text-sm text-ink-muted">
-        <Link href="/auctions" className="underline">
-          Auctions
+        <Link href="/marketplace" className="underline">
+          Marketplace
         </Link>
       </p>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">
-        {listing.fishery_name}
-      </h1>
-      <p className="mt-2 text-ink-muted">
-        {listing.stock_name} · {listing.season_name} · {listing.quota_type_name}{" "}
-        ({listing.measurement_kind})
-      </p>
-      <dl className="mt-8 grid max-w-lg gap-3 text-sm">
-        <div>
-          <dt className="text-ink-muted">Seller</dt>
-          <dd className="text-ink">{listing.seller_name}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Offering</dt>
-          <dd className="text-ink">{listing.offering}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Quantity</dt>
-          <dd className="text-ink">
-            {listing.quantity} {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Current price</dt>
-          <dd className="text-ink">
-            {formatAud(listing.unit_price_aud)} per {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Starting price</dt>
-          <dd className="text-ink">
-            {formatAud(listing.starting_price_aud ?? listing.unit_price_aud)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Increment</dt>
-          <dd className="text-ink">
-            {formatAud(listing.bid_increment_aud ?? 0)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Reserve</dt>
-          <dd className="text-ink">
-            {listing.reserve_price_aud
-              ? formatAud(listing.reserve_price_aud)
-              : "None"}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Status</dt>
-          <dd className="text-ink">{listing.status}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Starts</dt>
-          <dd className="text-ink">
-            {listing.starts_at
-              ? new Date(listing.starts_at).toLocaleString("en-AU")
-              : "—"}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Ends</dt>
-          <dd className="text-ink">
-            {new Date(listing.expires_at).toLocaleString("en-AU")}
-          </dd>
-        </div>
-      </dl>
-      {listing.status === "PUBLISHED" && live ? (
-        <div className="mt-8">
-          {!user ? (
+      <OfferDetailLayout
+        actionTitle="Place bid"
+        action={
+          listing.status === "PUBLISHED" && live ? (
+            !user ? (
+              <p className="text-sm text-ink-muted">
+                <Link
+                  href={`/login?next=/auctions/${listing.id}`}
+                  className="underline"
+                >
+                  Log in
+                </Link>{" "}
+                to bid. Bid time is recorded by the server. If you win, you
+                pay FQX in Stripe test mode.
+              </p>
+            ) : organisations.length === 0 ? (
+              <p className="text-sm text-ink-muted">
+                Add your business details on{" "}
+                <Link href="/dashboard/account" className="underline">
+                  Business Settings
+                </Link>{" "}
+                before you can bid.
+              </p>
+            ) : !active ? (
+              <p className="text-sm text-ink-muted">
+                <SwitchAccountLink next={auctionPath}>
+                  Choose a business
+                </SwitchAccountLink>{" "}
+                before you can bid.
+              </p>
+            ) : isSeller ? (
+              <p className="text-sm text-ink-muted">
+                You cannot bid on this auction while using the seller&apos;s
+                business.
+                {canSwitch ? (
+                  <>
+                    {" "}
+                    <SwitchAccountLink next={auctionPath} /> to bid as another
+                    business.
+                  </>
+                ) : null}
+              </p>
+            ) : !canBuyForOrganisation(active.role) ? (
+              <p className="text-sm text-ink-muted">
+                Only owners and admins can bid for this business.
+              </p>
+            ) : !acceptedTerms ? (
+              <TermsRequiredNotice action="bid" />
+            ) : buyerMissing.length > 0 ? (
+              <BusinessDetailsRequiredNotice
+                action="bid"
+                missingLabels={ownMissingTradeReadyLabels(buyerMissing)}
+              />
+            ) : sellerIncomplete ? (
+              <p className="text-sm text-ink-muted">
+                This seller has not completed business details, so this auction
+                cannot be bid on yet.
+              </p>
+            ) : (
+              <BidForm listingId={listing.id} minimumBid={minBid} />
+            )
+          ) : listing.status === "PUBLISHED" && !started ? (
             <p className="text-sm text-ink-muted">
-              <Link
-                href={`/login?next=/auctions/${listing.id}`}
-                className="underline"
-              >
-                Sign in
-              </Link>{" "}
-              to bid. Bid time is recorded by the server.
+              Bidding has not started yet.
             </p>
-          ) : organisations.length === 0 ? (
+          ) : listing.status === "PUBLISHED" && ended ? (
             <p className="text-sm text-ink-muted">
-              Create an organisation from the dashboard before bidding.
+              This auction has ended. Closing uses server time and creates a
+              simulated order if the reserve is met.
             </p>
-          ) : isSeller && bidderOrganisations.length === 0 ? (
+          ) : listing.status === "UNSOLD" ? (
             <p className="text-sm text-ink-muted">
-              You cannot bid on your organisation&apos;s auction. Use a
-              different organisation to test a bid.
+              Closed unsold. No bid met the reserve, or there were no bids.
             </p>
-          ) : bidderOrganisations.length > 0 ? (
-            <BidForm
-              listingId={listing.id}
-              minimumBid={minBid}
-              organisations={bidderOrganisations}
+          ) : listing.status === "RESERVED" || listing.status === "SOLD" ? (
+            <p className="text-sm text-ink-muted">
+              Closed with a winning bid. Quota is reserved. If the seller is
+              set up for payments, the winner pays FQX before compliance. FQX
+              holds the funds until settlement.
+              {order ? (
+                <>
+                  {" "}
+                  <Link href={`/orders/${order.id}`} className="underline">
+                    {order.status === "AWAITING_PAYMENT" &&
+                    active &&
+                    active.id === order.buyer_organisation_id &&
+                    canBuyForOrganisation(active.role)
+                      ? `Pay order ${order.id}`
+                      : `View order ${order.id}`}
+                  </Link>
+                </>
+              ) : null}
+            </p>
+          ) : (
+            <p className="text-sm text-ink-muted">
+              This auction is not open for bids.
+            </p>
+          )
+        }
+        extra={
+          <>
+            {canClose ? (
+              <form action={closeAuctionAction}>
+                <input type="hidden" name="listing_id" value={listing.id} />
+                <PendingSubmitButton
+                  className={buttonClassName}
+                  pendingLabel="Closing…"
+                >
+                  Close auction
+                </PendingSubmitButton>
+              </form>
+            ) : null}
+            {canCancel ? (
+              <form action={cancelListingAction}>
+                <input type="hidden" name="listing_id" value={listing.id} />
+                <input
+                  type="hidden"
+                  name="next"
+                  value={`/auctions/${listing.id}`}
+                />
+                <PendingSubmitButton
+                  className={buttonClassName}
+                  pendingLabel="Cancelling…"
+                >
+                  Cancel auction
+                </PendingSubmitButton>
+              </form>
+            ) : canManage &&
+              (listing.status === "PENDING_APPROVAL" ||
+                listing.status === "PUBLISHED") &&
+              bids.length > 0 ? (
+              <p className="text-sm text-ink-muted">
+                This auction cannot be edited or cancelled because a bid has been
+                placed.
+              </p>
+            ) : null}
+            <section>
+              <h2 className="text-xl font-semibold text-ink">Bids</h2>
+              {bids.length === 0 ? (
+                <p className="mt-4 text-sm text-ink-muted">No bids yet.</p>
+              ) : (
+                <div className={`mt-4 ${tableWrapClassName}`}>
+                  <table className={`${tableClassName} table-fixed`}>
+                    <thead className={tableHeadClassName}>
+                      <tr>
+                        <th className={`${tableHeaderCellClassName} w-1/3 pl-4`}>
+                          Bid
+                        </th>
+                        <th className={`${tableHeaderCellClassName} w-1/3`}>
+                          Bidder
+                        </th>
+                        <th className={`${tableHeaderCellClassName} w-1/3 pr-4`}>
+                          Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bids.map((bid, index) => (
+                        <tr key={bid.id} className={tableRowClassName(index)}>
+                          <td
+                            className={`${tableBodyCellClassName} pl-4 tabular-nums`}
+                          >
+                            {formatAud(bid.amount_aud)}
+                          </td>
+                          <td className={tableBodyCellClassName}>
+                            <PublicSellerName
+                              display={
+                                bidderDisplays[Number(bid.id)] ?? {
+                                  label: PRIVATE_BUYER_LABEL,
+                                  tooltip: null,
+                                }
+                              }
+                            />
+                          </td>
+                          <td className={`${tableBodyCellClassName} pr-4`}>
+                            {formatTableDateTime(bid.created_at)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
+        }
+        related={
+          fishery ? (
+            <ListingRelatedMarket
+              fishery={fishery}
+              currentListingId={listing.id}
+              offering={listing.offering}
             />
-          ) : null}
-        </div>
-      ) : listing.status === "PUBLISHED" && !started ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          Bidding has not started yet.
-        </p>
-      ) : listing.status === "PUBLISHED" && ended ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          This auction has ended. Closing uses server time and creates a
-          simulated order if the reserve is met.
-        </p>
-      ) : listing.status === "UNSOLD" ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          Closed unsold. No bid met the reserve, or there were no bids.
-        </p>
-      ) : listing.status === "RESERVED" || listing.status === "SOLD" ? (
-        <p className="mt-8 text-sm text-ink-muted">
-          Closed with a winning bid. Quota is reserved and the order follows
-          the Phase 7 compliance workflow.
-          {order ? (
-            <>
-              {" "}
-              <Link href={`/orders/${order.id}`} className="underline">
-                View order {order.id}
-              </Link>
-            </>
-          ) : null}
-        </p>
-      ) : (
-        <p className="mt-8 text-sm text-ink-muted">
-          This auction is not open for bids.
-        </p>
-      )}
-      {canClose ? (
-        <form action={closeAuctionAction} className="mt-6">
-          <input type="hidden" name="listing_id" value={listing.id} />
-          <button type="submit" className={buttonClassName}>
-            Close auction
-          </button>
-        </form>
-      ) : null}
-      {canCancel ? (
-        <form action={cancelListingAction} className="mt-6">
-          <input type="hidden" name="listing_id" value={listing.id} />
-          <input type="hidden" name="next" value={`/auctions/${listing.id}`} />
-          <button
-            type="submit"
-            className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
-          >
-            Cancel auction
-          </button>
-        </form>
-      ) : null}
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold text-ink">Bids</h2>
-        {bids.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No bids yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-            {bids.map((bid) => (
-              <li key={bid.id}>
-                {formatAud(bid.amount_aud)} · {bid.bidder_name} ·{" "}
-                {new Date(bid.created_at).toLocaleString("en-AU")}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          ) : null
+        }
+      >
+        <OfferCard
+          listing={listing}
+          fishery={fishery ?? { name: listing.fishery_name, logo_path: null }}
+          fisheryId={fishery?.id ?? null}
+          jurisdictionCode={jurisdictionCode}
+          sellerDisplay={sellerDisplay}
+          priceLabel="Current bid"
+          totalLabel="Indicative price"
+          {...auctionBidStats(bids.length > 0)}
+          badge={
+            ended
+              ? listing.status === "PUBLISHED"
+                ? "Ended — waiting to close"
+                : listingStatusLabel(listing.status)
+              : started
+                ? listing.status === "PUBLISHED"
+                  ? undefined
+                  : listingStatusLabel(listing.status)
+                : "Scheduled"
+          }
+          extraStats={[
+            {
+              label: "Starting price",
+              value: formatAud(
+                listing.starting_price_aud ?? listing.unit_price_aud,
+              ),
+            },
+            {
+              label: "Increment",
+              value: formatAud(listing.bid_increment_aud ?? 0),
+            },
+            {
+              label: "Reserve",
+              value: auctionReserveLabel(
+                listing.reserve_price_aud,
+                bids.length > 0
+                  ? Math.max(
+                      ...bids.map((bid) => Number(bid.amount_aud)),
+                    )
+                  : null,
+              ),
+            },
+          ]}
+          metaLabel={ended ? "Ended" : started ? "Time left" : "Starts in"}
+          metaValue={
+            ended ? (
+              formatTableDate(listing.expires_at)
+            ) : (
+              <AuctionCountdown
+                at={
+                  started
+                    ? listing.expires_at
+                    : (listing.starts_at ?? listing.expires_at)
+                }
+              />
+            )
+          }
+        />
+      </OfferDetailLayout>
     </div>
   );
 }

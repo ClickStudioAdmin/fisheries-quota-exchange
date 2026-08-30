@@ -1,180 +1,329 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  approveComplianceAction,
-  rejectComplianceAction,
-  simulateSettlementAction,
-  simulateTransferAction,
-} from "@/lib/orders/actions";
+import { startOrderQueueAction } from "@/lib/orders/actions";
 import { listAllOrders } from "@/lib/orders/queries";
-import { orderStatusLabel } from "@/lib/orders/types";
-import { formatAud } from "@/lib/listings/types";
+import {
+  adminTransferActionLabel,
+  isOrderQueueStatus,
+  orderQueuePath,
+  orderQueueTitle,
+  parseOrderIds,
+  type Order,
+} from "@/lib/orders/types";
+import { formatAud, listingOfferingLabel } from "@/lib/listings/types";
+import { quantityUsageTooltips } from "@/lib/listings/quota-usage";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
+import { fisherySelectLabelForName } from "@/lib/fisheries/types";
+import { DataTable, DataTableRowExtras } from "@/components/data-table";
+import { OrderTableLinks } from "@/components/order-table-links";
+import { TableModal } from "@/components/table-modal";
+import { CancelOrderForm } from "@/components/cancel-order-form";
+import { ReviewTransferForms } from "@/components/review-transfer-forms";
+import { BulkReviewOrdersModal } from "@/components/bulk-review-orders-modal";
+import { formatTableDate } from "@/lib/format";
+import { orderStatusLabelFor, transferStatusInputForOrder } from "@/lib/transfers/display";
+import { listTransferApplicationsByOrderIds } from "@/lib/transfers/queries";
 
 export const metadata = {
   title: "Orders",
 };
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ queue?: string }>;
+}) {
   if (!(await isPlatformAdmin())) {
     redirect("/admin");
   }
 
-  const orders = await listAllOrders();
-  const compliance = orders.filter((item) => item.status === "AWAITING_COMPLIANCE");
-  const transfer = orders.filter((item) => item.status === "AWAITING_TRANSFER");
-  const settlement = orders.filter(
-    (item) => item.status === "AWAITING_SETTLEMENT",
+  const query = await searchParams;
+  const [orders, fisheries, jurisdictions] = await Promise.all([
+    listAllOrders(),
+    listFisheries(),
+    listJurisdictions(),
+  ]);
+  const transferApplications = await listTransferApplicationsByOrderIds(
+    orders.map((order) => order.id),
   );
-  const others = orders.filter(
-    (item) =>
-      item.status !== "AWAITING_COMPLIANCE" &&
-      item.status !== "AWAITING_TRANSFER" &&
-      item.status !== "AWAITING_SETTLEMENT",
-  );
+  const queued = parseOrderIds(query.queue);
+  const byId = new Map(orders.map((order) => [order.id, order]));
+  const firstQueued = queued
+    .map((id) => byId.get(id))
+    .find(
+      (order): order is Order =>
+        order != null && isOrderQueueStatus(order.status),
+    );
+  const queueStatus = firstQueued?.status;
+  const queueOrders = queueStatus
+    ? queued
+        .map((id) => byId.get(id))
+        .filter(
+          (order): order is Order =>
+            order != null && order.status === queueStatus,
+        )
+    : [];
+  const remainingPath = orderQueuePath(queueOrders.map((order) => order.id));
+  const requestedPath = orderQueuePath(queued);
+
+  if (queued.length > 0 && remainingPath !== requestedPath) {
+    redirect(remainingPath);
+  }
 
   return (
-    <div className="space-y-10">
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Simulated transactions
-      </h1>
-      <p className="text-sm text-ink-muted">
-        No live payment. Approve compliance, simulate transfer, then simulate
-        settlement. Settlement writes SALE/PURCHASE or LEASE_OUT/LEASE_IN
-        ledger rows and consumes the reservation.
-      </p>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Compliance review</h2>
-        {compliance.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No orders waiting.</p>
-        ) : (
-          <div className="mt-4 space-y-4">
-            {compliance.map((order) => (
-              <div key={order.id} className="border border-line p-4">
-                <p className="font-medium text-ink">
-                  Order {order.id} · {order.buyer_name} buying from{" "}
-                  {order.seller_name}
-                </p>
-                <p className="text-sm text-ink-muted">
-                  {order.offering} · {order.quantity} {order.unit_label} ·{" "}
-                  {formatAud(order.amount_aud)}
-                </p>
-                <p className="mt-1 text-sm">
-                  <Link href={`/orders/${order.id}`} className="underline">
-                    View order
-                  </Link>
-                </p>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  <form action={approveComplianceAction} className="flex gap-2">
-                    <input type="hidden" name="order_id" value={order.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Note (optional)"
-                      className={fieldClassName}
-                    />
-                    <button type="submit" className={buttonClassName}>
-                      Approve
-                    </button>
-                  </form>
-                  <form action={rejectComplianceAction} className="flex gap-2">
-                    <input type="hidden" name="order_id" value={order.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Reason (optional)"
-                      className={fieldClassName}
-                    />
-                    <button
-                      type="submit"
-                      className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          Simulated orders
+        </h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          Approve compliance, run transfer (Queensland workspace or simulate),
+          then simulate settlement. Cancel is admin-only and available while an
+          order is awaiting payment or compliance. Select orders in the same
+          status to open a queue. The buyer pays the listed amount. Settlement
+          Transfers the seller’s share after the platform fee, writes
+          SALE/PURCHASE or LEASE_OUT/LEASE_IN ledger rows, consumes the
+          reservation, and emails the dummy quota invoice to the buyer and the
+          dummy fee invoice to the seller.
+        </p>
+      </div>
+      <DataTable
+        caption="Orders"
+        empty="No orders yet."
+        searchPlaceholder="Filter orders…"
+        defaultSort={{ key: "id", direction: "desc" }}
+        selectable
+        bulkActions={[
+          {
+            label: "Review",
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "status",
+              value: "AWAITING_COMPLIANCE",
+            },
+            hiddenFields: { expected_status: "AWAITING_COMPLIANCE" },
+          },
+          {
+            label: "Open transfer",
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "transferKind",
+              value: "QLD",
+            },
+            hiddenFields: { expected_status: "AWAITING_TRANSFER" },
+          },
+          {
+            label: "Simulate transfer",
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "transferKind",
+              value: "SIMULATED",
+            },
+            hiddenFields: { expected_status: "AWAITING_TRANSFER" },
+          },
+          {
+            label: "Simulate settlement",
+            action: startOrderQueueAction,
+            requireValue: {
+              key: "status",
+              value: "AWAITING_SETTLEMENT",
+            },
+            hiddenFields: { expected_status: "AWAITING_SETTLEMENT" },
+          },
+        ]}
+        columns={[
+          { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
+          {
+            key: "parties",
+            header: "Buyer / seller",
+            stacked: [
+              { key: "buyer", label: "Buyer", filter: "select" },
+              { key: "seller", label: "Seller", filter: "select" },
+            ],
+          },
+          {
+            key: "offering",
+            header: "Offering",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "SALE", label: "Sale" },
+              { value: "LEASE", label: "Lease" },
+            ],
+          },
+          {
+            key: "fishery",
+            header: "Fishery",
+            sortable: true,
+            filter: "select",
+          },
+          { key: "quantity", header: "Quantity", sortable: true, align: "right" },
+          {
+            key: "amount",
+            header: "Amount",
+            sortable: true,
+            align: "right",
+            stacked: [
+              { key: "amount", label: "Amount" },
+              { key: "fee", label: "Fee" },
+            ],
+          },
+          {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "AWAITING_PAYMENT", label: "Awaiting payment" },
+              { value: "AWAITING_COMPLIANCE", label: "Awaiting compliance" },
+              { value: "AWAITING_TRANSFER", label: "Awaiting transfer" },
+              { value: "AWAITING_SETTLEMENT", label: "Awaiting settlement" },
+              { value: "COMPLETED", label: "Completed" },
+              { value: "REJECTED", label: "Rejected" },
+              { value: "CANCELLED", label: "Cancelled" },
+            ],
+          },
+        ]}
+        rows={orders.map((order) => {
+          const transfer = transferStatusInputForOrder(
+            order,
+            transferApplications.get(order.id),
+            fisheries,
+            jurisdictions,
+          );
+
+          return {
+            id: order.id,
+            needsAction:
+              order.status === "AWAITING_COMPLIANCE" ||
+              order.status === "AWAITING_TRANSFER" ||
+              order.status === "AWAITING_SETTLEMENT",
+            details: [
+              { label: "Created", value: formatTableDate(order.created_at) },
+            ],
+            values: {
+              id: order.id,
+              parties: `${order.buyer_name} ${order.seller_name}`,
+              buyer: order.buyer_name,
+              seller: order.seller_name,
+              fishery: fisherySelectLabelForName(
+                order.fishery_name,
+                fisheries,
+                jurisdictions,
+              ),
+              offering: order.offering,
+              quantity: order.quantity,
+              amount: order.amount_aud,
+              fee: order.fee_amount_aud,
+              status: order.status,
+              transferKind:
+                order.status === "AWAITING_TRANSFER"
+                  ? transfer.usesSimulatedTransfer
+                    ? "SIMULATED"
+                    : "QLD"
+                  : "",
+              created: order.created_at,
+            },
+            display: {
+              offering: listingOfferingLabel(order.offering),
+              quantity: `${order.quantity} ${order.unit_label}`,
+              amount: formatAud(order.amount_aud),
+              fee:
+                Number(order.fee_percent) > 0
+                  ? `${formatAud(order.fee_amount_aud)} (${order.fee_percent}%)`
+                  : formatAud(order.fee_amount_aud),
+              status: orderStatusLabelFor(
+                order,
+                transferApplications,
+                fisheries,
+                jurisdictions,
+              ),
+            },
+            tooltips: quantityUsageTooltips(
+              order.unused_quantity,
+              order.used_quantity,
+              order.unit_label,
+            ),
+          };
+        })}
+      >
+        {orders.map((order) => {
+          const simulated = transferStatusInputForOrder(
+            order,
+            transferApplications.get(order.id),
+            fisheries,
+            jurisdictions,
+          ).usesSimulatedTransfer;
+
+          return (
+            <DataTableRowExtras
+              key={order.id}
+              id={order.id}
+              links={<OrderTableLinks orderId={order.id} />}
+              actions={
+                <>
+                  {order.status === "AWAITING_COMPLIANCE" ? (
+                    <TableModal
+                      persistKey={`order-${order.id}-compliance`}
+                      title="Review compliance"
+                      label="Review"
+                      wide
                     >
-                      Reject
-                    </button>
-                  </form>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Transfer simulation</h2>
-        {transfer.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No orders waiting.</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {transfer.map((order) => (
-              <li
-                key={order.id}
-                className="flex flex-col gap-3 border border-line p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="text-ink">
-                    Order {order.id} · {order.quantity} {order.unit_label}
-                  </p>
-                  <p className="text-sm text-ink-muted">
-                    {order.buyer_name} · {formatAud(order.amount_aud)}
-                  </p>
-                </div>
-                <form action={simulateTransferAction}>
-                  <input type="hidden" name="order_id" value={order.id} />
-                  <button type="submit" className={buttonClassName}>
-                    Simulate transfer
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Settlement simulation</h2>
-        {settlement.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No orders waiting.</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {settlement.map((order) => (
-              <li
-                key={order.id}
-                className="flex flex-col gap-3 border border-line p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="text-ink">
-                    Order {order.id} · {order.offering} · {order.quantity}{" "}
-                    {order.unit_label}
-                  </p>
-                  <p className="text-sm text-ink-muted">
-                    Writes quota ledger rows. No money moves.
-                  </p>
-                </div>
-                <form action={simulateSettlementAction}>
-                  <input type="hidden" name="order_id" value={order.id} />
-                  <button type="submit" className={buttonClassName}>
-                    Simulate settlement
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Other orders</h2>
-        {others.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">None yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-            {others.map((order) => (
-              <li key={order.id}>
-                <Link href={`/orders/${order.id}`} className="underline">
-                  Order {order.id}
-                </Link>{" "}
-                · {orderStatusLabel(order.status)} · {order.buyer_name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                      <ReviewTransferForms order={order} />
+                    </TableModal>
+                  ) : null}
+                  {order.status === "AWAITING_PAYMENT" ||
+                  order.status === "AWAITING_COMPLIANCE" ? (
+                    <TableModal
+                      persistKey={`order-${order.id}-cancel`}
+                      title="Cancel order"
+                      label="Cancel"
+                    >
+                      <CancelOrderForm order={order} />
+                    </TableModal>
+                  ) : null}
+                  {order.status === "AWAITING_TRANSFER" ? (
+                    <TableModal
+                      persistKey={`order-${order.id}-transfer`}
+                      title={simulated ? "Simulate transfer" : "Transfer"}
+                      label={adminTransferActionLabel(simulated)}
+                      wide={!simulated}
+                    >
+                      <ReviewTransferForms order={order} />
+                    </TableModal>
+                  ) : null}
+                  {order.status === "AWAITING_SETTLEMENT" ? (
+                    <ReviewTransferForms order={order} />
+                  ) : null}
+                </>
+              }
+            />
+          );
+        })}
+      </DataTable>
+      {queueOrders.length > 0 &&
+      queueStatus &&
+      isOrderQueueStatus(queueStatus) ? (
+        <BulkReviewOrdersModal
+          title={orderQueueTitle(queueStatus)}
+          count={queueOrders.length}
+        >
+          {queueOrders.map((order, index) => (
+            <section
+              key={order.id}
+              className="space-y-4 py-6 first:pt-0 last:pb-0"
+            >
+              <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+                {index + 1} of {queueOrders.length}
+              </p>
+              <ReviewTransferForms
+                order={order}
+                reviewQueue={queueOrders.map((item) => item.id)}
+              />
+            </section>
+          ))}
+        </BulkReviewOrdersModal>
+      ) : null}
     </div>
   );
 }

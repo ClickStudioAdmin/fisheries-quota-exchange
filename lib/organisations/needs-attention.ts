@@ -1,0 +1,339 @@
+export type NeedsAttentionItem = {
+  key: string;
+  href: string;
+  title: string;
+  detail?: string;
+  actionLabel: string;
+};
+
+export type NeedsAttentionOrder = {
+  id: number;
+  status: string;
+  fishery_name: string;
+  offering: "SALE" | "LEASE";
+  buyer_organisation_id: number;
+  seller_organisation_id: number;
+};
+
+export type NeedsAttentionListing = {
+  id: number;
+  listing_type: string;
+  status: string;
+  expires_at: string;
+  fishery_name: string;
+  organisation_id?: number;
+};
+
+export type NeedsAttentionHolding = {
+  id: number;
+  fishery_name: string;
+  custody_kind: "MEMBER" | "FQX_CUSTODIAL";
+  verification_status: string;
+};
+
+export type NeedsAttentionCustodyRelease = {
+  id: number;
+  holding_id: number;
+  fishery_name: string;
+  quantity: string;
+};
+
+export type NeedsAttentionTransfer = {
+  process_code: string;
+  status: string;
+  signing_channel?: string;
+  pandadoc_seller_completed_at?: string | null;
+  pandadoc_buyer_completed_at?: string | null;
+};
+
+export type NeedsAttentionComplianceNotes = {
+  buyer: string | null;
+  seller: string | null;
+};
+
+const CLOSED_ORDER_STATUSES = new Set([
+  "CANCELLED",
+  "REJECTED",
+  "COMPLETED",
+]);
+
+const PAYMENT_NO_LONGER_DUE = new Set(["PAID", "EXPIRED", "FAILED"]);
+
+export function orderPaymentActionIsDue(
+  orderStatus: string,
+  paymentStatus?: string | null,
+) {
+  if (orderStatus !== "AWAITING_PAYMENT") {
+    return false;
+  }
+
+  if (paymentStatus && PAYMENT_NO_LONGER_DUE.has(paymentStatus.toUpperCase())) {
+    return false;
+  }
+
+  return true;
+}
+
+export function memberActionCountBuckets(items: readonly NeedsAttentionItem[]) {
+  let orders = 0;
+  let listings = 0;
+  let holdings = 0;
+
+  for (const item of items) {
+    if (item.key.startsWith("auction-")) {
+      listings += 1;
+    } else if (
+      item.key.startsWith("holding-") ||
+      item.key.startsWith("custody-release-")
+    ) {
+      holdings += 1;
+    } else {
+      orders += 1;
+    }
+  }
+
+  return {
+    orders,
+    listings,
+    holdings,
+    overview: items.length,
+  };
+}
+
+function isQldLeaseAwaitingOutbound(
+  order: Pick<NeedsAttentionOrder, "status" | "offering" | "fishery_name">,
+  fisheries: readonly { name: string; jurisdiction_id: number }[],
+  jurisdictions: readonly { id: number; code: string }[],
+) {
+  if (order.status !== "AWAITING_TRANSFER" || order.offering !== "LEASE") {
+    return false;
+  }
+
+  const fishery = fisheries.find((item) => item.name === order.fishery_name);
+  const jurisdictionCode =
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code ??
+    null;
+
+  return jurisdictionCode === "QLD";
+}
+
+function usesSimulatedTransfer(
+  order: Pick<NeedsAttentionOrder, "offering" | "fishery_name">,
+  application: NeedsAttentionTransfer | undefined,
+  fisheries: readonly { name: string; jurisdiction_id: number }[],
+  jurisdictions: readonly { id: number; code: string }[],
+) {
+  if (application?.process_code) {
+    return application.process_code === "SIMULATED";
+  }
+
+  const fishery = fisheries.find((item) => item.name === order.fishery_name);
+  const jurisdictionCode =
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code ??
+    null;
+
+  return jurisdictionCode !== "QLD";
+}
+
+function qldTransferActionLabel(
+  application: NeedsAttentionTransfer | undefined,
+  isSeller: boolean,
+  isBuyer: boolean,
+) {
+  const status = application?.status ?? "READY";
+  if (application?.signing_channel === "PANDADOC") {
+    if (status === "READY") {
+      return isSeller ? "Prepare transfer documents" : null;
+    }
+    if (status === "AWAITING_SIGNATURES") {
+      if (isSeller && !application.pandadoc_seller_completed_at) {
+        return "Sign Online";
+      }
+      if (isBuyer && !application.pandadoc_buyer_completed_at) {
+        return "Sign Online";
+      }
+      return null;
+    }
+    if (status === "ACTION_REQUIRED") {
+      return "Update transfer details";
+    }
+    return null;
+  }
+
+  if (status == null || status === "READY") {
+    return isSeller ? "Prepare transfer documents" : null;
+  }
+
+  if (status === "AWAITING_SELLER_SIGNATURE") {
+    return isSeller ? "Sign and upload transfer documents" : null;
+  }
+
+  if (status === "AWAITING_BUYER_SIGNATURE") {
+    return isBuyer ? "Sign and upload transfer documents" : null;
+  }
+
+  if (status === "ACTION_REQUIRED") {
+    return "Update transfer details";
+  }
+
+  return null;
+}
+
+export function organisationNeedsAttentionItems(input: {
+  organisationId: number;
+  canManage: boolean;
+  orders: readonly NeedsAttentionOrder[];
+  listings: readonly NeedsAttentionListing[];
+  holdings?: readonly NeedsAttentionHolding[];
+  custodyReleases?: readonly NeedsAttentionCustodyRelease[];
+  transferByOrderId?: ReadonlyMap<number, NeedsAttentionTransfer>;
+  fisheries?: readonly { name: string; jurisdiction_id: number }[];
+  jurisdictions?: readonly { id: number; code: string }[];
+  complianceNotesByOrderId?: ReadonlyMap<number, NeedsAttentionComplianceNotes>;
+  paymentStatusByOrderId?: ReadonlyMap<number, string>;
+  now?: Date;
+}): NeedsAttentionItem[] {
+  if (!input.canManage || input.organisationId <= 0) {
+    return [];
+  }
+
+  const items: NeedsAttentionItem[] = [];
+  const fisheries = input.fisheries ?? [];
+  const jurisdictions = input.jurisdictions ?? [];
+  const transfers = input.transferByOrderId ?? new Map();
+  const notesByOrderId = input.complianceNotesByOrderId ?? new Map();
+  const paymentStatusByOrderId = input.paymentStatusByOrderId ?? new Map();
+  const now = input.now ?? new Date();
+
+  for (const holding of input.holdings ?? []) {
+    if (holding.verification_status !== "PENDING_VERIFICATION") {
+      continue;
+    }
+
+    items.push({
+      key: `holding-${holding.id}`,
+      href: `/dashboard/holdings/${holding.id}`,
+      title:
+        holding.custody_kind === "FQX_CUSTODIAL"
+          ? `Custodial quota pending verification`
+          : `Holding pending verification`,
+      detail: holding.fishery_name,
+      actionLabel: "View holding",
+    });
+  }
+
+  for (const release of input.custodyReleases ?? []) {
+    items.push({
+      key: `custody-release-${release.id}`,
+      href: `/dashboard/holdings/${release.holding_id}`,
+      title: `Custody release pending`,
+      detail: `${release.fishery_name} · ${release.quantity}`,
+      actionLabel: "View holding",
+    });
+  }
+
+  for (const order of input.orders) {
+    if (CLOSED_ORDER_STATUSES.has(order.status)) {
+      continue;
+    }
+
+    const isBuyer = order.buyer_organisation_id === input.organisationId;
+    const isSeller = order.seller_organisation_id === input.organisationId;
+
+    if (!isBuyer && !isSeller) {
+      continue;
+    }
+
+    if (
+      isBuyer &&
+      orderPaymentActionIsDue(
+        order.status,
+        paymentStatusByOrderId.get(order.id),
+      )
+    ) {
+      items.push({
+        key: `pay-${order.id}`,
+        href: `/orders/${order.id}`,
+        title: `Pay order ${order.id}`,
+        detail: order.fishery_name,
+        actionLabel: "Go to order",
+      });
+    }
+
+    if (order.status === "AWAITING_COMPLIANCE") {
+      const notes = notesByOrderId.get(order.id);
+      if (
+        (isBuyer && notes?.buyer) ||
+        (isSeller && notes?.seller)
+      ) {
+        items.push({
+          key: `compliance-update-${order.id}`,
+          href: `/orders/${order.id}`,
+          title: `Update order ${order.id} details`,
+          detail: order.fishery_name,
+          actionLabel: "Go to order",
+        });
+      }
+    }
+
+    if (order.status === "AWAITING_TRANSFER") {
+      if (isQldLeaseAwaitingOutbound(order, fisheries, jurisdictions)) {
+        items.push({
+          key: `lease-outbound-${order.id}`,
+          href: `/orders/${order.id}`,
+          title: `Lease awaiting FishNet outbound for order ${order.id}`,
+          detail: order.fishery_name,
+          actionLabel: "Go to order",
+        });
+        continue;
+      }
+
+      const application = transfers.get(order.id);
+      if (usesSimulatedTransfer(order, application, fisheries, jurisdictions)) {
+        continue;
+      }
+
+      const action = qldTransferActionLabel(
+        application,
+        isSeller,
+        isBuyer,
+      );
+      if (action) {
+        items.push({
+          key: `transfer-${order.id}`,
+          href: `/orders/${order.id}`,
+          title: `${action} for order ${order.id}`,
+          detail: order.fishery_name,
+          actionLabel: "Go to order",
+        });
+      }
+    }
+  }
+
+  for (const listing of input.listings) {
+    if (
+      listing.organisation_id != null &&
+      listing.organisation_id !== input.organisationId
+    ) {
+      continue;
+    }
+
+    if (
+      listing.listing_type !== "AUCTION" ||
+      listing.status !== "PUBLISHED" ||
+      new Date(listing.expires_at) > now
+    ) {
+      continue;
+    }
+
+    items.push({
+      key: `auction-${listing.id}`,
+      href: `/auctions/${listing.id}`,
+      title: `Close auction ${listing.id}`,
+      detail: listing.fishery_name,
+      actionLabel: "Go to auction",
+    });
+  }
+
+  return items;
+}

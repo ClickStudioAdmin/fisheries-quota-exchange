@@ -1,35 +1,58 @@
-import Link from "next/link";
 import { AuthLinks } from "@/components/auth-links";
+import { HeaderMenu } from "@/components/header-menu";
+import { Logo } from "@/components/logo";
 import { Nav } from "@/components/nav";
-import { canSeeAdmin } from "@/lib/admin/access";
+import { pageWidthClassName } from "@/components/surface";
+import { canSeeAdmin, isPlatformAdmin } from "@/lib/admin/access";
+import { displayName } from "@/lib/auth/display-name";
+import { getAdminActionCounts, getMemberActionCounts } from "@/lib/nav/action-counts";
+import { getMyUnreadNotificationCount } from "@/lib/notifications/queries";
+import { registrationsAllowed } from "@/lib/settings/queries";
 import { getUser } from "@/lib/supabase/server";
 
 export async function Header() {
   const user = await getUser();
   const showAdmin = user ? await canSeeAdmin() : false;
+  const admin = user ? await isPlatformAdmin() : false;
+  const [adminCounts, memberCounts, unreadNotifications, allowRegister] =
+    await Promise.all([
+      admin ? getAdminActionCounts() : Promise.resolve(null),
+      user ? getMemberActionCounts() : Promise.resolve(null),
+      user ? getMyUnreadNotificationCount() : Promise.resolve(0),
+      user ? Promise.resolve(false) : registrationsAllowed(),
+    ]);
+  const dashboardBadge = (memberCounts?.total ?? 0) + unreadNotifications;
+  const adminBadge = adminCounts?.total ?? 0;
 
   return (
-    <header className="bg-ink text-paper">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:px-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="font-semibold tracking-tight">
-            <span className="block text-sm uppercase tracking-[0.18em] text-paper/70">
-              FQX
-            </span>
-            <span className="block text-base sm:text-lg">
-              Fisheries Quota Exchange
-            </span>
-          </Link>
-          <AuthLinks email={user?.email ?? null} />
+    <header className="relative shrink-0 bg-ink text-paper">
+      <div
+        className={`${pageWidthClassName} flex items-center justify-between gap-4 py-3 lg:py-4`}
+      >
+        <div className="flex min-w-0 items-center gap-x-8">
+          <Logo />
+          <div className="hidden lg:block">
+            <Nav />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <Nav />
-          {showAdmin ? (
-            <Link href="/admin" className="text-sm text-paper/75 hover:text-paper">
-              Admin
-            </Link>
-          ) : null}
+        <div className="hidden lg:block">
+          <AuthLinks
+            email={user?.email ?? null}
+            name={user ? displayName(user) : null}
+            showAdmin={showAdmin}
+            adminBadge={adminBadge}
+            dashboardBadge={dashboardBadge}
+            showRegister={allowRegister}
+          />
         </div>
+        <HeaderMenu
+          email={user?.email ?? null}
+          name={user ? displayName(user) : null}
+          showAdmin={showAdmin}
+          adminBadge={adminBadge}
+          dashboardBadge={dashboardBadge}
+          showRegister={allowRegister}
+        />
       </div>
     </header>
   );

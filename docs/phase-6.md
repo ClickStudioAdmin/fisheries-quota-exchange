@@ -11,12 +11,13 @@ Do not implement auctions, payments, or quota reservation in this phase.
 1. Organisation `OWNER` or `ADMIN` creates a listing from a holding.
 2. Status is `PENDING_APPROVAL`.
 3. Platform admin approves (`PUBLISHED`) or rejects (`REJECTED`).
-4. Seller or admin can cancel (`CANCELLED`).
-5. `/marketplace` shows published listings that have not expired.
+4. Seller or admin can change the quantity and unit price on an open listing (`PENDING_APPROVAL` or `PUBLISHED`) from an **Edit** action (modal), the same pattern as holdings. Quantity cannot exceed the uncommitted holding.
+5. Seller or admin can cancel (`CANCELLED`).
+6. `/marketplace` shows published listings that have not expired.
 
 Listing type is `FIXED_PRICE` only. Offering is `SALE` or `LEASE`.
 
-Quantity cannot exceed the holding at create time. The holding quantity is not reduced until a later transaction phase.
+Quantity cannot exceed the holding at create time or when the listing is edited. The holding quantity is not reduced until a later transaction phase.
 
 ## Pages
 
@@ -24,16 +25,18 @@ Quantity cannot exceed the holding at create time. The holding quantity is not r
 | --- | --- |
 | `/marketplace` | Published listings |
 | `/marketplace/[id]` | Listing detail |
+| `/dashboard/listings` | Seller listings for the selected account |
 | `/organisations/[id]/listings/new` | Create listing from a holding |
 | `/admin/listings` | Approve or reject |
 
 ## Database
 
-`listings` stores the offer plus a snapshot of fishery/stock/season/quota type names so the marketplace can show published rows without exposing private holdings.
+`listings` stores the offer plus a snapshot of fishery name and unit label (`kg` or `units`, from the fishery’s quantity type) so the marketplace can show published rows without exposing private holdings.
 
 Functions:
 
 - `create_listing`
+- `update_listing`
 - `approve_listing`
 - `reject_listing`
 - `cancel_listing`

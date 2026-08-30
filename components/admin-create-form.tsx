@@ -3,20 +3,31 @@
 import { useActionState } from "react";
 import type { AdminFormState } from "@/lib/fisheries/actions";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { FileDropzone } from "@/components/file-dropzone";
+import { FISHERY_LOGO_MAX_BYTES } from "@/lib/fisheries/logo";
 
 type Field =
   | {
       name: string;
       label: string;
-      type?: "text" | "date" | "number";
+      type?: "text" | "date" | "number" | "checkbox";
       required?: boolean;
       defaultValue?: string;
+      defaultChecked?: boolean;
+    }
+  | {
+      name: string;
+      label: string;
+      type: "file";
+      accept?: string;
+      required?: boolean;
     }
   | {
       name: string;
       label: string;
       type: "select";
       required?: boolean;
+      defaultValue?: string;
       options: { value: string; label: string }[];
     }
   | {
@@ -66,14 +77,19 @@ export function AdminCreateForm({
       ) : null}
       {fields.map((field) => (
         <div key={field.name}>
-          <label htmlFor={field.name} className="block text-sm text-ink">
-            {field.label}
-          </label>
+          {field.type === "file" ? (
+            <p className="text-sm text-ink">{field.label}</p>
+          ) : field.type === "checkbox" ? null : (
+            <label htmlFor={field.name} className="block text-sm text-ink">
+              {field.label}
+            </label>
+          )}
           {field.type === "select" ? (
             <select
               id={field.name}
               name={field.name}
               required={field.required}
+              defaultValue={field.defaultValue ?? ""}
               className={fieldClassName}
             >
               <option value="">Select</option>
@@ -83,6 +99,42 @@ export function AdminCreateForm({
                 </option>
               ))}
             </select>
+          ) : field.type === "file" ? (
+            <FileDropzone
+              id={field.name}
+              name={field.name}
+              accept={field.accept ?? ""}
+              required={field.required}
+              emptyTitle={
+                field.accept?.includes("image/")
+                  ? "Drop image here or click to browse"
+                  : "Drop file here or click to browse"
+              }
+              hint={
+                field.accept?.includes("image/")
+                  ? "JPEG, PNG, WebP, or GIF. 2 MB max"
+                  : "Click to browse"
+              }
+              maxBytes={
+                field.accept?.includes("image/")
+                  ? FISHERY_LOGO_MAX_BYTES
+                  : undefined
+              }
+            />
+          ) : field.type === "checkbox" ? (
+            <label
+              htmlFor={field.name}
+              className="flex items-center gap-2 text-sm text-ink"
+            >
+              <input
+                id={field.name}
+                name={field.name}
+                type="checkbox"
+                value="true"
+                defaultChecked={field.defaultChecked ?? false}
+              />
+              {field.label}
+            </label>
           ) : field.type === "textarea" ? (
             <textarea
               id={field.name}

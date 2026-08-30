@@ -14,17 +14,17 @@ There are no listings, auctions, or payments in this phase.
 | --- | --- |
 | `platform_admins` | Emails that may administer reference data |
 | `jurisdictions` | Commonwealth, states and territories |
-| `authorities` | Management agencies under a jurisdiction |
-| `fisheries` | A managed fishery |
-| `species` | Species names |
-| `stocks` | Species within a fishery (named stock/area) |
+| `fisheries` | A managed fishery under a jurisdiction, with quantity type `KG` or `UNITS` |
+| `stocks` | Named stock or area within a fishery |
 | `seasons` | Date-bounded seasons for a fishery |
 | `quota_types` | Per-fishery type with `WEIGHT`, `UNITS`, `EFFORT` or `OTHER` and a unit label |
 | `fishery_rules` | Configurable `code` + JSON `value` |
-| `quota_holdings` | Organisation holding of a stock/season/type |
+| `quota_holdings` | Organisation holding of a fishery |
 | `quota_ledger` | Immutable quantity events |
 
-Australian jurisdictions are seeded. A development fixture migration also adds `DEV-` authorities, fisheries, stocks, seasons and quota types. These are test records, not official regulatory data.
+`stocks` and `seasons` were added in this phase and later removed. Holdings and listings are per fishery only.
+
+Australian jurisdictions are seeded. Development fixture migrations add real-world Australian fisheries (not official regulatory data), plus seed organisations, users, holdings, listings, auctions, and historical sale and lease trades so public pages and admin tables have data. Each fishery has enough completed sales to chart price history.
 
 ## Ledger
 
@@ -38,12 +38,11 @@ The first signed-in user may claim **platform admin** at `/admin` if the table i
 
 Admin can then:
 
-1. Add an authority and species
-2. Create a fishery
-3. Add stock, season, quota type and optional rules
-4. Create a test holding for an organisation
+1. Create a fishery for a jurisdiction, including quantity type (Kg or Units)
+2. Add a logo
+3. Create a test holding for an organisation (organisation, fishery, quantity, note)
 
-Members of that organisation can see the holding and ledger on the organisation page.
+Members of that organisation can see the holding at `/dashboard/holdings` and the ledger on `/dashboard/holdings/[id]`.
 
 ## Not in this phase
 

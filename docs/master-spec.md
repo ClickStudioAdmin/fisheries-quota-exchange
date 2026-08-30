@@ -1,10 +1,10 @@
 # Fisheries Quota Exchange (FQX)
 
-Master development specification, version 3.0.
+Master development specification, version 3.3.
 
 This document is the canonical development specification for FQX.
 
-Current implementation phase: Phase 8 — Auctions.
+Current implementation phase: Phase 12 — QLD custodial lease holdings. See [phase-12.md](phase-12.md). Phase 11 is complete.
 
 ## Development philosophy
 
@@ -98,11 +98,14 @@ Database migrations must be executed by CI/CD rather than requiring the develope
 
 - Next.js, TypeScript, App Router, Tailwind CSS
 - Supabase PostgreSQL and Supabase Auth
+- Resend for transactional email (server only)
+- Stripe Connect in test mode
+- `@react-pdf/renderer` for dummy tax invoice PDFs
+- `pdf-lib` to pre-fill official Queensland FDU1465 sale and FDU1469 lease applications
 - Vercel
 - GitHub and GitHub Actions
 - Cursor
 - Supabase CLI migrations deployed by GitHub Actions
-- Stripe Connect later
 - Vitest and Playwright later
 - Zod where appropriate
 
@@ -190,7 +193,7 @@ Organisation creation, profile, membership, roles (`OWNER`, `ADMIN`, `MEMBER`), 
 
 ## 24. Phase 5 — Fisheries and quota data
 
-Jurisdictions, authorities, fisheries, species, stocks, seasons, quota types, fishery rules, holdings, and an immutable quota ledger. Do not assume quota is always measured in weight.
+Jurisdictions, fisheries, quota types, fishery rules, holdings, and an immutable quota ledger. Do not assume quota is always measured in weight.
 
 ## 25. Phase 6 — Listings
 
@@ -206,37 +209,35 @@ Server-side auction logic. Never rely on client-side bid timestamps.
 
 ## 28. Phase 9 — Stripe test payments
 
-Stripe Connect in test mode behind a `PaymentProvider` abstraction. Idempotent webhooks.
+Stripe Connect in test mode behind a `PaymentProvider` abstraction. Separate charges and transfers. Idempotent webhooks.
 
-## 29. Phase 10 — Settlement
+**Complete.** See [phase-9.md](phase-9.md).
 
-Payment → compliance → transfer → authority process → settlement → seller proceeds. Immutable financial ledger.
+## 29. Phase 10 — Queensland transfer process (foundation)
 
-## 30. Phase 11 — Seller payouts
+Jurisdiction-specific transfer after payment and compliance. Queensland sales and leases generate stored application PDFs from business details. The seller signs first and uploads; admin checks that file before the buyer can download it; admin records Fisheries Queensland submission. Other jurisdictions keep simulated transfer. Approved QLD applications hand off to existing `simulate_transfer` and settlement. No live e-sign and no FQ API.
 
-Pending, available, and paid balances with duplicate payout protection.
+**Complete.** See [phase-10.md](phase-10.md).
 
-## 31. Phase 12 — Authority workflow
+## 30. Phase 11 — Queensland online signing (PandaDoc)
 
-`AuthorityAdapter` with a manual first implementation. Do not invent regulatory rules.
+Alternate Queensland signing channel using PandaDoc sandbox. The Phase 10 offline pack stays a fully separate, unchanged flow. Admins set a default channel and choose Offline or PandaDoc per order during compliance. FQX still generates the official PDF; PandaDoc is for signatures only. Buyer and seller sign in parallel. Webhooks are the source of truth. After a sealed PDF is stored, Fisheries Queensland tracking and `simulate_transfer` are unchanged.
 
-## 32. Phase 13 — Market data
+**Complete for sales.** Phase 12 retires live lease FDU1469 / lease PandaDoc in favour of custodial FishNet leases. See [phase-11.md](phase-11.md).
 
-History, activity, prices, volume, and fishery pages. Do not present indicative data as official regulatory data.
+## 31. Phase 12 — QLD custodial lease holdings
 
-## 33. Phase 14 — Closed beta
+Queensland **temporary FishNet custodianship** on holdings: members move quota to FQX as custodian (not owner), list that stock for **lease** only, and can **request release** back to themselves. After lease payment, admin completes outbound FishNet with a checklist. **Sales** stay on non-custodial holdings and FDU1465 / Phase 10–11 signing. Live FDU1469 / lease PandaDoc are retired. Notifications and Needs attention cover inbound, release, and outbound events.
 
-Invite selected participants. Fix operational problems before broad launch.
+See [phase-12.md](phase-12.md).
 
-## 34. Phase 15 — Public launch
+## 32. Later phases
 
-Expand fisheries, organisations, and market features.
+Phases after 12 are not pre-planned. A new phase starts only when its objective, scope, and acceptance criteria are written under `docs/`.
 
-## 35. Phase 16 — Exchange
+Do not implement a previously sketched later phase (FQ portal/API, other jurisdictions’ real processes, settlement ledger, seller bank payouts, market-data expansion, closed beta, public launch, or exchange matching) unless a new phase document asks for that work.
 
-Only after marketplace liquidity exists. Do not build matching infrastructure before then.
-
-## 36–44. Long-term architecture
+## 33. Long-term architecture
 
 Every table must be justified by an actual feature. Do not create all tables during early phases.
 
@@ -244,6 +245,6 @@ Quota and financial ledgers are immutable. Never delete historical entries. Neve
 
 Never trust the browser for payment, bid, quota, balance, payout, settlement, or admin state.
 
-## 45. Cursor rules
+## 34. Cursor rules
 
 Project rules in `.cursor/rules/` enforce phase discipline, GitHub as source of truth, migration-only schema changes, secret handling, and the stop condition at the end of each phase.

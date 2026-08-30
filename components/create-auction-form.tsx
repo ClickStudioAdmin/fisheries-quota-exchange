@@ -1,11 +1,17 @@
 "use client";
 
 import { useActionState } from "react";
+import { OfferingField } from "@/components/offering-field";
+import { QuantityField } from "@/components/quantity-field";
+import { QldQuotaUsageFields } from "@/components/qld-quota-usage-fields";
+import { TermsAcknowledgements } from "@/components/terms-acknowledgements";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
 import {
   createAuctionAction,
 } from "@/lib/auctions/actions";
 import type { AuctionFormState } from "@/lib/auctions/types";
+import type { ListingOffering } from "@/lib/listings/types";
+import { SELLER_ACKNOWLEDGEMENTS } from "@/lib/terms/acknowledgements";
 
 const initialState: AuctionFormState = {};
 
@@ -14,6 +20,10 @@ type CreateAuctionFormProps = {
   holdingId: number;
   maxQuantity: string;
   unitLabel: string;
+  offerings: ListingOffering[];
+  requireQldUsage?: boolean;
+  autoPublish?: boolean;
+  feeNote?: string | null;
 };
 
 export function CreateAuctionForm({
@@ -21,6 +31,10 @@ export function CreateAuctionForm({
   holdingId,
   maxQuantity,
   unitLabel,
+  offerings,
+  requireQldUsage = false,
+  autoPublish = false,
+  feeNote = null,
 }: CreateAuctionFormProps) {
   const [state, formAction, pending] = useActionState(
     createAuctionAction,
@@ -36,39 +50,24 @@ export function CreateAuctionForm({
           {state.error}
         </p>
       ) : null}
-      <div>
-        <label htmlFor="offering" className="block text-sm text-ink">
-          Offering
-        </label>
-        <select
-          id="offering"
-          name="offering"
-          required
-          className={fieldClassName}
-          defaultValue="SALE"
-        >
-          <option value="SALE">Sale</option>
-          <option value="LEASE">Lease</option>
-        </select>
-      </div>
+      <OfferingField offerings={offerings} />
       <div>
         <label htmlFor="quantity" className="block text-sm text-ink">
-          Quantity ({unitLabel}), max {maxQuantity}
+          Quantity, max {maxQuantity}
         </label>
-        <input
+        <QuantityField
           id="quantity"
-          name="quantity"
-          type="number"
-          step="any"
-          min="0"
-          max={maxQuantity}
+          unitLabel={unitLabel}
           required
-          className={fieldClassName}
+          max={maxQuantity}
         />
       </div>
+      {requireQldUsage ? (
+        <QldQuotaUsageFields unitLabel={unitLabel} maxQuantity={maxQuantity} />
+      ) : null}
       <div>
         <label htmlFor="starting_price_aud" className="block text-sm text-ink">
-          Starting price per unit (AUD)
+          Starting price per {unitLabel} (AUD)
         </label>
         <input
           id="starting_price_aud"
@@ -96,7 +95,7 @@ export function CreateAuctionForm({
       </div>
       <div>
         <label htmlFor="reserve_price_aud" className="block text-sm text-ink">
-          Reserve price per unit (optional)
+          Reserve price per {unitLabel} (optional)
         </label>
         <input
           id="reserve_price_aud"
@@ -130,8 +129,17 @@ export function CreateAuctionForm({
           className={fieldClassName}
         />
       </div>
-      <button type="submit" className={buttonClassName} disabled={pending}>
-        {pending ? "Submitting…" : "Submit auction for approval"}
+      {feeNote ? <p className="text-sm text-ink-muted">{feeNote}</p> : null}
+      <TermsAcknowledgements
+        title="Seller acknowledgements"
+        items={SELLER_ACKNOWLEDGEMENTS}
+      />
+      <button type="submit" className={buttonClassName} disabled={pending || offerings.length === 0}>
+        {pending
+          ? "Submitting…"
+          : autoPublish
+            ? "Publish auction"
+            : "Submit auction for approval"}
       </button>
     </form>
   );

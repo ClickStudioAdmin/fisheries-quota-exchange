@@ -7,10 +7,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <PageIntro title="About">
+    <PageIntro title="About" width="article">
       <p>
         Fisheries Quota Exchange (FQX) is being built for Australian
-        Commonwealth, State and Territory fisheries.
+        Commonwealth, state and territory fisheries.
       </p>
       <p>
         Quota units, rules, authorities and transfer processes differ between

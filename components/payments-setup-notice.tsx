@@ -1,0 +1,21 @@
+import { StripeLogo } from "@/components/stripe-logo";
+import { ActionNotice } from "@/components/notices";
+
+export function PaymentsSetupNotice({
+  href,
+  children = "Complete payments setup on the Payments tab of Business Settings before you can list quota for sale or lease.",
+}: {
+  href: string;
+  children?: string;
+}) {
+  return (
+    <ActionNotice
+      title="Set up payments"
+      href={href}
+      actionLabel="Go to Business Settings"
+      icon={<StripeLogo className="h-6 w-auto" linked={false} />}
+    >
+      {children}
+    </ActionNotice>
+  );
+}

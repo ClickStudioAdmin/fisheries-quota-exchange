@@ -2,51 +2,35 @@
 
 import { useActionState } from "react";
 import {
-  updateOrganisationAction,
+  createOrganisationAction,
   type OrganisationFormState,
 } from "@/lib/organisations/actions";
 import { buttonClassName, fieldClassName } from "@/components/auth-card";
-import type { Organisation } from "@/lib/organisations/types";
 
 const initialState: OrganisationFormState = {};
 
-type OrganisationProfileFormProps = {
-  organisation: Organisation;
-  canEdit: boolean;
-};
-
-export function OrganisationProfileForm({
-  organisation,
-  canEdit,
-}: OrganisationProfileFormProps) {
+export function BusinessDetailsForm() {
   const [state, formAction, pending] = useActionState(
-    updateOrganisationAction,
+    createOrganisationAction,
     initialState,
   );
 
   return (
     <form action={formAction} className="space-y-4">
-      <input type="hidden" name="organisation_id" value={organisation.id} />
       {state.error ? (
         <p className="text-sm text-red-800" role="alert">
           {state.error}
         </p>
       ) : null}
-      {state.message ? (
-        <p className="text-sm text-sea" role="status">
-          {state.message}
-        </p>
-      ) : null}
       <div>
         <label htmlFor="legal_name" className="block text-sm text-ink">
-          Legal name
+          Legal name{" "}
+          <span className="font-normal text-ink-muted">(required)</span>
         </label>
         <input
           id="legal_name"
           name="legal_name"
           required
-          defaultValue={organisation.legal_name}
-          disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
@@ -57,8 +41,6 @@ export function OrganisationProfileForm({
         <input
           id="trading_name"
           name="trading_name"
-          defaultValue={organisation.trading_name ?? ""}
-          disabled={!canEdit}
           className={fieldClassName}
         />
       </div>
@@ -70,20 +52,13 @@ export function OrganisationProfileForm({
           id="abn"
           name="abn"
           inputMode="numeric"
-          defaultValue={organisation.abn ?? ""}
-          disabled={!canEdit}
+          autoComplete="off"
           className={fieldClassName}
         />
       </div>
-      {canEdit ? (
-        <button type="submit" className={buttonClassName} disabled={pending}>
-          {pending ? "Saving…" : "Save profile"}
-        </button>
-      ) : (
-        <p className="text-sm text-ink-muted">
-          Only owners and admins can edit this profile.
-        </p>
-      )}
+      <button type="submit" className={buttonClassName} disabled={pending}>
+        {pending ? "Saving…" : "Save business details"}
+      </button>
     </form>
   );
 }

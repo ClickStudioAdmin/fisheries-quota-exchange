@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { continueAfterAuthentication } from "@/lib/organisations/active-session";
+import { createClient, getUser } from "@/lib/supabase/server";
+import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
+  const next = searchParams.get("next");
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
@@ -23,5 +24,13 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
   }
 
-  return NextResponse.redirect(`${origin}${safeNext}`);
+  const user = await getUser();
+
+  if (user) {
+    await ensureOwnedAccount(supabase, user);
+  }
+
+  const destination = await continueAfterAuthentication(next);
+
+  return NextResponse.redirect(`${origin}${destination}`);
 }

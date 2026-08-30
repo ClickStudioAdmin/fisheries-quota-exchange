@@ -4,8 +4,27 @@ export function canEditOrganisation(role: OrganisationRole) {
   return role === "OWNER" || role === "ADMIN";
 }
 
+export function canBuyForOrganisation(role: OrganisationRole) {
+  return canEditOrganisation(role);
+}
+
 export function canAddMember(role: OrganisationRole) {
   return role === "OWNER" || role === "ADMIN";
+}
+
+export function canCancelInvitation(
+  actorRole: OrganisationRole,
+  invitedRole: OrganisationRole,
+) {
+  if (actorRole === "OWNER") {
+    return true;
+  }
+
+  if (actorRole === "ADMIN") {
+    return invitedRole !== "OWNER";
+  }
+
+  return false;
 }
 
 export function canAssignRole(
@@ -31,7 +50,12 @@ export function canRemoveMember(
   actorRole: OrganisationRole,
   targetRole: OrganisationRole,
   isSelf: boolean,
+  ownerCount: number,
 ) {
+  if (targetRole === "OWNER" && ownerCount <= 1) {
+    return false;
+  }
+
   if (isSelf) {
     return true;
   }

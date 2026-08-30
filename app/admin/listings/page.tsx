@@ -1,91 +1,210 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  approveListingAction,
-  rejectListingAction,
-} from "@/lib/listings/actions";
+import { startListingReviewAction } from "@/lib/listings/actions";
 import { listAllListings } from "@/lib/listings/queries";
-import { formatAud } from "@/lib/listings/types";
+import {
+  formatAud,
+  listingOfferingLabel,
+  listingReviewPath,
+  listingStatusLabel,
+  listingTypeLabel,
+  parseListingReviewIds,
+  type Listing,
+} from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { buttonClassName, fieldClassName } from "@/components/auth-card";
+import { listFisheries, listJurisdictions } from "@/lib/fisheries/queries";
+import { fisherySelectLabelForName } from "@/lib/fisheries/types";
+import { DataTable, DataTableRowExtras, tableLinkClassName } from "@/components/data-table";
+import { TableModal } from "@/components/table-modal";
+import { ListingApprovalPanel } from "@/components/listing-approval-panel";
+import { BulkReviewListingsModal } from "@/components/bulk-review-listings-modal";
+import { formatTableDate } from "@/lib/format";
+import { quantityUsageTooltips } from "@/lib/listings/quota-usage";
 
 export const metadata = {
   title: "Listings",
 };
 
-export default async function AdminListingsPage() {
+export default async function AdminListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ review?: string }>;
+}) {
   if (!(await isPlatformAdmin())) {
     redirect("/admin");
   }
 
-  const listings = await listAllListings();
-  const pending = listings.filter((item) => item.status === "PENDING_APPROVAL");
-  const others = listings.filter((item) => item.status !== "PENDING_APPROVAL");
+  const query = await searchParams;
+  const [{ listings, error }, fisheries, jurisdictions] = await Promise.all([
+    listAllListings(),
+    listFisheries(),
+    listJurisdictions(),
+  ]);
+  const queued = parseListingReviewIds(query.review);
+  const byId = new Map(listings.map((listing) => [listing.id, listing]));
+  const reviewListings = queued
+    .map((id) => byId.get(id))
+    .filter(
+      (listing): listing is Listing =>
+        listing != null && listing.status === "PENDING_APPROVAL",
+    );
+  const remainingPath = listingReviewPath(reviewListings.map((listing) => listing.id));
+  const requestedPath = listingReviewPath(queued);
+
+  if (queued.length > 0 && remainingPath !== requestedPath) {
+    redirect(remainingPath);
+  }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight text-ink">
-        Listing approval
+        Listings
       </h1>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Waiting for approval</h2>
-        {pending.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">No pending listings.</p>
-        ) : (
-          <div className="mt-4 space-y-4">
-            {pending.map((listing) => (
-              <div key={listing.id} className="border border-line p-4">
-                <p className="font-medium text-ink">
-                  {listing.listing_type === "AUCTION" ? "Auction · " : ""}
-                  {listing.seller_name} · {listing.fishery_name} ·{" "}
-                  {listing.stock_name}
-                </p>
-                <p className="text-sm text-ink-muted">
-                  {listing.offering} · {listing.quantity} {listing.unit_label} ·{" "}
-                  {formatAud(listing.unit_price_aud)} / {listing.unit_label}
-                </p>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  <form action={approveListingAction} className="flex gap-2">
-                    <input type="hidden" name="listing_id" value={listing.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Note (optional)"
-                      className={fieldClassName}
-                    />
-                    <button type="submit" className={buttonClassName}>
-                      Approve
-                    </button>
-                  </form>
-                  <form action={rejectListingAction} className="flex gap-2">
-                    <input type="hidden" name="listing_id" value={listing.id} />
-                    <input
-                      name="review_note"
-                      placeholder="Reason (optional)"
-                      className={fieldClassName}
-                    />
-                    <button
-                      type="submit"
-                      className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
-                    >
-                      Reject
-                    </button>
-                  </form>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-      <section>
-        <h2 className="text-xl font-semibold text-ink">Other listings</h2>
-        <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-          {others.map((listing) => (
-            <li key={listing.id}>
-              {listing.status} · {listing.listing_type} · {listing.seller_name}{" "}
-              · {listing.fishery_name} · {listing.quantity} {listing.unit_label}
-            </li>
+      {error ? (
+        <p className="text-sm text-ink-muted">Could not load listings. {error}</p>
+      ) : (
+      <DataTable
+        caption="Listings"
+        empty="No listings yet."
+        searchPlaceholder="Filter listings…"
+        defaultSort={{ key: "id", direction: "desc" }}
+        selectable
+        bulkActions={[
+          {
+            label: "Review",
+            action: startListingReviewAction,
+            requireValue: {
+              key: "status",
+              value: "PENDING_APPROVAL",
+            },
+          },
+        ]}
+        columns={[
+          { key: "id", header: "ID", sortable: true, details: true, nowrap: true },
+          { key: "seller", header: "Seller", sortable: true, filter: "select" },
+          {
+            key: "type",
+            header: "Listing type",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "FIXED_PRICE", label: "Fixed price" },
+              { value: "AUCTION", label: "Auction" },
+            ],
+          },
+          {
+            key: "offering",
+            header: "Offering",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "SALE", label: "Sale" },
+              { value: "LEASE", label: "Lease" },
+            ],
+          },
+          { key: "fishery", header: "Fishery", sortable: true, filter: "select" },
+          { key: "quantity", header: "Quantity", sortable: true, align: "right" },
+          { key: "price", header: "Price", sortable: true, align: "right" },
+          {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            filter: "select",
+            filterOptions: [
+              { value: "PENDING_APPROVAL", label: "Pending approval" },
+              { value: "PUBLISHED", label: "Live" },
+              { value: "RESERVED", label: "Reserved" },
+              { value: "SOLD", label: "Sold" },
+              { value: "UNSOLD", label: "Unsold" },
+              { value: "CANCELLED", label: "Cancelled" },
+              { value: "REJECTED", label: "Rejected" },
+            ],
+          },
+        ]}
+        rows={listings.map((listing) => ({
+          id: listing.id,
+          needsAction: listing.status === "PENDING_APPROVAL",
+          details: [
+            { label: "Created", value: formatTableDate(listing.created_at) },
+          ],
+          values: {
+            id: listing.id,
+            seller: listing.seller_name,
+            type: listing.listing_type,
+            fishery: fisherySelectLabelForName(
+              listing.fishery_name,
+              fisheries,
+              jurisdictions,
+            ),
+            offering: listing.offering,
+            quantity: listing.quantity,
+            price: listing.unit_price_aud,
+            status: listing.status,
+            created: listing.created_at,
+          },
+          display: {
+            type: listingTypeLabel(listing.listing_type),
+            offering: listingOfferingLabel(listing.offering),
+            quantity: `${listing.quantity} ${listing.unit_label}`,
+            price: formatAud(listing.unit_price_aud),
+            status: listingStatusLabel(listing.status),
+          },
+          tooltips: quantityUsageTooltips(
+            listing.unused_quantity,
+            listing.used_quantity,
+            listing.unit_label,
+          ),
+        }))}
+      >
+        {listings.map((listing) => (
+          <DataTableRowExtras
+            key={listing.id}
+            id={listing.id}
+            links={
+              <Link
+                href={
+                  listing.listing_type === "AUCTION"
+                    ? `/auctions/${listing.id}`
+                    : `/marketplace/${listing.id}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className={tableLinkClassName}
+              >
+                View
+              </Link>
+            }
+            actions={
+              listing.status === "PENDING_APPROVAL" ? (
+                <TableModal
+                  persistKey={`listing-${listing.id}-review`}
+                  title="Review listing"
+                  label="Review"
+                  wide
+                >
+                  <ListingApprovalPanel listingId={listing.id} />
+                </TableModal>
+              ) : null
+            }
+          />
+        ))}
+      </DataTable>
+      )}
+      {reviewListings.length > 0 ? (
+        <BulkReviewListingsModal count={reviewListings.length}>
+          {reviewListings.map((listing, index) => (
+            <section key={listing.id} className="space-y-4 py-6 first:pt-0 last:pb-0">
+              <p className="text-xs uppercase tracking-[0.12em] text-ink-muted">
+                {index + 1} of {reviewListings.length}
+              </p>
+              <ListingApprovalPanel
+                listingId={listing.id}
+                reviewQueue={reviewListings.map((item) => item.id)}
+              />
+            </section>
           ))}
-        </ul>
-      </section>
+        </BulkReviewListingsModal>
+      ) : null}
     </div>
   );
 }

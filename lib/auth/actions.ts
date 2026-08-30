@@ -1,28 +1,15 @@
 "use server";
 
-import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
+import { continueAfterAuthentication } from "@/lib/organisations/active-session";
+import { clearActiveOrganisationCookie } from "@/lib/organisations/active-session";
+import { userFacingError } from "@/lib/errors/user-message";
+import { getSiteUrl } from "@/lib/site-url";
+import { ensureOwnedAccount } from "@/lib/organisations/ensure-account";
 import { safeNextPath } from "@/lib/auth/paths";
 import type { AuthFormState } from "@/lib/auth/types";
-
-async function getSiteUrl() {
-  const headerList = await headers();
-  const origin = headerList.get("origin");
-
-  if (origin) {
-    return origin;
-  }
-
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
-  const protocol = headerList.get("x-forwarded-proto") ?? "https";
-
-  if (!host) {
-    return null;
-  }
-
-  return `${protocol}://${host}`;
-}
 
 function readEmailPassword(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -39,6 +26,22 @@ function readEmailPassword(formData: FormData) {
   return { email, password } as const;
 }
 
+function readPhone(value: string) {
+  const phone = value.trim();
+
+  if (!phone) {
+    return { error: "Enter a phone number." } as const;
+  }
+
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.length < 8) {
+    return { error: "Enter a valid phone number." } as const;
+  }
+
+  return { phone } as const;
+}
+
 export async function registerAction(
   _prev: AuthFormState,
   formData: FormData,
@@ -49,23 +52,57 @@ export async function registerAction(
     return { error: parsed.error };
   }
 
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const phoneResult = readPhone(String(formData.get("phone") ?? ""));
+
+  if (!fullName) {
+    return { error: "Enter your name." };
+  }
+
+  if ("error" in phoneResult) {
+    return { error: phoneResult.error };
+  }
+
   const supabase = await createClient();
 
   if (!supabase) {
     return { error: "Supabase is not configured for this environment." };
   }
 
+  const { data: allowed, error: allowedError } = await supabase.rpc(
+    "registrations_allowed",
+  );
+
+  if (allowedError) {
+    return { error: userFacingError(allowedError) };
+  }
+
+  if (allowed !== true) {
+    return { error: "New registrations are closed." };
+  }
+
   const siteUrl = await getSiteUrl();
+  const rawNext = String(formData.get("next") ?? "").trim();
+  const next = rawNext ? safeNextPath(rawNext) : null;
+  const callback = siteUrl
+    ? next
+      ? `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
+      : `${siteUrl}/auth/callback`
+    : undefined;
   const { data, error } = await supabase.auth.signUp({
     email: parsed.email,
     password: parsed.password,
     options: {
-      emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
+      emailRedirectTo: callback,
+      data: {
+        full_name: fullName,
+        phone: phoneResult.phone,
+      },
     },
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   if (!data.session) {
@@ -74,7 +111,11 @@ export async function registerAction(
     };
   }
 
-  redirect("/dashboard");
+  if (data.user) {
+    await ensureOwnedAccount(supabase, data.user);
+  }
+
+  redirect(await continueAfterAuthentication(next));
 }
 
 export async function loginAction(
@@ -99,10 +140,18 @@ export async function loginAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
-  redirect(safeNextPath(String(formData.get("next") ?? "")));
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureOwnedAccount(supabase, user);
+  }
+
+  redirect(await continueAfterAuthentication(String(formData.get("next") ?? "")));
 }
 
 export async function forgotPasswordAction(
@@ -132,7 +181,7 @@ export async function forgotPasswordAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
   return {
@@ -159,13 +208,126 @@ export async function updatePasswordAction(
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return { error: error.message };
+    return { error: userFacingError(error) };
   }
 
-  redirect("/dashboard");
+  redirect(await continueAfterAuthentication());
+}
+
+export async function updatePersonAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const phoneResult = readPhone(String(formData.get("phone") ?? ""));
+
+  if (!fullName) {
+    return { error: "Enter your name." };
+  }
+
+  if (!email || !email.includes("@")) {
+    return { error: "Enter a valid email address." };
+  }
+
+  if ("error" in phoneResult) {
+    return { error: phoneResult.error };
+  }
+
+  const currentEmail = user.email?.toLowerCase() ?? "";
+  const siteUrl = await getSiteUrl();
+  const attributes: {
+    email?: string;
+    data: { full_name: string; phone: string };
+  } = {
+    data: {
+      full_name: fullName,
+      phone: phoneResult.phone,
+    },
+  };
+
+  if (email !== currentEmail) {
+    attributes.email = email;
+  }
+
+  const { data, error } = await supabase.auth.updateUser(
+    attributes,
+    siteUrl && attributes.email
+      ? { emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard` }
+      : undefined,
+  );
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/profile");
+
+  if (attributes.email && data.user?.email?.toLowerCase() !== email) {
+    return {
+      message:
+        "Saved. Check your new email address to confirm the email change.",
+    };
+  }
+
+  return { message: "Account settings saved." };
+}
+
+export async function updateProfilePasswordAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const user = await getUser();
+  const supabase = await createClient();
+
+  if (!user?.email || !supabase) {
+    return { error: "You must be signed in." };
+  }
+
+  const currentPassword = String(formData.get("current_password") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm_password") ?? "");
+
+  if (!currentPassword) {
+    return { error: "Enter your current password." };
+  }
+
+  if (password.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+
+  if (password !== confirm) {
+    return { error: "New password and confirmation do not match." };
+  }
+
+  const { error: currentError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+
+  if (currentError) {
+    return { error: "Current password is incorrect." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return { error: userFacingError(error) };
+  }
+
+  return { message: "Password updated." };
 }
 
 export async function logoutAction() {
+  await clearActiveOrganisationCookie();
   const supabase = await createClient();
 
   if (supabase) {

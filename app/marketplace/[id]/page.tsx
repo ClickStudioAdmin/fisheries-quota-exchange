@@ -1,12 +1,45 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PurchaseForm } from "@/components/purchase-form";
+import { SwitchAccountLink } from "@/components/switch-account-notice";
+import { TermsRequiredNotice } from "@/components/terms-required-notice";
+import { BusinessDetailsRequiredNotice } from "@/components/business-details-required-notice";
+import { EditListingPriceButton } from "@/components/edit-listing-price-form";
+import { buttonClassName } from "@/components/auth-card";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { OfferCard } from "@/components/offer-card";
+import { OfferDetailLayout } from "@/components/offer-detail-layout";
+import { ListingRelatedMarket } from "@/components/listing-related-market";
+import { pageWidthClassName } from "@/components/surface";
+import { formatTableDate } from "@/lib/format";
 import { cancelListingAction } from "@/lib/listings/actions";
+import {
+  getHolding,
+  listFisheries,
+  listHoldingCommitments,
+  listJurisdictions,
+} from "@/lib/fisheries/queries";
 import { getListing } from "@/lib/listings/queries";
-import { formatAud } from "@/lib/listings/types";
+import {
+  canCancelOpenListing,
+  canEditListingPrice,
+  listingEditMaxQuantity,
+  listingStatusLabel,
+} from "@/lib/listings/types";
 import { isPlatformAdmin } from "@/lib/admin/access";
-import { listMyOrganisations, getMyRole } from "@/lib/organisations/queries";
+import { getActiveOrganisation } from "@/lib/organisations/active-session";
+import { listMyOrganisations, getMyRole, loadPublicSellerDisplays } from "@/lib/organisations/queries";
+import { canBuyForOrganisation } from "@/lib/organisations/permissions";
+import {
+  ownMissingTradeReadyFields,
+  ownMissingTradeReadyLabels,
+  requireCounterpartyTradeReadyError,
+} from "@/lib/organisations/eligibility";
+import { tradeRequiresQldProfile } from "@/lib/organisations/completeness";
 import { getUser } from "@/lib/supabase/server";
+import { isPaymentsConfigured } from "@/lib/payments/env";
+import { organisationAcceptsCardPayments } from "@/lib/payments/queries";
+import { hasAcceptedCurrentTerms } from "@/lib/terms/queries";
 
 export const metadata = {
   title: "Listing",
@@ -34,117 +67,216 @@ export default async function ListingPage({
     redirect(`/auctions/${listing.id}`);
   }
 
-  const user = await getUser();
+  const [user, fisheries, jurisdictions, holding, commitments] = await Promise.all([
+    getUser(),
+    listFisheries(),
+    listJurisdictions(),
+    getHolding(listing.holding_id),
+    listHoldingCommitments([listing.holding_id]),
+  ]);
+  const fishery = fisheries.find((item) => item.name === listing.fishery_name);
+  const jurisdictionCode =
+    jurisdictions.find((item) => item.id === fishery?.jurisdiction_id)?.code ??
+    null;
+  const requireQld = tradeRequiresQldProfile(jurisdictionCode);
   const role = user ? await getMyRole(listing.organisation_id) : null;
   const admin = user ? await isPlatformAdmin() : false;
   const organisations = user ? await listMyOrganisations() : [];
-  const buyerOrganisations = organisations.filter(
-    (organisation) => organisation.id !== listing.organisation_id,
+  const active = user ? await getActiveOrganisation() : null;
+  const listingPath = `/marketplace/${listing.id}`;
+  const canSwitch = organisations.length > 1;
+  const operatingAsSeller = active?.id === listing.organisation_id;
+  const canManage =
+    admin ||
+    (operatingAsSeller && (role === "OWNER" || role === "ADMIN"));
+  const showEdit = canManage && canEditListingPrice(listing);
+  const showCancel = canManage && canCancelOpenListing(listing);
+  const maxQuantity = listingEditMaxQuantity(
+    listing.quantity,
+    holding?.quantity,
+    commitments.get(listing.holding_id) ?? 0,
   );
-  const canCancel =
-    listing.status === "PENDING_APPROVAL" || listing.status === "PUBLISHED";
-  const showCancel =
-    canCancel && (admin || role === "OWNER" || role === "ADMIN");
   const expired = new Date(listing.expires_at) <= new Date();
+  const paymentsOn = isPaymentsConfigured();
+  const sellerAcceptsCards = paymentsOn
+    ? await organisationAcceptsCardPayments(listing.organisation_id)
+    : true;
+  const acceptedTerms = user ? await hasAcceptedCurrentTerms() : false;
+  const buyerMissing =
+    active && !operatingAsSeller
+      ? await ownMissingTradeReadyFields(active.id, {
+          requireQldProfile: requireQld,
+        })
+      : [];
+  const sellerIncomplete =
+    Boolean(user) && !operatingAsSeller
+      ? Boolean(
+          await requireCounterpartyTradeReadyError(listing.organisation_id, {
+            requireQldProfile: requireQld,
+          }),
+        )
+      : false;
+  const sellerDisplays = await loadPublicSellerDisplays([listing]);
+  const sellerDisplay = sellerDisplays[listing.id] ?? {
+    label: listing.seller_name,
+    tooltip: null,
+  };
   const canPurchase =
-    listing.status === "PUBLISHED" && !expired && buyerOrganisations.length > 0;
-  const isSeller = role !== null;
+    listing.status === "PUBLISHED" &&
+    !expired &&
+    active != null &&
+    !operatingAsSeller &&
+    sellerAcceptsCards &&
+    !sellerIncomplete &&
+    buyerMissing.length === 0 &&
+    canBuyForOrganisation(active.role);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className={`${pageWidthClassName} py-12 sm:py-16`}>
       <p className="text-sm text-ink-muted">
         <Link href="/marketplace" className="underline">
           Marketplace
         </Link>
       </p>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">
-        {listing.fishery_name}
-      </h1>
-      <p className="mt-2 text-ink-muted">
-        {listing.stock_name} · {listing.season_name} · {listing.quota_type_name}{" "}
-        ({listing.measurement_kind})
-      </p>
-      <dl className="mt-8 grid max-w-lg gap-3 text-sm">
-        <div>
-          <dt className="text-ink-muted">Seller</dt>
-          <dd className="text-ink">{listing.seller_name}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Offering</dt>
-          <dd className="text-ink">{listing.offering}</dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Quantity</dt>
-          <dd className="text-ink">
-            {listing.quantity} {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Price</dt>
-          <dd className="text-ink">
-            {formatAud(listing.unit_price_aud)} per {listing.unit_label}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Status</dt>
-          <dd className="text-ink">
-            {listing.status}
-            {expired ? " · expired" : ""}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-ink-muted">Expires</dt>
-          <dd className="text-ink">
-            {new Date(listing.expires_at).toLocaleString("en-AU")}
-          </dd>
-        </div>
-      </dl>
-      {listing.status === "PUBLISHED" && !expired ? (
-        <div className="mt-8">
-          {!user ? (
+      <OfferDetailLayout
+        actionTitle="Buy"
+        action={
+          listing.status === "PUBLISHED" && !expired ? (
+            !user ? (
+              <p className="text-sm text-ink-muted">
+                <Link
+                  href={`/login?next=/marketplace/${listing.id}`}
+                  className="underline"
+                >
+                  Log in
+                </Link>{" "}
+                to purchase. Quota is reserved when you buy. You then pay FQX
+                in Stripe test mode: the listed amount by bank debit, or the
+                listed amount plus card processing if you pay by
+                Australian-issued card. FQX holds the funds until settlement.
+              </p>
+            ) : organisations.length === 0 ? (
+              <p className="text-sm text-ink-muted">
+                Add your business details on{" "}
+                <Link href="/dashboard/account" className="underline">
+                  Business Settings
+                </Link>{" "}
+                before you can buy.
+              </p>
+            ) : !active ? (
+              <p className="text-sm text-ink-muted">
+                <SwitchAccountLink next={listingPath}>
+                  Choose a business
+                </SwitchAccountLink>{" "}
+                before you can buy.
+              </p>
+            ) : operatingAsSeller ? (
+              <p className="text-sm text-ink-muted">
+                You cannot purchase this listing while using the seller&apos;s
+                business.
+                {canSwitch ? (
+                  <>
+                    {" "}
+                    <SwitchAccountLink next={listingPath} /> to buy as another
+                    business.
+                  </>
+                ) : null}
+              </p>
+            ) : !canBuyForOrganisation(active.role) ? (
+              <p className="text-sm text-ink-muted">
+                Only owners and admins can buy for this business.
+              </p>
+            ) : !acceptedTerms ? (
+              <TermsRequiredNotice action="buy" />
+            ) : buyerMissing.length > 0 ? (
+              <BusinessDetailsRequiredNotice
+                action="buy"
+                missingLabels={ownMissingTradeReadyLabels(buyerMissing)}
+              />
+            ) : sellerIncomplete ? (
+              <p className="text-sm text-ink-muted">
+                This seller has not completed business details, so the listing
+                cannot be purchased yet.
+              </p>
+            ) : !sellerAcceptsCards ? (
+              <p className="text-sm text-ink-muted">
+                This seller has not completed payment setup, so the listing
+                cannot be purchased yet.
+              </p>
+            ) : canPurchase ? (
+              <PurchaseForm listingId={listing.id} />
+            ) : (
+              <p className="text-sm text-ink-muted">
+                This listing is not available to purchase.
+              </p>
+            )
+          ) : (
             <p className="text-sm text-ink-muted">
-              <Link
-                href={`/login?next=/marketplace/${listing.id}`}
-                className="underline"
-              >
-                Sign in
-              </Link>{" "}
-              to purchase. Quota is reserved immediately. There is no live
-              payment.
+              This listing is not available to purchase.
             </p>
-          ) : organisations.length === 0 ? (
-            <p className="text-sm text-ink-muted">
-              Create an organisation from the dashboard before purchasing.
-            </p>
-          ) : isSeller && buyerOrganisations.length === 0 ? (
-            <p className="text-sm text-ink-muted">
-              You cannot purchase your organisation&apos;s listing. Use a
-              different organisation to test a buy.
-            </p>
-          ) : canPurchase ? (
-            <PurchaseForm
-              listingId={listing.id}
-              organisations={buyerOrganisations}
+          )
+        }
+        extra={
+          showEdit || showCancel ? (
+            <div className="flex flex-wrap items-center gap-3">
+              {showEdit ? (
+                <EditListingPriceButton
+                  title="Edit listing"
+                  label="Edit listing"
+                  triggerClassName={buttonClassName}
+                  listingId={listing.id}
+                  unitLabel={listing.unit_label}
+                  currentQuantity={listing.quantity}
+                  maxQuantity={maxQuantity}
+                  currentPrice={listing.unit_price_aud}
+                />
+              ) : null}
+              {showCancel ? (
+                <form action={cancelListingAction}>
+                  <input type="hidden" name="listing_id" value={listing.id} />
+                  <input
+                    type="hidden"
+                    name="next"
+                    value={`/marketplace/${listing.id}`}
+                  />
+                  <PendingSubmitButton
+                    className={buttonClassName}
+                    pendingLabel="Cancelling…"
+                  >
+                    Cancel listing
+                  </PendingSubmitButton>
+                </form>
+              ) : null}
+            </div>
+          ) : null
+        }
+        related={
+          fishery ? (
+            <ListingRelatedMarket
+              fishery={fishery}
+              currentListingId={listing.id}
+              offering={listing.offering}
             />
-          ) : null}
-        </div>
-      ) : (
-        <p className="mt-8 text-sm text-ink-muted">
-          This listing is not available to purchase.
-        </p>
-      )}
-      {showCancel ? (
-        <form action={cancelListingAction} className="mt-6">
-          <input type="hidden" name="listing_id" value={listing.id} />
-          <input type="hidden" name="next" value={`/marketplace/${listing.id}`} />
-          <button
-            type="submit"
-            className="border border-line px-4 py-2 text-sm text-ink hover:bg-paper-raised"
-          >
-            Cancel listing
-          </button>
-        </form>
-      ) : null}
+          ) : null
+        }
+      >
+        <OfferCard
+          listing={listing}
+          fishery={fishery ?? { name: listing.fishery_name, logo_path: null }}
+          fisheryId={fishery?.id ?? null}
+          jurisdictionCode={jurisdictionCode}
+          sellerDisplay={sellerDisplay}
+          badge={
+            expired && listing.status === "PUBLISHED"
+              ? "Expired"
+              : listing.status === "PUBLISHED"
+                ? undefined
+                : listingStatusLabel(listing.status)
+          }
+          metaLabel="Expires"
+          metaValue={formatTableDate(listing.expires_at)}
+        />
+      </OfferDetailLayout>
     </div>
   );
 }

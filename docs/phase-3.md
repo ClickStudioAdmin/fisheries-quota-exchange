@@ -17,16 +17,16 @@ There is no organisation UI in this phase.
 | `/dashboard` | Signed-in only |
 | `/auth/callback` | Auth email link handler |
 
-Unauthenticated requests to `/dashboard` redirect to `/login`.
+Unauthenticated requests to `/dashboard` redirect to `/login?next=…` so the user returns to that page after sign-in. A platform admin who logs in with no return URL goes to `/admin`. If the signed-in person belongs to more than one organisation, login continues to `/select-account` first.
 
 ## How it works
 
 - `@supabase/ssr` stores the session in cookies.
 - `middleware.ts` refreshes the session and protects `/dashboard`.
-- Server actions in `lib/auth/actions.ts` handle register, login, logout, and password reset.
+- Server actions in `lib/auth/actions.ts` handle register, login, logout, password reset, and signed-in updates (name, email, phone on Account Settings → Profile; password on Password and Security).
 - Access checks use `getUser()`, not client-trusted session state.
 
-Passwords must be at least 8 characters.
+Passwords must be at least 8 characters. Registration and the dashboard profile collect a phone number.
 
 ## Environment variables
 

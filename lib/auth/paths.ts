@@ -11,3 +11,34 @@ export function safeNextPath(value: string | null | undefined) {
 
   return value;
 }
+
+export function loginPath(next?: string | null) {
+  const value = next?.trim();
+
+  if (!value) {
+    return "/login";
+  }
+
+  return `/login?next=${encodeURIComponent(safeNextPath(value))}`;
+}
+
+export function registerPath(next?: string | null) {
+  const value = next?.trim();
+
+  if (!value) {
+    return "/register";
+  }
+
+  return `/register?next=${encodeURIComponent(safeNextPath(value))}`;
+}
+
+export function postLoginPath(
+  next: string | null | undefined,
+  isAdmin: boolean,
+) {
+  if (next && next.trim()) {
+    return safeNextPath(next);
+  }
+
+  return isAdmin ? "/admin" : "/dashboard";
+}

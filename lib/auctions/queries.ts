@@ -4,23 +4,6 @@ import { getListing } from "@/lib/listings/queries";
 import type { Bid } from "@/lib/auctions/types";
 import { auctionHasEnded } from "@/lib/auctions/types";
 
-const listingColumns =
-  "id, organisation_id, holding_id, listing_type, offering, quantity, unit_price_aud, expires_at, status, seller_name, fishery_name, stock_name, season_name, quota_type_name, measurement_kind, unit_label, created_by_email, created_at, reviewed_by_email, reviewed_at, review_note, starting_price_aud, reserve_price_aud, bid_increment_aud, starts_at";
-
-export async function listAuctions() {
-  const supabase = await createClient();
-  if (!supabase) return [];
-
-  const { data } = await supabase
-    .from("listings")
-    .select(listingColumns)
-    .eq("listing_type", "AUCTION")
-    .in("status", ["PUBLISHED", "RESERVED", "SOLD", "UNSOLD"])
-    .order("expires_at", { ascending: false });
-
-  return (data ?? []) as Listing[];
-}
-
 export async function listBids(listingId: number) {
   const supabase = await createClient();
   if (!supabase) return [];
@@ -32,6 +15,29 @@ export async function listBids(listingId: number) {
     .order("created_at", { ascending: false });
 
   return (data ?? []) as Bid[];
+}
+
+export async function listingIdsWithBids(listingIds: number[]) {
+  const ids = [...new Set(listingIds.filter((id) => Number.isInteger(id)))];
+  if (ids.length === 0) {
+    return new Set<number>();
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    return new Set<number>();
+  }
+
+  const { data } = await supabase
+    .from("bids")
+    .select("listing_id")
+    .in("listing_id", ids);
+
+  return new Set(
+    (data ?? [])
+      .map((row) => Number((row as { listing_id: number }).listing_id))
+      .filter((id) => Number.isInteger(id)),
+  );
 }
 
 export async function ensureAuctionClosed(listing: Listing) {
@@ -50,6 +56,17 @@ export async function ensureAuctionClosed(listing: Listing) {
     return listing;
   }
 
+  const bids = await listBids(listing.id);
   await supabase.rpc("close_auction", { p_listing_id: listing.id });
-  return (await getListing(listing.id)) ?? listing;
+  const closed = (await getListing(listing.id)) ?? listing;
+  const { getOrderForListing } = await import("@/lib/orders/queries");
+  const { notifyAuctionClosed } = await import("@/lib/email/events");
+  const order = await getOrderForListing(listing.id);
+  await notifyAuctionClosed({
+    listing,
+    bids,
+    order:
+      closed.status === "RESERVED" || closed.status === "SOLD" ? order : null,
+  });
+  return closed;
 }
