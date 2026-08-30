@@ -149,6 +149,9 @@ If the log shows `Connection timed out` to `pooler.supabase.com`:
 
 The deploy workflow passes `--password` to avoid the CLI temporary login role, which can stall on the pooler after repeated runs.
 
+**Supabase email: project will pause for inactivity**  
+Free projects can pause after about seven days of low activity. Run **Keepalive Supabase** from the Actions tab (or wait for the 3-day schedule). If the project is already paused, restore it in the Supabase dashboard first. See [environments.md](environments.md). Upgrading to Pro disables free-tier pause.
+
 **Table is missing in Supabase**  
 Open the failed Actions run. Do not create the table in the SQL editor unless recovering from an emergency.
 

@@ -56,6 +56,20 @@ Create a **second** hosted project for development. Do not reuse the production 
 
 The first push to `develop` after secrets are set will apply existing migrations, including `system_health`, to the empty development database.
 
+## Supabase keep-alive (free tier)
+
+Free Supabase projects can pause after about seven days of low activity. [`.github/workflows/keepalive-supabase.yml`](../.github/workflows/keepalive-supabase.yml) pings both databases so that is less likely during downtime.
+
+- Runs on a schedule every **3 days** (12:00 UTC) and on **Run workflow**
+- Development job: `select 1` from `system_health` on the develop project
+- Production job: same on the production project
+- Uses the same project ID / DB password / access token secrets as Deploy Database
+- Does **not** apply migrations
+
+GitHub only runs `schedule` workflows from the **default branch**. Merge this workflow to that branch (and to `main` if that is the default) so the timer fires. After a pause warning, run the workflow manually. If the project is already paused, unpause it in the Supabase dashboard first.
+
+Upgrading the project to **Pro** is the only way to turn free-tier pause off permanently.
+
 ## Vercel
 
 Production stays on `main`.
